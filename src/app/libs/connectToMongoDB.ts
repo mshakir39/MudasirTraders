@@ -1,5 +1,4 @@
 import { Db, MongoClient } from 'mongodb';
-import { cookies } from 'next/headers';
 
 interface MongoConnection {
   client: MongoClient | null;
@@ -25,6 +24,18 @@ let cleanupTimer: NodeJS.Timeout | null = null;
 
 // Event handlers flag to prevent duplicate listeners
 let handlersAdded = false;
+
+// Helper function to extract database name from MongoDB URI
+function extractDbNameFromUri(uri: string): string | null {
+  try {
+    // Match pattern: /databaseName? in the URI
+    const match = uri.match(/\/([^/?]+)(?:\?|$)/);
+    return match ? match[1] : null;
+  } catch (error) {
+    console.warn('Could not extract database name from URI:', error);
+    return null;
+  }
+}
 
 export async function connectToMongoDB(): Promise<Db | null> {
   const currentTime = Date.now();
@@ -64,28 +75,16 @@ export async function connectToMongoDB(): Promise<Db | null> {
   connection.isConnecting = true;
 
   try {
-    const cookieStore = cookies();
-    const userId = cookieStore.get('userId')?.value;
+    // Use single MONGODB_URI for both production and development
+    const uri = process.env.MONGODB_URI;
 
-    let uri: string;
-    let dbName: string;
-
-    if (process.env.NODE_ENV === 'production') {
-      if (!userId) {
-        console.warn('⚠️ userId is undefined in production. Skipping DB connection.');
-        connection.isConnecting = false;
-        return null;
-      }
-      uri = `mongodb+srv://testuser:testuser@serverlessinstance0.a00kcsk.mongodb.net/Store_prod_${userId}?retryWrites=true&w=majority&appName=ServerlessInstance0`;
-      dbName = `Store_prod_${userId}`;
-    } else {
-      uri = process.env.MONGODB_URI_DEV || '';
-      if (!uri) {
-        connection.isConnecting = false;
-        throw new Error('❌ MONGODB_URI_DEV is not defined in environment variables');
-      }
-      dbName = 'batteryStore';
+    if (!uri) {
+      connection.isConnecting = false;
+      throw new Error(`❌ MONGODB_URI is not defined in environment variables`);
     }
+
+    // Extract database name from the URI or use a default
+    const dbName = extractDbNameFromUri(uri) || 'mudasirtraders';
 
     // Optimized settings for serverless and connection limits
     const client = new MongoClient(uri, {

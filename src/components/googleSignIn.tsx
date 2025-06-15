@@ -7,7 +7,7 @@ function GoogleSignIn() {
 
   const handleSignIn = () => {
     signIn('google', {
-      callbackUrl: `/category`,
+      callbackUrl: `/`,
     });
   };
   // checking if sessions exists
