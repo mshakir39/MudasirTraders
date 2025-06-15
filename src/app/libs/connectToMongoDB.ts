@@ -4,10 +4,9 @@ interface MongoConnection {
   client: MongoClient | null;
   db: Db | null;
   lastUsed: number;
-  isConnecting: boolean; // Prevent multiple simultaneous connections
+  isConnecting: boolean;
 }
 
-// Global connection object
 let connection: MongoConnection = {
   client: null,
   db: null,
@@ -15,20 +14,13 @@ let connection: MongoConnection = {
   isConnecting: false,
 };
 
-// Connection timeout (3 minutes for serverless)
 const CONNECTION_TIMEOUT = 3 * 60 * 1000;
-const IDLE_TIMEOUT = 2 * 60 * 1000; // 2 minutes idle timeout
-
-// Cleanup timer
+const IDLE_TIMEOUT = 2 * 60 * 1000;
 let cleanupTimer: NodeJS.Timeout | null = null;
-
-// Event handlers flag to prevent duplicate listeners
 let handlersAdded = false;
 
-// Helper function to extract database name from MongoDB URI
 function extractDbNameFromUri(uri: string): string | null {
   try {
-    // Match pattern: /databaseName? in the URI
     const match = uri.match(/\/([^/?]+)(?:\?|$)/);
     return match ? match[1] : null;
   } catch (error) {
@@ -38,21 +30,24 @@ function extractDbNameFromUri(uri: string): string | null {
 }
 
 export async function connectToMongoDB(): Promise<Db | null> {
+  // During build time, return null to prevent connection attempts
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('🚫 Skipping MongoDB connection during build phase');
+    return null;
+  }
+
   const currentTime = Date.now();
 
-  // If already connecting, wait a bit and retry
   if (connection.isConnecting) {
     await new Promise(resolve => setTimeout(resolve, 100));
     if (connection.db) return connection.db;
   }
 
-  // Check if existing connection is still valid and not too old
   if (connection.client && connection.db && !connection.isConnecting) {
     const timeSinceLastUsed = currentTime - connection.lastUsed;
     
     if (timeSinceLastUsed < CONNECTION_TIMEOUT) {
       try {
-        // Quick ping to verify connection
         await connection.client.db().admin().ping();
         connection.lastUsed = currentTime;
         scheduleCleanup();
@@ -67,7 +62,6 @@ export async function connectToMongoDB(): Promise<Db | null> {
     }
   }
 
-  // Prevent multiple simultaneous connections
   if (connection.isConnecting) {
     return null;
   }
@@ -75,28 +69,26 @@ export async function connectToMongoDB(): Promise<Db | null> {
   connection.isConnecting = true;
 
   try {
-    // Use single MONGODB_URI for both production and development
     const uri = process.env.MONGODB_URI;
 
     if (!uri) {
       connection.isConnecting = false;
-      throw new Error(`❌ MONGODB_URI is not defined in environment variables`);
+      console.error('❌ MONGODB_URI is not defined in environment variables');
+      return null;
     }
 
-    // Extract database name from the URI or use a default
     const dbName = extractDbNameFromUri(uri) || 'mudasirtraders';
 
-    // Optimized settings for serverless and connection limits
     const client = new MongoClient(uri, {
-      maxPoolSize: 3, // Further reduced for serverless
-      minPoolSize: 0, // No minimum connections
+      maxPoolSize: process.env.NODE_ENV === 'production' ? 3 : 5,
+      minPoolSize: 0,
       maxIdleTimeMS: IDLE_TIMEOUT,
-      connectTimeoutMS: 10000,
-      socketTimeoutMS: 30000,
-      waitQueueTimeoutMS: 5000, // Reduced wait time
-      serverSelectionTimeoutMS: 10000,
-      heartbeatFrequencyMS: 30000, // Reduce heartbeat frequency
-      maxConnecting: 1, // Limit concurrent connection attempts
+      connectTimeoutMS: 15000, // Increased timeout
+      socketTimeoutMS: 45000,  // Increased timeout
+      waitQueueTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 15000,
+      heartbeatFrequencyMS: 30000,
+      maxConnecting: 1,
       serverApi: {
         version: '1',
         strict: true,
@@ -105,14 +97,18 @@ export async function connectToMongoDB(): Promise<Db | null> {
     });
 
     console.log(`🔄 Connecting to MongoDB database: ${dbName}`);
-    await client.connect();
+    
+    // Add connection timeout
+    const connectPromise = client.connect();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Connection timeout')), 20000)
+    );
+
+    await Promise.race([connectPromise, timeoutPromise]);
     
     const db = client.db(dbName);
-    
-    // Test the connection
     await db.admin().ping();
 
-    // Save the connection
     connection.client = client;
     connection.db = db;
     connection.lastUsed = currentTime;
@@ -120,22 +116,19 @@ export async function connectToMongoDB(): Promise<Db | null> {
 
     console.log(`✅ Connected to MongoDB database: ${dbName}`);
 
-    // Add event handlers only once
     if (!handlersAdded) {
       setupEventHandlers(client);
       handlersAdded = true;
     }
 
-    // Schedule automatic cleanup
     scheduleCleanup();
-
     return db;
 
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
     connection.isConnecting = false;
     await closeConnection();
-    throw error;
+    return null; // Return null instead of throwing
   }
 }
 
@@ -155,8 +148,6 @@ function setupEventHandlers(client: MongoClient) {
     resetConnection();
   });
 
-  // For serverless, we rely on the platform's cleanup rather than process signals
-  // But keep this for local development
   if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
     const gracefulShutdown = async (signal: string) => {
       console.log(`Received ${signal}. Gracefully shutting down MongoDB connection.`);
@@ -182,19 +173,17 @@ function resetConnection() {
 }
 
 function scheduleCleanup() {
-  // Clear existing timer
   if (cleanupTimer) {
     clearTimeout(cleanupTimer);
   }
 
-  // Schedule cleanup after idle timeout
   cleanupTimer = setTimeout(async () => {
     const timeSinceLastUsed = Date.now() - connection.lastUsed;
     if (timeSinceLastUsed >= IDLE_TIMEOUT) {
       console.log('🧹 Auto-closing idle MongoDB connection');
       await closeConnection();
     }
-  }, IDLE_TIMEOUT + 10000); // Add 10 seconds buffer
+  }, IDLE_TIMEOUT + 10000);
 }
 
 async function closeConnection() {
@@ -205,7 +194,7 @@ async function closeConnection() {
 
   if (connection.client) {
     try {
-      await connection.client.close(true); // Force close
+      await connection.client.close(true);
       console.log('✅ MongoDB connection closed successfully.');
     } catch (error) {
       console.error('❌ Error closing MongoDB connection:', error);
@@ -215,12 +204,10 @@ async function closeConnection() {
   resetConnection();
 }
 
-// Export the close function for manual cleanup
 export async function closeMongoConnection() {
   await closeConnection();
 }
 
-// Export function to get connection stats (for debugging)
 export function getConnectionStats() {
   return {
     isConnected: !!connection.client && !!connection.db,
