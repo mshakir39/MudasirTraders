@@ -12,5 +12,5 @@ export const metadata: Metadata = {
 
 export default async function CustomersPage() {
   const customers = await getCustomers();
-  return <CustomersLayout customers={customers} />;
+  return <CustomersLayout customers={Array.isArray(customers) ? customers : []} />;
 } 

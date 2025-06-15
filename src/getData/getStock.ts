@@ -1,4 +1,4 @@
-'use server';
+
 import { executeOperation } from '@/app/libs/executeOperation';
 import { ObjectId } from 'mongodb';
 

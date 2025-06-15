@@ -12,5 +12,5 @@ export const metadata: Metadata = {
 
 export default async function SalesPage() {
   const sales = await getSales();
-  return <SalesLayout sales={sales} />;
+  return <SalesLayout sales={Array.isArray(sales) ? sales : []} />;
 } 

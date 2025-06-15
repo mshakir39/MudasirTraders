@@ -2,7 +2,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import DateRangePicker from "@/components/CustomDateRangePicker";
 import SalesSummaryCards from "@/components/sales/SalesSummaryCards";
-import SalesDateInfo from "@/components/sales/SalesDateInfo";
 import SalesDataGrid from "@/components/sales/SalesDataGrid";
 import ProductsDetailModal from "@/components/sales/ProductDetailModal";
 

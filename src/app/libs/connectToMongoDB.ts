@@ -31,23 +31,31 @@ function extractDbNameFromUri(uri: string): string | null {
 
 export async function connectToMongoDB(): Promise<Db | null> {
   // During build time, return null to prevent connection attempts
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
+  if (process.env.NEXT_PHASE === 'phase-production-build' || 
+      process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === undefined) {
     console.log('🚫 Skipping MongoDB connection during build phase');
     return null;
   }
 
   const currentTime = Date.now();
 
+  // If already connecting, wait and return existing connection
   if (connection.isConnecting) {
-    await new Promise(resolve => setTimeout(resolve, 100));
+    let attempts = 0;
+    while (connection.isConnecting && attempts < 50) { // Wait up to 5 seconds
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
     if (connection.db) return connection.db;
   }
 
+  // Check if existing connection is still valid
   if (connection.client && connection.db && !connection.isConnecting) {
     const timeSinceLastUsed = currentTime - connection.lastUsed;
     
     if (timeSinceLastUsed < CONNECTION_TIMEOUT) {
       try {
+        // Quick ping to verify connection is alive
         await connection.client.db().admin().ping();
         connection.lastUsed = currentTime;
         scheduleCleanup();
@@ -62,6 +70,7 @@ export async function connectToMongoDB(): Promise<Db | null> {
     }
   }
 
+  // Prevent multiple simultaneous connections
   if (connection.isConnecting) {
     return null;
   }
@@ -74,7 +83,7 @@ export async function connectToMongoDB(): Promise<Db | null> {
     if (!uri) {
       connection.isConnecting = false;
       console.error('❌ MONGODB_URI is not defined in environment variables');
-      return null;
+      throw new Error('MONGODB_URI is not defined');
     }
 
     const dbName = extractDbNameFromUri(uri) || 'mudasirtraders';
@@ -83,8 +92,8 @@ export async function connectToMongoDB(): Promise<Db | null> {
       maxPoolSize: process.env.NODE_ENV === 'production' ? 3 : 5,
       minPoolSize: 0,
       maxIdleTimeMS: IDLE_TIMEOUT,
-      connectTimeoutMS: 15000, // Increased timeout
-      socketTimeoutMS: 45000,  // Increased timeout
+      connectTimeoutMS: 15000,
+      socketTimeoutMS: 45000,
       waitQueueTimeoutMS: 10000,
       serverSelectionTimeoutMS: 15000,
       heartbeatFrequencyMS: 30000,
@@ -98,17 +107,20 @@ export async function connectToMongoDB(): Promise<Db | null> {
 
     console.log(`🔄 Connecting to MongoDB database: ${dbName}`);
     
-    // Add connection timeout
+    // Connect with timeout
     const connectPromise = client.connect();
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Connection timeout')), 20000)
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Connection timeout after 20 seconds')), 20000)
     );
 
     await Promise.race([connectPromise, timeoutPromise]);
     
     const db = client.db(dbName);
+    
+    // Test the connection
     await db.admin().ping();
 
+    // Save the connection
     connection.client = client;
     connection.db = db;
     connection.lastUsed = currentTime;
@@ -116,11 +128,13 @@ export async function connectToMongoDB(): Promise<Db | null> {
 
     console.log(`✅ Connected to MongoDB database: ${dbName}`);
 
+    // Add event handlers only once
     if (!handlersAdded) {
       setupEventHandlers(client);
       handlersAdded = true;
     }
 
+    // Schedule automatic cleanup
     scheduleCleanup();
     return db;
 
@@ -128,7 +142,7 @@ export async function connectToMongoDB(): Promise<Db | null> {
     console.error('❌ MongoDB connection error:', error);
     connection.isConnecting = false;
     await closeConnection();
-    return null; // Return null instead of throwing
+    throw error; // Throw the error so calling functions can handle it
   }
 }
 
@@ -148,6 +162,7 @@ function setupEventHandlers(client: MongoClient) {
     resetConnection();
   });
 
+  // Handle process termination
   if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
     const gracefulShutdown = async (signal: string) => {
       console.log(`Received ${signal}. Gracefully shutting down MongoDB connection.`);
@@ -215,4 +230,10 @@ export function getConnectionStats() {
     timeSinceLastUsed: connection.lastUsed ? Date.now() - connection.lastUsed : 0,
     isConnecting: connection.isConnecting,
   };
+}
+
+// Export a function to check if we're in build mode
+export function isBuildMode(): boolean {
+  return process.env.NEXT_PHASE === 'phase-production-build' || 
+         (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === undefined);
 }
