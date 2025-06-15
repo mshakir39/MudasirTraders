@@ -86,7 +86,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     }
 
     // Check if any products have been added
-    const hasProducts = Object.values(accordionData).some(item => 
+    const hasProducts = Object.values(accordionData).some((item: any) =>
       item.brandName || item.series || item.productPrice || item.quantity
     );
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Modal from '@/components/modal';
 import InvoiceGrid from '@/components/invoice/InvoiceGrid';
 import ProductDetailModal from '@/components/invoice/ProductDetailModal';
@@ -24,13 +24,7 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
   const [subModalType, setSubModalType] = useState<string>('');
   const [modalData, setModalData] = useState<any>(null);
 
-  useEffect(() => {
-    if (isOpen && customer?.id) {
-      fetchCustomerInvoices();
-    }
-  }, [isOpen, customer]);
-
-  const fetchCustomerInvoices = async () => {
+  const fetchCustomerInvoices = useCallback(async () => {
     setIsLoading(true);
     console.log('🔍 Fetching invoices for customer:', customer);
     
@@ -56,7 +50,13 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [customer]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCustomerInvoices();
+    }
+  }, [isOpen, fetchCustomerInvoices]);
 
   const handleEditInvoice = async (data: any) => {
     try {

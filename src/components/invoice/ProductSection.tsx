@@ -40,12 +40,12 @@ const ProductSection: React.FC<ProductSectionProps> = ({
     }
 
     // Filter series options to only include those with stock > 0
-    const filteredOptions = originalSeriesOptions.filter(option => {
-      const stockItem = brandStock.seriesStock.find(stock => 
+    const filteredOptions = originalSeriesOptions.filter((option: { value: string }) => {
+      const stockItem = brandStock.seriesStock.find((stock: { series: string; batteryDetails?: { name: string }; quantity: number }) => 
         stock.series === option.value || 
         stock.batteryDetails?.name === option.value
       );
-      return stockItem && stockItem.inStock > 0;
+      return stockItem && stockItem.quantity > 0;
     });
 
     return filteredOptions;

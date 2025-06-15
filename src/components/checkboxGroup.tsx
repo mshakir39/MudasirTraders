@@ -27,13 +27,12 @@ const CheckboxGroup: React.FC<CheckboxGroupProps> = React.memo(
     };
 
     useEffect(() => {
-      onChange(selectedValues);
-    }, [selectedValues]);
-
-    // Sync local state with checkedValues prop
-    useEffect(() => {
       setSelectedValues(checkedValues);
-    }, []);
+    }, [checkedValues, onChange]);
+
+    useEffect(() => {
+      onChange(selectedValues);
+    }, [selectedValues, onChange]);
 
     return (
       <div className='relative flex flex-col text-gray-700'>

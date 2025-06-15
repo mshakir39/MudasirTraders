@@ -124,8 +124,8 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
             console.log('🎯 All series options:', seriesOptions);
             
             // Only show series that exist in stock with quantity > 0
-            filteredSeriesOptions = seriesOptions.filter(option => {
-              const stockItem = brandStock.seriesStock.find(stockSeries => {
+            filteredSeriesOptions = seriesOptions.filter((option: SeriesOption) => {
+              const stockItem = brandStock.seriesStock.find((stockSeries: { series?: string; inStock: number }) => {
                 // More comprehensive matching
                 const stockSeriesName = stockSeries.series?.toLowerCase().trim();
                 const optionValue = option.value?.toLowerCase().trim();

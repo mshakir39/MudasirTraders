@@ -55,6 +55,3 @@ input[type='number'] {
 .width-transition {
   transition: width 0.5s ease-in-out;
 }
-#headlessui-menu-items-:reo: {
-  width: fit-content;
-}
