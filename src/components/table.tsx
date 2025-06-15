@@ -1,0 +1,80 @@
+import React, { useState } from 'react';
+import { CompactTable } from '@table-library/react-table-library/compact';
+import { useTheme } from '@table-library/react-table-library/theme';
+import { getTheme } from '@table-library/react-table-library/baseline';
+import { filterItems } from '@/utils/filterItems'; // Import the filterItems function
+import { FaSearch } from 'react-icons/fa';
+import Button from './button';
+import '../app/css/table.css';
+
+interface Props<T extends Record<string, unknown>> {
+  columns: any;
+  data: T[];
+  searchParentClassName?: string;
+  tableParentClassName?: string;
+  buttonOnClick?: () => void;
+  buttonTitle?: string;
+  showButton?: boolean;
+}
+
+const Table: React.FC<Props<any>> = ({
+  columns,
+  data,
+  searchParentClassName,
+  buttonOnClick,
+  tableParentClassName,
+  buttonTitle = 'Create',
+  showButton = true,
+}) => {
+  const theme = useTheme(getTheme());
+  const [search, setSearch] = useState<string>('');
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value);
+  };
+
+  const filteredData = filterItems(data, search); // Use the filterItems function
+
+  return (
+    <div className={`flex w-full flex-col px-4 ${tableParentClassName}`}>
+      <div className='mt-6 flex items-center justify-between'>
+        <div className={`relative ${searchParentClassName}`}>
+          <input
+            className='h-10  w-full  rounded-xl p-4 outline-none'
+            placeholder='Enter to Search'
+            style={{
+              boxShadow:
+                'rgba(0, 0, 0, 0.16) 0px 10px 36px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px',
+            }}
+            id='search'
+            type='text'
+            value={search}
+            onChange={handleSearch}
+          />
+          <FaSearch className='absolute bottom-3 right-3 text-[#5b4eea]' />
+        </div>
+        {showButton && (
+          <Button
+            className='my-2'
+            variant='fill'
+            text={buttonTitle}
+            onClick={buttonOnClick}
+          ></Button>
+        )}
+      </div>
+
+      <br />
+      {data && data.length > 0 ? (
+        <CompactTable
+          columns={columns}
+          data={{ nodes: filteredData }}
+          theme={theme}
+        />
+      ) : (
+        <div className='flex w-full justify-center'>No Data Found</div>
+      )}
+    </div>
+  );
+};
+
+export default Table;

@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.sidebarItem:hover {
+  background-color: #5b4eea;
+}
+
+.sidebarItem:hover svg {
+  color: white;
+}
+
+.sidebarItem:hover span {
+  color: white;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  appearance: none;
+  -moz-appearance: textfield;
+}
+
+.MuiDataGrid-columnHeaderTitle {
+  font-weight: 600 !important;
+}
+
+.width-transition {
+  transition: width 0.5s ease-in-out;
+}
+#headlessui-menu-items-:reo: {
+  width: fit-content;
+}
