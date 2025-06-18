@@ -1,6 +1,15 @@
 'use server';
 import { executeOperation } from '@/app/libs/executeOperation';
 
+export async function GET() {
+  try {
+    const categories = await executeOperation('categories', 'find', {});
+    return Response.json(categories);
+  } catch (err: any) {
+    return Response.json({ error: err.message }, { status: 500 });
+  }
+}
+
 export async function POST(req: any, res: any) {
   const { series, brandName } = await req.json();
   try {

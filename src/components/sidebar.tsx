@@ -9,6 +9,7 @@ import { IoMdSettings } from 'react-icons/io';
 import { IoLogOut } from 'react-icons/io5';
 import { RiMenuFoldLine, RiMenuUnfoldLine } from 'react-icons/ri';
 import { MdDashboard } from 'react-icons/md';
+import { HiX } from 'react-icons/hi';
 import Modal from '@/components/modal';
 import Button from '@/components/button';
 import Input from '@/components/customInput';
@@ -24,6 +25,7 @@ const Sidebar = ({ className }: any) => {
   const [storeData, setStoreData] = useState<any>();
   const [storeDetail, setStoreDetail] = useState<any>();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const path = usePathname();
 
@@ -65,13 +67,43 @@ const Sidebar = ({ className }: any) => {
     fetchStoreDetail();
   }, []);
 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [path]);
+
+  // Handle clicks outside sidebar on mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const sidebar = document.getElementById('sidebar');
+      const target = event.target as Node;
+      
+      if (isMobileMenuOpen && sidebar && !sidebar.contains(target)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    if (isMobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden'; // Prevent body scroll when menu is open
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
   // Check if each item is active based on the path
   const isActiveDashboard = path === '/';
   const isActiveStock = path === '/stock';
   const isActiveInvoices = path === '/invoices';
   const isActiveBrands = path === '/brands';
   const isActiveCategory = path === '/category';
-  // const isActiveScrapStock = path === '/scrapStock';
+  const isActiveSales = path === '/sales';
+  const isActiveCustomers = path === '/customers';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -106,29 +138,30 @@ const Sidebar = ({ className }: any) => {
     setStoreData((prevStore: any) => ({ ...prevStore, [name]: value }));
   }, []);
 
-  return (
-    <div
-      className={`${path === '/signIn' ? 'hidden' : 'relative flex flex-col'} 
-        h-svh bg-white shadow-lg transition-all duration-300 ease-in-out
-        ${isCollapsed ? 'w-20' : 'w-64'}`}
-    >
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className='absolute -right-3 top-9 z-50 rounded-full bg-white p-1.5 shadow-md hover:bg-gray-100'
-      >
-        {isCollapsed ? (
-          <RiMenuUnfoldLine className='h-4 w-4 text-[#4287f5]' />
-        ) : (
-          <RiMenuFoldLine className='h-4 w-4 text-[#4287f5]' />
-        )}
-      </button>
+  const handleMobileLinkClick = () => {
+    setIsMobileMenuOpen(false);
+  };
 
-      <div className='flex h-full flex-col justify-between p-4'>
-        {/* Header */}
-        <div className='flex flex-col'>
+  const sidebarContent = (
+    <>
+      {/* Mobile Header with Close Button */}
+      <div className="flex items-center justify-between p-4 md:hidden">
+        <span className="text-lg font-semibold text-[#4287f5]">
+          {storeDetail?.storeName || 'Store'}
+        </span>
+        <button
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="rounded-full p-2 hover:bg-gray-100"
+        >
+          <HiX className="h-5 w-5 text-gray-600" />
+        </button>
+      </div>
+
+      <div className="flex h-full flex-col justify-between p-4">
+        {/* Header - Desktop Only */}
+        <div className="flex flex-col">
           <span
-            className={`mb-8 text-center font-semibold text-[#4287f5] transition-all duration-300
+            className={`mb-8 text-center font-semibold text-[#4287f5] transition-all duration-300 hidden md:block
             ${isCollapsed ? 'text-base' : 'text-xl'}`}
           >
             {isCollapsed
@@ -137,163 +170,184 @@ const Sidebar = ({ className }: any) => {
           </span>
 
           {/* Navigation Links */}
-          <div className='flex flex-col space-y-2'>
+          <div className="flex flex-col space-y-2">
             <Link
-              href='/'
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200
+              href="/"
+              onClick={handleMobileLinkClick}
+              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
                 ${
                   isActiveDashboard
                     ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white'
+                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
                 }`}
             >
               <MdDashboard
-                className={`h-6 w-6 ${
+                className={`h-6 w-6 flex-shrink-0 ${
                   isActiveDashboard
                     ? 'text-white'
                     : 'text-gray-600 group-hover:text-white'
                 }`}
               />
               <span
-                className={`ml-3 font-medium transition-all duration-300 ${isCollapsed ? 'hidden' : 'block'}`}
+                className={`ml-3 font-medium transition-all duration-300 ${
+                  isCollapsed ? 'hidden' : 'block'
+                } md:${isCollapsed ? 'hidden' : 'block'}`}
               >
                 Dashboard
               </span>
             </Link>
 
             <Link
-              href='/brands'
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200
+              href="/brands"
+              onClick={handleMobileLinkClick}
+              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
                 ${
                   isActiveBrands
                     ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white'
+                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
                 }`}
             >
               <FaTags
-                className={`h-6 w-6 ${
+                className={`h-6 w-6 flex-shrink-0 ${
                   isActiveBrands
                     ? 'text-white'
                     : 'text-gray-600 group-hover:text-white'
                 }`}
               />
               <span
-                className={`ml-3 font-medium transition-all duration-300 ${isCollapsed ? 'hidden' : 'block'}`}
+                className={`ml-3 font-medium transition-all duration-300 ${
+                  isCollapsed ? 'hidden' : 'block'
+                } md:${isCollapsed ? 'hidden' : 'block'}`}
               >
                 Brands
               </span>
             </Link>
 
             <Link
-              href='/category'
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200
+              href="/category"
+              onClick={handleMobileLinkClick}
+              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
                 ${
                   isActiveCategory
                     ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white'
+                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
                 }`}
             >
               <TbCategoryPlus
-                className={`h-6 w-6 ${
+                className={`h-6 w-6 flex-shrink-0 ${
                   isActiveCategory
                     ? 'text-white'
                     : 'text-gray-600 group-hover:text-white'
                 }`}
               />
               <span
-                className={`ml-3 font-medium transition-all duration-300 ${isCollapsed ? 'hidden' : 'block'}`}
+                className={`ml-3 font-medium transition-all duration-300 ${
+                  isCollapsed ? 'hidden' : 'block'
+                } md:${isCollapsed ? 'hidden' : 'block'}`}
               >
                 Category
               </span>
             </Link>
 
             <Link
-              href='/stock'
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200
+              href="/stock"
+              onClick={handleMobileLinkClick}
+              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
                 ${
                   isActiveStock
                     ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white'
+                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
                 }`}
             >
               <FaCarBattery
-                className={`h-6 w-6 ${
+                className={`h-6 w-6 flex-shrink-0 ${
                   isActiveStock
                     ? 'text-white'
                     : 'text-gray-600 group-hover:text-white'
                 }`}
               />
               <span
-                className={`ml-3 font-medium transition-all duration-300 ${isCollapsed ? 'hidden' : 'block'}`}
+                className={`ml-3 font-medium transition-all duration-300 ${
+                  isCollapsed ? 'hidden' : 'block'
+                } md:${isCollapsed ? 'hidden' : 'block'}`}
               >
                 Stock
               </span>
             </Link>
 
             <Link
-              href='/invoices'
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200
+              href="/invoices"
+              onClick={handleMobileLinkClick}
+              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
                 ${
                   isActiveInvoices
                     ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white'
+                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
                 }`}
             >
               <FaFileInvoice
-                className={`h-6 w-6 ${
+                className={`h-6 w-6 flex-shrink-0 ${
                   isActiveInvoices
                     ? 'text-white'
                     : 'text-gray-600 group-hover:text-white'
                 }`}
               />
               <span
-                className={`ml-3 font-medium transition-all duration-300 ${isCollapsed ? 'hidden' : 'block'}`}
+                className={`ml-3 font-medium transition-all duration-300 ${
+                  isCollapsed ? 'hidden' : 'block'
+                } md:${isCollapsed ? 'hidden' : 'block'}`}
               >
                 Invoices
               </span>
             </Link>
 
             <Link
-              href='/sales'
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200
+              href="/sales"
+              onClick={handleMobileLinkClick}
+              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
                 ${
-                  path === '/sales'
+                  isActiveSales
                     ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white'
+                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
                 }`}
             >
               <FaFileInvoice
-                className={`h-6 w-6 ${
-                  path === '/sales'
+                className={`h-6 w-6 flex-shrink-0 ${
+                  isActiveSales
                     ? 'text-white'
                     : 'text-gray-600 group-hover:text-white'
                 }`}
               />
               <span
-                className={`ml-3 font-medium transition-all duration-300 ${isCollapsed ? 'hidden' : 'block'}`}
+                className={`ml-3 font-medium transition-all duration-300 ${
+                  isCollapsed ? 'hidden' : 'block'
+                } md:${isCollapsed ? 'hidden' : 'block'}`}
               >
                 Sales
               </span>
             </Link>
 
             <Link
-              href='/customers'
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200
+              href="/customers"
+              onClick={handleMobileLinkClick}
+              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
                 ${
-                  path === '/customers'
+                  isActiveCustomers
                     ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white'
+                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
                 }`}
             >
               <FaUserFriends
-                className={`h-6 w-6 ${
-                  path === '/customers'
+                className={`h-6 w-6 flex-shrink-0 ${
+                  isActiveCustomers
                     ? 'text-white'
                     : 'text-gray-600 group-hover:text-white'
                 }`}
               />
               <span
-                className={`ml-3 font-medium transition-all duration-300 ${isCollapsed ? 'hidden' : 'block'}`}
+                className={`ml-3 font-medium transition-all duration-300 ${
+                  isCollapsed ? 'hidden' : 'block'
+                } md:${isCollapsed ? 'hidden' : 'block'}`}
               >
                 Customers
               </span>
@@ -302,14 +356,19 @@ const Sidebar = ({ className }: any) => {
         </div>
 
         {/* Footer Actions */}
-        <div className='flex flex-col space-y-2'>
+        <div className="flex flex-col space-y-2 mt-auto">
           <button
-            onClick={() => setIsModalOpen(true)}
-            className='sidebarItem flex items-center rounded-lg p-3 text-gray-700 transition-all duration-200 hover:bg-[#4287f5] hover:text-white'
+            onClick={() => {
+              setIsModalOpen(true);
+              setIsMobileMenuOpen(false);
+            }}
+            className="sidebarItem flex items-center rounded-lg p-3 text-gray-700 transition-all duration-200 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6] touch-manipulation"
           >
-            <IoMdSettings className='h-6 w-6 text-gray-600 group-hover:text-white' />
+            <IoMdSettings className="h-6 w-6 flex-shrink-0 text-gray-600 group-hover:text-white" />
             <span
-              className={`ml-3 font-medium transition-all duration-300 ${isCollapsed ? 'hidden' : 'block'}`}
+              className={`ml-3 font-medium transition-all duration-300 ${
+                isCollapsed ? 'hidden' : 'block'
+              } md:${isCollapsed ? 'hidden' : 'block'}`}
             >
               Settings
             </span>
@@ -320,48 +379,107 @@ const Sidebar = ({ className }: any) => {
               Cookies.remove('userId');
               signOut({ callbackUrl: '/signIn' });
             }}
-            className='sidebarItem flex items-center rounded-lg p-3 text-gray-700 transition-all duration-200 hover:bg-[#4287f5] hover:text-white'
+            className="sidebarItem flex items-center rounded-lg p-3 text-gray-700 transition-all duration-200 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6] touch-manipulation"
           >
-            <IoLogOut className='h-6 w-6 text-gray-600 group-hover:text-white' />
+            <IoLogOut className="h-6 w-6 flex-shrink-0 text-gray-600 group-hover:text-white" />
             <span
-              className={`ml-3 font-medium transition-all duration-300 ${isCollapsed ? 'hidden' : 'block'}`}
+              className={`ml-3 font-medium transition-all duration-300 ${
+                isCollapsed ? 'hidden' : 'block'
+              } md:${isCollapsed ? 'hidden' : 'block'}`}
             >
               Logout
             </span>
           </button>
         </div>
       </div>
+    </>
+  );
+
+  if (path === '/signIn') {
+    return null;
+  }
+
+  return (
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(true)}
+        className="fixed top-4 left-4 z-50 rounded-lg bg-white p-2 shadow-lg md:hidden"
+      >
+        <RiMenuUnfoldLine className="h-6 w-6 text-[#4287f5]" />
+      </button>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden" />
+      )}
+
+      {/* Desktop Sidebar */}
+      <div
+        id="sidebar"
+        className={`
+          ${className}
+          hidden md:relative md:flex md:flex-col
+          h-svh bg-white shadow-lg transition-all duration-300 ease-in-out
+          ${isCollapsed ? 'w-20' : 'w-64'}
+        `}
+      >
+        {/* Desktop Toggle Button */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3 top-9 z-50 rounded-full bg-white p-1.5 shadow-md hover:bg-gray-100 hidden md:block"
+        >
+          {isCollapsed ? (
+            <RiMenuUnfoldLine className="h-4 w-4 text-[#4287f5]" />
+          ) : (
+            <RiMenuFoldLine className="h-4 w-4 text-[#4287f5]" />
+          )}
+        </button>
+
+        {sidebarContent}
+      </div>
+
+      {/* Mobile Sidebar */}
+      <div
+        id="sidebar"
+        className={`
+          fixed top-0 left-0 z-50 h-full w-80 max-w-[85vw] bg-white shadow-lg transition-transform duration-300 ease-in-out md:hidden
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        {sidebarContent}
+      </div>
 
       {/* Settings Modal */}
       {isModalOpen && (
         <Modal
-          parentClass='hidden'
-          dialogPanelClass='!w-[90%] md:!w-[60%] lg:!w-[40%]'
+          parentClass="hidden"
+          dialogPanelClass="!w-[95%] sm:!w-[90%] md:!w-[60%] lg:!w-[40%] max-w-md mx-auto"
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          title='Store Detail'
+          title="Store Detail"
         >
           <form onSubmit={handleSubmit}>
-            <div className='mt-4 flex w-full flex-col gap-2'>
+            <div className="mt-4 flex w-full flex-col gap-4">
               <Input
-                type='text'
-                label='Store Name'
-                name='storeName'
+                type="text"
+                label="Store Name"
+                name="storeName"
                 onChange={handleChange}
                 required
               />
               <Button
-                className='w-fit'
-                variant='fill'
-                text='Save'
-                type='submit'
+                className="w-full sm:w-fit"
+                variant="fill"
+                text="Save"
+                type="submit"
                 isPending={isLoading}
               />
             </div>
           </form>
         </Modal>
       )}
-    </div>
+    </>
   );
 };
 

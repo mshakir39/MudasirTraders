@@ -93,8 +93,8 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
   }));
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Customers</h1>
+    <div className='md:p-6 p-0 py-6'>
+      <h1 className="text-2xl font-bold">Customers</h1>
       
       <DataGridDemo
         rows={rows}

@@ -7,10 +7,10 @@ import Input from '@/components/customInput';
 import Dropdown, { DropdownOption } from '@/components/dropdown';
 import { unstable_noStore } from 'next/cache';
 import { toast } from 'react-toastify';
-import { POST } from '@/utils/api';
 import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
 import { ICategory, IBrand } from '../../interfaces';
 import { FaEye } from 'react-icons/fa6';
+import { useCategoryStore } from '@/store/categoryStore';
 
 interface BatteryData {
   name: string;
@@ -28,35 +28,33 @@ interface CategoryWithBatteryData extends Omit<ICategory, 'series'> {
   salesTax: number;
 }
 
-interface CategoryLayoutProps {
-  categories: CategoryWithBatteryData[];
-}
-
-const CategoryLayout: React.FC<CategoryLayoutProps> = ({ categories }) => {
+const CategoryLayout: React.FC = () => {
   unstable_noStore();
+  const { categories, fetchCategories } = useCategoryStore();
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const [modalType, setModalType] = React.useState<string>('');
   const [detailData, setDetailData] = React.useState<CategoryWithBatteryData>();
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [brands, setBrands] = React.useState<IBrand[]>([]);
   const [searchQuery, setSearchQuery] = React.useState<string>('');
-  const [editingBattery, setEditingBattery] = React.useState<string | null>(
-    null
-  );
+  const [editingBattery, setEditingBattery] = React.useState<string | null>(null);
   const [editingPrice, setEditingPrice] = React.useState<{
     [key: string]: number;
   }>({});
   const [editingSalesTax, setEditingSalesTax] = React.useState<{
     [key: string]: number;
   }>({});
-  const [isEditingGlobalSalesTax, setIsEditingGlobalSalesTax] =
-    React.useState<boolean>(false);
+  const [isEditingGlobalSalesTax, setIsEditingGlobalSalesTax] = React.useState<boolean>(false);
   const [globalSalesTax, setGlobalSalesTax] = React.useState<string>('18');
   const [category, setCategory] = React.useState<{
     series: string;
     brandName: string;
     salesTax: string;
   }>({ series: '', brandName: '', salesTax: '' });
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   useEffect(() => {
     const fetchBrands = async () => {
@@ -465,20 +463,20 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ categories }) => {
   }, [detailData, searchQuery]);
 
   return (
-    <div className=''>
-      <div className='flex w-full justify-between py-2'>
-        <span className='text-3xl font-medium'>Categories</span>
+    <div className='md:p-6 p-0 py-6'>
+      <div className='flex items-center justify-between py-2'>
+        <h1 className='text-2xl font-bold'>Categories</h1>
+    
       </div>
+
       <Table
-        columns={columns}
         data={categories}
-        buttonTitle='Add Category'
-        buttonOnClick={() => {
-          // addAllCategories();
-          // setModalType('add');
-          // setIsModalOpen(true);
-        }}
+        columns={columns}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        
       />
+
       <Modal
         isOpen={isModalOpen}
         onClose={() => {
@@ -529,192 +527,294 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ categories }) => {
             </div>
           </form>
         ) : (
-          <div className='max-h-[70vh] overflow-y-auto'>
-            <div className='mb-4 flex items-end justify-between gap-4'>
-              <div className='w-1/2'>
-                <Input
-                  type='text'
-                  label='Search batteries'
-                  placeholder='Search by name, plate, AH or type...'
-                  value={searchQuery}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSearchQuery(e.target.value)
-                  }
-                />
+          // Fully Responsive Battery List Component
+<div className='max-h-[80vh] overflow-y-auto'>
+  {/* Header Controls - Responsive Layout */}
+  <div className='mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
+    {/* Search Input - Full width on mobile, half on desktop */}
+    <div className='w-full sm:w-1/2 lg:w-3/5'>
+      <Input
+        type='text'
+        label='Search batteries'
+        placeholder='Search by name, plate, AH or type...'
+        value={searchQuery}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          setSearchQuery(e.target.value)
+        }
+      />
+    </div>
+    
+    {/* Sales Tax Control - Full width on mobile, smaller on desktop */}
+    <div className='w-full sm:w-1/3 lg:w-1/4'>
+      <div className='mb-1 flex items-center justify-between'>
+        <label className='text-sm text-gray-500'>Sales Tax %</label>
+        {!isEditingGlobalSalesTax ? (
+          <button
+            onClick={() => setIsEditingGlobalSalesTax(true)}
+            className='rounded px-2 py-1 text-sm text-blue-500 hover:bg-blue-50 hover:text-blue-700 touch-manipulation'
+          >
+            Edit
+          </button>
+        ) : (
+          <div className='flex gap-1 sm:gap-2'>
+            <button
+              onClick={handleSaveGlobalSalesTax}
+              className='rounded px-2 py-1 text-sm text-green-500 hover:bg-green-50 hover:text-green-700 touch-manipulation'
+              disabled={isLoading}
+            >
+              Save
+            </button>
+            <button
+              onClick={() => {
+                setIsEditingGlobalSalesTax(false);
+                setGlobalSalesTax('18'); // Reset to default
+              }}
+              className='rounded px-2 py-1 text-sm text-red-500 hover:bg-red-50 hover:text-red-700 touch-manipulation'
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+      {isEditingGlobalSalesTax ? (
+        <input
+          type='text'
+          value={globalSalesTax}
+          onChange={(e) => {
+            const { value } = e.target;
+            if (/^-?\d*$/.test(value)) {
+              setGlobalSalesTax(value);
+            }
+          }}
+          className='w-full rounded border bg-white p-2 text-sm focus:border-blue-500 focus:outline-none'
+          placeholder='Enter sales tax percentage'
+        />
+      ) : (
+        <div className='w-full rounded border bg-gray-100 p-2 text-sm font-medium'>
+          {globalSalesTax}%
+        </div>
+      )}
+    </div>
+  </div>
+
+  {/* Battery List */}
+  <div className='flex flex-col gap-3 sm:gap-4'>
+    <div className='grid grid-cols-1 gap-3 sm:gap-4'>
+      {filteredSeries.length > 0 ? (
+        filteredSeries.map((item: BatteryData, index: number) => (
+          <div
+            key={index}
+            className='rounded-lg bg-white p-3 sm:p-4 shadow transition-shadow hover:shadow-md'
+          >
+            {/* Mobile Card Layout */}
+            <div className='block sm:hidden'>
+              {/* Header Row */}
+              <div className='mb-3 flex items-start justify-between'>
+                <div className='flex-1'>
+                  <h3 className='font-semibold text-gray-900'>{item.name}</h3>
+                  <div className='mt-1 flex flex-wrap gap-2 text-sm text-gray-600'>
+                    <span>Plate: {item.plate}</span>
+                    <span>•</span>
+                    <span>AH: {item.ah}</span>
+                    {item.type && (
+                      <>
+                        <span>•</span>
+                        <span>Type: {item.type}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className='w-1/4'>
-                <div className='mb-1 flex items-center justify-between'>
-                  <label className='text-sm text-gray-500'>Sales Tax %</label>
-                  {!isEditingGlobalSalesTax ? (
-                    <button
-                      onClick={() => setIsEditingGlobalSalesTax(true)}
-                      className='text-sm text-blue-500 hover:text-blue-700'
-                    >
-                      Edit
-                    </button>
-                  ) : (
-                    <div className='flex gap-2'>
-                      <button
-                        onClick={handleSaveGlobalSalesTax}
-                        className='text-sm text-green-500 hover:text-green-700'
-                        disabled={isLoading}
-                      >
-                        Save
-                      </button>
+
+              {/* Price Section */}
+              <div className='space-y-3'>
+                {/* Retail Price */}
+                <div className='rounded-lg bg-gray-50 p-3'>
+                  <div className='mb-2 flex items-center justify-between'>
+                    <span className='text-sm font-medium text-gray-700'>Retail Price</span>
+                    {editingBattery !== item.name ? (
                       <button
                         onClick={() => {
-                          setIsEditingGlobalSalesTax(false);
-                          setGlobalSalesTax('18'); // Reset to default
+                          setEditingBattery(item.name);
+                          setEditingPrice((prev) => ({
+                            ...prev,
+                            [item.name]: item.retailPrice || 0,
+                          }));
                         }}
-                        className='text-sm text-red-500 hover:text-red-700'
+                        className='rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-600 hover:bg-blue-200 touch-manipulation'
                       >
-                        Cancel
+                        Edit
                       </button>
-                    </div>
+                    ) : (
+                      <div className='flex gap-2'>
+                        <button
+                          onClick={() => handleSavePrice(item.name)}
+                          className='rounded-full bg-green-100 px-3 py-1 text-sm text-green-600 hover:bg-green-200 touch-manipulation'
+                          disabled={isLoading}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingBattery(null);
+                            setEditingPrice({});
+                          }}
+                          className='rounded-full bg-red-100 px-3 py-1 text-sm text-red-600 hover:bg-red-200 touch-manipulation'
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {editingBattery === item.name ? (
+                    <input
+                      type='number'
+                      value={editingPrice[item.name] ?? item.retailPrice ?? ''}
+                      onChange={(e) => handlePriceChange(item.name, e.target.value)}
+                      className='w-full rounded border p-2 text-base focus:border-blue-500 focus:outline-none'
+                      placeholder='Enter price'
+                    />
+                  ) : (
+                    <p className='text-lg font-semibold text-gray-900'>
+                      Rs {item.retailPrice || 'N/A'}
+                    </p>
                   )}
                 </div>
-                {isEditingGlobalSalesTax ? (
-                  <input
-                    type='text'
-                    value={globalSalesTax}
-                    onChange={(e) => {
-                      const { value } = e.target;
-                      if (/^-?\d*$/.test(value)) {
-                        setGlobalSalesTax(value);
-                      }
-                    }}
-                    className='w-full rounded border bg-white p-2'
-                    placeholder='Enter sales tax percentage'
-                  />
-                ) : (
-                  <div className='w-full rounded border bg-gray-100 p-2'>
-                    {globalSalesTax}%
+
+                {/* Tax and Max Price Row */}
+                <div className='grid grid-cols-2 gap-3'>
+                  <div className='rounded-lg bg-gray-50 p-3'>
+                    <span className='text-xs text-gray-500'>
+                      Sales Tax ({item.salesTax ?? detailData?.salesTax ?? 18}%)
+                    </span>
+                    <p className='font-medium text-gray-900'>
+                      Rs {item.retailPrice
+                        ? Math.round((item.retailPrice * (item.salesTax ?? detailData?.salesTax ?? 18)) / 100)
+                        : 'N/A'}
+                    </p>
                   </div>
-                )}
+                  <div className='rounded-lg bg-gray-50 p-3'>
+                    <span className='text-xs text-gray-500'>Max Retail Price</span>
+                    <p className='font-medium text-gray-900'>
+                      Rs {item.maxRetailPrice || 'N/A'}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className='flex flex-col gap-4'>
-              <div className='grid grid-cols-1 gap-3'>
-                {filteredSeries.length > 0 ? (
-                  filteredSeries.map((item: BatteryData, index: number) => (
-              <div
-                key={index}
-                      className='rounded-lg bg-white p-4 shadow transition-shadow hover:shadow-md'
-                    >
-                      <div className='grid grid-cols-2 gap-4 md:grid-cols-7'>
-                        <div>
-                          <span className='text-sm text-gray-500'>Name</span>
-                          <p className='font-medium'>{item.name}</p>
-                        </div>
-                        <div>
-                          <span className='text-sm text-gray-500'>Plate</span>
-                          <p className='font-medium'>{item.plate}</p>
-                        </div>
-                        <div>
-                          <span className='text-sm text-gray-500'>AH</span>
-                          <p className='font-medium'>{item.ah}</p>
-                        </div>
-                        <div>
-                          <div className='flex items-center justify-between'>
-                            <span className='text-sm text-gray-500'>
-                              Retail Price
-                            </span>
-                            {editingBattery !== item.name ? (
-                              <button
-                                onClick={() => {
-                                  setEditingBattery(item.name);
-                                  setEditingPrice((prev) => ({
-                                    ...prev,
-                                    [item.name]: item.retailPrice || 0,
-                                  }));
-                                }}
-                                className='text-sm text-blue-500 hover:text-blue-700'
-                              >
-                                Edit
-                              </button>
-                            ) : (
-                              <div className='flex gap-2'>
-                                <button
-                                  onClick={() => handleSavePrice(item.name)}
-                                  className='text-sm text-green-500 hover:text-green-700'
-                                  disabled={isLoading}
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setEditingBattery(null);
-                                    setEditingPrice({});
-                                  }}
-                                  className='text-sm text-red-500 hover:text-red-700'
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                          {editingBattery === item.name ? (
-                            <input
-                              type='number'
-                              value={
-                                editingPrice[item.name] ??
-                                item.retailPrice ??
-                                ''
-                              }
-                              onChange={(e) =>
-                                handlePriceChange(item.name, e.target.value)
-                              }
-                              className='mt-1 w-full rounded border p-1'
-                              placeholder='Enter price'
-                            />
-                          ) : (
-                            <p className='font-medium'>
-                              {item.retailPrice || 'N/A'}
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <div className='flex items-center justify-between'>
-                            <span className='text-sm text-gray-500'>
-                              Sales Tax (
-                              {item.salesTax ?? detailData?.salesTax ?? 18}%)
-                            </span>
-                          </div>
-                          <p className='font-medium'>
-                            {item.retailPrice
-                              ? (item.retailPrice *
-                                  (item.salesTax ??
-                                    detailData?.salesTax ??
-                                    18)) /
-                                100
-                              : 'N/A'}
-                          </p>
-                        </div>
-                        <div>
-                          <span className='text-sm text-gray-500'>
-                            Max Retail Price
-                          </span>
-                          <p className='font-medium'>
-                            {item.maxRetailPrice || 'N/A'}
-                          </p>
-                        </div>
-                        {item.type && (
-                          <div>
-                            <span className='text-sm text-gray-500'>Type</span>
-                            <p className='font-medium'>{item.type}</p>
-                          </div>
-                        )}
+
+            {/* Desktop Grid Layout */}
+            <div className='hidden sm:block'>
+              <div className='grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7'>
+                <div>
+                  <span className='text-sm text-gray-500'>Name</span>
+                  <p className='font-medium text-gray-900 break-words'>{item.name}</p>
+                </div>
+                <div>
+                  <span className='text-sm text-gray-500'>Plate</span>
+                  <p className='font-medium text-gray-900'>{item.plate}</p>
+                </div>
+                <div>
+                  <span className='text-sm text-gray-500'>AH</span>
+                  <p className='font-medium text-gray-900'>{item.ah}</p>
+                </div>
+                <div className='col-span-2 md:col-span-1 lg:col-span-1'>
+                  <div className='mb-1 flex items-center justify-between'>
+                    <span className='text-sm text-gray-500'>Retail Price</span>
+                    {editingBattery !== item.name ? (
+                      <button
+                        onClick={() => {
+                          setEditingBattery(item.name);
+                          setEditingPrice((prev) => ({
+                            ...prev,
+                            [item.name]: item.retailPrice || 0,
+                          }));
+                        }}
+                        className='rounded px-2 py-1 text-sm text-blue-500 hover:bg-blue-50 hover:text-blue-700 touch-manipulation'
+                      >
+                        Edit
+                      </button>
+                    ) : (
+                      <div className='flex gap-1'>
+                        <button
+                          onClick={() => handleSavePrice(item.name)}
+                          className='rounded px-2 py-1 text-xs text-green-500 hover:bg-green-50 hover:text-green-700 touch-manipulation'
+                          disabled={isLoading}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingBattery(null);
+                            setEditingPrice({});
+                          }}
+                          className='rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50 hover:text-red-700 touch-manipulation'
+                        >
+                          Cancel
+                        </button>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className='py-4 text-center text-gray-500'>
-                    No batteries found matching your search.
+                    )}
+                  </div>
+                  {editingBattery === item.name ? (
+                    <input
+                      type='number'
+                      value={editingPrice[item.name] ?? item.retailPrice ?? ''}
+                      onChange={(e) => handlePriceChange(item.name, e.target.value)}
+                      className='w-full rounded border p-1 text-sm focus:border-blue-500 focus:outline-none'
+                      placeholder='Enter price'
+                    />
+                  ) : (
+                    <p className='font-medium text-gray-900'>
+                      Rs {item.retailPrice || 'N/A'}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-sm text-gray-500'>
+                      Sales Tax ({item.salesTax ?? detailData?.salesTax ?? 18}%)
+                    </span>
+                  </div>
+                  <p className='font-medium text-gray-900'>
+                    Rs {item.retailPrice
+                      ? Math.round((item.retailPrice * (item.salesTax ?? detailData?.salesTax ?? 18)) / 100)
+                      : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <span className='text-sm text-gray-500'>Max Retail Price</span>
+                  <p className='font-medium text-gray-900'>
+                    Rs {item.maxRetailPrice || 'N/A'}
+                  </p>
+                </div>
+                {item.type && (
+                  <div>
+                    <span className='text-sm text-gray-500'>Type</span>
+                    <p className='font-medium text-gray-900'>{item.type}</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
+        ))
+      ) : (
+        <div className='rounded-lg bg-gray-50 py-8 text-center'>
+          <div className='mx-auto max-w-md px-4'>
+            <div className='text-gray-400 mb-3'>
+              <svg className='mx-auto h-12 w-12' fill='currentColor' viewBox='0 0 24 24'>
+                <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/>
+              </svg>
+            </div>
+            <h3 className='text-lg font-medium text-gray-900 mb-1'>No batteries found</h3>
+            <p className='text-sm text-gray-500'>
+              No batteries match your search criteria. Try adjusting your search terms.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
         )}
       </Modal>
     </div>

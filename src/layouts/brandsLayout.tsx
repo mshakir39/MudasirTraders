@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { unstable_noStore } from 'next/cache';
 import { toast } from 'react-toastify';
 import { FaTrash } from 'react-icons/fa';
@@ -14,16 +14,20 @@ import Input from '@/components/customInput';
 import { POST } from '@/utils/api';
 import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
 import { IBrand } from '../../interfaces';
+import { useBrandStore } from '@/store/brandStore';
 
-interface BrandsLayoutProps {
-  brands: IBrand[];
-}
-
-const BrandsLayout: React.FC<BrandsLayoutProps> = ({ brands }) => {
+const BrandsLayout: React.FC = () => {
   unstable_noStore();
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [brand, setBrand] = useState<{ brandName: string }>({ brandName: '' });
+
+  const brands = useBrandStore((s) => s.brands);
+  const fetchBrands = useBrandStore((s) => s.fetchBrands);
+
+  useEffect(() => {
+    fetchBrands();
+  }, [fetchBrands]);
 
   const columns = [
     { label: 'Brand Name', renderCell: (item: IBrand) => item.brandName },
@@ -56,6 +60,7 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ brands }) => {
       if (response.ok) {
         toast.success(data.message || 'Brand deleted successfully');
         await revalidatePathCustom('/brands');
+        await fetchBrands(); // Refresh store after delete
       } else {
         toast.error(data.error || 'Failed to delete brand');
       }
@@ -75,6 +80,7 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ brands }) => {
         toast.success(response?.message);
         await revalidatePathCustom('/brands');
         setBrand({ brandName: '' });
+        await fetchBrands(); // Refresh store after add
       }
 
       if (response?.error) {
@@ -96,9 +102,9 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ brands }) => {
   };
 
   return (
-    <div className=''>
-      <div className='flex w-full justify-between py-2'>
-        <span className='text-3xl font-medium'>Brands</span>
+    <div className='md:p-6 p-0 py-6'>
+     <div className='flex items-center justify-between py-2'>
+        <span className='text-2xl font-bold'>Brands</span>
       </div>
       <Table
         columns={columns}

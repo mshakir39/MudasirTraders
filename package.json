@@ -37,7 +37,8 @@
     "recharts": "^2.15.3",
     "rsuite-table": "^5.18.2",
     "swr": "^2.2.5",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@types/cookie": "^0.6.0",

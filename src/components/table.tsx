@@ -36,7 +36,7 @@ const Table: React.FC<Props<any>> = ({
   const filteredData = filterItems(data, search); // Use the filterItems function
 
   return (
-    <div className={`flex w-full flex-col px-4 ${tableParentClassName}`}>
+    <div className={`flex w-full flex-col ${tableParentClassName}`}>
       <div className='mt-6 flex items-center justify-between'>
         <div className={`relative ${searchParentClassName}`}>
           <input

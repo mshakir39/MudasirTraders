@@ -12,9 +12,8 @@ async function page() {
   const stock = await getAllStock();
 
   return (
-    <div className='mt-6 flex w-full flex-col'>
+
       <StockLayout categories={categories} stock={stock} />
-    </div>
   );
 }
 

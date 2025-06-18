@@ -107,9 +107,10 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
   };
 
   return (
-    <div className='flex flex-col'>
+    
+    <div className='flex flex-col md:p-6 p-0 py-6'>
       <div className='flex w-full justify-between py-2'>
-        <span className='text-3xl font-medium'>Invoices</span>
+        <span className='text-2xl font-bold'>Invoices</span>
       </div>
       
       <InvoiceGrid

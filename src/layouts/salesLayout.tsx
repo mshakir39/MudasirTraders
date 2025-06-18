@@ -118,82 +118,17 @@ const SalesLayout = ({ sales }: { sales: any[] }) => {
   }, [getDefaultDateRange]);
 
   return (
-    <div className="p-6">
+    <div className='md:p-6 p-0 py-6'>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Sales</h1>
+        <h1 className="text-2xl font-bold">Sales</h1>
         
-        {/* Filters Section */}
-        <div className="flex items-center gap-4">
-          {/* Customer Filter */}
-          <div className="min-w-[200px]">
-            <Dropdown
-              options={customerOptions}
-              onSelect={handleCustomerSelect}
-              placeholder="Select Customer"
-              defaultValue={selectedCustomer}
-              className="w-full"
-            />
-          </div>
-          
-          {/* Date Range Picker */}
-          <DateRangePicker
-            onDateChange={handleDateChange}
-            initialDateRange={dateRange}
-          />
-          
-          {/* Clear Filters Button */}
-          {(selectedCustomer || 
-            dateRange.start.getTime() !== getDefaultDateRange().start.getTime() ||
-            dateRange.end.getTime() !== getDefaultDateRange().end.getTime()) && (
-            <button
-              onClick={handleClearFilters}
-              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-              title="Clear all filters"
-            >
-              Clear Filters
-            </button>
-          )}
-        </div>
+
+    
       </div>
 
-      {/* Active Filters Info */}
-      {(selectedCustomer || filteredSales.length !== sales.length) && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
-              </svg>
-              <span className="text-sm font-medium text-blue-800">
-                Active Filters: 
-                {selectedCustomer && (
-                  <span className="ml-1 px-2 py-1 bg-blue-200 rounded-full text-xs">
-                    Customer: {selectedCustomer}
-                  </span>
-                )}
-                <span className="ml-1 px-2 py-1 bg-blue-200 rounded-full text-xs">
-                  Date: {dateRange.start.toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                  })} - {dateRange.end.toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                  })}
-                </span>
-              </span>
-            </div>
-            <span className="text-sm text-blue-600">
-              {filteredSales.length} of {sales.length} sales
-            </span>
-          </div>
-        </div>
-      )}
 
-      {/* Sales Summary Cards */}
-      <SalesSummaryCards salesSummary={salesSummary} />
+
 
       {/* Sales Data Grid */}
       <SalesDataGrid 
