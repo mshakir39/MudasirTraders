@@ -347,8 +347,8 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     setEditModalData({
       brandName,
       series: item.series,
-      productCost: item.productCost.toString(),
-      inStock: item.inStock.toString(),
+      productCost: String(item.productCost),
+      inStock: String(item.inStock),
     });
     fetchData(brandName);
     setIsModalOpen(true);
@@ -516,7 +516,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                   content: null,
                 }))}
                 onTabClick={handleTabClick}
-                className="min-w-max sm:min-w-0"
               />
             </div>
           </div>
@@ -575,8 +574,8 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                             setEditModalData({
                               brandName: row.brandName,
                               series: row.series,
-                              productCost: row.productCost,
-                              inStock: row.inStock,
+                              productCost: String(row.productCost),
+                              inStock: String(row.inStock),
                             });
                             setModalType('edit');
                             setIsModalOpen(true);
@@ -625,8 +624,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                 setModalType('add');
                 setIsModalOpen(true);
               }}
-              responsive={true}
-              mobileBreakpoint="sm"
             />
           </div>
         </div>
@@ -653,7 +650,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         }}
         title={modalType === 'add' ? 'Add Stock' : 'Edit Stock'}
         dialogPanelClass="w-full max-w-sm sm:max-w-md md:max-w-lg mx-4 sm:mx-auto"
-        className="px-4 sm:px-6"
       >
         <form 
           onSubmit={modalType === 'add' ? handleSubmit : handleSubmitEdit}
@@ -681,10 +677,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                   defaultValue={
                     modalType === 'edit' ? editModalData.series : undefined
                   }
-                  dropdownClassName="max-h-48 overflow-y-auto text-base w-full"
-                  optionClassName="py-3 px-4 text-base touch-manipulation"
-                  buttonClassName="w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-left bg-white focus:border-blue-500 focus:outline-none focus:ring-0 focus:shadow-none"
-                  buttonStyle={{ outline: 'none', boxShadow: 'none' }}
                 />
               </div>
             </div>

@@ -472,9 +472,6 @@ const CategoryLayout: React.FC = () => {
       <Table
         data={categories}
         columns={columns}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        
       />
 
       <Modal
