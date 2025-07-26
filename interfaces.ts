@@ -1,7 +1,10 @@
 export interface ICategory {
-  id: string;
-  series: string[];
-  brandName: string | null;
+  id?: string;
+  brandName: string;
+  series: IBatterySeries[];
+  salesTax: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface IDropdownOption {
@@ -19,7 +22,21 @@ export interface IStock {
 }
 
 export interface IBrand {
-  id: string;
+  id?: string;
   brandName: string;
-  createdAt?: Date;
+}
+
+export interface IBatterySeries {
+  name: string;
+  plate: string;
+  ah: number;
+  type?: string;
+  retailPrice?: number;
+  salesTax?: number;
+  maxRetailPrice?: number;
+}
+
+export interface ICategoryHistory extends ICategory {
+  categoryId: string;
+  historyDate: Date;
 }

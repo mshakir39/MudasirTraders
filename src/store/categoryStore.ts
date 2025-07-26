@@ -1,16 +1,9 @@
 import { create } from 'zustand';
-
-interface Category {
-  id: string;
-  brandName: string;
-  series: string[];
-  salesTax: string;
-  // Add other fields as needed
-}
+import { ICategory } from '@/interfaces';
 
 interface CategoryStore {
-  categories: Category[];
-  setCategories: (categories: Category[]) => void;
+  categories: ICategory[];
+  setCategories: (categories: ICategory[]) => void;
   fetchCategories: () => Promise<void>;
 }
 
@@ -19,11 +12,13 @@ export const useCategoryStore = create<CategoryStore>((set) => ({
   setCategories: (categories) => set({ categories }),
   fetchCategories: async () => {
     try {
-      const res = await fetch('/api/categories');
-      const data = await res.json();
-      set({ categories: Array.isArray(data) ? data : [] });
+      const response = await fetch('/api/categories');
+      const data = await response.json();
+      if (data.success) {
+        set({ categories: data.data });
+      }
     } catch (error) {
-      set({ categories: [] });
+      console.error('Error fetching categories:', error);
     }
   },
 })); 

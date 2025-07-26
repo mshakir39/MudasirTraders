@@ -6,6 +6,8 @@ import Modal from '@/components/modal';
 import Input from '@/components/customInput';
 import Button from '@/components/button';
 import CustomerInvoicesModal from '@/components/customer/CustomerInvoicesModal';
+import { createCustomer, getCustomers } from '@/actions/customerActions';
+import { toast } from 'react-toastify';
 
 const CustomersLayout = ({ customers }: { customers: any[] }) => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -54,24 +56,29 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
     setIsLoading(true);
     
     try {
-      const res = await fetch('/api/customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+      const result = await createCustomer({
+        customerName: form.name,
+        phoneNumber: form.contactInfo,
+        address: form.address,
       });
       
-      if (res.ok) {
+      if (result.success) {
         // Refresh customer list
-        const updated = await fetch('/api/customers');
-        const data = await updated.json();
-        setCustomerList(data);
+        const customersResult = await getCustomers();
+        if (customersResult.success && Array.isArray(customersResult.data)) {
+          setCustomerList(customersResult.data);
+        }
         
         // Reset form and close modal
         setForm({ name: '', contactInfo: '', address: '' });
         setIsModalOpen(false);
+        toast.success('Customer created successfully');
+      } else {
+        toast.error(result.error || 'Failed to create customer');
       }
     } catch (error) {
       console.error('Error creating customer:', error);
+      toast.error('An error occurred while creating customer');
     } finally {
       setIsLoading(false);
     }

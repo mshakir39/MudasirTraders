@@ -49,24 +49,50 @@ interface StreamlinedDashboardStats {
   }>;
 }
 
-const DashboardLayout = () => {
-  const [stats, setStats] = useState<StreamlinedDashboardStats>({
-    totalProducts: 0,
-    totalInventoryValue: 0,
-    lowStockCount: 0,
-    outOfStockCount: 0,
-    totalSales: 0,
-    totalRevenue: 0,
-    totalProfit: 0,
-    averageOrderValue: 0,
-    totalPending: 0,
-    totalCustomers: 0,
-    topSellingProducts: [],
-    alerts: {
-      lowStock: 0,
-      outOfStock: 0,
-      pendingPayments: 0
+interface DashboardLayoutProps {
+  initialStats: any;
+}
+
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
+  const [stats, setStats] = useState<StreamlinedDashboardStats>(() => {
+    if (initialStats) {
+      return {
+        totalProducts: initialStats.totalStockItems || 0,
+        totalInventoryValue: 0,
+        lowStockCount: 0,
+        outOfStockCount: 0,
+        totalSales: initialStats.totalSales || 0,
+        totalRevenue: initialStats.totalSales || 0,
+        totalProfit: 0,
+        averageOrderValue: 0,
+        totalPending: 0,
+        totalCustomers: initialStats.totalCustomers || 0,
+        topSellingProducts: initialStats.topSellingProducts || [],
+        alerts: {
+          lowStock: 0,
+          outOfStock: 0,
+          pendingPayments: 0
+        }
+      };
     }
+    return {
+      totalProducts: 0,
+      totalInventoryValue: 0,
+      lowStockCount: 0,
+      outOfStockCount: 0,
+      totalSales: 0,
+      totalRevenue: 0,
+      totalProfit: 0,
+      averageOrderValue: 0,
+      totalPending: 0,
+      totalCustomers: 0,
+      topSellingProducts: [],
+      alerts: {
+        lowStock: 0,
+        outOfStock: 0,
+        pendingPayments: 0
+      }
+    };
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

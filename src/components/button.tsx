@@ -1,61 +1,70 @@
-import React, { ButtonHTMLAttributes } from 'react';
+import React, { ButtonHTMLAttributes, FunctionComponent } from 'react';
 import { useFormStatus } from 'react-dom';
-type TButton = {
+
+interface IButton extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant: 'fill' | 'outline';
   text: string;
   isPending?: boolean;
-} & ButtonHTMLAttributes<HTMLButtonElement>;
+  icon?: React.ReactNode;
+}
 
-export default function Button({
+const Button: FunctionComponent<IButton> = ({
   variant,
   text,
   className = '',
   isPending,
+  icon,
   ...rest
-}: TButton) {
+}) => {
   const { pending, data, action } = useFormStatus();
+
+  const baseClasses =
+    'flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200';
+
+  const variantClasses = {
+    fill: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+    outline:
+      'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500',
+  };
+
+  const disabledClasses = 'disabled:opacity-50 disabled:cursor-not-allowed';
 
   return (
     <button
       type='button'
       disabled={pending || isPending}
-      className={` flex justify-center ${
-        variant === 'fill'
-          ? 'bg-[#4287f5] text-white hover:bg-[#4287f5]/90 focus:outline-none focus:ring-4 focus:ring-[#4287f5]/50'
-          : 'transparent border border-[#4287f5] text-black hover:bg-[#4287f5]/10 focus:outline-none focus:ring-4 focus:ring-[#4287f5]/50'
-      }  rounded-xl px-5 py-2.5 text-center text-sm font-medium  ${className}`}
+      className={`${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className}`}
       {...rest}
     >
       {pending ||
         (isPending && (
           <svg
-            className='animate-spin text-gray-300'
-            viewBox='0 0 64 64'
-            fill='none'
-            xmlns='http://www.w3.org/2000/svg'
-            width='18'
-            height='18'
+            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
           >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
             <path
-              d='M32 3C35.8083 3 39.5794 3.75011 43.0978 5.20749C46.6163 6.66488 49.8132 8.80101 52.5061 11.4939C55.199 14.1868 57.3351 17.3837 58.7925 20.9022C60.2499 24.4206 61 28.1917 61 32C61 35.8083 60.2499 39.5794 58.7925 43.0978C57.3351 46.6163 55.199 49.8132 52.5061 52.5061C49.8132 55.199 46.6163 57.3351 43.0978 58.7925C39.5794 60.2499 35.8083 61 32 61C28.1917 61 24.4206 60.2499 20.9022 58.7925C17.3837 57.3351 14.1868 55.199 11.4939 52.5061C8.801 49.8132 6.66487 46.6163 5.20749 43.0978C3.7501 39.5794 3 35.8083 3 32C3 28.1917 3.75011 24.4206 5.2075 20.9022C6.66489 17.3837 8.80101 14.1868 11.4939 11.4939C14.1868 8.80099 17.3838 6.66487 20.9022 5.20749C24.4206 3.7501 28.1917 3 32 3L32 3Z'
-              stroke='currentColor'
-              strokeWidth='5'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            ></path>
-            <path
-              d='M32 3C36.5778 3 41.0906 4.08374 45.1692 6.16256C49.2477 8.24138 52.7762 11.2562 55.466 14.9605C58.1558 18.6647 59.9304 22.9531 60.6448 27.4748C61.3591 31.9965 60.9928 36.6232 59.5759 40.9762'
-              stroke='currentColor'
-              strokeWidth='5'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              className='text-blue-500'
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             ></path>
           </svg>
         ))}
+      {icon}
       <span className={` ${pending || isPending ? 'pl-2' : ''}`}>
         {pending || isPending ? ' Saving' : text}
       </span>
     </button>
   );
-}
+};
+
+export default Button;

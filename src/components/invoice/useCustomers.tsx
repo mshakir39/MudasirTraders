@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getCustomers } from '@/actions/customerActions';
 
 export const useCustomers = () => {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -6,9 +7,10 @@ export const useCustomers = () => {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const response = await fetch('/api/customers');
-        const data = await response.json();
-        setCustomers(data);
+        const result = await getCustomers();
+        if (result.success && Array.isArray(result.data)) {
+          setCustomers(result.data);
+        }
       } catch (error) {
         console.error('Error fetching customers:', error);
       }

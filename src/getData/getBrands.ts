@@ -1,3 +1,4 @@
+'use server';
 import { executeOperation } from '@/app/libs/executeOperation';
 
 export async function getBrands() {

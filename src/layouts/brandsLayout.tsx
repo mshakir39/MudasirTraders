@@ -11,23 +11,31 @@ import Modal from '@/components/modal';
 import Input from '@/components/customInput';
 
 // Utils and Types
-import { POST } from '@/utils/api';
 import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
+import { createBrand, deleteBrand } from '@/actions/brandActions';
 import { IBrand } from '../../interfaces';
 import { useBrandStore } from '@/store/brandStore';
 
-const BrandsLayout: React.FC = () => {
+interface BrandsLayoutProps {
+  initialBrands: IBrand[];
+}
+
+const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
   unstable_noStore();
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [brand, setBrand] = useState<{ brandName: string }>({ brandName: '' });
 
-  const brands = useBrandStore((s) => s.brands);
-  const fetchBrands = useBrandStore((s) => s.fetchBrands);
+  const { brands, fetchBrands, setBrands } = useBrandStore();
 
   useEffect(() => {
-    fetchBrands();
-  }, [fetchBrands]);
+    // Initialize brands from server-side props
+    if (initialBrands && initialBrands.length > 0) {
+      setBrands(initialBrands);
+    } else {
+      fetchBrands();
+    }
+  }, [initialBrands, setBrands, fetchBrands]);
 
   const columns = [
     { label: 'Brand Name', renderCell: (item: IBrand) => item.brandName },
@@ -47,22 +55,16 @@ const BrandsLayout: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this brand?')) return;
-    console.log('id', id);
+    
     try {
-      const response = await fetch('/api/brands', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
+      const result = await deleteBrand(id);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success(data.message || 'Brand deleted successfully');
+      if (result.success) {
+        toast.success('Brand deleted successfully');
         await revalidatePathCustom('/brands');
         await fetchBrands(); // Refresh store after delete
       } else {
-        toast.error(data.error || 'Failed to delete brand');
+        toast.error(result.error || 'Failed to delete brand');
       }
     } catch (error) {
       console.error('Error deleting brand:', error);
@@ -74,24 +76,21 @@ const BrandsLayout: React.FC = () => {
     e.preventDefault();
     try {
       setIsLoading(true);
-      const response: any = await POST('api/brands', brand);
+      const result = await createBrand({ brandName: brand.brandName });
 
-      if (response?.message) {
-        toast.success(response?.message);
+      if (result.success) {
+        toast.success('Brand created successfully');
         await revalidatePathCustom('/brands');
         setBrand({ brandName: '' });
         await fetchBrands(); // Refresh store after add
+        setIsModalOpen(false);
+      } else {
+        toast.error(result.error || 'Failed to create brand');
       }
-
-      if (response?.error) {
-        toast.error(response?.error);
-      }
-
-      setIsLoading(false);
-      setIsModalOpen(false);
     } catch (error) {
       console.error('Error adding brand:', error);
       toast.error('An error occurred while adding the brand');
+    } finally {
       setIsLoading(false);
     }
   };

@@ -1,4 +1,4 @@
-import { getSales } from '@/getData/getSales';
+import { getSales } from '@/actions/salesActions';
 import SalesLayout from '@/layouts/salesLayout';
 import { Metadata } from 'next';
 
@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SalesPage() {
-  const sales = await getSales();
-  return <SalesLayout sales={Array.isArray(sales) ? sales : []} />;
+  const salesResult = await getSales();
+  const sales = salesResult.success && Array.isArray(salesResult.data) ? salesResult.data : [];
+  return <SalesLayout sales={sales} />;
 } 

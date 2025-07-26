@@ -4,38 +4,53 @@ import React, { useEffect } from 'react';
 import Button from '@/components/button';
 import Modal from '@/components/modal';
 import Input from '@/components/customInput';
-import Dropdown, { DropdownOption } from '@/components/dropdown';
 import { unstable_noStore } from 'next/cache';
 import { toast } from 'react-toastify';
-import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
-import { ICategory, IBrand } from '../../interfaces';
-import { FaEye } from 'react-icons/fa6';
+import { revalidatePathCustom } from '@/actions/revalidatePathCustom';
+import { createCategory, updateCategory, patchCategory, getCategoryHistory } from '@/actions/categoryActions';
+import { ICategory, IBrand, IBatterySeries } from '@/interfaces';
+import { FaEye, FaUpload } from 'react-icons/fa6';
 import { useCategoryStore } from '@/store/categoryStore';
+import PdfUploadModal from '@/components/PdfUploadModal';
+import { ObjectId } from 'mongodb';
 
-interface BatteryData {
-  name: string;
-  plate: string;
-  ah: number;
-  type?: string;
-  retailPrice?: number;
-  salesTax?: number;
-  maxRetailPrice?: number;
-}
+// Use IBatterySeries directly instead of creating a new interface
+type BatteryData = IBatterySeries;
 
 // Extend ICategory to ensure series is BatteryData[]
-interface CategoryWithBatteryData extends Omit<ICategory, 'series'> {
-  series: BatteryData[];
-  salesTax: number;
+interface CategoryWithBatteryData extends ICategory {
+  id: string; // Make id required for the UI
+  historyDate?: Date; // Optional for history entries
 }
 
-const CategoryLayout: React.FC = () => {
+interface CategoryLayoutProps {
+  initialCategories: CategoryWithBatteryData[];
+  initialBrands: IBrand[];
+}
+
+interface ActionResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+interface HistoryEntry {
+  _id?: string;
+  categoryId?: string;
+  brandName: string;
+  series: BatteryData[];
+  salesTax: number;
+  historyDate: string | Date;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
+const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, initialBrands }) => {
   unstable_noStore();
-  const { categories, fetchCategories } = useCategoryStore();
+  const { categories, fetchCategories, setCategories } = useCategoryStore();
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
-  const [modalType, setModalType] = React.useState<string>('');
   const [detailData, setDetailData] = React.useState<CategoryWithBatteryData>();
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
-  const [brands, setBrands] = React.useState<IBrand[]>([]);
   const [searchQuery, setSearchQuery] = React.useState<string>('');
   const [editingBattery, setEditingBattery] = React.useState<string | null>(null);
   const [editingPrice, setEditingPrice] = React.useState<{
@@ -46,37 +61,77 @@ const CategoryLayout: React.FC = () => {
   }>({});
   const [isEditingGlobalSalesTax, setIsEditingGlobalSalesTax] = React.useState<boolean>(false);
   const [globalSalesTax, setGlobalSalesTax] = React.useState<string>('18');
-  const [category, setCategory] = React.useState<{
-    series: string;
-    brandName: string;
-    salesTax: string;
-  }>({ series: '', brandName: '', salesTax: '' });
+  const [isPdfModalOpen, setIsPdfModalOpen] = React.useState<boolean>(false);
+  const [brands, setBrands] = React.useState<IBrand[]>(initialBrands);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = React.useState<boolean>(false);
+  const [historyData, setHistoryData] = React.useState<CategoryWithBatteryData[]>([]);
+  const [selectedHistoryEntry, setSelectedHistoryEntry] = React.useState<CategoryWithBatteryData | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = React.useState<boolean>(false);
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    // Initialize categories from server-side props
+    if (initialCategories && initialCategories.length > 0) {
+      setCategories(initialCategories as ICategory[]);
+    } else {
+      fetchCategories();
+    }
+  }, [initialCategories, setCategories, fetchCategories]);
 
-  useEffect(() => {
-    const fetchBrands = async () => {
-      try {
-        const response = await fetch('/api/brands');
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          setBrands(data);
-        }
-      } catch (error) {
-        console.error('Error fetching brands:', error);
-        toast.error('Failed to load brands');
+  const brandOptions = brands
+    .filter(brand => brand.id) // Filter out brands without IDs
+    .map((brand) => ({
+      label: brand.brandName,
+      value: brand.id as string, // We know id exists because of the filter
+    }));
+
+  const handleViewHistory = async (categoryId: string) => {
+    if (!categoryId) return;
+    try {
+      setIsLoadingHistory(true);
+      const result = await getCategoryHistory(categoryId);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch history');
       }
-    };
+      
+      // Ensure the data exists and has the correct shape
+      if (!result.data || !Array.isArray(result.data)) {
+        throw new Error('Invalid history data received');
+      }
+      
+      // Transform the history data into the expected format
+      const typedData = result.data.map((entry: HistoryEntry) => {
+        // Ensure we have a valid ID
+        const entryId = entry._id || entry.categoryId;
+        if (!entryId) {
+          throw new Error('History entry missing ID');
+        }
+        
+        // Handle dates safely
+        const historyDate = new Date(entry.historyDate ?? '');
+        const createdAt = entry.createdAt ? new Date(entry.createdAt) : historyDate;
+        const updatedAt = entry.updatedAt ? new Date(entry.updatedAt) : historyDate;
 
-    fetchBrands();
-  }, []);
-
-  const brandOptions = brands.map((brand) => ({
-    label: brand.brandName,
-    value: brand.id,
-  }));
+        return {
+          id: entryId,
+          brandName: entry.brandName,
+          series: entry.series,
+          salesTax: entry.salesTax,
+          historyDate,
+          createdAt,
+          updatedAt
+        } as CategoryWithBatteryData;
+      });
+      
+      setHistoryData(typedData);
+      setIsHistoryModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching history:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to fetch history');
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   const columns = [
     {
@@ -91,243 +146,82 @@ const CategoryLayout: React.FC = () => {
     {
       label: '',
       renderCell: (item: CategoryWithBatteryData) => (
-        <FaEye
-          className='cursor-pointer'
-          title='View'
-          onClick={() => {
-            setModalType('detail');
-            setIsModalOpen(true);
-            setDetailData(item);
-            setGlobalSalesTax(item.salesTax.toString());
-          }}
-        />
+        <div className="flex gap-2">
+          <FaEye
+            className='cursor-pointer'
+            title='View'
+            onClick={() => {
+              setIsModalOpen(true);
+              setDetailData(item);
+              setGlobalSalesTax(item.salesTax.toString());
+            }}
+          />
+          <button
+            onClick={() => handleViewHistory(item.id!)}
+            className="px-2 py-1 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            disabled={isLoadingHistory}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            History
+          </button>
+        </div>
       ),
     },
   ];
 
-  async function addAllCategories() {
-    const brandName = 'OSAKA';
-    const salesTax = 18; // Default sales tax percentage
-
-    // List of all battery series
-   
-
-    const allSeries = [
-      // HT SERIES LIGHT RANGE (DRY CHARGED UN-FILLED BATTERIES)
-      { name: 'HT 50 R/L', ah: 24, plate: 7, retailPrice: 5600.00 },
-      { name: 'HT 50 R/L PLUS', ah: 26, plate: 7, retailPrice: 5900.00 },
-      { name: 'HT 55 R/L', ah: 30, plate: 9, retailPrice: 6700.00 },
-      { name: 'HT 60 R/L', ah: 34, plate: 9, retailPrice: 7245.00 },
-      { name: 'HT GR 65 R/L', ah: 40, plate: 11, retailPrice: 8759.00 },
-      { name: 'HT 70Q', ah: 45, plate: 11, retailPrice: 8740.00 },
-      { name: 'HT 75QL TALLWICK', ah: 50, plate: 12, retailPrice: 9720.00 },
-      { name: 'HT 88 R/L', ah: 50, plate: 9, retailPrice: 10290.00 },
-      { name: 'HT 92 R/L', ah: 60, plate: 11, retailPrice: 10650.00 },
-      { name: 'HT 95 R/L', ah: 70, plate: 13, retailPrice: 12290.00 },
-      { name: 'HT 110', ah: 70, plate: 11, retailPrice: 12650.00 },
-      { name: 'HT 115 PLUS A', ah: 72, plate: 11, retailPrice: 13490.00 },
-      { name: 'HT 120 R/L', ah: 85, plate: 13, retailPrice: 14530.00 },
-      { name: 'HT 125 R/L', ah: 90, plate: 15, retailPrice: 16340.00 },
-    
-      // HT SERIES MEDIUM RANGE (DRY CHARGED UN-FILLED BATTERIES)
-      { name: 'HT 130', ah: 90, plate: 13, retailPrice: 15750.00 },
-      { name: 'HT 135', ah: 100, plate: 15, retailPrice: 16760.00 },
-      { name: 'HT 145', ah: 105, plate: 17, retailPrice: 19130.00 },
-      { name: 'HT 150', ah: 105, plate: 15, retailPrice: 19130.00 },
-      { name: 'HT 155', ah: 110, plate: 17, retailPrice: 18350.00 },
-      { name: 'HT 160', ah: 115, plate: 19, retailPrice: 20650.00 },
-    
-      // HT SERIES HEAVY RANGE (DRY CHARGED UN-FILLED BATTERIES)
-      { name: 'HT 180', ah: 115, plate: 19, retailPrice: 22600.00 },
-      { name: 'HT 200', ah: 120, plate: 21, retailPrice: 24800.00 },
-      { name: 'HT 210 PLUS', ah: 130, plate: 21, retailPrice: 22530.00 },
-      { name: 'HT 220', ah: 135, plate: 23, retailPrice: 26750.00 },
-      { name: 'HT 225', ah: 135, plate: 21, retailPrice: 26190.00 },
-      { name: 'HT 230', ah: 145, plate: 23, retailPrice: 28600.00 },
-      { name: 'HT 240 PLUS', ah: 155, plate: 23, retailPrice: 28900.00 },
-      { name: 'HT 260', ah: 175, plate: 25, retailPrice: 30900.00 },
-      { name: 'HT 270', ah: 180, plate: 27, retailPrice: 33980.00 },
-      { name: 'HT 280', ah: 190, plate: 27, retailPrice: 34900.00 },
-      { name: 'HT 290', ah: 200, plate: 31, retailPrice: 36790.00 },
-      { name: 'HT 300', ah: 215, plate: 33, retailPrice: 39290.00 },
-    
-      // SOLAR SERIES (DRY CHARGED UN-FILLED BATTERIES)
-      { name: 'HT Solar 50', ah: 20, plate: 5, retailPrice: 4480.00 },
-      { name: 'HT Solar 50 PLUS', ah: 22, plate: 5, retailPrice: 4750.00 },
-      { name: 'HT Solar 100', ah: 55, plate: 9, retailPrice: 10750.00 },
-    
-      // OSAKA HIGH-TECH SERIES
-      // FORD 3600 & FORD 4000 (DRY CHARGED UN-FILLED BATTERIES)
-      { name: 'HT GLT 200', ah: 130, plate: 25, retailPrice: 35325.00 },
-      { name: 'HT GLT 220', ah: 145, plate: 29, retailPrice: 36900.00 },
-    
-      // HT IPS SERIES (DRY CHARGED UN-FILLED BATTERIES)
-      { name: 'HT IPS 1200', ah: 120, plate: 19, retailPrice: 27600.00 },
-      { name: 'HT IPS 1400', ah: 130, plate: 21, retailPrice: 30600.00 },
-      { name: 'HT IPS 1600', ah: 150, plate: 23, retailPrice: 32600.00 },
-      { name: 'HT IPS 2000', ah: 175, plate: 25, retailPrice: 36600.00 },
-    
-      // MAINTENANCE FREE BATTERIES (FACTORY FILLED AND CHARGED BATTERIES)
-      { name: 'MF 50 R/L', ah: 20, plate: 5, retailPrice: 6500.00 },
-      { name: 'MF 55 R/L', ah: 38, plate: 9, retailPrice: 8210.00 },
-      { name: 'MF 65 R/L', ah: 40, plate: 11, retailPrice: 9325.00 },
-      { name: 'MF 70 R/L (ThinThick Pole)', ah: 48, plate: 11, retailPrice: 10530.00 },
-      { name: 'MF 75 R/L (ThinThick Pole)', ah: 50, plate: 12, retailPrice: 10670.00 },
-      { name: 'MF 80 R/L', ah: 50, plate: 9, retailPrice: 10760.00 },
-      { name: 'MF 85 GR 25 R', ah: 75, plate: 11, retailPrice: 11450.00 },
-      { name: 'MF 85 R/L', ah: 75, plate: 11, retailPrice: 11450.00 },
-      { name: 'MF 110 R/L', ah: 80, plate: 13, retailPrice: 12750.00 },
-      { name: 'MF 120 R/L', ah: 90, plate: 15, retailPrice: 14750.00 },
-    
-      // DIN SERIES MAINTENANCE FREE BATTERIES (FACTORY FILLED AND CHARGED BATTERIES)
-      { name: 'MF DIN 555', ah: 45, plate: 9, retailPrice: 12615.00 },
-      { name: 'MF DIN 666', ah: 60, plate: 11, retailPrice: 15410.00 },
-      { name: 'MF DIN 777', ah: 66, plate: 13, retailPrice: 16640.00 },
-      { name: 'MF DIN 888', ah: 88, plate: 17, retailPrice: 18850.00 },
-    
-      // TUBULAR BATTERIES (FACTORY FILLED AND CHARGED BATTERIES)
-      { name: 'HT 1800', ah: 185, plate: 5, retailPrice: 41000.00 },
-      { name: 'HT 2000', ah: 200, plate: 6, retailPrice: 43000.00 },
-      { name: 'HT 2500', ah: 250, plate: 7, retailPrice: 44000.00 },
-      { name: 'HT 3500', ah: 280, plate: 9, retailPrice: 53000.00 }
-    ]
-    .map((item) => ({
-      ...item,
-      salesTax: salesTax, // Set salesTax at series level
-      maxRetailPrice: item.retailPrice
-        ? item.retailPrice + (item.retailPrice * salesTax) / 100
-        : undefined,
-    }));
-
-    try {
-      // First, check if brand already exists
-      const existingCategories = categories.find(
-        (cat) => cat.brandName === brandName
-      );
-      if (existingCategories) {
-        console.log(`Brand ${brandName} already exists. Skipping...`);
-        return {
-          totalProcessed: 0,
-          successful: 0,
-          failed: 0,
-          successDetails: [],
-          errorDetails: [
-            {
-              series: brandName,
-              status: 'error',
-              message: 'Brand already exists',
-            },
-          ],
-        };
-      }
-
-      // Create a single category with all series
-      const category = {
-        brandName,
-        series: allSeries,
-        salesTax: salesTax.toString(),
-      };
-
-      try {
-        const response = await fetch('/api/categories', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(category),
-        });
-        const data = await response.json();
-
-        if (data?.success) {
-          console.log(
-            `Successfully added brand ${brandName} with ${allSeries.length} series`
-          );
-          await revalidatePathCustom('/category');
-          return {
-            totalProcessed: allSeries.length,
-            successful: allSeries.length,
-            failed: 0,
-            successDetails: [
-              { series: brandName, status: 'success', message: data.message },
-            ],
-            errorDetails: [],
-          };
-        } else {
-          console.error(`Error adding brand ${brandName}: ${data?.error}`);
-          return {
-            totalProcessed: allSeries.length,
-            successful: 0,
-            failed: allSeries.length,
-            successDetails: [],
-            errorDetails: [
-              { series: brandName, status: 'error', message: data?.error },
-            ],
-          };
-        }
-      } catch (error) {
-        console.error(`Failed to add brand ${brandName}:`, error);
-        return {
-          totalProcessed: allSeries.length,
-          successful: 0,
-          failed: allSeries.length,
-          successDetails: [],
-          errorDetails: [
-            {
-              series: brandName,
-              status: 'error',
-              message: error instanceof Error ? error.message : 'Unknown error',
-            },
-          ],
-        };
-      }
-    } catch (error) {
-      console.error('Operation failed:', error);
-      throw error;
-    }
-  }
-
-  const handleSelectOption = (option: DropdownOption) => {
-    setCategory({ ...category, brandName: option?.label });
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handlePdfUploadSuccess = async (data: {
+    brandName: string;
+    series: BatteryData[];
+    salesTax: string;
+  }) => {
     try {
       setIsLoading(true);
-      const response: any = await fetch('/api/categories', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...category,
-          salesTax: Number(category.salesTax) || 0, // Ensure sales tax is a number
-        }),
-      });
+      
+      // Check if category already exists for this brand
+      const existingCategory = categories.find(
+        (cat) => cat.brandName === data.brandName
+      );
 
-      if (response?.message) {
-        toast.success(response?.message);
-        await revalidatePathCustom('/category');
+      const categoryData: Omit<ICategory, 'id'> = {
+        brandName: data.brandName,
+        series: data.series,
+        salesTax: Number(data.salesTax)
+      };
+
+      if (existingCategory && existingCategory.id) {
+        // Update existing category
+        const result = await patchCategory(existingCategory.id, categoryData);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to update category');
+        }
+
+        toast.success(`Updated existing category for ${data.brandName} with ${data.series.length} series`);
+      } else if (!existingCategory) {
+        // Create new category
+        const result = await createCategory(categoryData);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create category');
+        }
+
+        toast.success(`Created new category for ${data.brandName} with ${data.series.length} series`);
+      } else {
+        throw new Error('Category is missing an id');
       }
 
-      if (response?.error) {
-        toast.error(response?.error);
-      }
-
-      setIsLoading(false);
-      setIsModalOpen(false);
+      // Call revalidatePath and wait for it to complete
+      await revalidatePathCustom('/category');
+      await fetchCategories(); // Refresh the categories list
     } catch (error) {
-      console.error('Error posting data:', error);
-      toast.error('Failed to add category');
+      console.error('Error saving category from PDF:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to save category from PDF'
+      );
+    } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleChange = (e: any) => {
-    const { name, value } = e.target;
-    if (name === 'salesTax') {
-      // Allow negative numbers
-      if (/^-?\d*$/.test(value)) {
-        setCategory({ ...category, [name]: value });
-      }
-    } else {
-      setCategory({ ...category, [name]: value });
     }
   };
 
@@ -349,22 +243,13 @@ const CategoryLayout: React.FC = () => {
 
       if (!detailData || !updatedSeries) return;
 
-      const response = await fetch('/api/categories', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: detailData.id,
-          data: {
-            brandName: detailData.brandName,
-            series: updatedSeries,
-          },
-        }),
+      const result = await patchCategory(detailData.id!, {
+        brandName: detailData.brandName,
+        series: updatedSeries,
       });
 
-      const data = await response.json();
-
-      if (data?.error) {
-        throw new Error(data.error);
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
       setDetailData((prev) =>
@@ -405,22 +290,14 @@ const CategoryLayout: React.FC = () => {
           : undefined,
       }));
 
-      const response = await fetch('/api/categories', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: detailData.id,
-          data: {
-            brandName: detailData.brandName,
-            series: updatedSeries,
-            salesTax: tax,
-          },
-        }),
+      const result = await patchCategory(detailData.id!, {
+        brandName: detailData.brandName,
+        series: updatedSeries,
+        salesTax: tax,
       });
-      const data = await response.json();
 
-      if (data?.error) {
-        throw new Error(data.error);
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
       // Update both the series and the parent salesTax
@@ -466,353 +343,463 @@ const CategoryLayout: React.FC = () => {
     <div className='md:p-6 p-0 py-6'>
       <div className='flex items-center justify-between py-2'>
         <h1 className='text-2xl font-bold'>Categories</h1>
-    
+        <div className='flex gap-2'>
+          <Button
+            variant='fill'
+            text='Upload PDF'
+            onClick={() => setIsPdfModalOpen(true)}
+          />
+        </div>
       </div>
 
       <Table
         data={categories}
         columns={columns}
+        showButton={false}
+      />
+
+      {/* PDF Upload Modal */}
+      <PdfUploadModal
+        isOpen={isPdfModalOpen}
+        onClose={() => setIsPdfModalOpen(false)}
+        onSuccess={handlePdfUploadSuccess}
+        brands={brandOptions}
+        categories={categories}
       />
 
       <Modal
+        size='large'
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
           setSearchQuery('');
         }}
-        title={
-          modalType === 'add'
-            ? 'Add Category'
-            : detailData && detailData.brandName
-        }
+        title={detailData && detailData.brandName}
       >
-        {modalType === 'add' ? (
-          <form onSubmit={handleSubmit}>
-            <div className='mt-4 flex w-full flex-col gap-2'>
-              <div
-                className='w-full'
-                onClick={(event) => event.preventDefault()}
-              >
-                <Dropdown
-                  options={brandOptions}
-                  onSelect={handleSelectOption}
-                  placeholder='Select Battery Brand'
-                />
-              </div>
+        {/* Fully Responsive Battery List Component */}
+        <div className='max-h-[80vh] overflow-y-auto'>
+          {/* Header Controls - Responsive Layout */}
+          <div className='mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
+            {/* Search Input - Full width on mobile, half on desktop */}
+            <div className='w-full sm:w-1/2 lg:w-3/5'>
               <Input
                 type='text'
-                label='Enter Series'
-                name='series'
-                onChange={handleChange}
-              />
-              <Input
-                type='text'
-                label='Sales Tax %'
-                name='salesTax'
-                value={category.salesTax}
-                onChange={handleChange}
-                placeholder='Enter sales tax percentage'
-              />
-
-              <Button
-                className='w-fit'
-                variant='fill'
-                text='Save'
-                type='submit'
-                isPending={isLoading}
+                label='Search batteries'
+                placeholder='Search by name, plate, AH or type...'
+                value={searchQuery}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearchQuery(e.target.value)
+                }
               />
             </div>
-          </form>
-        ) : (
-          // Fully Responsive Battery List Component
-<div className='max-h-[80vh] overflow-y-auto'>
-  {/* Header Controls - Responsive Layout */}
-  <div className='mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
-    {/* Search Input - Full width on mobile, half on desktop */}
-    <div className='w-full sm:w-1/2 lg:w-3/5'>
-      <Input
-        type='text'
-        label='Search batteries'
-        placeholder='Search by name, plate, AH or type...'
-        value={searchQuery}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          setSearchQuery(e.target.value)
-        }
-      />
-    </div>
-    
-    {/* Sales Tax Control - Full width on mobile, smaller on desktop */}
-    <div className='w-full sm:w-1/3 lg:w-1/4'>
-      <div className='mb-1 flex items-center justify-between'>
-        <label className='text-sm text-gray-500'>Sales Tax %</label>
-        {!isEditingGlobalSalesTax ? (
-          <button
-            onClick={() => setIsEditingGlobalSalesTax(true)}
-            className='rounded px-2 py-1 text-sm text-blue-500 hover:bg-blue-50 hover:text-blue-700 touch-manipulation'
-          >
-            Edit
-          </button>
-        ) : (
-          <div className='flex gap-1 sm:gap-2'>
-            <button
-              onClick={handleSaveGlobalSalesTax}
-              className='rounded px-2 py-1 text-sm text-green-500 hover:bg-green-50 hover:text-green-700 touch-manipulation'
-              disabled={isLoading}
-            >
-              Save
-            </button>
-            <button
-              onClick={() => {
-                setIsEditingGlobalSalesTax(false);
-                setGlobalSalesTax('18'); // Reset to default
-              }}
-              className='rounded px-2 py-1 text-sm text-red-500 hover:bg-red-50 hover:text-red-700 touch-manipulation'
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-      </div>
-      {isEditingGlobalSalesTax ? (
-        <input
-          type='text'
-          value={globalSalesTax}
-          onChange={(e) => {
-            const { value } = e.target;
-            if (/^-?\d*$/.test(value)) {
-              setGlobalSalesTax(value);
-            }
-          }}
-          className='w-full rounded border bg-white p-2 text-sm focus:border-blue-500 focus:outline-none'
-          placeholder='Enter sales tax percentage'
-        />
-      ) : (
-        <div className='w-full rounded border bg-gray-100 p-2 text-sm font-medium'>
-          {globalSalesTax}%
-        </div>
-      )}
-    </div>
-  </div>
-
-  {/* Battery List */}
-  <div className='flex flex-col gap-3 sm:gap-4'>
-    <div className='grid grid-cols-1 gap-3 sm:gap-4'>
-      {filteredSeries.length > 0 ? (
-        filteredSeries.map((item: BatteryData, index: number) => (
-          <div
-            key={index}
-            className='rounded-lg bg-white p-3 sm:p-4 shadow transition-shadow hover:shadow-md'
-          >
-            {/* Mobile Card Layout */}
-            <div className='block sm:hidden'>
-              {/* Header Row */}
-              <div className='mb-3 flex items-start justify-between'>
-                <div className='flex-1'>
-                  <h3 className='font-semibold text-gray-900'>{item.name}</h3>
-                  <div className='mt-1 flex flex-wrap gap-2 text-sm text-gray-600'>
-                    <span>Plate: {item.plate}</span>
-                    <span>•</span>
-                    <span>AH: {item.ah}</span>
-                    {item.type && (
-                      <>
-                        <span>•</span>
-                        <span>Type: {item.type}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Price Section */}
-              <div className='space-y-3'>
-                {/* Retail Price */}
-                <div className='rounded-lg bg-gray-50 p-3'>
-                  <div className='mb-2 flex items-center justify-between'>
-                    <span className='text-sm font-medium text-gray-700'>Retail Price</span>
-                    {editingBattery !== item.name ? (
-                      <button
-                        onClick={() => {
-                          setEditingBattery(item.name);
-                          setEditingPrice((prev) => ({
-                            ...prev,
-                            [item.name]: item.retailPrice || 0,
-                          }));
-                        }}
-                        className='rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-600 hover:bg-blue-200 touch-manipulation'
-                      >
-                        Edit
-                      </button>
-                    ) : (
-                      <div className='flex gap-2'>
-                        <button
-                          onClick={() => handleSavePrice(item.name)}
-                          className='rounded-full bg-green-100 px-3 py-1 text-sm text-green-600 hover:bg-green-200 touch-manipulation'
-                          disabled={isLoading}
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingBattery(null);
-                            setEditingPrice({});
-                          }}
-                          className='rounded-full bg-red-100 px-3 py-1 text-sm text-red-600 hover:bg-red-200 touch-manipulation'
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  {editingBattery === item.name ? (
-                    <input
-                      type='number'
-                      value={editingPrice[item.name] ?? item.retailPrice ?? ''}
-                      onChange={(e) => handlePriceChange(item.name, e.target.value)}
-                      className='w-full rounded border p-2 text-base focus:border-blue-500 focus:outline-none'
-                      placeholder='Enter price'
-                    />
-                  ) : (
-                    <p className='text-lg font-semibold text-gray-900'>
-                      Rs {item.retailPrice || 'N/A'}
-                    </p>
-                  )}
-                </div>
-
-                {/* Tax and Max Price Row */}
-                <div className='grid grid-cols-2 gap-3'>
-                  <div className='rounded-lg bg-gray-50 p-3'>
-                    <span className='text-xs text-gray-500'>
-                      Sales Tax ({item.salesTax ?? detailData?.salesTax ?? 18}%)
-                    </span>
-                    <p className='font-medium text-gray-900'>
-                      Rs {item.retailPrice
-                        ? Math.round((item.retailPrice * (item.salesTax ?? detailData?.salesTax ?? 18)) / 100)
-                        : 'N/A'}
-                    </p>
-                  </div>
-                  <div className='rounded-lg bg-gray-50 p-3'>
-                    <span className='text-xs text-gray-500'>Max Retail Price</span>
-                    <p className='font-medium text-gray-900'>
-                      Rs {item.maxRetailPrice || 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Desktop Grid Layout */}
-            <div className='hidden sm:block'>
-              <div className='grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7'>
-                <div>
-                  <span className='text-sm text-gray-500'>Name</span>
-                  <p className='font-medium text-gray-900 break-words'>{item.name}</p>
-                </div>
-                <div>
-                  <span className='text-sm text-gray-500'>Plate</span>
-                  <p className='font-medium text-gray-900'>{item.plate}</p>
-                </div>
-                <div>
-                  <span className='text-sm text-gray-500'>AH</span>
-                  <p className='font-medium text-gray-900'>{item.ah}</p>
-                </div>
-                <div className='col-span-2 md:col-span-1 lg:col-span-1'>
-                  <div className='mb-1 flex items-center justify-between'>
-                    <span className='text-sm text-gray-500'>Retail Price</span>
-                    {editingBattery !== item.name ? (
-                      <button
-                        onClick={() => {
-                          setEditingBattery(item.name);
-                          setEditingPrice((prev) => ({
-                            ...prev,
-                            [item.name]: item.retailPrice || 0,
-                          }));
-                        }}
-                        className='rounded px-2 py-1 text-sm text-blue-500 hover:bg-blue-50 hover:text-blue-700 touch-manipulation'
-                      >
-                        Edit
-                      </button>
-                    ) : (
-                      <div className='flex gap-1'>
-                        <button
-                          onClick={() => handleSavePrice(item.name)}
-                          className='rounded px-2 py-1 text-xs text-green-500 hover:bg-green-50 hover:text-green-700 touch-manipulation'
-                          disabled={isLoading}
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingBattery(null);
-                            setEditingPrice({});
-                          }}
-                          className='rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50 hover:text-red-700 touch-manipulation'
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  {editingBattery === item.name ? (
-                    <input
-                      type='number'
-                      value={editingPrice[item.name] ?? item.retailPrice ?? ''}
-                      onChange={(e) => handlePriceChange(item.name, e.target.value)}
-                      className='w-full rounded border p-1 text-sm focus:border-blue-500 focus:outline-none'
-                      placeholder='Enter price'
-                    />
-                  ) : (
-                    <p className='font-medium text-gray-900'>
-                      Rs {item.retailPrice || 'N/A'}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm text-gray-500'>
-                      Sales Tax ({item.salesTax ?? detailData?.salesTax ?? 18}%)
-                    </span>
-                  </div>
-                  <p className='font-medium text-gray-900'>
-                    Rs {item.retailPrice
-                      ? Math.round((item.retailPrice * (item.salesTax ?? detailData?.salesTax ?? 18)) / 100)
-                      : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <span className='text-sm text-gray-500'>Max Retail Price</span>
-                  <p className='font-medium text-gray-900'>
-                    Rs {item.maxRetailPrice || 'N/A'}
-                  </p>
-                </div>
-                {item.type && (
-                  <div>
-                    <span className='text-sm text-gray-500'>Type</span>
-                    <p className='font-medium text-gray-900'>{item.type}</p>
+            
+            {/* Sales Tax Control - Full width on mobile, smaller on desktop */}
+            <div className='w-full sm:w-1/3 lg:w-1/4'>
+              <div className='mb-1 flex items-center justify-between'>
+                <label className='text-sm text-gray-500'>Sales Tax %</label>
+                {!isEditingGlobalSalesTax ? (
+                  <button
+                    onClick={() => setIsEditingGlobalSalesTax(true)}
+                    className='rounded px-2 py-1 text-sm text-blue-500 hover:bg-blue-50 hover:text-blue-700 touch-manipulation'
+                  >
+                    Edit
+                  </button>
+                ) : (
+                  <div className='flex gap-1 sm:gap-2'>
+                    <button
+                      onClick={handleSaveGlobalSalesTax}
+                      className='rounded px-2 py-1 text-sm text-green-500 hover:bg-green-50 hover:text-green-700 touch-manipulation'
+                      disabled={isLoading}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingGlobalSalesTax(false);
+                        setGlobalSalesTax('18'); // Reset to default
+                      }}
+                      className='rounded px-2 py-1 text-sm text-red-500 hover:bg-red-50 hover:text-red-700 touch-manipulation'
+                    >
+                      Cancel
+                    </button>
                   </div>
                 )}
               </div>
+              {isEditingGlobalSalesTax ? (
+                <input
+                  type='text'
+                  value={globalSalesTax}
+                  onChange={(e) => {
+                    const { value } = e.target;
+                    if (/^-?\d*$/.test(value)) {
+                      setGlobalSalesTax(value);
+                    }
+                  }}
+                  className='w-full rounded border bg-white p-2 text-sm focus:border-blue-500 focus:outline-none'
+                  placeholder='Enter sales tax percentage'
+                />
+              ) : (
+                <div className='w-full rounded border bg-gray-100 p-2 text-sm font-medium'>
+                  {globalSalesTax}%
+                </div>
+              )}
             </div>
           </div>
-        ))
-      ) : (
-        <div className='rounded-lg bg-gray-50 py-8 text-center'>
-          <div className='mx-auto max-w-md px-4'>
-            <div className='text-gray-400 mb-3'>
-              <svg className='mx-auto h-12 w-12' fill='currentColor' viewBox='0 0 24 24'>
-                <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/>
-              </svg>
+
+          {/* Battery List */}
+          <div className='flex flex-col gap-3 sm:gap-4'>
+            <div className='grid grid-cols-1 gap-3 sm:gap-4'>
+              {filteredSeries.length > 0 ? (
+                filteredSeries.map((item: BatteryData, index: number) => (
+                  <div
+                    key={index}
+                    className='rounded-lg bg-white p-3 sm:p-4 shadow transition-shadow hover:shadow-md'
+                  >
+                    {/* Mobile Card Layout */}
+                    <div className='block sm:hidden'>
+                      {/* Header Row */}
+                      <div className='mb-3 flex items-start justify-between'>
+                        <div className='flex-1'>
+                          <h3 className='font-semibold text-gray-900'>{item.name}</h3>
+                          <div className='mt-1 flex flex-wrap gap-2 text-sm text-gray-600'>
+                            <span>Plate: {item.plate}</span>
+                            <span>•</span>
+                            <span>AH: {item.ah}</span>
+                            {item.type && (
+                              <>
+                                <span>•</span>
+                                <span>Type: {item.type}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Price Section */}
+                      <div className='space-y-3'>
+                        {/* Retail Price */}
+                        <div className='rounded-lg bg-gray-50 p-3'>
+                          <div className='mb-2 flex items-center justify-between'>
+                            <span className='text-sm font-medium text-gray-700'>Retail Price</span>
+                            {editingBattery !== item.name ? (
+                              <button
+                                onClick={() => {
+                                  setEditingBattery(item.name);
+                                  setEditingPrice((prev) => ({
+                                    ...prev,
+                                    [item.name]: item.retailPrice || 0,
+                                  }));
+                                }}
+                                className='rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-600 hover:bg-blue-200 touch-manipulation'
+                              >
+                                Edit
+                              </button>
+                            ) : (
+                              <div className='flex gap-2'>
+                                <button
+                                  onClick={() => handleSavePrice(item.name)}
+                                  className='rounded-full bg-green-100 px-3 py-1 text-sm text-green-600 hover:bg-green-200 touch-manipulation'
+                                  disabled={isLoading}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingBattery(null);
+                                    setEditingPrice({});
+                                  }}
+                                  className='rounded-full bg-red-100 px-3 py-1 text-sm text-red-600 hover:bg-red-200 touch-manipulation'
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          {editingBattery === item.name ? (
+                            <input
+                              type='number'
+                              value={editingPrice[item.name] ?? item.retailPrice ?? ''}
+                              onChange={(e) => handlePriceChange(item.name, e.target.value)}
+                              className='w-full rounded border p-2 text-base focus:border-blue-500 focus:outline-none'
+                              placeholder='Enter price'
+                            />
+                          ) : (
+                            <p className='text-lg font-semibold text-gray-900'>
+                              Rs {item.retailPrice || 'N/A'}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Tax and Max Price Row */}
+                        <div className='grid grid-cols-2 gap-3'>
+                          <div className='rounded-lg bg-gray-50 p-3'>
+                            <span className='text-xs text-gray-500'>
+                              Sales Tax ({item.salesTax ?? detailData?.salesTax ?? 18}%)
+                            </span>
+                            <p className='font-medium text-gray-900'>
+                              Rs {item.retailPrice
+                                ? Math.round((item.retailPrice * (item.salesTax ?? detailData?.salesTax ?? 18)) / 100)
+                                : 'N/A'}
+                            </p>
+                          </div>
+                          <div className='rounded-lg bg-gray-50 p-3'>
+                            <span className='text-xs text-gray-500'>Max Retail Price</span>
+                            <p className='font-medium text-gray-900'>
+                              Rs {item.maxRetailPrice || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Desktop Grid Layout */}
+                    <div className='hidden sm:block'>
+                      <div className='grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7'>
+                        <div>
+                          <span className='text-sm text-gray-500'>Name</span>
+                          <p className='font-medium text-gray-900 break-words'>{item.name}</p>
+                        </div>
+                        <div>
+                          <span className='text-sm text-gray-500'>Plate</span>
+                          <p className='font-medium text-gray-900'>{item.plate}</p>
+                        </div>
+                        <div>
+                          <span className='text-sm text-gray-500'>AH</span>
+                          <p className='font-medium text-gray-900'>{item.ah}</p>
+                        </div>
+                        <div className='col-span-2 md:col-span-1 lg:col-span-1'>
+                          <div className='mb-1 flex items-center justify-between'>
+                            <span className='text-sm text-gray-500'>Retail Price</span>
+                            {editingBattery !== item.name ? (
+                              <button
+                                onClick={() => {
+                                  setEditingBattery(item.name);
+                                  setEditingPrice((prev) => ({
+                                    ...prev,
+                                    [item.name]: item.retailPrice || 0,
+                                  }));
+                                }}
+                                className='rounded px-2 py-1 text-sm text-blue-500 hover:bg-blue-50 hover:text-blue-700 touch-manipulation'
+                              >
+                                Edit
+                              </button>
+                            ) : (
+                              <div className='flex gap-1'>
+                                <button
+                                  onClick={() => handleSavePrice(item.name)}
+                                  className='rounded px-2 py-1 text-xs text-green-500 hover:bg-green-50 hover:text-green-700 touch-manipulation'
+                                  disabled={isLoading}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingBattery(null);
+                                    setEditingPrice({});
+                                  }}
+                                  className='rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50 hover:text-red-700 touch-manipulation'
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          {editingBattery === item.name ? (
+                            <input
+                              type='number'
+                              value={editingPrice[item.name] ?? item.retailPrice ?? ''}
+                              onChange={(e) => handlePriceChange(item.name, e.target.value)}
+                              className='w-full rounded border p-1 text-sm focus:border-blue-500 focus:outline-none'
+                              placeholder='Enter price'
+                            />
+                          ) : (
+                            <p className='font-medium text-gray-900'>
+                              Rs {item.retailPrice || 'N/A'}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-sm text-gray-500'>
+                              Sales Tax ({item.salesTax ?? detailData?.salesTax ?? 18}%)
+                            </span>
+                          </div>
+                          <p className='font-medium text-gray-900'>
+                            Rs {item.retailPrice
+                              ? Math.round((item.retailPrice * (item.salesTax ?? detailData?.salesTax ?? 18)) / 100)
+                              : 'N/A'}
+                          </p>
+                        </div>
+                        <div>
+                          <span className='text-sm text-gray-500'>Max Retail Price</span>
+                          <p className='font-medium text-gray-900'>
+                            Rs {item.maxRetailPrice || 'N/A'}
+                          </p>
+                        </div>
+                        {item.type && (
+                          <div>
+                            <span className='text-sm text-gray-500'>Type</span>
+                            <p className='font-medium text-gray-900'>{item.type}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className='rounded-lg bg-gray-50 py-8 text-center'>
+                  <div className='mx-auto max-w-md px-4'>
+                    <div className='text-gray-400 mb-3'>
+                      <svg className='mx-auto h-12 w-12' fill='currentColor' viewBox='0 0 24 24'>
+                        <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/>
+                      </svg>
+                    </div>
+                    <h3 className='text-lg font-medium text-gray-900 mb-1'>No batteries found</h3>
+                    <p className='text-sm text-gray-500'>
+                      No batteries match your search criteria. Try adjusting your search terms.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-            <h3 className='text-lg font-medium text-gray-900 mb-1'>No batteries found</h3>
-            <p className='text-sm text-gray-500'>
-              No batteries match your search criteria. Try adjusting your search terms.
-            </p>
           </div>
         </div>
-      )}
-    </div>
-  </div>
-</div>
-        )}
+      </Modal>
+
+      {/* History Modal */}
+      <Modal
+        size='large'
+        isOpen={isHistoryModalOpen}
+        onClose={() => {
+          setIsHistoryModalOpen(false);
+          setSelectedHistoryEntry(null);
+        }}
+        title="Category History"
+      >
+        <div className="max-h-[80vh] overflow-y-auto">
+          {isLoadingHistory ? (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : historyData.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No history available
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {!selectedHistoryEntry ? (
+                // History List View
+                <div className="grid gap-4">
+                  {historyData.map((entry, index) => (
+                    <div
+                      key={index}
+                      className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setSelectedHistoryEntry(entry)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-medium">{entry.brandName}</h3>
+                          <p className="text-sm text-gray-500">
+                            {entry.series.length} series items
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-600">
+                            {new Date(entry.historyDate ?? '').toLocaleDateString()}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(entry.historyDate ?? '').toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // Historical Data Detail View
+                <div>
+                  <button
+                    onClick={() => setSelectedHistoryEntry(null)}
+                    className="mb-4 text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to History List
+                  </button>
+                  
+                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-yellow-700">
+                          This is a historical view from {new Date(selectedHistoryEntry.historyDate ?? '').toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Render the same battery list view but with historical data */}
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                    {selectedHistoryEntry.series.map((item: BatteryData, index: number) => (
+                      <div
+                        key={index}
+                        className="rounded-lg bg-white p-3 sm:p-4 shadow"
+                      >
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
+                          <div>
+                            <span className="text-sm text-gray-500">Name</span>
+                            <p className="font-medium text-gray-900 break-words">{item.name}</p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-gray-500">Plate</span>
+                            <p className="font-medium text-gray-900">{item.plate}</p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-gray-500">AH</span>
+                            <p className="font-medium text-gray-900">{item.ah}</p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-gray-500">Retail Price</span>
+                            <p className="font-medium text-gray-900">
+                              Rs {item.retailPrice || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-gray-500">
+                              Sales Tax ({item.salesTax ?? selectedHistoryEntry.salesTax ?? 18}%)
+                            </span>
+                            <p className="font-medium text-gray-900">
+                              Rs {item.retailPrice
+                                ? Math.round((item.retailPrice * (item.salesTax ?? selectedHistoryEntry.salesTax ?? 18)) / 100)
+                                : 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-gray-500">Max Retail Price</span>
+                            <p className="font-medium text-gray-900">
+                              Rs {item.maxRetailPrice || 'N/A'}
+                            </p>
+                          </div>
+                          {item.type && (
+                            <div>
+                              <span className="text-sm text-gray-500">Type</span>
+                              <p className="font-medium text-gray-900">{item.type}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

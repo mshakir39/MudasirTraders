@@ -1,19 +1,18 @@
 import React from 'react';
 import StockLayout from '../../layouts/stockLayout';
 import { getCategories } from '@/getData/getCategories';
-import { getAllStock } from '@/getData/getStock';
+import { getStock } from '@/actions/stockActions';
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 async function page() {
-  console.log("Stock");
   const categories = await getCategories();
-  console.log("categories",categories);
-  const stock = await getAllStock();
+  const stockResult = await getStock();
+  const stock = stockResult.success && Array.isArray(stockResult.data) ? stockResult.data : [];
 
   return (
-
-      <StockLayout categories={categories} stock={stock} />
+    <StockLayout categories={categories} stock={stock} />
   );
 }
 

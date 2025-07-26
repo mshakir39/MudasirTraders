@@ -11,7 +11,14 @@ interface ModalProps {
   dialogPanelClass?: string;
   parentClass?: string;
   preventBackdropClose?: boolean; // New prop to control backdrop closing
+  size?: 'large' | 'medium' | 'small';
 }
+
+const sizeClasses = {
+  small: 'max-w-sm',
+  medium: 'max-w-2xl',
+  large: 'max-w-6xl',
+};
 
 const Modal: FunctionComponent<ModalProps> = ({
   isOpen,
@@ -22,6 +29,7 @@ const Modal: FunctionComponent<ModalProps> = ({
   dialogPanelClass,
   parentClass,
   preventBackdropClose = false, // Default to allow backdrop close
+  size = 'medium',
 }) => {
   const handleClose = () => {
     if (onClose && !preventBackdropClose) {
@@ -79,7 +87,7 @@ const Modal: FunctionComponent<ModalProps> = ({
                 leaveTo='opacity-0 scale-95'
               >
                 <Dialog.Panel
-                  className={`w-full transform overflow-visible rounded-2xl bg-white px-6 py-2 text-left align-middle shadow-xl transition-all ${dialogPanelClass}`}
+                  className={`w-full ${sizeClasses[size]} transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all ${dialogPanelClass}`}
                 >
                   <div className="flex items-center justify-between">
                     <Dialog.Title
