@@ -53,7 +53,12 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
     },
   ];
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string | undefined) => {
+    if (!id) {
+      toast.error('Cannot delete brand: ID is missing');
+      return;
+    }
+    
     if (!confirm('Are you sure you want to delete this brand?')) return;
     
     try {

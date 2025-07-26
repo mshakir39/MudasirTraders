@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 interface Brand {
-  id: string;
+  id?: string;
   brandName: string;
   // Add other fields as needed
 }
