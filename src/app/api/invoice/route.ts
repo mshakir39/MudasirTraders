@@ -99,7 +99,7 @@ export async function POST(req: any, res: any) {
 
 export async function PATCH(req: any, res: any) {
   try {
-    const { additionalPayment, id } = await req.json();
+    const { additionalPayment, paymentMethod, id } = await req.json();
 
     const invoiceId = new ObjectId(id);
     const invoice: any = await executeOperation('invoices', 'findOne', {
@@ -115,6 +115,7 @@ export async function PATCH(req: any, res: any) {
       const newPayment = {
         addedDate: new Date(),
         amount: additionalPayment,
+        paymentMethod: paymentMethod,
       };
 
       const updatedInvoice = {

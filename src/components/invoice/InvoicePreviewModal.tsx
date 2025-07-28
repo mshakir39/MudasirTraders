@@ -80,6 +80,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
       onClose={handleModalClose}
       onOpen={handleModalOpen}
       title=''
+      size='large'
     >
       <div className='relative flex h-full w-full flex-col' ref={downloadRef}>
         <div className='text-[40px] font-bold uppercase text-black'>Invoice</div>
@@ -203,6 +204,11 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                       className='width-transition p-[16px] font-bold'
                     >
                       Received: {dateTime}
+                      {paymentData?.paymentMethod && (
+                        <div className='text-xs text-gray-600 mt-1'>
+                          ({paymentData.paymentMethod.join(' + ')})
+                        </div>
+                      )}
                     </div>
                     <div
                       style={{ width: tdWidths[1] ? tdWidths[1] + 'px' : '150px' }}
