@@ -1,8 +1,7 @@
 import React from 'react';
-
-const Accordion = React.lazy(() => import('@/components/accordion'));
-const Dropdown = React.lazy(() => import('@/components/dropdown'));
-const Input = React.lazy(() => import('@/components/customInput'));
+import Accordion from '@/components/accordion';
+import Dropdown from '@/components/dropdown';
+import Input from '@/components/customInput';
 
 interface ProductSectionProps {
   accordionData: any;
@@ -23,12 +22,32 @@ const ProductSection: React.FC<ProductSectionProps> = ({
   accordionMethods,
   stock,
 }) => {
+  
+
   // Function to filter series options based on stock availability
   const getFilteredSeriesOptions = (accordionIndex: number) => {
     const selectedBrand = accordionData[accordionIndex]?.brandName;
     const originalSeriesOptions = accordionData[accordionIndex]?.seriesOption || [];
     
-    if (!selectedBrand || !stock) {
+    // If no brand is selected, return empty array
+    if (!selectedBrand) {
+      return [];
+    }
+    
+    // If no original series options, try to get them from categories
+    if (originalSeriesOptions.length === 0) {
+      const category = categories.find((cat) => cat.brandName === selectedBrand);
+      if (category) {
+        const seriesOptions = category.series.map((battery: any) => ({
+          label: `${battery.name} (${battery.plate}, ${battery.ah}AH${battery.type ? `, ${battery.type}` : ''})`,
+          value: battery.name,
+          batteryDetails: battery,
+        }));
+        return seriesOptions;
+      }
+    }
+    
+    if (!stock) {
       return originalSeriesOptions;
     }
 
@@ -41,12 +60,19 @@ const ProductSection: React.FC<ProductSectionProps> = ({
 
     // Filter series options to only include those with stock > 0
     const filteredOptions = originalSeriesOptions.filter((option: { value: string }) => {
-      const stockItem = brandStock.seriesStock.find((stock: { series: string; batteryDetails?: { name: string }; quantity: number }) => 
+      const stockItem = brandStock.seriesStock.find((stock: { series: string; batteryDetails?: { name: string }; inStock: string | number }) => 
         stock.series === option.value || 
         stock.batteryDetails?.name === option.value
       );
-      return stockItem && stockItem.quantity > 0;
+      // Convert inStock to number for proper comparison
+      const stockQuantity = stockItem ? parseInt(String(stockItem.inStock)) || 0 : 0;
+      return stockItem && stockQuantity > 0;
     });
+    
+    // Fallback: if filtering results in empty array, show all series options
+    if (filteredOptions.length === 0) {
+      return originalSeriesOptions;
+    }
 
     return filteredOptions;
   };
@@ -58,117 +84,133 @@ const ProductSection: React.FC<ProductSectionProps> = ({
 
     return (
       <>
-        <div
+        <div 
           className='w-full'
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
+          onSubmit={(e) => {
+            e.preventDefault();
           }}
         >
-          <div className='flex w-full gap-2'>
-            <Dropdown
-              className={'mt-2'}
-              options={brandOptions}
-              onSelect={(option) =>
-                accordionMethods.handleAccordionChange(accordionIndex, 'brandName', option.value)
-              }
-              placeholder='Select Brand'
-              defaultValue={accordionData[accordionIndex]?.brandName}
-              required
-            />
-            <Dropdown
-              className={'mt-2'}
-              options={getFilteredSeriesOptions(accordionIndex)}
-              onSelect={(option) =>
-                accordionMethods.handleAccordionChange(accordionIndex, 'series', option.value)
-              }
-              placeholder='Select Series'
-              defaultValue={accordionData[accordionIndex]?.series}
-              required
-            />
+          <div className='grid grid-cols-2 w-full gap-4 mb-4 mt-4'>
+            <div className="w-full">
+           
+              <Dropdown
+                key={`brand-${accordionIndex}`}
+                className={'w-full'}
+                options={brandOptions}
+                onSelect={(option) => {
+                  accordionMethods.handleAccordionChange(accordionIndex, 'brandName', option.value);
+                }}
+                placeholder='Select Brand'
+                defaultValue={accordionData[accordionIndex]?.brandName}
+                required
+              />
+            </div>
+            <div className="w-full">
+          
+              <Dropdown
+                key={`series-${accordionIndex}`}
+                className={'w-full'}
+                options={getFilteredSeriesOptions(accordionIndex)}
+                onSelect={(option) => {
+                  accordionMethods.handleAccordionChange(accordionIndex, 'series', option.value);
+                }}
+                placeholder='Select Series'
+                defaultValue={accordionData[accordionIndex]?.series}
+                required
+              />
+            </div>
+            
+
           </div>
           
-          <div className='flex w-full gap-2'>
-            <Input
-              parentClass='mt-2'
-              type='number'
-              label='Product Price'
-              name='productPrice'
-              min={1}
-              step="0.01"
-              required
-              value={accordionDataItem.productPrice}
-              onChange={(e) =>
-                accordionMethods.handleAccordionChange(
-                  accordionIndex,
-                  'productPrice',
-                  e.target.value
-                )
-              }
-            />
-            <Input
-              parentClass='mt-4'
-              type='number'
-              label='Quantity'
-              value={accordionDataItem.quantity}
-              onChange={(e) => {
-                accordionMethods.handleAccordionChange(accordionIndex, 'quantity', e.target.value);
-              }}
-            />
+
+          
+          <div className='grid grid-cols-2 w-full gap-4 mb-4'>
+            <div className="w-full">
+              <Input
+                parentClass='w-full'
+                type='number'
+                label='Product Price'
+                name='productPrice'
+                min={1}
+                step="0.01"
+                required
+                value={accordionDataItem.productPrice}
+                onChange={(e) => {
+                  accordionMethods.handleAccordionChange(
+                    accordionIndex,
+                    'productPrice',
+                    e.target.value
+                  );
+                }}
+              />
+            </div>
+            <div className="w-full">
+              <Input
+                parentClass='w-full'
+                type='number'
+                label='Quantity'
+                value={accordionDataItem.quantity}
+                onChange={(e) => {
+                  accordionMethods.handleAccordionChange(accordionIndex, 'quantity', e.target.value);
+                }}
+              />
+            </div>
           </div>
 
-          <div
-            className='flex w-full gap-2'
-            onClick={(event) => {
-              event.stopPropagation();
-            }}
-          >
-            <Input
-              parentClass='mt-4'
-              type='date'
-              label='Warrenty Start Date'
-              name='warrentyStartDate'
-              value={accordionDataItem.warrentyStartDate}
-              onChange={(e) =>
-                accordionMethods.handleAccordionChange(
-                  accordionIndex,
-                  'warrentyStartDate',
-                  e.target.value
-                )
-              }
-            />
-            <Input
-              parentClass='mt-4'
-              type='number'
-              label='Warranty Duration (Months)'
-              name='warrentyDuration'
-              min={1}
-              value={accordionDataItem.warrentyDuration}
-              onChange={(e) =>
-                accordionMethods.handleAccordionChange(
-                  accordionIndex,
-                  'warrentyDuration',
-                  e.target.value
-                )
-              }
-            />
+          <div className='grid grid-cols-2 w-full gap-4 mb-4'>
+            <div className="w-full">
+              <Input
+                parentClass='w-full'
+                type='date'
+                label='Warranty Start Date'
+                name='warrentyStartDate'
+                value={accordionDataItem.warrentyStartDate}
+                onChange={(e) =>
+                  accordionMethods.handleAccordionChange(
+                    accordionIndex,
+                    'warrentyStartDate',
+                    e.target.value
+                  )
+                }
+              />
+            </div>
+            <div className="w-full">
+              <Input
+                parentClass='w-full'
+                type='number'
+                label='Warranty Duration (Months)'
+                name='warrentyDuration'
+                min={1}
+                value={accordionDataItem.warrentyDuration}
+                onChange={(e) =>
+                  accordionMethods.handleAccordionChange(
+                    accordionIndex,
+                    'warrentyDuration',
+                    e.target.value
+                  )
+                }
+              />
+            </div>
           </div>
         </div>
 
-        <Input
-          parentClass='mt-2'
-          type='text'
-          label='Warrenty Code'
-          name='warrentyCode'
-          value={accordionDataItem.warrentyCode}
-          onChange={(e) =>
-            accordionMethods.handleAccordionChange(
-              accordionIndex,
-              'warrentyCode',
-              e.target.value
-            )
-          }
-        />
+        <div className='w-full mb-4'>
+          <Input
+            parentClass='w-full'
+            type='text'
+            label='Warranty Code'
+            name='warrentyCode'
+            value={accordionDataItem.warrentyCode}
+            onChange={(e) =>
+              accordionMethods.handleAccordionChange(
+                accordionIndex,
+                'warrentyCode',
+                e.target.value
+              )
+            }
+          />
+        </div>
       </>
     );
   };

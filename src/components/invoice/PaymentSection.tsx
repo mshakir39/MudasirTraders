@@ -1,8 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import { FaPlus } from 'react-icons/fa6';
 
-const CheckboxGroup = React.lazy(() => import('@/components/checkboxGroup'));
-const Input = React.lazy(() => import('@/components/customInput'));
+import CheckboxGroup from '@/components/checkboxGroup';
+import Input from '@/components/customInput';
 
 const options = [
   { id: 'Credit', value: 'Credit', label: 'Credit' },
@@ -36,10 +36,17 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
 
   const handleCheckboxChange = useCallback(
     (values: string[]) => {
-      setInvoiceData((prev: any) => ({
-        ...prev,
-        paymentMethod: values,
-      }));
+      console.log('Payment methods selected:', values);
+      
+      // FIXED: More robust state update with validation
+      setInvoiceData((prev: any) => {
+        const newState = {
+          ...prev,
+          paymentMethod: values,
+        };
+        console.log('Updated invoice data:', newState);
+        return newState;
+      });
     },
     [setInvoiceData]
   );
@@ -51,20 +58,28 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
     }));
   }, [setInvoiceData, totalAmount]);
 
+  // FIXED: Ensure paymentMethod is always an array
+  const currentPaymentMethods = Array.isArray(invoiceData?.paymentMethod) 
+    ? invoiceData.paymentMethod 
+    : [];
+
   return (
     <>
-      <div className='flex flex-col'>
-        <span className='text-sm font-medium text-gray-500'>
+      <div className='flex flex-col gap-2'>
+        <span className='text-sm font-medium text-gray-700'>
           Payment Method: <span className="text-red-500">*</span>
         </span>
-        <CheckboxGroup
-          options={options}
-          onChange={(value) => handleCheckboxChange(value)}
-        />
+        <div className="p-4 bg-gray-50 rounded-md">
+          <CheckboxGroup
+            options={options}
+            onChange={handleCheckboxChange}
+            checkedValues={currentPaymentMethods}
+          />
+        </div>
       </div>
 
       <div className='flex w-full'>
-        {invoiceData?.paymentMethod?.includes('Old Battery') && (
+        {currentPaymentMethods.includes('Old Battery') && (
           <div className='flex w-full gap-2'>
             <div className='mt-1 w-full'>
               <Input

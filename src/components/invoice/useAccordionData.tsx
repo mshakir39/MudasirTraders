@@ -98,69 +98,94 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
   ) => {
     if (fieldName === 'brandName') {
       const category = categories.find((item) => item.brandName === fieldValue);
+
+      
       if (category) {
+
+        
         // Create series options from category data
         const seriesOptions = category.series.map((battery: any) => ({
           label: `${battery.name} (${battery.plate}, ${battery.ah}AH${battery.type ? `, ${battery.type}` : ''})`,
           value: battery.name,
           batteryDetails: battery,
         }));
+        
+
 
         // Filter series options based on stock availability
         let filteredSeriesOptions = [];
         
-        console.log('🔍 Stock filtering for brand:', fieldValue);
-        console.log('📦 Available stock:', stock);
+
         
         if (stock && stock.length > 0) {
           const brandStock = stock.find(stockItem => 
             stockItem.brandName && stockItem.brandName === fieldValue
           );
           
-          console.log('🏷️ Brand stock found:', brandStock);
+
           
           if (brandStock && brandStock.seriesStock && brandStock.seriesStock.length > 0) {
-            console.log('📋 Series in stock:', brandStock.seriesStock);
-            console.log('🎯 All series options:', seriesOptions);
+
             
             // Only show series that exist in stock with quantity > 0
             filteredSeriesOptions = seriesOptions.filter((option: SeriesOption) => {
-              const stockItem = brandStock.seriesStock.find((stockSeries: { series?: string; inStock: number }) => {
+              const stockItem = brandStock.seriesStock.find((stockSeries: { series?: string; inStock: string | number }) => {
                 // More comprehensive matching
                 const stockSeriesName = stockSeries.series?.toLowerCase().trim();
                 const optionValue = option.value?.toLowerCase().trim();
                 const batteryName = option.batteryDetails?.name?.toLowerCase().trim();
                 
-                console.log(`🔗 Matching: "${stockSeriesName}" vs "${optionValue}" or "${batteryName}"`);
+
+                
+                // Convert inStock to number for proper comparison
+                const inStockNumber = parseInt(String(stockSeries.inStock)) || 0;
                 
                 return (stockSeriesName === optionValue || stockSeriesName === batteryName) && 
-                       stockSeries.inStock > 0;
+                       inStockNumber > 0;
               });
               
-              console.log(`✅ Option "${option.value}" ${stockItem ? 'MATCHED' : 'NOT MATCHED'}`);
-              return stockItem && stockItem.inStock > 0;
+
+              // Convert inStock to number for proper comparison
+              const stockItemInStock = stockItem ? parseInt(String(stockItem.inStock)) || 0 : 0;
+              return stockItem && stockItemInStock > 0;
             });
             
-            console.log('🎭 Filtered options:', filteredSeriesOptions);
+
           } else {
-            console.log('❌ No series stock found for brand');
+
           }
           // If no stock found for this brand or no series in stock, show empty array
         } else {
           // If no stock data at all, show all series (fallback for when stock isn't loaded yet)
-          console.log('⚠️ No stock data available, showing all series');
+
           filteredSeriesOptions = seriesOptions;
         }
+        
+        // Fallback: if filtering results in empty array, show all series options
+        if (filteredSeriesOptions.length === 0) {
+          console.log('⚠️ No series with stock found, showing all series as fallback');
+          filteredSeriesOptions = seriesOptions;
+        }
+        
 
-        setAccordionData((prevData: AccordionData) => ({
-          ...prevData,
-          [accordionIndex]: {
-            ...prevData[accordionIndex],
-            brandName: String(fieldValue),
-            seriesOption: filteredSeriesOptions,
-            series: '', // Reset series when brand changes
-          },
-        }));
+
+        console.log('📝 Setting accordion data for index:', accordionIndex);
+        console.log('📝 Brand name:', fieldValue);
+        console.log('📝 Series options to set:', filteredSeriesOptions);
+        
+        setAccordionData((prevData: AccordionData) => {
+          const newData = {
+            ...prevData,
+            [accordionIndex]: {
+              ...prevData[accordionIndex],
+              brandName: String(fieldValue),
+              seriesOption: filteredSeriesOptions,
+              series: '', // Reset series when brand changes
+            },
+          };
+          console.log('📝 Updated accordion data:', newData);
+          return newData;
+        });
       }
     } else if (fieldName === 'series') {
       const currentAccordion = accordionData[accordionIndex];

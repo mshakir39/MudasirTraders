@@ -18,9 +18,7 @@ import { useInvoiceForm } from '@/components/invoice/useInvoiceForm';
 import { useAccordionData } from '@/components/invoice/useAccordionData';
 import { useCustomers } from '@/components/invoice/useCustomers';
 
-const Button = React.lazy(() => import('@/components/button'));
-const Modal = React.lazy(() => import('@/components/modal'));
-const DataGridDemo = React.lazy(() => import('@/components/dataGrid'));
+
 
 interface InvoiceLayoutProps {
   categories: ICategory[];
@@ -38,6 +36,9 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
   const [modalData, setModalData] = useState<any>([]);
   const [editInvoiceData, setEditInvoiceData] = useState<any>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  console.log('📦 InvoiceLayout - Stock data received:', stock);
+  console.log('📦 InvoiceLayout - Categories received:', categories);
 
   // Custom hooks
   const { invoiceData, setInvoiceData, handleChange, resetInvoiceData } = useInvoiceForm();

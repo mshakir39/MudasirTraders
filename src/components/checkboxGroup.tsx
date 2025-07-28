@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { isEqual } from 'lodash';
+import React from 'react';
 
 interface CheckboxGroupProps {
   options: {
@@ -11,88 +10,66 @@ interface CheckboxGroupProps {
   checkedValues?: string[];
 }
 
-const CheckboxGroup: React.FC<CheckboxGroupProps> = React.memo(
-  ({ options, onChange, checkedValues = [], ...props }) => {
-    const [selectedValues, setSelectedValues] =
-      useState<string[]>(checkedValues);
+// Alternative implementation using different event approach
+const CheckboxGroup: React.FC<CheckboxGroupProps> = ({ 
+  options, 
+  onChange, 
+  checkedValues = [] 
+}) => {
+  const handleItemClick = (value: string) => {
+    console.log('Item clicked:', value);
+    const safeCheckedValues = Array.isArray(checkedValues) ? checkedValues : [];
+    const isCurrentlyChecked = safeCheckedValues.includes(value);
+    
+    const newValues = isCurrentlyChecked
+      ? safeCheckedValues.filter((v) => v !== value)
+      : [...safeCheckedValues, value];
+    
+    console.log('New values:', newValues);
+    onChange(newValues);
+  };
 
-    const handleCheckboxChange = (value: string, checked: boolean) => {
-      if (checked) {
-        setSelectedValues((prevValues) => [...prevValues, value]); // Add value to selected values array
-      } else {
-        setSelectedValues((prevValues) =>
-          prevValues.filter((v) => v !== value)
-        ); // Remove value from selected values array
-      }
-    };
+  const safeCheckedValues = Array.isArray(checkedValues) ? checkedValues : [];
 
-    useEffect(() => {
-      setSelectedValues(checkedValues);
-    }, [checkedValues, onChange]);
-
-    useEffect(() => {
-      onChange(selectedValues);
-    }, [selectedValues, onChange]);
-
-    return (
-      <div className='relative flex flex-col text-gray-700'>
-        <nav className='text-blue-gray-700 flex flex-wrap text-base font-normal'>
-          {options.map((option, index) => (
-            <div
-              role='button'
-              key={index}
-              className='hover:bg-blue-gray-50 hover:text-blue-[#5b4eea] focus:bg-blue-gray-50 focus:text-blue-[#5b4eea] active:bg-blue-gray-50 active:text-blue-[#5b4eea] flex w-fit items-center rounded-lg p-0 text-start leading-tight outline-none transition-all hover:bg-opacity-80 focus:bg-opacity-80 active:bg-opacity-80'
+  return (
+    <div className="flex flex-row flex-wrap gap-x-4 gap-y-2">
+      {options.map((option) => {
+        const isChecked = safeCheckedValues.includes(option.value);
+        
+        return (
+          <div
+            key={option.id}
+            className="relative flex items-center py-2 px-2 hover:bg-gray-50 rounded cursor-pointer border border-transparent hover:border-gray-200"
+            onClick={() => handleItemClick(option.value)}
+            style={{ 
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              MozUserSelect: 'none',
+              msUserSelect: 'none'
+            }}
+          >
+            {/* Visual checkbox - not a real input */}
+            <div 
+              className={`h-5 w-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors ${
+                isChecked 
+                  ? 'bg-blue-600 border-blue-600 text-white' 
+                  : 'border-gray-300 bg-white hover:border-blue-400'
+              }`}
             >
-              <label
-                htmlFor={option.id}
-                className='flex w-fit cursor-pointer items-center px-1 py-1'
-              >
-                <div className='mr-3 flex place-items-center'>
-                  <div className='inline-flex items-center'>
-                    <label
-                      className='relative flex cursor-pointer items-center rounded-full p-0'
-                      htmlFor={option.id}
-                    >
-                      <input
-                        id={option.id}
-                        type='checkbox'
-                        checked={selectedValues.includes(option.value)} // Check if value is in selected values array
-                        onChange={(e) =>
-                          handleCheckboxChange(option.value, e.target.checked)
-                        }
-                        className="before:content[''] border-blue-gray-200 before:bg-blue-gray-500 small peer relative h-4 w-4 cursor-pointer appearance-none rounded-md border transition-all before:absolute before:left-2/4 before:top-2/4 before:block before:h-8 before:w-8 before:-translate-x-2/4 before:-translate-y-2/4 before:rounded-full before:opacity-0 before:transition-opacity checked:border-[#5b4eea] checked:bg-[#5b4eea] checked:before:bg-[#5b4eea] hover:before:opacity-0" // Add "small" class to reduce checkbox size
-                      />
-                      <span className='pointer-events-none absolute left-2/4 top-2/4 -translate-x-2/4 -translate-y-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100'>
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          className='h-3.5 w-3.5'
-                          viewBox='0 0 20 20'
-                          fill='currentColor'
-                          stroke='currentColor'
-                          strokeWidth='1'
-                        >
-                          <path
-                            fillRule='evenodd'
-                            d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
-                            clipRule='evenodd'
-                          ></path>
-                        </svg>
-                      </span>
-                    </label>
-                  </div>
-                </div>
-                <p className='block text-sm leading-relaxed text-gray-500 antialiased'>
-                  {option.label}
-                </p>
-              </label>
+              {isChecked && (
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              )}
             </div>
-          ))}
-        </nav>
-      </div>
-    );
-  }
-);
-
-CheckboxGroup.displayName = 'CheckboxGroup';
+            <span className="ml-3 text-sm font-medium text-gray-700 cursor-pointer">
+              {option.label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 export default CheckboxGroup;

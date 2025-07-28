@@ -5,9 +5,9 @@ import CustomerSection from './CustomerSection';
 import ProductSection from './ProductSection';
 import PaymentSection from './PaymentSection';
 
-const Modal = React.lazy(() => import('@/components/modal'));
-const Button = React.lazy(() => import('@/components/button'));
-const Input = React.lazy(() => import('@/components/customInput'));
+import Modal from '@/components/modal';
+import Button from '@/components/button';
+import Input from '@/components/customInput';
 
 interface CreateInvoiceModalProps {
   isOpen: boolean;
@@ -171,7 +171,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       onClose={onClose}
       title='Create Invoice'
     >
-      <form onSubmit={handleSubmit} noValidate>
+      <form 
+        onSubmit={handleSubmit} 
+        noValidate
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
         <div className='mt-4 flex w-full flex-col gap-2'>
           <CustomerSection
             invoiceData={invoiceData}

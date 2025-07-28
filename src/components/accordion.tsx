@@ -72,6 +72,10 @@ const Accordion = ({
       <div
         className={`text-sm transition duration-300 ease-in-out ${expandedAccordionIndex === index ? 'h-auto' : 'hidden'}`}
         aria-hidden={expandedAccordionIndex !== index}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
       >
         {content}
       </div>

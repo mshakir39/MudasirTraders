@@ -1,7 +1,6 @@
 import React from 'react';
-
-const Input = React.lazy(() => import('@/components/customInput'));
-const Dropdown = React.lazy(() => import('@/components/dropdown'));
+import Input from '@/components/customInput';
+import Dropdown from '@/components/dropdown';
 
 interface CustomerSectionProps {
   invoiceData: any;
