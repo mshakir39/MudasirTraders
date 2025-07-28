@@ -171,14 +171,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       onClose={onClose}
       title='Create Invoice'
     >
-      <form 
-        onSubmit={handleSubmit} 
-        noValidate
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
-      >
+      <form onSubmit={handleSubmit} noValidate>
         <div className='mt-4 flex w-full flex-col gap-2'>
           <CustomerSection
             invoiceData={invoiceData}

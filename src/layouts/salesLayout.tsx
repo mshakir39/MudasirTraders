@@ -4,8 +4,7 @@ import DateRangePicker from "@/components/CustomDateRangePicker";
 import SalesSummaryCards from "@/components/sales/SalesSummaryCards";
 import SalesDataGrid from "@/components/sales/SalesDataGrid";
 import ProductsDetailModal from "@/components/sales/ProductDetailModal";
-
-const Dropdown = React.lazy(() => import('@/components/dropdown'));
+import Dropdown from '@/components/dropdown';
 
 interface DateRange {
   start: Date;

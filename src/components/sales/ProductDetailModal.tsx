@@ -1,6 +1,5 @@
 import React from 'react';
-
-const Modal = React.lazy(() => import('@/components/modal'));
+import Modal from '@/components/modal';
 
 interface ProductsDetailModalProps {
   isOpen: boolean;
@@ -17,10 +16,10 @@ const ProductsDetailModal: React.FC<ProductsDetailModalProps> = ({
 }) => {
   return (
     <Modal
+    size='large'
       isOpen={isOpen}
       onClose={onClose}
       title={`Products - ${selectedSaleInfo?.customerName || 'Sale Details'}`}
-      dialogPanelClass="!w-[60%]"
     >
       <div className="mt-4">
         {/* Sale Info */}

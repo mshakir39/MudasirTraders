@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import { VscPreview } from 'react-icons/vsc';
 import { convertDate } from '@/utils/convertTime';
-
-const DataGridDemo = React.lazy(() => import('@/components/dataGrid'));
+import DataGridDemo from '@/components/dataGrid';
 
 interface InvoiceGridProps {
   invoices: any[];

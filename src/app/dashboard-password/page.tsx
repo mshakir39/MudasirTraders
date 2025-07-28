@@ -23,14 +23,9 @@ const DashboardPasswordPage: React.FC = () => {
 
     try {
       if (password === DASHBOARD_PASSWORD) {
-        // Set dashboard session cookies
-        const currentTime = Date.now();
-        document.cookie = `dashboard-session=true; path=/; max-age=${30 * 60}`; // 30 minutes
-        document.cookie = `dashboard-unlock-time=${currentTime}; path=/; max-age=${30 * 60}`; // 30 minutes
-        
-        toast.success('Dashboard unlocked successfully!');
-        // Force a page reload to ensure cookies are properly set
-        window.location.href = '/';
+        // On successful password entry
+        sessionStorage.setItem('dashboard-unlocked', 'true');
+        router.push('/');
       } else {
         toast.error('Incorrect password. Please try again.');
         setPassword('');
@@ -109,9 +104,6 @@ const DashboardPasswordPage: React.FC = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              Demo password: <span className="font-mono bg-gray-100 px-2 py-1 rounded">admin123</span>
-            </p>
             <p className="text-xs text-blue-500 mt-2">
               You can navigate to other pages using the sidebar
             </p>

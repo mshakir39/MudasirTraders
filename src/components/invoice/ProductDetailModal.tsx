@@ -1,8 +1,7 @@
 import React from 'react';
 import { convertDate } from '@/utils/convertTime';
-
-const Modal = React.lazy(() => import('@/components/modal'));
-const DataGridDemo = React.lazy(() => import('@/components/dataGrid'));
+import Modal from '@/components/modal';
+import DataGridDemo from '@/components/dataGrid';
 
 interface ProductDetailModalProps {
   isOpen: boolean;
@@ -87,6 +86,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title='Products Detail'
+      size='large'
     >
       <DataGridDemo
         rows={data}

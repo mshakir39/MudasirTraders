@@ -24,10 +24,7 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
             name='customerType'
             value='WalkIn Customer'
             checked={invoiceData?.customerType === 'WalkIn Customer'}
-            onChange={(e) => setInvoiceData((prev: any) => ({ 
-              ...prev,
-              customerType: e.target.value
-            }))}
+            onChange={onChange}
           />
           Walk-In Customer
         </label>
@@ -37,26 +34,14 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
             name='customerType'
             value='Regular'
             checked={invoiceData?.customerType === 'Regular'}
-            onChange={(e) => setInvoiceData((prev: any) => ({ 
-              ...prev,
-              customerType: e.target.value
-            }))}
+            onChange={onChange}
           />
           Regular Customer
         </label>
       </div>
 
       {invoiceData?.customerType === 'Regular' && (
-        <div 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        >
+        <div>
           <Dropdown
             key={invoiceData.customerType}
             className='mt-2'

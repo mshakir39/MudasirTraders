@@ -5,9 +5,8 @@ import { convertDate } from '@/utils/convertTime';
 import { getAllSum } from '@/utils/getTotalSum';
 import { formatRupees } from '@/utils/formatRupees';
 import printHtmlAsPdf from '@/utils/printHtmlAsPdf';
-
-const Modal = React.lazy(() => import('@/components/modal'));
-const BasicTable = React.lazy(() => import('@/components/basicTable'));
+import Modal from '@/components/modal';
+import BasicTable from '@/components/basicTable';
 
 const dancingScript = Dancing_Script({ subsets: ['latin'] });
 

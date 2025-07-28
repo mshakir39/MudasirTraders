@@ -84,12 +84,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({
 
     return (
       <>
-        <div 
-          className='w-full'
-          onSubmit={(e) => {
-            e.preventDefault();
-          }}
-        >
+        <div className='w-full'>
           <div className='grid grid-cols-2 w-full gap-4 mb-4 mt-4'>
             <div className="w-full">
            

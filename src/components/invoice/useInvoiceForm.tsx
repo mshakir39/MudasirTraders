@@ -12,7 +12,20 @@ export const useInvoiceForm = () => {
 
   const handleChange = useCallback((e: any) => {
     const { name, value } = e.target;
-    setInvoiceData((prevInv: any) => ({ ...prevInv, [name]: value }));
+    
+    if (name === 'customerType' && value === 'WalkIn Customer') {
+      setInvoiceData((prevInv: any) => ({
+        ...prevInv,
+        customerType: value,
+        customerName: '',
+        customerAddress: '',
+        customerContactNumber: '',
+        clientName: '',
+        customerId: null,
+      }));
+    } else {
+      setInvoiceData((prevInv: any) => ({ ...prevInv, [name]: value }));
+    }
   }, []);
 
   const resetInvoiceData = () => {

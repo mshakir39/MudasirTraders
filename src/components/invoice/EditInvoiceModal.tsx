@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-
-const Modal = React.lazy(() => import('@/components/modal'));
-const Button = React.lazy(() => import('@/components/button'));
-const Input = React.lazy(() => import('@/components/customInput'));
+import Modal from '@/components/modal';
+import Button from '@/components/button';
+import Input from '@/components/customInput';
 
 interface EditInvoiceModalProps {
   isOpen: boolean;
