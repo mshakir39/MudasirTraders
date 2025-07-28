@@ -1,24 +1,32 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 function GoogleSignIn() {
   const { data: session } = useSession() as any;
+  const router = useRouter();
 
   const handleSignIn = () => {
     signIn('google', {
       callbackUrl: `/`,
     });
   };
+
+  // Redirect to dashboard password if already signed in
+  useEffect(() => {
+    if (session) {
+      router.push('/dashboard-password');
+    }
+  }, [session, router]);
+
   // checking if sessions exists
   if (session) {
-    // rendering components for logged in users
+    // Show loading while redirecting
     return (
-      <>
-        <p>Welcome {session.user?.id}. Signed In As</p>
-        <p>{session.user?.email}</p>
-        <button onClick={() => signOut()}>Sign out</button>
-      </>
+      <div className="text-center">
+        <p>Redirecting to dashboard...</p>
+      </div>
     );
   }
 
