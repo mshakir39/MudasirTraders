@@ -1,11 +1,9 @@
 'use client';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 
 function GoogleSignIn() {
   const { data: session } = useSession() as any;
-  const router = useRouter();
 
   const handleSignIn = () => {
     signIn('google', {
@@ -13,20 +11,17 @@ function GoogleSignIn() {
     });
   };
 
-  // Redirect to category if already signed in
-  useEffect(() => {
-    if (session) {
-      router.push('/category');
-    }
-  }, [session, router]);
+
 
   // checking if sessions exists
   if (session) {
-    // Show loading while redirecting
+    // rendering components for logged in users
     return (
-      <div className="text-center">
-        <p>Redirecting to category...</p>
-      </div>
+      <>
+        <p>Welcome {session.user?.id}. Signed In As</p>
+        <p>{session.user?.email}</p>
+        <button onClick={() => signOut()}>Sign out</button>
+      </>
     );
   }
 
