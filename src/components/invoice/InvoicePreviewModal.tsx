@@ -94,8 +94,8 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
             <span className='text-xl font-bold text-black'>Invoice From:</span>
             <span className='text-base text-[#6B6B6B]'>MUDASIR TRADERS-DG KHAN</span>
             <span className='text-base text-[#6B6B6B]'>+923349627745, +923215392445</span>
-            <span className='text-base text-[#6B6B6B]'>NEAR PULL PIYARE WALI. DERA GHAZI KHAN,</span>
-            <span className='text-base text-[#6B6B6B]'>MudassirQureshi@gmail.com</span>
+            <span className='text-base text-[#6B6B6B]'>General Bus Stand, near Badozai Market, Dera Ghazi Khan</span>
+            <span className='text-base text-[#6B6B6B]'>Owner@mudasirtraders.com</span>
           </div>
           <div className='flex w-[50%] flex-col text-right'>
             <span className='text-xl font-bold text-black'>Invoice To:</span>
