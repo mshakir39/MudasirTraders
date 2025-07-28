@@ -4,6 +4,7 @@ import { Dancing_Script } from 'next/font/google';
 import { convertDate } from '@/utils/convertTime';
 import { getAllSum } from '@/utils/getTotalSum';
 import { formatRupees } from '@/utils/formatRupees';
+import { removeParentheses } from '@/utils/formatters';
 import printHtmlAsPdf from '@/utils/printHtmlAsPdf';
 import Modal from '@/components/modal';
 import BasicTable from '@/components/basicTable';
@@ -22,9 +23,10 @@ const columns = [
     label: 'Name',
     renderCell: (item: any) => {
       const details = item?.batteryDetails;
-      return details
+      const name = details
         ? `${item.brandName} - ${details.name} (${details.plate}, ${details.ah}AH${details.type ? `, ${details.type}` : ''})`
         : `${item.brandName} - ${item.series}`;
+      return removeParentheses(name);
     },
   },
   { label: 'Quantity', renderCell: (item: any) => item.quantity },
@@ -99,7 +101,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
           </div>
           <div className='flex w-[50%] flex-col text-right'>
             <span className='text-xl font-bold text-black'>Invoice To:</span>
-            <span className='text-base text-[#6B6B6B]'>{data?.customerName}</span>
+            <span className='text-base text-[#6B6B6B]'>{removeParentheses(data?.customerName)}</span>
             <span className='text-base text-[#6B6B6B]'>{data?.customerContactNumber}</span>
             <span className='text-base text-[#6B6B6B]'>{data?.customerAddress}</span>
           </div>

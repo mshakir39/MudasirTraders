@@ -25,4 +25,9 @@ export function formatDate(date: Date): string {
     month: 'short',
     day: 'numeric'
   }).format(date);
-} 
+}
+
+export const removeParentheses = (text: string): string => {
+  if (!text) return text;
+  return text.replace(/\([^)]*\)/g, '').trim();
+}; 

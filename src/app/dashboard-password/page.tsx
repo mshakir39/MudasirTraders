@@ -3,13 +3,15 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { unlockDashboard } from '@/actions/dashboardActions';
 
 const DashboardPasswordPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const DASHBOARD_PASSWORD = 'admin123'; // Dashboard password
+  
+  console.log('Dashboard Password:', process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,10 +24,8 @@ const DashboardPasswordPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      if (password === DASHBOARD_PASSWORD) {
-        // On successful password entry
-        sessionStorage.setItem('dashboard-unlocked', 'true');
-        router.push('/');
+      if (password === process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD) {
+        await unlockDashboard();
       } else {
         toast.error('Incorrect password. Please try again.');
         setPassword('');

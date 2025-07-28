@@ -83,7 +83,7 @@ const DataGridDemo = React.memo(function DataGridDemo({
         <div className='flex items-center'>
           {Number(stockCost ? stockCost : 0) > 0 && (
             <span className='mr-4 font-bold'>
-              Total Stock Cost :{stockCost}
+              Total Stock Cost : {Math.round(stockCost || 0).toLocaleString()}
             </span>
           )}
           {showButton && (

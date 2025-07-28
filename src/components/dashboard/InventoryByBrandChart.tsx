@@ -21,8 +21,8 @@ export const InventoryByBrandChart: React.FC<InventoryByBrandChartProps> = ({ da
           <YAxis />
           <Tooltip 
             formatter={(value, name) => [
-              name === 'value' ? `Rs ${Number(value).toLocaleString()}` : value,
-              name === 'value' ? 'Inventory Value' : 'Product Count'
+              name === 'Inventory Value' ? `Rs ${Number(value).toLocaleString()}` : value,
+              name === 'Inventory Value' ? 'Inventory Value' : 'Product Count'
             ]}
           />
           <Legend />

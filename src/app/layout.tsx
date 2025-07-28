@@ -7,7 +7,6 @@ import 'react-data-grid/lib/styles.css';
 import 'rsuite-table/dist/css/rsuite-table.css';
 import SessionWrapper from '@/components/sessionWrapper';
 import SideBar from '@/components/sidebar';
-import DashboardGateWrapper from '@/components/DashboardGateWrapper';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -25,13 +24,11 @@ export default function RootLayout({
     <html lang='en'>
       <body className={inter.className}>
         <SessionWrapper>
-          <DashboardGateWrapper>
             <div className='flex min-h-screen w-full'>
               <SideBar />
               <main className='flex-1 overflow-x-hidden p-4'>{children}</main>
               <ToastContainer />
             </div>
-          </DashboardGateWrapper>
         </SessionWrapper>
       </body>
     </html>

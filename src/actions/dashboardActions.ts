@@ -117,30 +117,19 @@ export async function getInventoryByBrand() {
   }
 } 
 
-export async function logoutDashboard() {
+export async function unlockDashboard() {
   const cookieStore = cookies();
-  
-  // Clear dashboard session cookies
-  cookieStore.delete('dashboard-session');
-  cookieStore.delete('dashboard-unlock-time');
-  
-  // Redirect to dashboard password page
-  redirect('/dashboard-password');
+  cookieStore.set('dashboard-unlocked', 'true', {
+    path: '/',
+    maxAge: 60 * 30, // 30 minutes
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+  });
+  redirect('/');
 }
 
-export async function checkDashboardSession() {
+export async function lockDashboard() {
   const cookieStore = cookies();
-  
-  const dashboardSession = cookieStore.get('dashboard-session');
-  const dashboardUnlockTime = cookieStore.get('dashboard-unlock-time');
-  
-  if (!dashboardSession || !dashboardUnlockTime) {
-    return false;
-  }
-  
-  const unlockTime = parseInt(dashboardUnlockTime.value);
-  const currentTime = Date.now();
-  const sessionTimeout = 30 * 60 * 1000; // 30 minutes
-  
-  return currentTime - unlockTime < sessionTimeout;
+  cookieStore.delete('dashboard-unlocked');
+  redirect('/dashboard-password');
 } 

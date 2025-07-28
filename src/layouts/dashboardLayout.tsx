@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useTransition } from 'react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -10,7 +10,7 @@ import { StatsGrid } from '@/components/dashboard/StatsGrid';
 import { TopSellingProducts } from '@/components/dashboard/TopSellingProducts';
 import { SalesTrendChart } from '@/components/dashboard/SalesTrendChart';
 import { InventoryByBrandChart } from '@/components/dashboard/InventoryByBrandChart';
-import { logoutDashboard } from '@/actions/dashboardActions';
+import { lockDashboard } from '@/actions/dashboardActions';
 
 interface DateRange {
   start: Date;
@@ -57,12 +57,14 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
   const router = useRouter();
-
-  const lockDashboard = () => {
-    sessionStorage.removeItem('dashboard-unlocked');
-    router.push('/dashboard-password');
-  };
+  const [isPending, startTransition] = useTransition();
   
+  const handleLockDashboard = () => {
+    startTransition(() => {
+      lockDashboard();
+    });
+  };
+
   const [stats, setStats] = useState<StreamlinedDashboardStats>(() => {
     if (initialStats) {
       return {
@@ -205,7 +207,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
 
   return (
     <div className='p-6 bg-gray-50 min-h-screen'>
-      <DashboardHeader onLock={lockDashboard} />
+      <DashboardHeader onLock={handleLockDashboard} />
       
       <AlertsBanner alerts={stats.alerts} />
 
