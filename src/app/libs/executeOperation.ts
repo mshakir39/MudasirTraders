@@ -194,6 +194,22 @@ export async function executeOperation(
               },
             }
           );
+
+        case 'deleteSeriesStock':
+          // First check if the series exists in the stock
+          const existingStock = await db.collection(collectionName).findOne({
+            brandName,
+            'seriesStock.series': series
+          });
+          
+          if (!existingStock) {
+            throw new Error(`Series '${series}' not found in stock for brand '${brandName}'`);
+          }
+          
+          return await db.collection(collectionName).updateOne(
+            { brandName },
+            { $pull: { seriesStock: { series: series } } } as any
+          );
           
         case 'updateOne':
           // For categories, replace the entire series array and salesTax field

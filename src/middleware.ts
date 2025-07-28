@@ -18,6 +18,33 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Dashboard protection - check for dashboard session
+  if (url.pathname === '/') {
+    const dashboardSession = request.cookies.get('dashboard-session');
+    const dashboardUnlockTime = request.cookies.get('dashboard-unlock-time');
+    
+    // Check if dashboard session exists and is valid (30 minutes)
+    if (dashboardSession && dashboardUnlockTime) {
+      const unlockTime = parseInt(dashboardUnlockTime.value);
+      const currentTime = Date.now();
+      const sessionTimeout = 30 * 60 * 1000; // 30 minutes
+      
+      if (currentTime - unlockTime < sessionTimeout) {
+        // Valid session, allow access to dashboard
+        return NextResponse.next();
+      }
+    }
+    
+    // No valid dashboard session, redirect to dashboard password page
+    const dashboardPasswordUrl = new URL('/dashboard-password', request.url);
+    return NextResponse.redirect(dashboardPasswordUrl);
+  }
+
+  // Allow access to dashboard-password page
+  if (url.pathname === '/dashboard-password') {
+    return NextResponse.next();
+  }
+
   // If there is a session token and the request is for the signIn page, redirect to home page
   if (sessionToken && url.pathname === '/signIn') {
     const homeUrl = new URL('/category', request.url);

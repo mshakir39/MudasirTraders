@@ -1,6 +1,9 @@
 'use server';
 import { executeOperation } from '@/app/libs/executeOperation';
 
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+
 export async function getDashboardStats() {
   try {
     // Get total sales
@@ -112,4 +115,32 @@ export async function getInventoryByBrand() {
   } catch (error: any) {
     return { success: false, error: error.message };
   }
+} 
+
+export async function logoutDashboard() {
+  const cookieStore = cookies();
+  
+  // Clear dashboard session cookies
+  cookieStore.delete('dashboard-session');
+  cookieStore.delete('dashboard-unlock-time');
+  
+  // Redirect to dashboard password page
+  redirect('/dashboard-password');
+}
+
+export async function checkDashboardSession() {
+  const cookieStore = cookies();
+  
+  const dashboardSession = cookieStore.get('dashboard-session');
+  const dashboardUnlockTime = cookieStore.get('dashboard-unlock-time');
+  
+  if (!dashboardSession || !dashboardUnlockTime) {
+    return false;
+  }
+  
+  const unlockTime = parseInt(dashboardUnlockTime.value);
+  const currentTime = Date.now();
+  const sessionTimeout = 30 * 60 * 1000; // 30 minutes
+  
+  return currentTime - unlockTime < sessionTimeout;
 } 

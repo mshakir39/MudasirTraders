@@ -9,6 +9,8 @@ import { StatsGrid } from '@/components/dashboard/StatsGrid';
 import { TopSellingProducts } from '@/components/dashboard/TopSellingProducts';
 import { SalesTrendChart } from '@/components/dashboard/SalesTrendChart';
 import { InventoryByBrandChart } from '@/components/dashboard/InventoryByBrandChart';
+import { logoutDashboard } from '@/actions/dashboardActions';
+import { useDashboardAutoLock } from '@/utils/hooks/useDashboardAutoLock';
 
 interface DateRange {
   start: Date;
@@ -54,6 +56,9 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
+  // Auto-lock dashboard when navigating away
+  useDashboardAutoLock();
+  
   const [stats, setStats] = useState<StreamlinedDashboardStats>(() => {
     if (initialStats) {
       return {
@@ -196,7 +201,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
 
   return (
     <div className='p-6 bg-gray-50 min-h-screen'>
-      <DashboardHeader />
+      <DashboardHeader onLock={logoutDashboard} />
       
       <AlertsBanner alerts={stats.alerts} />
 

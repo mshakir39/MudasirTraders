@@ -5,7 +5,7 @@ export interface IBrand {
 
 export interface IBatterySeries {
   name: string;
-  plate: string;
+  plate: string | number;
   ah: number;
   type?: string;
   retailPrice?: number;

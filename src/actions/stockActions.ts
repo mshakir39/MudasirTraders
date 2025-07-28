@@ -300,4 +300,50 @@ export async function checkSeriesExistsInStock(field: string, value: string) {
   } catch (error: any) {
     return { success: false, error: error.message };
   }
+}
+
+export async function deleteStock(brandName: string, series: string) {
+  try {
+    const { ObjectId } = require('mongodb');
+    
+    // First save current state to history before deletion
+    const db = await connectToMongoDB();
+    if (!db) {
+      throw new Error('Failed to connect to database');
+    }
+    
+    const collection = db.collection('stock');
+    const historyCollection = db.collection('stockHistory');
+    
+    // Find current stock for this brand and series
+    const currentStock = await collection.findOne({ brandName });
+    if (currentStock) {
+      const currentSeries = currentStock.seriesStock?.find((s: SeriesStock) => s.series === series);
+      
+      if (currentSeries) {
+        // Save deletion to history
+        await historyCollection.insertOne({
+          brandName: brandName,
+          series: series,
+          oldQuantity: currentSeries.inStock || 0,
+          newQuantity: 0,
+          quantityDifference: -(currentSeries.inStock || 0),
+          oldCost: currentSeries.productCost || 0,
+          newCost: 0,
+          costDifference: -(currentSeries.productCost || 0),
+          historyDate: new Date(),
+          action: 'deleted'
+        });
+      }
+    }
+
+    // Then delete the series from stock
+    const result = await executeOperation('stock', 'deleteSeriesStock', {
+      brandName,
+      series,
+    });
+    return { success: true, data: result };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
 } 

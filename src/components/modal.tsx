@@ -7,7 +7,7 @@ interface ModalProps {
   onOpen?: () => void;
   onClose?: () => void;
   children: ReactNode;
-  title?: string | null;
+  title?: ReactNode;
   dialogPanelClass?: string;
   parentClass?: string;
   preventBackdropClose?: boolean; // New prop to control backdrop closing
@@ -25,7 +25,7 @@ const Modal: FunctionComponent<ModalProps> = ({
   onOpen,
   onClose,
   children,
-  title = 'Modal Title',
+  title = 'Modal Title' as ReactNode,
   dialogPanelClass,
   parentClass,
   preventBackdropClose = false, // Default to allow backdrop close

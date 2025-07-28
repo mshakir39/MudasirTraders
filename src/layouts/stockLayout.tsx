@@ -14,16 +14,16 @@ import Button from '@/components/button';
 
 import arrayStringToArrayObject from '@/utils/arrayStringToArrayObject';
 import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
-import { createStock, updateStock, getStockHistory } from '@/actions/stockActions';
+import { createStock, updateStock, getStockHistory, deleteStock } from '@/actions/stockActions';
 import { ICategory, IDropdownOption, IStock } from '../../interfaces';
 import { getSeries } from '@/models/getSeries';
-import { FaEdit, FaHistory } from 'react-icons/fa';
+import { FaEdit, FaHistory, FaTrash } from 'react-icons/fa';
 import { convertDate } from '@/utils/convertTime';
 import DataGridDemo from '@/components/dataGrid';
 
 interface BatteryDetails {
   name: string;
-  plate: string;
+  plate: string | number | null;
   ah: number;
   type?: string;
 }
@@ -101,6 +101,9 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState<boolean>(false);
   const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<any | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [deleteItem, setDeleteItem] = useState<{ brandName: string; series: string; seriesName: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const gridColumns = [
     {
@@ -109,9 +112,11 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
       width: 250,
       renderCell: (item: { row: StockBatteryData }) => {
         const details = item.row.batteryDetails;
-        return details
-          ? `${details.name} (${details.plate}, ${details.ah}AH${details.type ? `, ${details.type}` : ''})`
-          : item.row.series;
+        if (details) {
+          const plateDisplay = details.plate ? details.plate : 'N/A';
+          return `${details.name} (${plateDisplay}, ${details.ah}AH${details.type ? `, ${details.type}` : ''})`;
+        }
+        return item.row.series;
       },
     },
     {
@@ -166,6 +171,20 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
             className='cursor-pointer text-blue-600 hover:text-blue-800'
             onClick={() => handleViewStockHistory(currentBrandName, item.row.series)}
             title="View History"
+          />
+        </div>
+      ),
+    },
+    {
+      field: 'delete',
+      headerName: '',
+      width: 80,
+      renderCell: (item: { row: StockBatteryData }) => (
+        <div className='flex h-full w-full items-center justify-start'>
+          <FaTrash
+            className='cursor-pointer text-red-600 hover:text-red-800'
+            onClick={() => handleDeleteClick(item.row, currentBrandName)}
+            title="Delete Stock"
           />
         </div>
       ),
@@ -313,16 +332,22 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
       if (category) {
         // Cast the series to BatteryDetails[] since we know the structure
         const seriesArray = category.series as unknown as BatteryDetails[];
-        const seriesOptions = seriesArray.map((battery) => ({
-          label: `${battery.name} (${battery.plate}, ${battery.ah}AH${battery.type ? `, ${battery.type}` : ''})`,
-          value: battery.name,
-          batteryDetails: {
-            name: battery.name,
-            plate: battery.plate,
-            ah: battery.ah,
-            type: battery.type,
-          },
-        }));
+        const seriesOptions = seriesArray.map((battery) => {
+          // Handle null/undefined plate values
+          const plateDisplay = battery.plate ? battery.plate : 'N/A';
+          const label = `${battery.name} (${plateDisplay}, ${battery.ah}AH${battery.type ? `, ${battery.type}` : ''})`;
+          
+          return {
+            label,
+            value: battery.name,
+            batteryDetails: {
+              name: battery.name,
+              plate: battery.plate || 'N/A',
+              ah: battery.ah,
+              type: battery.type,
+            },
+          };
+        });
         console.log('seriesOptions created:', seriesOptions);
         setSeriesOptions(seriesOptions);
       }
@@ -505,6 +530,38 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     }
   };
 
+  const handleDeleteClick = (item: StockBatteryData, brandName: string) => {
+    setDeleteItem({
+      brandName,
+      series: item.series,
+      seriesName: item.batteryDetails?.name || item.series
+    });
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteStock = async () => {
+    if (!deleteItem) return;
+    
+    try {
+      setIsDeleting(true);
+      const result = await deleteStock(deleteItem.brandName, deleteItem.series);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to delete stock');
+      }
+      
+      toast.success('Stock deleted successfully');
+      await revalidatePathCustom('/stock');
+      setIsDeleteModalOpen(false);
+      setDeleteItem(null);
+    } catch (error) {
+      console.error('Error deleting stock:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete stock');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className='min-h-screen bg-gray-50 sm:bg-white pt-14 sm:pt-0'>
       {/* Mobile Header */}
@@ -639,6 +696,13 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                           title="View History"
                         >
                           <FaHistory className='h-4 w-4' />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteClick(row, currentBrandName)}
+                          className='rounded-lg bg-red-100 p-2 text-red-600 hover:bg-red-200 touch-manipulation'
+                          title="Delete Stock"
+                        >
+                          <FaTrash className='h-4 w-4' />
                         </button>
                       </div>
                     </div>
@@ -939,6 +1003,72 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
               )}
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeleteItem(null);
+        }}
+        title="Delete Stock"
+        dialogPanelClass="w-full max-w-sm sm:max-w-md mx-4 sm:mx-auto"
+      >
+        <div className="space-y-4">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <FaTrash className="h-8 w-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Delete Stock Item
+            </h3>
+            <p className="text-sm text-gray-500">
+              Are you sure you want to delete this stock item? This action cannot be undone.
+            </p>
+          </div>
+
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h4 className="text-sm font-medium text-red-800">
+                  Stock Item to Delete
+                </h4>
+                <div className="mt-2 text-sm text-red-700">
+                  <p><strong>Brand:</strong> {deleteItem?.brandName}</p>
+                  <p><strong>Series:</strong> {deleteItem?.seriesName}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 pt-4">
+            <Button
+              className="w-full h-12 text-base font-medium focus:outline-none focus:ring-0"
+              variant="fill"
+              text="Delete Stock"
+              onClick={handleDeleteStock}
+              isPending={isDeleting}
+              disabled={isDeleting}
+              style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
+            />
+            <Button
+              className="w-full h-12 text-base focus:outline-none focus:ring-0"
+              variant="outline"
+              text="Cancel"
+              type="button"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setDeleteItem(null);
+              }}
+            />
+          </div>
         </div>
       </Modal>
     </div>

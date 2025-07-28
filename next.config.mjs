@@ -8,9 +8,6 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    serverActions: true,
-  },
   // Ensure API routes are properly handled
   async headers() {
     return [

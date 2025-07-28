@@ -332,9 +332,9 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
     const query = searchQuery.toLowerCase().trim();
     return detailData.series.filter(
       (item: BatteryData) =>
-        item.name.toLowerCase().includes(query) ||
-        item.plate.toLowerCase().includes(query) ||
-        item.ah.toString().includes(query) ||
+        (item.name && item.name.toLowerCase().includes(query)) ||
+        (item.plate && item.plate.toString().toLowerCase().includes(query)) ||
+        (item.ah && item.ah.toString().includes(query)) ||
         (item.type && item.type.toLowerCase().includes(query))
     );
   }, [detailData, searchQuery]);
@@ -374,7 +374,32 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
           setIsModalOpen(false);
           setSearchQuery('');
         }}
-        title={detailData && detailData.brandName}
+        title={
+          detailData ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">{detailData.brandName}</h2>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <span className="font-medium">
+                        {filteredSeries.length} {filteredSeries.length === 1 ? 'Product' : 'Products'}
+                      </span>
+                    </div>
+                    {searchQuery && (
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        filtered from {detailData.series.length}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : undefined
+        }
       >
         {/* Fully Responsive Battery List Component */}
         <div className='max-h-[80vh] overflow-y-auto'>
