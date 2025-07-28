@@ -13,10 +13,10 @@ function GoogleSignIn() {
     });
   };
 
-  // Redirect to dashboard password if already signed in
+  // Redirect to category if already signed in
   useEffect(() => {
     if (session) {
-      router.push('/dashboard-password');
+      router.push('/category');
     }
   }, [session, router]);
 
@@ -25,7 +25,7 @@ function GoogleSignIn() {
     // Show loading while redirecting
     return (
       <div className="text-center">
-        <p>Redirecting to dashboard...</p>
+        <p>Redirecting to category...</p>
       </div>
     );
   }

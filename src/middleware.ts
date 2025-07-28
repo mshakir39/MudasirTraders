@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
   }
   
   if (authToken && pathname === '/signIn') {
-    return NextResponse.redirect(new URL('/dashboard-password', url));
+    return NextResponse.redirect(new URL('/category', url));
   }
 
   // Step 2: Handle Dashboard Access
