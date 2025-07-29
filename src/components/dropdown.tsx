@@ -85,31 +85,31 @@ const DropdownComponent: FunctionComponent<DropdownProps> = ({
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        disabled={disabled}
+            disabled={disabled}
         className={`${disabled && 'pointer-events-none cursor-no-drop text-gray-400'} z-10 inline-flex w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium 
-        ${
-          selectedOption && selectedOption.label
-            ? 'text-black'
-            : 'text-gray-400 '
-        }
+            ${
+              selectedOption && selectedOption.label
+                ? 'text-black'
+                : 'text-gray-400 '
+            }
          hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-      >
-        {selectedOption && selectedOption.label
-          ? selectedOption.label
-          : placeholder}
+          >
+            {selectedOption && selectedOption.label
+              ? selectedOption.label
+              : placeholder}
       </button>
 
-      <input
-        type='text'
-        className='pointer-events-none absolute inset-0 z-0 h-full w-full opacity-0'
-        name={name}
-        value={inputValue}
-        required={required}
+          <input
+            type='text'
+            className='pointer-events-none absolute inset-0 z-0 h-full w-full opacity-0'
+            name={name}
+            value={inputValue}
+            required={required}
         readOnly
       />
       
@@ -118,8 +118,8 @@ const DropdownComponent: FunctionComponent<DropdownProps> = ({
           {options.length > 0 ? (
             options.map((option, index) => (
               <div key={index} className='relative'>
-                <button
-                  name={name}
+                    <button
+                      name={name}
                   className='group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-900 hover:bg-[#5b4eea] hover:text-white'
                   onClick={(event) => {
                     event.preventDefault();
@@ -127,10 +127,10 @@ const DropdownComponent: FunctionComponent<DropdownProps> = ({
                     handleSelectOption(event, option);
                     setIsOpen(false);
                   }}
-                >
-                  {option.icon && <span className='mr-2'>{option.icon}</span>}
-                  <span className=''>{option.label}</span>
-                </button>
+                    >
+                      {option.icon && <span className='mr-2'>{option.icon}</span>}
+                      <span className=''>{option.label}</span>
+                    </button>
               </div>
             ))
           ) : (
@@ -138,8 +138,8 @@ const DropdownComponent: FunctionComponent<DropdownProps> = ({
               No options available
             </div>
           )}
-        </div>
-      )}
+                  </div>
+                )}
     </div>
   );
 };

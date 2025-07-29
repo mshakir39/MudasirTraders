@@ -13,6 +13,7 @@ import { FaEye, FaUpload } from 'react-icons/fa6';
 import { useCategoryStore } from '@/store/categoryStore';
 import PdfUploadModal from '@/components/PdfUploadModal';
 import { ObjectId } from 'mongodb';
+import { ColumnDef } from '@tanstack/react-table';
 
 // Use IBatterySeries directly instead of creating a new interface
 type BatteryData = IBatterySeries;
@@ -133,32 +134,60 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
     }
   };
 
-  const columns = [
+  const columns = React.useMemo<ColumnDef<CategoryWithBatteryData>[]>(() => [
     {
-      label: 'BrandName',
-      renderCell: (item: CategoryWithBatteryData) => item.brandName,
+      accessorKey: 'brandName',
+      header: 'BrandName',
     },
     {
-      label: 'Series',
-      renderCell: (item: CategoryWithBatteryData) =>
-        item.series.map((s) => s.name).join(', '),
+      accessorKey: 'series',
+      header: 'Series',
+      cell: ({ row }) => {
+        const series = row.original.series;
+        if (series.length === 0) return 'No series';
+        
+        // Show first 3 series, then indicate how many more
+        const displaySeries = series.slice(0, 3).map(s => s.name);
+        const remainingCount = series.length - 3;
+        
+        return (
+          <div className="space-y-1">
+            <div className="text-sm">
+              {displaySeries.join(', ')}
+              {remainingCount > 0 && (
+                <span className="text-gray-500 ml-1">
+                  +{remainingCount} more
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-gray-400">
+              {series.length} total series
+            </div>
+          </div>
+        );
+      },
     },
     {
-      label: '',
-      renderCell: (item: CategoryWithBatteryData) => (
-        <div className="flex gap-2">
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
           <FaEye
-            className='cursor-pointer'
+            className='cursor-pointer text-blue-600 hover:text-blue-800 transition-colors'
             title='View'
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setIsModalOpen(true);
-              setDetailData(item);
-              setGlobalSalesTax(item.salesTax.toString());
+              setDetailData(row.original);
+              setGlobalSalesTax(row.original.salesTax.toString());
             }}
           />
           <button
-            onClick={() => handleViewHistory(item.id!)}
-            className="px-2 py-1 text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewHistory(row.original.id!);
+            }}
+            className="flex items-center gap-1 px-2 py-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
             disabled={isLoadingHistory}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,7 +198,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
         </div>
       ),
     },
-  ];
+  ], [isLoadingHistory, handleViewHistory]);
 
   const handlePdfUploadSuccess = async (data: {
     brandName: string;
@@ -352,9 +381,13 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
         </div>
       </div>
 
-      <Table
-        data={categories}
+      <Table<CategoryWithBatteryData>
+        data={categories as CategoryWithBatteryData[]}
         columns={columns}
+        enableSearch={true}
+        searchPlaceholder="Search categories..."
+        enablePagination={true}
+        pageSize={10}
         showButton={false}
       />
 

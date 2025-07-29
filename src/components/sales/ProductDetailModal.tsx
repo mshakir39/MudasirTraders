@@ -16,7 +16,7 @@ const ProductsDetailModal: React.FC<ProductsDetailModalProps> = ({
 }) => {
   return (
     <Modal
-    size='large'
+      size='large'
       isOpen={isOpen}
       onClose={onClose}
       title={`Products - ${selectedSaleInfo?.customerName || 'Sale Details'}`}
@@ -74,6 +74,9 @@ const ProductsDetailModal: React.FC<ProductsDetailModalProps> = ({
                       Product
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Warranty Code
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Quantity
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -99,6 +102,9 @@ const ProductsDetailModal: React.FC<ProductsDetailModalProps> = ({
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
+                        {product.warrentyCode || '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
                         {Number(product.quantity) || 0}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
@@ -117,7 +123,7 @@ const ProductsDetailModal: React.FC<ProductsDetailModalProps> = ({
               <table className="min-w-full">
                 <tfoot>
                   <tr>
-                    <td colSpan={3} className="px-4 py-3 text-sm font-medium text-gray-900 text-right">
+                    <td colSpan={4} className="px-4 py-3 text-sm font-medium text-gray-900 text-right">
                       Total ({selectedSaleProducts.length} items):
                     </td>
                     <td className="px-4 py-3 text-sm font-bold text-gray-900">

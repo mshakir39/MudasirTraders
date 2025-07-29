@@ -88,33 +88,33 @@ const ProductSection: React.FC<ProductSectionProps> = ({
           <div className='grid grid-cols-2 w-full gap-4 mb-4 mt-4'>
             <div className="w-full">
            
-              <Dropdown
+            <Dropdown
                 key={`brand-${accordionIndex}`}
                 className={'w-full'}
-                options={brandOptions}
+              options={brandOptions}
                 onSelect={(option) => {
                   accordionMethods.handleAccordionChange(accordionIndex, 'brandName', option.value);
                 }}
-                placeholder='Select Brand'
-                defaultValue={accordionData[accordionIndex]?.brandName}
-                required
-              />
+              placeholder='Select Brand'
+              defaultValue={accordionData[accordionIndex]?.brandName}
+              required
+            />
             </div>
             <div className="w-full">
           
-              <Dropdown
+            <Dropdown
                 key={`series-${accordionIndex}`}
                 className={'w-full'}
-                options={getFilteredSeriesOptions(accordionIndex)}
+              options={getFilteredSeriesOptions(accordionIndex)}
                 onSelect={(option) => {
                   accordionMethods.handleAccordionChange(accordionIndex, 'series', option.value);
                 }}
-                placeholder='Select Series'
-                defaultValue={accordionData[accordionIndex]?.series}
-                required
-              />
-            </div>
-            
+              placeholder='Select Series'
+              defaultValue={accordionData[accordionIndex]?.series}
+              required
+            />
+          </div>
+          
 
           </div>
           
@@ -122,89 +122,89 @@ const ProductSection: React.FC<ProductSectionProps> = ({
           
           <div className='grid grid-cols-2 w-full gap-4 mb-4'>
             <div className="w-full">
-              <Input
+            <Input
                 parentClass='w-full'
-                type='number'
-                label='Product Price'
-                name='productPrice'
-                min={1}
-                step="0.01"
-                required
-                value={accordionDataItem.productPrice}
+              type='number'
+              label='Product Price'
+              name='productPrice'
+              min={1}
+              step="0.01"
+              required
+              value={accordionDataItem.productPrice}
                 onChange={(e) => {
-                  accordionMethods.handleAccordionChange(
-                    accordionIndex,
-                    'productPrice',
-                    e.target.value
+                accordionMethods.handleAccordionChange(
+                  accordionIndex,
+                  'productPrice',
+                  e.target.value
                   );
                 }}
-              />
+            />
             </div>
             <div className="w-full">
-              <Input
+            <Input
                 parentClass='w-full'
-                type='number'
-                label='Quantity'
-                value={accordionDataItem.quantity}
-                onChange={(e) => {
-                  accordionMethods.handleAccordionChange(accordionIndex, 'quantity', e.target.value);
-                }}
-              />
+              type='number'
+              label='Quantity'
+              value={accordionDataItem.quantity}
+              onChange={(e) => {
+                accordionMethods.handleAccordionChange(accordionIndex, 'quantity', e.target.value);
+              }}
+            />
             </div>
           </div>
 
           <div className='grid grid-cols-2 w-full gap-4 mb-4'>
             <div className="w-full">
-              <Input
+            <Input
                 parentClass='w-full'
-                type='date'
+              type='date'
                 label='Warranty Start Date'
-                name='warrentyStartDate'
-                value={accordionDataItem.warrentyStartDate}
-                onChange={(e) =>
-                  accordionMethods.handleAccordionChange(
-                    accordionIndex,
-                    'warrentyStartDate',
-                    e.target.value
-                  )
-                }
-              />
+              name='warrentyStartDate'
+              value={accordionDataItem.warrentyStartDate}
+              onChange={(e) =>
+                accordionMethods.handleAccordionChange(
+                  accordionIndex,
+                  'warrentyStartDate',
+                  e.target.value
+                )
+              }
+            />
             </div>
             <div className="w-full">
-              <Input
+            <Input
                 parentClass='w-full'
-                type='number'
-                label='Warranty Duration (Months)'
-                name='warrentyDuration'
-                min={1}
-                value={accordionDataItem.warrentyDuration}
-                onChange={(e) =>
-                  accordionMethods.handleAccordionChange(
-                    accordionIndex,
-                    'warrentyDuration',
-                    e.target.value
-                  )
-                }
-              />
+              type='number'
+              label='Warranty Duration (Months)'
+              name='warrentyDuration'
+              min={1}
+              value={accordionDataItem.warrentyDuration}
+              onChange={(e) =>
+                accordionMethods.handleAccordionChange(
+                  accordionIndex,
+                  'warrentyDuration',
+                  e.target.value
+                )
+              }
+            />
             </div>
           </div>
         </div>
 
         <div className='w-full mb-4'>
-          <Input
+        <Input
             parentClass='w-full'
-            type='text'
+          type='text'
             label='Warranty Code'
-            name='warrentyCode'
-            value={accordionDataItem.warrentyCode}
-            onChange={(e) =>
-              accordionMethods.handleAccordionChange(
-                accordionIndex,
-                'warrentyCode',
-                e.target.value
-              )
-            }
-          />
+          name='warrentyCode'
+          value={accordionDataItem.warrentyCode}
+          onChange={(e) =>
+            accordionMethods.handleAccordionChange(
+              accordionIndex,
+              'warrentyCode',
+              e.target.value
+            )
+          }
+        />
         </div>
       </>
     );

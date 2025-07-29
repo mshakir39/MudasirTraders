@@ -7,10 +7,10 @@ import {
   GridColumnMenuProps,
 } from '@mui/x-data-grid';
 import { useState } from 'react';
-import { FaSearch } from 'react-icons/fa';
 import Button from './button';
 import { filterItems } from '@/utils/filterItems';
 import { v4 as uuidv4 } from 'uuid';
+import SearchField from './SearchField';
 
 interface DataGridDemoProps {
   rows: any[];
@@ -21,6 +21,8 @@ interface DataGridDemoProps {
   buttonTitle?: string;
   showButton?: boolean;
   stockCost?: number;
+  enablePagination?: boolean;
+  pageSize?: number;
 }
 
 const DataGridDemo = React.memo(function DataGridDemo({
@@ -32,6 +34,8 @@ const DataGridDemo = React.memo(function DataGridDemo({
   buttonTitle = 'Create',
   showButton = true,
   stockCost,
+  enablePagination = false,
+  pageSize = 5,
   ...rest
 }: DataGridDemoProps) {
   const [search, setSearch] = useState<string>('');
@@ -42,8 +46,7 @@ const DataGridDemo = React.memo(function DataGridDemo({
     setFilteredRows(rows);
   }, [rows]);
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const searchQuery = event.target.value;
+  const handleSearch = (searchQuery: string) => {
     setSearch(searchQuery);
     if (timeoutId) {
       clearTimeout(timeoutId);
@@ -55,40 +58,63 @@ const DataGridDemo = React.memo(function DataGridDemo({
     setTimeoutId(newTimeoutId);
   };
 
-  // const filterItemsMemoized = React.useCallback(
-  //   (items: any[], searchQuery: string) => {
-  //     return filterItems(items, searchQuery);
-  //   },
-  //   []
-  // );
+  const gridProps = {
+    getRowId: (row: any) => uuidv4(),
+    rows: filteredRows,
+    columns,
+    disableRowSelectionOnClick: true,
+    autoHeight: true,
+    rowHeight: 52,
+    ...rest
+  };
+
+  if (enablePagination) {
+    Object.assign(gridProps, {
+      initialState: {
+        pagination: {
+          paginationModel: {
+            pageSize: pageSize,
+          },
+        },
+      },
+      pageSizeOptions: [pageSize],
+      paginationMode: 'client' as const,
+    });
+  } else {
+    // When pagination is disabled, configure grid to show all rows
+    Object.assign(gridProps, {
+      hideFooter: true,
+      hideFooterPagination: true,
+      disableColumnFilter: false,
+      disableVirtualization: true, // Disable virtualization to show all rows
+      rowCount: filteredRows.length,
+      initialState: {
+        pagination: {
+          paginationModel: {
+            pageSize: 100000, // Set a very large number to show all rows
+          },
+        },
+      },
+    });
+  }
 
   return (
     <div className={`flex w-full flex-col px-4 ${tableParentClassName}`}>
-      <div className='mt-6 flex items-center justify-between'>
-        <div className={`relative ${searchParentClassName}`}>
-          <input
-            className='h-10  w-full  rounded-xl p-4 outline-none'
-            placeholder='Enter to Search'
-            style={{
-              boxShadow:
-                'rgba(0, 0, 0, 0.16) 0px 10px 36px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px',
-            }}
-            id='search'
-            type='text'
-            value={search}
-            onChange={handleSearch}
-          />
-          <FaSearch className='absolute bottom-3 right-3 text-[#5b4eea]' />
-        </div>
-        <div className='flex items-center'>
+      <div className='mt-6 flex items-center justify-between gap-4'>
+        <SearchField
+          value={search}
+          onChange={handleSearch}
+          placeholder="Search..."
+          className={`w-80 ${searchParentClassName}`}
+        />
+        <div className='flex items-center gap-4'>
           {Number(stockCost ? stockCost : 0) > 0 && (
-            <span className='mr-4 font-bold'>
-              Total Stock Cost : {Math.round(stockCost || 0).toLocaleString()}
+            <span className='font-bold whitespace-nowrap'>
+              Total Stock Cost: {Math.round(stockCost || 0).toLocaleString()}
             </span>
           )}
           {showButton && (
             <Button
-              className='my-2'
               variant='fill'
               text={buttonTitle}
               onClick={buttonOnClick}
@@ -97,26 +123,17 @@ const DataGridDemo = React.memo(function DataGridDemo({
         </div>
       </div>
 
-      <br />
-      {filteredRows && filteredRows.length > 0 ? (
-        <DataGrid
-          getRowId={(row) => uuidv4()}
-          rows={filteredRows}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: {
-                pageSize: 5,
-              },
-            },
-          }}
-          pageSizeOptions={[5]}
-          disableRowSelectionOnClick
-          {...rest}
-        />
-      ) : (
-        <div className='flex w-full justify-center'>No Data Found</div>
-      )}
+      <div className="mt-6">
+        {filteredRows && filteredRows.length > 0 ? (
+          <div style={{ width: '100%', height: '100%' }}>
+            <DataGrid {...gridProps} />
+          </div>
+        ) : (
+          <div className='flex w-full justify-center py-8 text-gray-500'>
+            No data found
+          </div>
+        )}
+      </div>
     </div>
   );
 });

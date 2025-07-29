@@ -1,25 +1,22 @@
 'use client';
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import dynamic from 'next/dynamic';
-
-// const Table = dynamic(() => import('@/components/table'));
-const Dropdown = dynamic(() => import('@/components/dropdown'));
-const Tabs = dynamic(() => import('@/components/tabs'));
-
-// Import components directly instead of using dynamic import
+import Table from '@/components/table';
+import { ColumnDef } from '@tanstack/react-table';
 import Modal from '@/components/modal';
 import Input from '@/components/customInput';
 import Button from '@/components/button';
-
-import arrayStringToArrayObject from '@/utils/arrayStringToArrayObject';
+import { FaEdit, FaHistory, FaTrash } from 'react-icons/fa';
 import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
 import { createStock, updateStock, getStockHistory, deleteStock } from '@/actions/stockActions';
 import { ICategory, IDropdownOption, IStock } from '../../interfaces';
 import { getSeries } from '@/models/getSeries';
-import { FaEdit, FaHistory, FaTrash } from 'react-icons/fa';
 import { convertDate } from '@/utils/convertTime';
-import DataGridDemo from '@/components/dataGrid';
+
+const Dropdown = dynamic(() => import('@/components/dropdown'));
+const Tabs = dynamic(() => import('@/components/tabs'));
 
 interface BatteryDetails {
   name: string;
@@ -29,12 +26,13 @@ interface BatteryDetails {
 }
 
 interface StockBatteryData {
-  brandName: string;
   series: string;
-  productCost: number;
-  inStock: number;
-  updatedDate: string;
+  productCost: string | number;
+  inStock: string | number;
+  updatedDate?: string;
   batteryDetails?: BatteryDetails;
+  soldCount?: number;
+  brandName: string; // Make this required
 }
 
 interface StockData {
@@ -76,6 +74,11 @@ interface FormStockData {
   batteryDetails?: BatteryDetails;
 }
 
+interface DeleteStockParams {
+  brandName: string;
+  series: string;
+}
+
 const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalType, setModalType] = useState<string>('');
@@ -105,91 +108,137 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   const [deleteItem, setDeleteItem] = useState<{ brandName: string; series: string; seriesName: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
-  const gridColumns = [
-    {
-      field: 'series',
-      headerName: 'Series',
-      width: 250,
-      renderCell: (item: { row: StockBatteryData }) => {
-        const details = item.row.batteryDetails;
-        if (details) {
-          const plateDisplay = details.plate ? details.plate : 'N/A';
-          return `${details.name} (${plateDisplay}, ${details.ah}AH${details.type ? `, ${details.type}` : ''})`;
+  const handleEditClick = useCallback((item: StockBatteryData, brandName: string) => {
+    setStockData({
+      brandName,
+      series: item.series,
+      productCost: item.productCost.toString(),
+      inStock: item.inStock.toString(),
+      batteryDetails: item.batteryDetails,
+    });
+    setModalType('edit');
+    setIsModalOpen(true);
+  }, []);
+
+  const handleDeleteClick = useCallback(async (item: StockBatteryData, brandName: string) => {
+    if (window.confirm('Are you sure you want to delete this stock?')) {
+      setIsDeleting(true);
+      try {
+        const result = await deleteStock(brandName, item.series);
+
+        if (result.success) {
+          toast.success('Stock deleted successfully');
+          await revalidatePathCustom('/stock');
+          fetchData(brandName);
+        } else {
+          toast.error(result.error || 'Failed to delete stock');
         }
-        return item.row.series;
-      },
+      } catch (error) {
+        console.error('Error deleting stock:', error);
+        toast.error('An error occurred while deleting stock');
+      } finally {
+        setIsDeleting(false);
+      }
+    }
+  }, []);
+
+  const handleViewStockHistory = useCallback(async (brandName: string, series?: string) => {
+    if (!brandName) return;
+    try {
+      setIsLoadingHistory(true);
+      const result = await getStockHistory(brandName, series);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to fetch stock history');
+      }
+      
+      if (!result.data || !Array.isArray(result.data)) {
+        throw new Error('Invalid stock history data received');
+      }
+      
+      setStockHistory(result.data);
+      setIsHistoryModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching stock history:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to fetch stock history');
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, []);
+
+  const columns = React.useMemo<ColumnDef<StockBatteryData>[]>(() => [
+    {
+      accessorKey: 'series',
+      header: 'Series',
+      cell: ({ row }) => {
+        const batteryDetails = row.original.batteryDetails;
+        return batteryDetails ? (
+          <div>
+            <div>{batteryDetails.name}</div>
+            <div className="text-xs text-gray-500">
+              {batteryDetails.plate} plates, {batteryDetails.ah}AH
+              {batteryDetails.type && `, ${batteryDetails.type}`}
+            </div>
+          </div>
+        ) : (
+          row.original.series
+        );
+      }
     },
     {
-      field: 'inStock',
-      headerName: 'InStock',
-      width: 120,
+      accessorKey: 'productCost',
+      header: 'Product Cost',
+      cell: ({ row }) => `Rs ${Number(row.original.productCost).toLocaleString()}`
     },
     {
-      field: 'productCost',
-      headerName: 'Cost/Item',
-      width: 150,
-      renderCell: (item: { row: StockBatteryData }) => {
-        return 'Rs ' + item.row.productCost;
-      },
+      accessorKey: 'inStock',
+      header: 'In Stock',
+      cell: ({ row }) => Number(row.original.inStock).toLocaleString()
     },
     {
-      field: 'updatedDate',
-      headerName: 'Updated Date',
-      width: 180,
-      renderCell: (item: { row: StockBatteryData }) => {
-        const { dateTime } = convertDate(item.row.updatedDate || '');
-        return <span>{dateTime}</span>;
-      },
+      accessorKey: 'soldCount',
+      header: 'Sold Count',
+      cell: ({ row }) => Number(row.original.soldCount || 0).toLocaleString()
     },
     {
-      field: 'totalCost',
-      headerName: 'Total Cost',
-      width: 150,
-      renderCell: (item: { row: StockBatteryData }) =>
-        'Rs ' + Number(item.row.productCost) * Number(item.row.inStock),
-    },
-    {
-      field: 'edit',
-      headerName: '',
-      width: 80,
-      renderCell: (item: { row: StockBatteryData }) => (
-        <div className='flex h-full w-full items-center justify-start'>
-          <FaEdit
-            className='cursor-pointer text-[#5b4eea]'
-            onClick={() => handleEditClick(item.row, currentBrandName)}
-          />
-        </div>
-      ),
-    },
-    {
-      field: 'history',
-      headerName: '',
-      width: 80,
-      renderCell: (item: { row: StockBatteryData }) => (
-        <div className='flex h-full w-full items-center justify-start'>
-          <FaHistory
-            className='cursor-pointer text-blue-600 hover:text-blue-800'
-            onClick={() => handleViewStockHistory(currentBrandName, item.row.series)}
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditClick(row.original, currentBrandName);
+            }}
+            className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
+            title="Edit Stock"
+          >
+            <FaEdit size={16} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewStockHistory(currentBrandName, row.original.series);
+            }}
+            className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
             title="View History"
-          />
-        </div>
-      ),
-    },
-    {
-      field: 'delete',
-      headerName: '',
-      width: 80,
-      renderCell: (item: { row: StockBatteryData }) => (
-        <div className='flex h-full w-full items-center justify-start'>
-          <FaTrash
-            className='cursor-pointer text-red-600 hover:text-red-800'
-            onClick={() => handleDeleteClick(item.row, currentBrandName)}
+          >
+            <FaHistory size={16} />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteClick(row.original, currentBrandName);
+            }}
+            className="p-2 text-red-600 hover:text-red-800 transition-colors"
             title="Delete Stock"
-          />
+          >
+            <FaTrash size={16} />
+          </button>
         </div>
-      ),
-    },
-  ];
+      )
+    }
+  ], [currentBrandName, handleEditClick, handleDeleteClick, handleViewStockHistory]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -382,18 +431,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     };
   };
 
-  const handleEditClick = (item: StockBatteryData, brandName: string) => {
-    setEditModalData({
-      brandName,
-      series: item.series,
-      productCost: String(item.productCost),
-      inStock: String(item.inStock),
-    });
-    fetchData(brandName);
-    setIsModalOpen(true);
-    setModalType('edit');
-  };
-
   useEffect(() => {
     console.log('useEffect triggered with categories:', categories);
     console.log('Current stock data:', stock);
@@ -503,63 +540,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
 
   const findSeriesOption = (series: string): SeriesOption | undefined => {
     return seriesOptions.find((option) => option.label === series);
-  };
-
-  const handleViewStockHistory = async (brandName: string, series?: string) => {
-    if (!brandName) return;
-    try {
-      setIsLoadingHistory(true);
-      const result = await getStockHistory(brandName, series);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch stock history');
-      }
-      
-      // Ensure the data exists and has the correct shape
-      if (!result.data || !Array.isArray(result.data)) {
-        throw new Error('Invalid stock history data received');
-      }
-      
-      setStockHistory(result.data);
-      setIsHistoryModalOpen(true);
-    } catch (error) {
-      console.error('Error fetching stock history:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to fetch stock history');
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
-
-  const handleDeleteClick = (item: StockBatteryData, brandName: string) => {
-    setDeleteItem({
-      brandName,
-      series: item.series,
-      seriesName: item.batteryDetails?.name || item.series
-    });
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteStock = async () => {
-    if (!deleteItem) return;
-    
-    try {
-      setIsDeleting(true);
-      const result = await deleteStock(deleteItem.brandName, deleteItem.series);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to delete stock');
-      }
-      
-      toast.success('Stock deleted successfully');
-      await revalidatePathCustom('/stock');
-      setIsDeleteModalOpen(false);
-      setDeleteItem(null);
-    } catch (error) {
-      console.error('Error deleting stock:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to delete stock');
-    } finally {
-      setIsDeleting(false);
-    }
   };
 
   return (
@@ -724,9 +704,11 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   
           {/* Desktop Data Grid */}
           <div className='hidden sm:block'>
-            <DataGridDemo
-              rows={tableData}
-              columns={gridColumns}
+            <Table
+              data={tableData}
+              columns={columns}
+              enableSearch={true}
+              searchPlaceholder="Search stock..."
               stockCost={stockCost}
               buttonTitle='Create Stock'
               showButton={true}
@@ -1053,7 +1035,30 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
               className="w-full h-12 text-base font-medium focus:outline-none focus:ring-0"
               variant="fill"
               text="Delete Stock"
-              onClick={handleDeleteStock}
+              onClick={() => {
+                setIsDeleting(true);
+                if (deleteItem?.brandName && deleteItem?.series) {
+                  deleteStock(deleteItem.brandName, deleteItem.series)
+                  .then(async (result) => {
+                    if (result.success) {
+                      toast.success('Stock deleted successfully');
+                      await revalidatePathCustom('/stock');
+                      setIsDeleteModalOpen(false);
+                      setDeleteItem(null);
+                      fetchData(deleteItem.brandName);
+                    } else {
+                      toast.error(result.error || 'Failed to delete stock');
+                    }
+                  })
+                  .catch((error) => {
+                    console.error('Error deleting stock:', error);
+                    toast.error('An error occurred while deleting stock');
+                  })
+                  .finally(() => {
+                    setIsDeleting(false);
+                  });
+                }
+              }}
               isPending={isDeleting}
               disabled={isDeleting}
               style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}

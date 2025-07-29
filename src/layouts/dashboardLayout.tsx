@@ -64,7 +64,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
       lockDashboard();
     });
   };
-
+  
   const [stats, setStats] = useState<StreamlinedDashboardStats>(() => {
     if (initialStats) {
       return {

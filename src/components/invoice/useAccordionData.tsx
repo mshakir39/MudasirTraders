@@ -166,7 +166,7 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
           console.log('⚠️ No series with stock found, showing all series as fallback');
           filteredSeriesOptions = seriesOptions;
         }
-        
+
 
 
         console.log('📝 Setting accordion data for index:', accordionIndex);
@@ -175,13 +175,13 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
         
         setAccordionData((prevData: AccordionData) => {
           const newData = {
-            ...prevData,
-            [accordionIndex]: {
-              ...prevData[accordionIndex],
-              brandName: String(fieldValue),
-              seriesOption: filteredSeriesOptions,
-              series: '', // Reset series when brand changes
-            },
+          ...prevData,
+          [accordionIndex]: {
+            ...prevData[accordionIndex],
+            brandName: String(fieldValue),
+            seriesOption: filteredSeriesOptions,
+            series: '', // Reset series when brand changes
+          },
           };
           console.log('📝 Updated accordion data:', newData);
           return newData;

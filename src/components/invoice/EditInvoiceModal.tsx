@@ -92,12 +92,12 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
     >
       <form onSubmit={handleSubmitEditInvoice}>
         <div className='space-y-4'>
-          <Input
+        <Input
             type='number'
-            label='Additional Amount'
-            name='additionalPayment'
+          label='Additional Amount'
+          name='additionalPayment'
             value={editInvoiceData.additionalPayment}
-            onChange={handleChangeEditInvoice}
+          onChange={handleChangeEditInvoice}
             min={0}
             step="0.01"
             required

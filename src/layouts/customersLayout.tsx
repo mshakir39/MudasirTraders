@@ -1,13 +1,20 @@
 'use client';
 import React from "react";
 import { FaEye } from 'react-icons/fa';
-import DataGridDemo from "@/components/dataGrid";
+import Table from "@/components/table";
 import Modal from '@/components/modal';
 import Input from '@/components/customInput';
 import Button from '@/components/button';
 import CustomerInvoicesModal from '@/components/customer/CustomerInvoicesModal';
 import { createCustomer, getCustomers } from '@/actions/customerActions';
 import { toast } from 'react-toastify';
+import { ColumnDef } from '@tanstack/react-table';
+
+interface CustomerData {
+  customerName: string;
+  phoneNumber: string;
+  address: string;
+}
 
 const CustomersLayout = ({ customers }: { customers: any[] }) => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -18,24 +25,34 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
   const [isLoading, setIsLoading] = React.useState(false);
 
   // Updated columns with "View Invoices" button
-  const columns = [
-    { field: "name", headerName: "Name", width: 200 },
-    { field: "contactInfo", headerName: "Contact Info", width: 250 },
-    { field: "address", headerName: "Address", width: 250 },
+  const columns = React.useMemo<ColumnDef<any>[]>(() => [
     { 
-      field: "createdDate", 
-      headerName: "Created Date", 
-      width: 180, 
-      renderCell: (item: any) => new Date(item.row.createdDate).toLocaleString() 
+      accessorKey: "name",
+      header: "Name",
+    },
+    { 
+      accessorKey: "contactInfo",
+      header: "Contact Info",
+    },
+    { 
+      accessorKey: "address",
+      header: "Address",
+    },
+    { 
+      accessorKey: "createdDate",
+      header: "Created Date",
+      cell: ({ row }) => new Date(row.original.createdDate).toLocaleString()
     },
     {
-      field: "viewInvoices",
-      headerName: "Invoices",
-      width: 120,
-      renderCell: (item: any) => (
+      id: "viewInvoices",
+      header: "Invoices",
+      cell: ({ row }) => (
         <div className='flex h-full w-full items-center justify-center'>
           <button
-            onClick={() => handleViewInvoices(item.row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewInvoices(row.original);
+            }}
             className='flex items-center gap-2 px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition-colors'
             title="View Customer Invoices"
           >
@@ -45,44 +62,7 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
         </div>
       ),
     },
-  ];
-
-  const handleChange = (e: any) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleCreate = async (e: any) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      const result = await createCustomer({
-        customerName: form.name,
-        phoneNumber: form.contactInfo,
-        address: form.address,
-      });
-      
-      if (result.success) {
-        // Refresh customer list
-        const customersResult = await getCustomers();
-        if (customersResult.success && Array.isArray(customersResult.data)) {
-          setCustomerList(customersResult.data);
-        }
-        
-        // Reset form and close modal
-        setForm({ name: '', contactInfo: '', address: '' });
-        setIsModalOpen(false);
-        toast.success('Customer created successfully');
-      } else {
-        toast.error(result.error || 'Failed to create customer');
-      }
-    } catch (error) {
-      console.error('Error creating customer:', error);
-      toast.error('An error occurred while creating customer');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  ], []);
 
   const handleViewInvoices = (customer: any) => {
     setSelectedCustomer(customer);
@@ -94,20 +74,60 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
     setSelectedCustomer(null);
   };
 
-  const rows = customerList.map((client, idx) => ({ 
-    id: client.id || idx, 
-    ...client 
-  }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name || !form.contactInfo) {
+      toast.error('Name and Contact Info are required');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const customerData: CustomerData = {
+        customerName: form.name,
+        phoneNumber: form.contactInfo,
+        address: form.address,
+      };
+
+      const result = await createCustomer(customerData);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create customer');
+      }
+
+      // Refresh customers list
+      const customersResult = await getCustomers();
+      if (customersResult.success && Array.isArray(customersResult.data)) {
+        setCustomerList(customersResult.data);
+      }
+
+      setIsModalOpen(false);
+      setForm({ name: '', contactInfo: '', address: '' });
+      toast.success('Customer created successfully');
+    } catch (error) {
+      console.error('Error creating customer:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create customer');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className='md:p-6 p-0 py-6'>
       <h1 className="text-2xl font-bold">Customers</h1>
       
-      <DataGridDemo
-        rows={rows}
+      <Table
+        data={customerList}
         columns={columns}
+        enableSearch={true}
+        searchPlaceholder="Search customers..."
         buttonTitle="Create Customer"
         buttonOnClick={() => setIsModalOpen(true)}
+        showButton={true}
       />
 
       {/* Create Customer Modal */}

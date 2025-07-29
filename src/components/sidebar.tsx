@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import React, { useCallback, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { FaCarBattery, FaFileInvoice, FaTags } from 'react-icons/fa6';
+import { FaCarBattery, FaFileInvoice, FaTags, FaBox, FaShoppingCart, FaUsers, FaChartBar, FaList, FaShieldAlt } from 'react-icons/fa';
 import { FaUserFriends } from 'react-icons/fa';
 import { TbCategoryPlus } from 'react-icons/tb';
 import { IoMdSettings } from 'react-icons/io';
@@ -104,6 +104,7 @@ const Sidebar = ({ className }: any) => {
   const isActiveCategory = path === '/category';
   const isActiveSales = path === '/sales';
   const isActiveCustomers = path === '/customers';
+  const isActiveWarrantyCheck = path === '/warranty-check';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -350,6 +351,32 @@ const Sidebar = ({ className }: any) => {
                 } md:${isCollapsed ? 'hidden' : 'block'}`}
               >
                 Customers
+              </span>
+            </Link>
+
+            <Link
+              href="/warranty-check"
+              onClick={handleMobileLinkClick}
+              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
+                ${
+                  isActiveWarrantyCheck
+                    ? 'bg-[#4287f5] text-white'
+                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
+                }`}
+            >
+              <FaShieldAlt
+                className={`h-6 w-6 flex-shrink-0 ${
+                  isActiveWarrantyCheck
+                    ? 'text-white'
+                    : 'text-gray-600 group-hover:text-white'
+                }`}
+              />
+              <span
+                className={`ml-3 font-medium transition-all duration-300 ${
+                  isCollapsed ? 'hidden' : 'block'
+                } md:${isCollapsed ? 'hidden' : 'block'}`}
+              >
+                Warranty Check
               </span>
             </Link>
           </div>

@@ -1,20 +1,14 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { unstable_noStore } from 'next/cache';
 import { toast } from 'react-toastify';
-import { FaTrash } from 'react-icons/fa';
-
-// Components
-import Table from '@/components/table';
-import Button from '@/components/button';
-import Modal from '@/components/modal';
-import Input from '@/components/customInput';
-
-// Utils and Types
-import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
-import { createBrand, deleteBrand } from '@/actions/brandActions';
-import { IBrand } from '../../interfaces';
+import { revalidatePathCustom } from '@/actions/revalidatePathCustom';
+import { deleteBrand } from '@/actions/brandActions';
 import { useBrandStore } from '@/store/brandStore';
+import { IBrand } from '@/interfaces';
+import { FaTrash } from 'react-icons/fa';
+import Table from '@/components/table';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface BrandsLayoutProps {
   initialBrands: IBrand[];
@@ -37,21 +31,28 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
     }
   }, [initialBrands, setBrands, fetchBrands]);
 
-  const columns = [
-    { label: 'Brand Name', renderCell: (item: IBrand) => item.brandName },
+  const columns = React.useMemo<ColumnDef<IBrand>[]>(() => [
+    { 
+      accessorKey: 'brandName',
+      header: 'Brand Name',
+    },
     {
-      label: 'Actions',
-      renderCell: (item: IBrand) => (
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
         <button
-          onClick={() => handleDelete(item.id)}
-          className='text-red-500 hover:text-red-700'
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete(row.original.id);
+          }}
+          className='text-red-500 hover:text-red-700 transition-colors'
           title='Delete Brand'
         >
           <FaTrash />
         </button>
       ),
     },
-  ];
+  ], []);
 
   const handleDelete = async (id: string | undefined) => {
     if (!id) {
@@ -77,70 +78,17 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      setIsLoading(true);
-      const result = await createBrand({ brandName: brand.brandName });
-
-      if (result.success) {
-        toast.success('Brand created successfully');
-        await revalidatePathCustom('/brands');
-        setBrand({ brandName: '' });
-        await fetchBrands(); // Refresh store after add
-        setIsModalOpen(false);
-      } else {
-        toast.error(result.error || 'Failed to create brand');
-      }
-    } catch (error) {
-      console.error('Error adding brand:', error);
-      toast.error('An error occurred while adding the brand');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setBrand({ ...brand, [name]: value });
-  };
-
   return (
     <div className='md:p-6 p-0 py-6'>
-     <div className='flex items-center justify-between py-2'>
-        <span className='text-2xl font-bold'>Brands</span>
-      </div>
+      <h1 className="text-2xl font-bold">Brands</h1>
+      
       <Table
-        columns={columns}
         data={brands}
-        buttonTitle='Add Brand'
-        buttonOnClick={() => setIsModalOpen(true)}
+        columns={columns}
+        enableSearch={true}
+        searchPlaceholder="Search brands..."
+        showButton={false}
       />
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title='Add Brand'
-      >
-        <form onSubmit={handleSubmit}>
-          <div className='mt-4 flex w-full flex-col gap-2'>
-            <Input
-              type='text'
-              label='Brand Name'
-              name='brandName'
-              value={brand.brandName}
-              onChange={handleChange}
-              required
-            />
-            <Button
-              className='w-fit'
-              variant='fill'
-              text='Save'
-              type='submit'
-              isPending={isLoading}
-            />
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 };

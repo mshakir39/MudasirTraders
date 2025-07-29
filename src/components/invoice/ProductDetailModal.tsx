@@ -1,7 +1,8 @@
 import React from 'react';
 import { convertDate } from '@/utils/convertTime';
 import Modal from '@/components/modal';
-import DataGridDemo from '@/components/dataGrid';
+import Table from '@/components/table';
+import { ColumnDef } from '@tanstack/react-table';
 
 interface ProductDetailModalProps {
   isOpen: boolean;
@@ -9,78 +10,62 @@ interface ProductDetailModalProps {
   data: any[];
 }
 
-const productsColumns = [
-  {
-    id: 0,
-    field: 'brandName',
-    headerName: 'Brand',
-    width: 150,
-  },
-  {
-    id: 1,
-    field: 'series',
-    headerName: 'Series',
-    width: 250,
-    renderCell: (item: any) => {
-      const details = item?.row?.batteryDetails;
-      return details
-        ? `${details.name} (${details.plate}, ${details.ah}AH${details.type ? `, ${details.type}` : ''})`
-        : item.row.series;
-    },
-  },
-  {
-    id: 2,
-    field: 'productPrice',
-    headerName: 'Price/Item',
-    width: 150,
-    renderCell: (item: any) => 'Rs ' + item?.row?.productPrice,
-  },
-  {
-    id: 3,
-    field: 'quantity',
-    headerName: 'Quantity',
-    width: 150,
-  },
-  {
-    id: 4,
-    field: 'warrentyCode',
-    headerName: 'Battery Code',
-    width: 150,
-  },
-  {
-    id: 5,
-    field: 'warrentyStartDate',
-    headerName: 'Warrenty Start Date',
-    width: 180,
-    renderCell: (item: any) => {
-      const { dateOnly } = convertDate(item?.row?.warrentyStartDate);
-      return <span>{dateOnly}</span>;
-    },
-  },
-  {
-    id: 6,
-    field: 'warrentyEndDate',
-    headerName: 'Warrenty End Date',
-    width: 180,
-    renderCell: (item: any) => {
-      const { dateOnly } = convertDate(item?.row?.warrentyEndDate);
-      return <span>{dateOnly}</span>;
-    },
-  },
-  {
-    id: 7,
-    field: 'totalPrice',
-    headerName: 'Total Price',
-    width: 150,
-    renderCell: (item: any) => 'Rs ' + item?.row.totalPrice,
-  },
-];
-
 const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   isOpen,
   onClose,
   data,
 }) => {
+  const columns = React.useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: 'brandName',
+      header: 'Brand',
+    },
+    {
+      accessorKey: 'series',
+      header: 'Series',
+      cell: ({ row }) => {
+        const details = row.original.batteryDetails;
+        return details
+          ? `${details.name} (${details.plate}, ${details.ah}AH${details.type ? `, ${details.type}` : ''})`
+          : row.original.series;
+      },
+    },
+    {
+      accessorKey: 'productPrice',
+      header: 'Price/Item',
+      cell: ({ row }) => 'Rs ' + row.original.productPrice,
+    },
+    {
+      accessorKey: 'quantity',
+      header: 'Quantity',
+    },
+    {
+      accessorKey: 'warrentyCode',
+      header: 'Battery Code',
+    },
+    {
+      accessorKey: 'warrentyStartDate',
+      header: 'Warrenty Start Date',
+      cell: ({ row }) => {
+        const { dateOnly } = convertDate(row.original.warrentyStartDate);
+        return <span>{dateOnly}</span>;
+      },
+    },
+    {
+      accessorKey: 'warrentyEndDate',
+      header: 'Warrenty End Date',
+      cell: ({ row }) => {
+        const { dateOnly } = convertDate(row.original.warrentyEndDate);
+        return <span>{dateOnly}</span>;
+      },
+    },
+    {
+      accessorKey: 'totalPrice',
+      header: 'Total Price',
+      cell: ({ row }) => 'Rs ' + row.original.totalPrice,
+    },
+  ], []);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -88,9 +73,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       title='Products Detail'
       size='large'
     >
-      <DataGridDemo
-        rows={data}
-        columns={productsColumns}
+      <Table
+        data={data}
+        columns={columns}
+        enableSearch={false}
         showButton={false}
       />
     </Modal>
