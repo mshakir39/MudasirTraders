@@ -53,10 +53,8 @@ export async function POST(req: any, res: any) {
     // Calculate remaining amount
     invoice.remainingAmount = totalProductAmount - receivedAmount - batteriesRate;
     
-    // Set payment status based on payment method and remaining amount
-    if (formData?.paymentMethod?.includes('Pay Later')) {
-      invoice.paymentStatus = 'pending';
-    } else if (invoice.remainingAmount === 0) {
+    // Set payment status based on remaining amount
+    if (invoice.remainingAmount === 0) {
       invoice.paymentStatus = 'paid';
     } else {
       invoice.paymentStatus = 'partial';

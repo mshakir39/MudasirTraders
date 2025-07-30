@@ -127,7 +127,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
         {currentPaymentMethods.includes('Pay Later') && (
           <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-sm text-yellow-800">
-              💡 <strong>Pay Later:</strong> Customer can pay any amount now and the remaining balance can be paid later using the "Add Payment" button.
+              💡 <strong>Pay Later:</strong> Customer can pay any amount now and the remaining balance can be paid later using the &quot;Add Payment&quot; button.
             </p>
           </div>
         )}
