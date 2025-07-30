@@ -41,7 +41,7 @@ export async function POST(req: any, res: any) {
         totalPrice: product.productPrice * product.quantity,
         batteryDetails: product.batteryDetails,
       })),
-      createdDate: new Date(),
+      createdDate: (formData.useCustomDate === true && formData.customDate) ? new Date(formData.customDate) : new Date(),
     };
 
     invoice.remainingAmount =

@@ -7,7 +7,9 @@ export const useInvoiceForm = () => {
     customerAddress: '',
     customerContactNumber: '',
     clientName: '',
-    customerId: null
+    customerId: null,
+    useCustomDate: false, // Default to current date
+    customDate: new Date().toISOString().slice(0, 16) // Default to current date/time
   });
 
   const handleChange = useCallback((e: any) => {
@@ -35,7 +37,9 @@ export const useInvoiceForm = () => {
       customerAddress: '',
       customerContactNumber: '',
       clientName: '',
-      customerId: null
+      customerId: null,
+      useCustomDate: false, // Default to current date
+      customDate: new Date().toISOString().slice(0, 16) // Default to current date/time
     });
   };
 

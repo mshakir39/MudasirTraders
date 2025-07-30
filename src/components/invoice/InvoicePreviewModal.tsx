@@ -1,13 +1,17 @@
 import React, { useRef, useState } from 'react';
 import { FaDownload } from 'react-icons/fa6';
+import { BsPrinter } from 'react-icons/bs';
 import { Dancing_Script } from 'next/font/google';
 import { convertDate } from '@/utils/convertTime';
 import { getAllSum } from '@/utils/getTotalSum';
 import { formatRupees } from '@/utils/formatRupees';
 import { removeParentheses } from '@/utils/formatters';
 import printHtmlAsPdf from '@/utils/printHtmlAsPdf';
+import { printWithThermalPrinter } from '@/utils/thermalPrinter';
 import Modal from '@/components/modal';
 import BasicTable from '@/components/basicTable';
+import PrinterInstructionsModal from '@/components/PrinterInstructionsModal';
+import ErrorModal from '@/components/ErrorModal';
 
 const dancingScript = Dancing_Script({ subsets: ['latin'] });
 
@@ -40,6 +44,17 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   data,
 }) => {
   const [tdWidths, setTdWidths] = useState<String[]>([]);
+  const [showPrinterInstructions, setShowPrinterInstructions] = useState(false);
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    details?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
   const downloadRef = useRef(null);
 
   const footerData = {
@@ -48,11 +63,40 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
     Amount: 'Rs ' + getAllSum(data?.products, 'totalPrice'),
   };
 
-  const printHandler = () => {
+  const downloadHandler = () => {
+    console.log('Download button clicked!');
     if (downloadRef.current) {
       printHtmlAsPdf(downloadRef.current);
+    } else {
+      console.log('downloadRef.current is null');
     }
   };
+
+  const printHandler = async () => {
+    if (!data) {
+      console.log('Print button clicked, but no data available yet.');
+      return;
+    }
+    console.log('Print button clicked!');
+    setShowPrinterInstructions(true);
+  };
+
+  const handlePrintConfirm = async () => {
+    try {
+      await printWithThermalPrinter(data);
+      console.log('Print successful!');
+    } catch (error: any) {
+      console.error('Print failed:', error);
+      setErrorModal({
+        isOpen: true,
+        title: 'Print Failed',
+        message: 'Failed to print invoice. Please check your printer settings.',
+        details: error.message || 'Unknown error'
+      });
+    }
+  };
+
+
 
   const handleModalOpen = () => {
     const tfoot = document.querySelector('tfoot') as HTMLTableSectionElement;
@@ -83,11 +127,19 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
       size='large'
     >
       <div className='relative flex h-full w-full flex-col' ref={downloadRef}>
-        <div className='text-[40px] font-bold uppercase text-black'>Invoice</div>
-        <FaDownload
-          className='absolute left-[98%] cursor-pointer text-2xl text-[#021B3B]'
-          onClick={printHandler}
-        />
+        <div className='text-[40px] font-bold uppercase text-black thermal-print-title'>Invoice</div>
+        <div className='absolute right-0 top-0 flex flex-row gap-3 z-10 bg-white p-3 rounded-lg shadow-lg border border-gray-200 print-hide'>
+          <FaDownload
+            className='cursor-pointer text-2xl text-[#021B3B] hover:text-[#0056b3] transition-colors'
+            onClick={downloadHandler}
+            title="Download PDF"
+          />
+                     <BsPrinter
+             className='cursor-pointer text-2xl text-[#021B3B] hover:text-[#0056b3] transition-colors'
+             onClick={printHandler}
+             title="Print to Thermal Printer"
+           />
+        </div>
         <div className='text-end text-lg font-bold uppercase text-black'>
           <span>No:Inv-{data?.invoiceNo}</span>
         </div>
@@ -240,10 +292,24 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
               </span>
             </div>
           </div>
-        </div>
-      </div>
-    </Modal>
-  );
-};
+                 </div>
+       </div>
+       
+       <PrinterInstructionsModal
+         isOpen={showPrinterInstructions}
+         onClose={() => setShowPrinterInstructions(false)}
+         onConfirm={handlePrintConfirm}
+       />
+       
+       <ErrorModal
+         isOpen={errorModal.isOpen}
+         onClose={() => setErrorModal(prev => ({ ...prev, isOpen: false }))}
+         title={errorModal.title}
+         message={errorModal.message}
+         details={errorModal.details}
+       />
+     </Modal>
+   );
+ };
 
 export default InvoicePreviewModal;

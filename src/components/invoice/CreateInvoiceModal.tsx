@@ -119,6 +119,20 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       return false;
     }
 
+    // Validate custom date if toggle is enabled
+    if (invoiceData?.useCustomDate === true) {
+      if (!invoiceData?.customDate) {
+        toast.error('Please select a date and time for the invoice');
+        return false;
+      }
+      
+      const selectedDate = new Date(invoiceData.customDate);
+      if (isNaN(selectedDate.getTime())) {
+        toast.error('Please select a valid date and time');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -134,6 +148,11 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     if (!invoiceData?.paymentMethod?.includes('Old Battery')) {
       formData.batteriesRate = 0;
       formData.batteriesCountAndWeight = '';
+    }
+    
+    // Ensure custom date fields are properly set
+    if (!formData.useCustomDate) {
+      formData.customDate = null; // Clear custom date when toggle is off
     }
     
     // Set customer type and related fields
@@ -188,6 +207,52 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             maxLength={20}
             onChange={onChange}
           />
+
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">
+                Use Custom Date & Time
+              </label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={invoiceData?.useCustomDate || false}
+                  onChange={(e) => {
+                    const newValue = e.target.checked;
+                    setInvoiceData((prev: any) => ({
+                      ...prev,
+                      useCustomDate: newValue,
+                      customDate: newValue ? prev.customDate : new Date().toISOString().slice(0, 16)
+                    }));
+                  }}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+            
+            {invoiceData?.useCustomDate ? (
+              <>
+                <Input
+                  type='datetime-local'
+                  label='Invoice Date & Time'
+                  name='customDate'
+                  value={invoiceData?.customDate || ''}
+                  onChange={onChange}
+                  required
+                />
+                <p className="text-sm text-gray-600 mt-1">
+                  Select the date and time for this invoice. Use this for old invoices or specific timing.
+                </p>
+              </>
+            ) : (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  Invoice will be created with current date and time.
+                </p>
+              </div>
+            )}
+          </div>
 
           <ProductSection
             accordionData={accordionData}

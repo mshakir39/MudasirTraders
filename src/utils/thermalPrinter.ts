@@ -14,78 +14,87 @@ interface PrinterData {
   remainingAmount: number;
   createdDate: string;
   additionalPayment?: any[];
+  batteriesCountAndWeight?: string;
+  batteriesRate?: string;
 }
 
 class ThermalPrinter {
+  
   // Print invoice using browser print functionality with thermal printer formatting
   async printInvoice(data: PrinterData): Promise<void> {
-    try {
-      // Create the receipt content
-      const receiptContent = this.createReceiptContent(data);
-      
-      // Create a new window for printing
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) {
-        throw new Error('Popup blocked. Please allow popups for this site.');
-      }
+    // Create the receipt content
+    const receiptContent = this.createReceiptContent(data);
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      throw new Error('Popup blocked. Please allow popups for this site.');
+    }
 
-      // Write the HTML content with thermal printer styling
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Invoice ${data.invoiceNo}</title>
-          <style>
-            @media print {
-              @page {
-                size: 80mm auto;
-                margin: 0;
-              }
+    // Write the HTML content with thermal printer styling
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice ${data.invoiceNo}</title>
+        <style>
+          @media print {
+            @page {
+              size: 80mm auto;
+              margin: 0;
             }
             body {
-              font-family: 'Courier New', monospace;
-              font-size: 12px;
-              line-height: 1.2;
               margin: 0;
-              padding: 10px;
+              padding: 0;
               width: 80mm;
-              max-width: 80mm;
+              font-family: 'Courier New', monospace;
+              font-size: 10px;
+              line-height: 1.1;
             }
             .receipt {
-              width: 100%;
+              width: 80mm;
+              max-width: 80mm;
               white-space: pre;
               word-wrap: normal;
               overflow-wrap: normal;
+              margin: 0;
+              padding: 5px;
             }
-            .center { text-align: center; }
-            .bold { font-weight: bold; }
-            .separator { border-top: 1px dashed #000; margin: 5px 0; }
-            @media screen {
-              body { background: #f5f5f5; }
-              .receipt { background: white; padding: 20px; margin: 20px auto; max-width: 80mm; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="receipt">
+          }
+          body {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            line-height: 1.1;
+            margin: 0;
+            padding: 5px;
+            width: 80mm;
+            max-width: 80mm;
+          }
+          .receipt {
+            width: 100%;
+            white-space: pre;
+            word-wrap: normal;
+            overflow-wrap: normal;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="receipt">
 ${receiptContent}
-          </div>
-        </body>
-        </html>
-      `);
+        </div>
+      </body>
+      </html>
+    `);
 
-      printWindow.document.close();
+    printWindow.document.close();
 
-      // Wait a moment for content to load, then print
+    // Simple print - no loops, no complex logic
+    setTimeout(() => {
+      printWindow.print();
       setTimeout(() => {
-        printWindow.print();
         printWindow.close();
-      }, 500);
-
-    } catch (error) {
-      console.error('Print failed:', error);
-      throw error;
-    }
+      }, 1000);
+    }, 500);
   }
 
   private createReceiptContent(data: PrinterData): string {
@@ -153,9 +162,21 @@ ${receiptContent}
 
     // Products
     data.products.forEach((item: any, index: number) => {
-      const name = item?.batteryDetails 
+      let name = item?.batteryDetails 
         ? `${item.brandName}-${item.batteryDetails.name}` 
         : `${item.brandName}-${item.series}`;
+      
+      // Add battery specifications if available
+      if (item?.batteryDetails) {
+        const specs = [];
+        if (item.batteryDetails.plate) specs.push(`${item.batteryDetails.plate} plates`);
+        if (item.batteryDetails.ah) specs.push(`${item.batteryDetails.ah}AH`);
+        if (item.batteryDetails.type) specs.push(item.batteryDetails.type);
+        
+        if (specs.length > 0) {
+          name += ` (${specs.join(', ')})`;
+        }
+      }
       
       const no = String(index + 1).padStart(2);
       // Ensure description doesn't exceed 18 characters
@@ -181,13 +202,35 @@ ${receiptContent}
     content += line('=');
     content += createRow('TOTAL:', `Rs ${grandTotal}`);
 
+    // Batteries count and weight (if available)
+    if (data.batteriesCountAndWeight && data.batteriesRate) {
+      content += createRow(data.batteriesCountAndWeight, `Rs ${data.batteriesRate}`);
+    }
+
     // Payment details
     if (data.receivedAmount && data.receivedAmount !== '0') {
       content += createRow('RECEIVED:', `Rs ${data.receivedAmount}`);
     }
     
+    // Additional payments
+    if (data.additionalPayment && data.additionalPayment.length > 0) {
+      data.additionalPayment.forEach((payment: any) => {
+        const paymentDate = convertDate(payment.addedDate).dateTime;
+        const paymentMethod = payment.paymentMethod ? ` (${payment.paymentMethod.join(' + ')})` : '';
+        content += createRow(`Received ${paymentDate}${paymentMethod}:`, `Rs ${payment.amount}`);
+      });
+    }
+    
     if (data.remainingAmount > 0) {
       content += createRow('BALANCE:', `Rs ${data.remainingAmount}`);
+    }
+
+    // Final total line
+    content += line('=');
+    if (data.remainingAmount === 0) {
+      content += createRow('TOTAL:', 'PAID');
+    } else {
+      content += createRow('TOTAL REMAINING:', `Rs ${data.remainingAmount}`);
     }
 
     // Payment method
