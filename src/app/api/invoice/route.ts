@@ -29,6 +29,7 @@ export async function POST(req: any, res: any) {
       batteriesCountAndWeight: formData?.batteriesCountAndWeight,
       batteriesRate: formData?.batteriesRate,
       receivedAmount: formData?.receivedAmount,
+      isPayLater: formData?.paymentMethod?.includes('Pay Later') || false,
 
       products: formData.productDetail.map((product: any) => ({
         brandName: product.brandName,
@@ -44,14 +45,22 @@ export async function POST(req: any, res: any) {
       createdDate: (formData.useCustomDate === true && formData.customDate) ? new Date(formData.customDate) : new Date(),
     };
 
-    invoice.remainingAmount =
-      formData?.receivedAmount > formData?.batteriesRate
-        ? getAllSum(invoice.products, 'totalPrice') -
-          formData?.batteriesRate -
-          formData?.receivedAmount
-        : getAllSum(invoice.products, 'totalPrice') -
-          formData?.receivedAmount -
-          formData?.batteriesRate;
+    // Calculate remaining amount
+    const totalProductAmount = getAllSum(invoice.products, 'totalPrice');
+    const receivedAmount = parseFloat(formData?.receivedAmount) || 0;
+    const batteriesRate = parseFloat(formData?.batteriesRate) || 0;
+    
+    // Calculate remaining amount
+    invoice.remainingAmount = totalProductAmount - receivedAmount - batteriesRate;
+    
+    // Set payment status based on payment method and remaining amount
+    if (formData?.paymentMethod?.includes('Pay Later')) {
+      invoice.paymentStatus = 'pending';
+    } else if (invoice.remainingAmount === 0) {
+      invoice.paymentStatus = 'paid';
+    } else {
+      invoice.paymentStatus = 'partial';
+    }
 
     // Update stock quantities and sold counts
     for (const product of formData.productDetail) {
