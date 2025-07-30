@@ -184,16 +184,19 @@ export async function executeOperation(
           const stock = document.seriesStock[0].inStock;
           const cost = document.seriesStock[0].productCost;
           const ser = document.seriesStock[0].series;
-          return await db.collection(collectionName).updateMany(
+          console.log('Updating series stock:', { brandName, ser, stock, cost });
+          const updateResult = await db.collection(collectionName).updateMany(
             { brandName, 'seriesStock.series': ser },
             {
               $set: {
                 'seriesStock.$.inStock': stock,
                 'seriesStock.$.productCost': cost,
-                'seriesStock.$.updatedDate': document.updatedDate,
+                'seriesStock.$.updatedDate': document.seriesStock[0].updatedDate,
               },
             }
           );
+          console.log('Update series stock result:', updateResult);
+          return updateResult;
 
         case 'deleteSeriesStock':
           // First check if the series exists in the stock
@@ -245,10 +248,10 @@ export async function executeOperation(
             
         case 'isExist':
           // Check if a document exists in the collection
-          const result = await db
+          const existResult = await db
             .collection(collectionName)
             .findOne(document);
-          return result !== null;
+          return existResult !== null;
           
         case 'upsert':
           if ('_id' in document) {

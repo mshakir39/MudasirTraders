@@ -22,6 +22,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en'>
+      <head>
+        <script src="/js/bGateWebPrintAPI_WS.js"></script>
+        <script src="/js/WS_parser.js"></script>
+      </head>
       <body className={inter.className}>
         <SessionWrapper>
             <div className='flex min-h-screen w-full'>

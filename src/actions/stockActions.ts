@@ -102,8 +102,11 @@ export async function updateStock(data: StockData) {
         updatedDate: new Date(),
       }],
     });
+    
+    console.log('Update stock result:', result);
     return { success: true, data: result };
   } catch (error: any) {
+    console.error('Update stock error:', error);
     return { success: false, error: error.message };
   }
 }

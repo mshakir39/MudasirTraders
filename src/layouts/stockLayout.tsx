@@ -109,12 +109,11 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const handleEditClick = useCallback((item: StockBatteryData, brandName: string) => {
-    setStockData({
+    setEditModalData({
       brandName,
       series: item.series,
       productCost: item.productCost.toString(),
       inStock: item.inStock.toString(),
-      batteryDetails: item.batteryDetails,
     });
     setModalType('edit');
     setIsModalOpen(true);
@@ -289,30 +288,14 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
 
   const handleSubmitEdit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-      setIsLoading(true);
+    setIsLoading(true);
 
     try {
+      console.log('Edit modal data:', editModalData);
+      
       if (!editModalData || !editModalData.series) {
         throw new Error('Invalid edit data');
       }
-      const filtered = stock?.filter(
-        (item) => item.brandName === editModalData.brandName
-      );
-
-      if (!filtered || filtered.length === 0) {
-        throw new Error('Stock data not found');
-      }
-
-      const updatedStock = filtered[0].seriesStock.map((item) =>
-        item.series === editModalData.series
-          ? {
-              ...item,
-              productCost: Number(editModalData.productCost),
-              inStock: Number(editModalData.inStock),
-              updatedDate: new Date().toISOString(),
-            }
-          : item
-      );
 
       const result = await updateStock({
         brandName: editModalData.brandName,
@@ -320,6 +303,8 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         productCost: editModalData.productCost,
         inStock: editModalData.inStock,
       });
+
+      console.log('Update result:', result);
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to update stock');
@@ -334,7 +319,13 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         inStock: '',
       });
       setIsModalOpen(false);
+      setModalType('');
       toast.success('Stock updated successfully');
+      
+      // Refresh the current view
+      if (editModalData.brandName === currentBrandName) {
+        fetchData(currentBrandName);
+      }
     } catch (error) {
       console.error('Error updating stock:', error);
       toast.error(
@@ -511,6 +502,13 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     }
   }, [categories, fetchData, stock, currentBrandName]);
 
+  // Effect to handle modal data initialization
+  useEffect(() => {
+    if (isModalOpen && modalType === 'edit' && editModalData.brandName) {
+      fetchData(editModalData.brandName);
+    }
+  }, [isModalOpen, modalType, editModalData.brandName, fetchData]);
+
   const handleTabClick = (id: number, brandName: string) => {
     setCurrentBrandName(brandName);
     const filtered = stock?.filter((item) => item.brandName === brandName);
@@ -656,7 +654,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                           onClick={() => {
                             // Handle edit functionality
                             setEditModalData({
-                              brandName: row.brandName,
+                              brandName: currentBrandName,
                               series: row.series,
                               productCost: String(row.productCost),
                               inStock: String(row.inStock),
@@ -747,6 +745,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
             inStock: '',
             batteryDetails: undefined,
           });
+          setModalType('');
         }}
         title={modalType === 'add' ? 'Add Stock' : 'Edit Stock'}
         dialogPanelClass="w-full max-w-sm sm:max-w-md md:max-w-lg mx-4 sm:mx-auto"
@@ -777,6 +776,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                   defaultValue={
                     modalType === 'edit' ? editModalData.series : undefined
                   }
+                  disabled={modalType === 'edit'}
                 />
               </div>
             </div>
@@ -853,6 +853,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                     inStock: '',
                     batteryDetails: undefined,
                   });
+                  setModalType('');
                 }}
               />
             </div>
