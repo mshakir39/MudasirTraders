@@ -6,11 +6,15 @@ import Input from '@/components/customInput';
 import CheckboxGroup from '@/components/checkboxGroup';
 
 const paymentOptions = [
-  { id: 'Credit', value: 'Credit', label: 'Credit' },
+  { id: 'Cash', value: 'Cash', label: 'Cash' },
+  { id: 'Card', value: 'Card', label: 'Card' },
   { id: 'Old Battery', value: 'Old Battery', label: 'Old Battery' },
   { id: 'Easy Paisa', value: 'Easy Paisa', label: 'Easy Paisa' },
   { id: 'Jazz Cash', value: 'Jazz Cash', label: 'Jazz Cash' },
   { id: 'Bank', value: 'Bank', label: 'Bank' },
+  { id: 'Cheque', value: 'Cheque', label: 'Cheque' },
+  { id: 'Pay Later', value: 'Pay Later', label: 'Pay Later' },
+  { id: 'Other', value: 'Other', label: 'Other' },
 ];
 
 interface EditInvoiceModalProps {
