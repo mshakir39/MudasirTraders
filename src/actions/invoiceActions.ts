@@ -64,6 +64,16 @@ export async function deleteInvoice(id: string) {
 export async function getInvoices() {
   try {
     const invoices = await executeOperation('invoices', 'findAll');
+    
+    // Sort invoices by creation date (newest first)
+    if (Array.isArray(invoices)) {
+      invoices.sort((a: any, b: any) => {
+        const dateA = new Date(a.createdDate).getTime();
+        const dateB = new Date(b.createdDate).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
+    }
+    
     return { success: true, data: invoices };
   } catch (error: any) {
     return { success: false, error: error.message };

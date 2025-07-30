@@ -8,6 +8,7 @@ export const useInvoiceForm = () => {
     customerContactNumber: '',
     clientName: '',
     customerId: null,
+    receivedAmount: '', // Initialize receivedAmount as empty string
     useCustomDate: false, // Default to current date
     customDate: new Date().toISOString().slice(0, 16) // Default to current date/time
   });
@@ -38,6 +39,7 @@ export const useInvoiceForm = () => {
       customerContactNumber: '',
       clientName: '',
       customerId: null,
+      receivedAmount: '', // Initialize receivedAmount as empty string
       useCustomDate: false, // Default to current date
       customDate: new Date().toISOString().slice(0, 16) // Default to current date/time
     });

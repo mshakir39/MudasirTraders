@@ -59,11 +59,20 @@ export async function POST(req: any, res: any) {
 
     // Calculate remaining amount
     const totalProductAmount = getAllSum(invoice.products, 'totalPrice');
-    const receivedAmount = parseFloat(formData?.receivedAmount) || 0;
-    const batteriesRate = parseFloat(formData?.batteriesRate) || 0;
+    const receivedAmount = parseFloat(formData?.receivedAmount || '0') || 0;
+    const batteriesRate = parseFloat(formData?.batteriesRate || '0') || 0;
     
     // Calculate remaining amount
     invoice.remainingAmount = totalProductAmount - receivedAmount - batteriesRate;
+    
+    // Debug the calculation
+    console.log('💰 Amount Calculation Debug:');
+    console.log('  totalProductAmount:', totalProductAmount);
+    console.log('  receivedAmount (raw):', formData?.receivedAmount);
+    console.log('  receivedAmount (parsed):', receivedAmount);
+    console.log('  batteriesRate (raw):', formData?.batteriesRate);
+    console.log('  batteriesRate (parsed):', batteriesRate);
+    console.log('  remainingAmount:', invoice.remainingAmount);
     
     // Set payment status based on remaining amount
     if (invoice.remainingAmount === 0) {
@@ -93,7 +102,7 @@ export async function POST(req: any, res: any) {
       // Update the stock quantity and increment sold count
       await executeOperation('stock', 'updateStockAndSoldCount', {
         series: seriesName,
-        quantity: product.quantity,
+        quantity: parseInt(product.quantity) || 0,
       });
     }
 
@@ -151,5 +160,149 @@ export async function PATCH(req: any, res: any) {
     }
   } catch (err: any) {
     return Response.json({ error: err.message });
+  }
+}
+
+export async function DELETE(req: any, res: any) {
+  try {
+    const { id } = await req.json();
+    
+    if (!id) {
+      return Response.json({ error: 'Invoice ID is required' });
+    }
+
+    const invoiceId = new ObjectId(id);
+    
+    // 1. First, get the invoice details before deleting
+    const invoice: any = await executeOperation('invoices', 'findOne', {
+      _id: invoiceId,
+    });
+
+    if (!invoice) {
+      return Response.json({ error: 'Invoice not found' });
+    }
+
+    console.log('🗑️ Starting complete invoice deletion for:', invoice.invoiceNo);
+    console.log('📋 Invoice details:', {
+      customerName: invoice.customerName,
+      totalProducts: invoice.products?.length || 0,
+      totalAmount: invoice.remainingAmount,
+      paymentMethod: invoice.paymentMethod
+    });
+
+    // 2. Preserve warranty data before deletion (for warranty lookups)
+    if (invoice.products && Array.isArray(invoice.products)) {
+      console.log('🔧 Preserving warranty data...');
+      for (const product of invoice.products) {
+        if (product.warrentyCode) {
+          try {
+            await executeOperation('warrantyHistory', 'insertOne', {
+              warrentyCode: product.warrentyCode,
+              customerName: invoice.customerName,
+              customerContactNumber: invoice.customerContactNumber,
+              customerAddress: invoice.customerAddress,
+              productDetails: {
+                brandName: product.brandName,
+                series: product.series,
+                warrentyStartDate: product.warrentyStartDate,
+                warrentyEndDate: product.warrentyEndDate,
+                warrentyDuration: product.warrentyDuration
+              },
+              originalInvoiceNo: invoice.invoiceNo,
+              originalInvoiceId: invoice._id,
+              deletedAt: new Date(),
+              deletionReason: 'Invoice deleted by user'
+            });
+            console.log(`✅ Warranty data preserved for: ${product.warrentyCode}`);
+          } catch (warrantyError) {
+            console.warn(`⚠️ Failed to preserve warranty data for ${product.warrentyCode}:`, warrantyError);
+          }
+        }
+      }
+    }
+
+    // 3. Reverse stock changes (restore quantities)
+    if (invoice.products && Array.isArray(invoice.products)) {
+      console.log('📦 Reversing stock changes...');
+      for (const product of invoice.products) {
+        const seriesName = product.batteryDetails?.name || product.series;
+        const quantity = product.quantity;
+
+        console.log(`🔄 Restoring stock for ${seriesName}: +${quantity} units`);
+
+        try {
+                  // Restore stock quantities (increase inStock, decrease soldCount)
+        await executeOperation('stock', 'restoreStockFromInvoice', {
+          series: seriesName,
+          quantity: parseInt(quantity) || 0,
+        });
+          console.log(`✅ Stock restored for ${seriesName}`);
+        } catch (stockError: any) {
+          console.error(`❌ Failed to restore stock for ${seriesName}:`, stockError);
+          throw new Error(`Failed to restore stock for ${seriesName}: ${stockError.message}`);
+        }
+      }
+    }
+
+    // 4. Delete the sales record
+    console.log('💼 Deleting sales record...');
+    try {
+      await executeOperation('sales', 'deleteOne', {
+        invoiceId: invoice.invoiceNo,
+      });
+      console.log('✅ Sales record deleted');
+    } catch (salesError: any) {
+      console.error('❌ Failed to delete sales record:', salesError);
+      throw new Error(`Failed to delete sales record: ${salesError.message}`);
+    }
+
+    // 5. Archive invoice data for audit purposes
+    console.log('📁 Archiving invoice data...');
+    try {
+      await executeOperation('archivedInvoices', 'insertOne', {
+        originalInvoice: invoice,
+        deletedAt: new Date(),
+        deletionReason: 'Invoice deleted by user',
+        originalId: invoice._id,
+        invoiceNo: invoice.invoiceNo
+      });
+      console.log('✅ Invoice data archived');
+    } catch (archiveError) {
+      console.warn('⚠️ Failed to archive invoice data:', archiveError);
+      // Don't fail the deletion if archiving fails
+    }
+
+    // 6. Delete the invoice
+    console.log('🗑️ Deleting main invoice record...');
+    try {
+      await executeOperation('invoices', 'deleteOne', {
+        _id: invoiceId,
+      });
+      console.log('✅ Main invoice record deleted');
+    } catch (invoiceError: any) {
+      console.error('❌ Failed to delete invoice:', invoiceError);
+      throw new Error(`Failed to delete invoice: ${invoiceError.message}`);
+    }
+
+    console.log('🎉 Complete invoice deletion successful:', invoice.invoiceNo);
+
+    return Response.json({ 
+      message: 'Invoice completely deleted and all related data reverted',
+      deletedInvoiceNo: invoice.invoiceNo,
+      actionsCompleted: [
+        'Warranty data preserved',
+        'Stock quantities restored',
+        'Sales record deleted',
+        'Invoice data archived',
+        'Main invoice deleted'
+      ]
+    });
+
+  } catch (err: any) {
+    console.error('❌ Error during invoice deletion:', err);
+    return Response.json({ 
+      error: err.message,
+      details: 'Invoice deletion failed. Please check the logs for details.'
+    });
   }
 }

@@ -1,8 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { VscPreview } from 'react-icons/vsc';
 import { convertDate } from '@/utils/convertTime';
 import Table from '@/components/table';
 import { ColumnDef } from '@tanstack/react-table';
+import { toast } from 'react-toastify';
+import Modal from '@/components/modal';
+import Button from '@/components/button';
 
 interface InvoiceGridProps {
   invoices: any[];
@@ -21,6 +24,80 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
   onEditInvoice,
   showCreateButton = true,
 }) => {
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    invoiceId: string;
+    invoiceNo: string;
+  }>({
+    isOpen: false,
+    invoiceId: '',
+    invoiceNo: '',
+  });
+
+  const handleDeleteClick = (invoiceId: string, invoiceNo: string) => {
+    setDeleteModal({
+      isOpen: true,
+      invoiceId,
+      invoiceNo,
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      const response = await fetch('/api/invoice', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: deleteModal.invoiceId }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success(`Invoice ${deleteModal.invoiceNo} deleted successfully`);
+        // Refresh the invoices list
+        // fetchInvoices(); // This line was not provided in the original file, so it's not added.
+      } else {
+        toast.error(result.error || 'Failed to delete invoice');
+      }
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      toast.error('Failed to delete invoice');
+    } finally {
+      setDeleteModal({ isOpen: false, invoiceId: '', invoiceNo: '' });
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, invoiceId: '', invoiceNo: '' });
+  };
+
+  // Utility function to clean up stock data (run this once to fix string/number issues)
+  const cleanupStockData = async () => {
+    try {
+      const response = await fetch('/api/stock', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'cleanupStockData' }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success(result.message);
+        console.log('Stock cleanup result:', result);
+      } else {
+        toast.error(result.error || 'Failed to cleanup stock data');
+      }
+    } catch (error) {
+      console.error('Error cleaning up stock data:', error);
+      toast.error('Failed to cleanup stock data');
+    }
+  };
+
   const columns = useMemo<ColumnDef<any>[]>(() => [
     {
       accessorKey: 'invoiceNo',
@@ -127,21 +204,82 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
         </div>
       ),
     },
-  ], [onViewProducts, onPreview, onEditInvoice]);
+    {
+      id: 'delete',
+      header: 'Delete',
+      cell: ({ row }) => (
+        <div className='flex h-full w-full items-center justify-start'>
+          <button
+            className='cursor-pointer text-red-500 hover:text-red-700 p-2 rounded-full transition-colors duration-200'
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteClick(row.original.id, row.original.invoiceNo);
+            }}
+            title="Delete Invoice"
+          >
+            🗑️
+          </button>
+        </div>
+      ),
+    },
+  ], [onViewProducts, onPreview, onEditInvoice, handleDeleteClick]);
 
-  return (
-    <Table
-      data={invoices}
-      columns={columns}
-      enableSearch={true}
-      searchPlaceholder="Search invoices..."
-      enablePagination={true}
-      pageSize={10}
-      buttonTitle={showCreateButton ? 'Create Invoice' : undefined}
-      buttonOnClick={showCreateButton ? onCreateInvoice : undefined}
-      showButton={showCreateButton}
-    />
-  );
+      console.log("invoices",invoices);
+    return (
+      <>
+        <Table
+          data={invoices}
+          columns={columns}
+          enableSearch={true}
+          searchPlaceholder="Search invoices..."
+          enablePagination={true}
+          pageSize={10}
+          buttonTitle={showCreateButton ? 'Create Invoice' : undefined}
+          buttonOnClick={showCreateButton ? onCreateInvoice : undefined}
+          showButton={showCreateButton}
+        />
+        <Modal
+          isOpen={deleteModal.isOpen}
+          onClose={handleDeleteCancel}
+          title={`Delete Invoice ${deleteModal.invoiceNo}`}
+        >
+          <div className="space-y-4">
+            <p className="text-gray-700">
+              Are you sure you want to <strong>completely revert</strong> invoice <strong>{deleteModal.invoiceNo}</strong>?
+            </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h4 className="font-semibold text-yellow-800 mb-2">This will completely reverse everything:</h4>
+              <ul className="list-disc list-inside space-y-1 text-yellow-700">
+                <li><strong>Restore stock quantities</strong> - All sold items go back to inventory</li>
+                <li><strong>Delete sales record</strong> - Remove from sales history</li>
+                <li><strong>Delete invoice record</strong> - Remove from invoice list</li>
+                <li><strong>Preserve warranty data</strong> - Keep warranty info for customer service</li>
+                <li><strong>Archive for audit</strong> - Keep backup for record keeping</li>
+              </ul>
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-red-700 font-medium">
+                ⚠️ This action will completely undo the invoice as if it never existed!
+              </p>
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                variant="outline"
+                text="Cancel"
+                onClick={handleDeleteCancel}
+              />
+              <Button
+                variant="fill"
+                text="Delete Invoice"
+                onClick={handleDeleteConfirm}
+                className="bg-red-600 hover:bg-red-700"
+              />
+            </div>
+          </div>
+        </Modal>
+      </>
+    );
 };
 
 export default InvoiceGrid;

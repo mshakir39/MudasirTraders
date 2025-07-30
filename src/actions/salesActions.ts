@@ -52,6 +52,16 @@ export async function deleteSale(id: string) {
 export async function getSales() {
   try {
     const sales = await executeOperation('sales', 'findAll');
+    
+    // Sort sales by date (newest first)
+    if (Array.isArray(sales)) {
+      sales.sort((a: any, b: any) => {
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
+    }
+    
     return { success: true, data: sales };
   } catch (error: any) {
     return { success: false, error: error.message };

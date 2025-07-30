@@ -283,7 +283,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                   style={{ width: tdWidths[1] ? tdWidths[1] + 'px' : '150px' }}
                   className='width-transition relative p-[16px] font-bold'
                 >
-                  {data?.remainingAmount === 0 ? 'Paid' : data?.remainingAmount}
+                  {data?.remainingAmount === 0 ? 'Paid' : `Rs ${data?.remainingAmount}`}
                 </div>
               </div>
 

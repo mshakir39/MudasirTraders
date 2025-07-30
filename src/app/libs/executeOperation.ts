@@ -68,8 +68,9 @@ export async function executeOperation(
                     $each: [
                       {
                         series: document.seriesStock[0].series,
-                        productCost: document.seriesStock[0].productCost,
-                        inStock: document.seriesStock[0].inStock,
+                        productCost: parseFloat(document.seriesStock[0].productCost) || 0,
+                        inStock: parseInt(document.seriesStock[0].inStock) || 0,
+                        soldCount: 0, // Initialize soldCount as number
                         createdDate: new Date(),
                       },
                     ],
@@ -78,7 +79,17 @@ export async function executeOperation(
               }
             );
           } else {
-            return await db.collection(collectionName).insertOne(document);
+            // Ensure all numeric fields are numbers before inserting
+            const stockDocument = {
+              ...document,
+              seriesStock: document.seriesStock.map((stock: any) => ({
+                ...stock,
+                productCost: parseFloat(stock.productCost) || 0,
+                inStock: parseInt(stock.inStock) || 0,
+                soldCount: parseInt(stock.soldCount) || 0,
+              }))
+            };
+            return await db.collection(collectionName).insertOne(stockDocument);
           }
           
         case 'updateSeries':
@@ -138,7 +149,7 @@ export async function executeOperation(
           }
 
         case 'updateStockAndSoldCount':
-          const updateQuantity = document.quantity;
+          const updateQuantity = parseInt(document.quantity) || 0;
           const updateSeriesDoc = await db
             .collection(collectionName)
             .findOne({ 'seriesStock.series': series });
@@ -148,8 +159,10 @@ export async function executeOperation(
               (item: any) => item.series === series
             );
             if (seriesStock) {
-              const currentInStock = seriesStock.inStock;
-              const currentSoldCount = seriesStock.soldCount || 0;
+              const currentInStock = parseInt(seriesStock.inStock) || 0;
+              const currentSoldCount = parseInt(seriesStock.soldCount) || 0;
+
+              console.log(`📦 Stock update for ${series}: currentInStock=${currentInStock}, currentSoldCount=${currentSoldCount}, updateQuantity=${updateQuantity}`);
 
               if (currentInStock === 0) {
                 throw new Error(
@@ -162,6 +175,8 @@ export async function executeOperation(
               } else {
                 const newInStock = currentInStock - updateQuantity;
                 const newSoldCount = currentSoldCount + updateQuantity;
+
+                console.log(`📦 Stock update result for ${series}: inStock ${currentInStock} → ${newInStock}, soldCount ${currentSoldCount} → ${newSoldCount}`);
 
                 return await db.collection(collectionName).updateOne(
                   { 'seriesStock.series': series },
@@ -180,9 +195,47 @@ export async function executeOperation(
             throw new Error(`Series '${series}' not found.`);
           }
 
+        case 'restoreStockFromInvoice':
+          const restoreQuantity = parseInt(document.quantity) || 0;
+          const restoreSeriesDoc = await db
+            .collection(collectionName)
+            .findOne({ 'seriesStock.series': series });
+
+          if (restoreSeriesDoc) {
+            const seriesStock = restoreSeriesDoc.seriesStock.find(
+              (item: any) => item.series === series
+            );
+            if (seriesStock) {
+              const currentInStock = parseInt(seriesStock.inStock) || 0;
+              const currentSoldCount = parseInt(seriesStock.soldCount) || 0;
+
+              console.log(`🔄 Stock restore for ${series}: currentInStock=${currentInStock}, currentSoldCount=${currentSoldCount}, restoreQuantity=${restoreQuantity}`);
+
+              // Restore stock quantities (increase inStock, decrease soldCount)
+              const newInStock = currentInStock + restoreQuantity;
+              const newSoldCount = Math.max(0, currentSoldCount - restoreQuantity); // Don't go below 0
+
+              console.log(`🔄 Stock restore result for ${series}: inStock ${currentInStock} → ${newInStock}, soldCount ${currentSoldCount} → ${newSoldCount}`);
+
+              return await db.collection(collectionName).updateOne(
+                { 'seriesStock.series': series },
+                {
+                  $set: {
+                    'seriesStock.$.inStock': newInStock,
+                    'seriesStock.$.soldCount': newSoldCount,
+                  },
+                }
+              );
+            } else {
+              throw new Error(`Series '${series}' not found in stock.`);
+            }
+          } else {
+            throw new Error(`Series '${series}' not found in stock.`);
+          }
+
         case 'updateSeriesStock':
-          const stock = document.seriesStock[0].inStock;
-          const cost = document.seriesStock[0].productCost;
+          const stock = parseInt(document.seriesStock[0].inStock) || 0;
+          const cost = parseFloat(document.seriesStock[0].productCost) || 0;
           const ser = document.seriesStock[0].series;
           console.log('Updating series stock:', { brandName, ser, stock, cost });
           const updateResult = await db.collection(collectionName).updateMany(
@@ -245,6 +298,11 @@ export async function executeOperation(
           return await db
             .collection(collectionName)
             .deleteOne({ _id: deleteId });
+            
+        case 'deleteOne':
+          return await db
+            .collection(collectionName)
+            .deleteOne(document);
             
         case 'isExist':
           // Check if a document exists in the collection
