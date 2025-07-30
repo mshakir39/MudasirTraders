@@ -90,7 +90,7 @@ export const useDashboardProtection = () => {
     
     // Update previous path
     setPreviousPath(pathname);
-  }, [pathname, previousPath]);
+  }, [pathname, previousPath, lockDashboard]);
 
   return {
     isLocked,

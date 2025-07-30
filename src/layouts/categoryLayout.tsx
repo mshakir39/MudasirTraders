@@ -1,6 +1,6 @@
 'use client';
 import Table from '@/components/table';
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import Button from '@/components/button';
 import Modal from '@/components/modal';
 import Input from '@/components/customInput';
@@ -85,7 +85,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
       value: brand.id as string, // We know id exists because of the filter
     }));
 
-  const handleViewHistory = async (categoryId: string) => {
+  const handleViewHistory = useCallback(async (categoryId: string) => {
     if (!categoryId) return;
     try {
       setIsLoadingHistory(true);
@@ -132,7 +132,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
     } finally {
       setIsLoadingHistory(false);
     }
-  };
+  }, [setHistoryData, setIsHistoryModalOpen, setIsLoadingHistory]);
 
   const columns = React.useMemo<ColumnDef<CategoryWithBatteryData>[]>(() => [
     {

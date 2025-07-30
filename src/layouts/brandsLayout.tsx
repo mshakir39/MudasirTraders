@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { unstable_noStore } from 'next/cache';
 import { toast } from 'react-toastify';
 import { revalidatePathCustom } from '@/actions/revalidatePathCustom';
@@ -31,30 +31,7 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
     }
   }, [initialBrands, setBrands, fetchBrands]);
 
-  const columns = React.useMemo<ColumnDef<IBrand>[]>(() => [
-    { 
-      accessorKey: 'brandName',
-      header: 'Brand Name',
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDelete(row.original.id);
-          }}
-          className='text-red-500 hover:text-red-700 transition-colors'
-          title='Delete Brand'
-        >
-          <FaTrash />
-        </button>
-      ),
-    },
-  ], []);
-
-  const handleDelete = async (id: string | undefined) => {
+  const handleDelete = useCallback(async (id: string | undefined) => {
     if (!id) {
       toast.error('Cannot delete brand: ID is missing');
       return;
@@ -76,7 +53,30 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
       console.error('Error deleting brand:', error);
       toast.error('An error occurred while deleting the brand');
     }
-  };
+  }, [fetchBrands]);
+
+  const columns = React.useMemo<ColumnDef<IBrand>[]>(() => [
+    { 
+      accessorKey: 'brandName',
+      header: 'Brand Name',
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete(row.original.id);
+          }}
+          className='text-red-500 hover:text-red-700 transition-colors'
+          title='Delete Brand'
+        >
+          <FaTrash />
+        </button>
+      ),
+    },
+  ], [handleDelete]);
 
   return (
     <div className='md:p-6 p-0 py-6'>
