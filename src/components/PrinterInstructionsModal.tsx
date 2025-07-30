@@ -50,7 +50,7 @@ const PrinterInstructionsModal: React.FC<PrinterInstructionsModalProps> = ({
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h3 className="font-semibold text-yellow-800 mb-3">Troubleshooting:</h3>
             <ul className="list-disc list-inside space-y-1 text-yellow-700">
-              <li>If printer doesn't appear, check USB connection and drivers</li>
+                             <li>If printer doesn&apos;t appear, check USB connection and drivers</li>
               <li>If print is too wide, select 80mm paper size</li>
               <li>If nothing prints, check printer status and paper</li>
             </ul>
