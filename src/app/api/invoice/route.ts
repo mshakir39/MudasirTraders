@@ -5,6 +5,14 @@ import { ObjectId } from 'mongodb';
 
 export async function POST(req: any, res: any) {
   const formData = await req.json();
+  
+  // Debug custom date logic
+  console.log('🔍 Custom Date Debug:');
+  console.log('useCustomDate:', formData.useCustomDate);
+  console.log('customDate:', formData.customDate);
+  console.log('useCustomDate type:', typeof formData.useCustomDate);
+  console.log('customDate type:', typeof formData.customDate);
+  
   try {
     const lastInvoice: any = await executeOperation('invoices', 'findLast');
     let nextInvoiceNumber;
@@ -42,8 +50,12 @@ export async function POST(req: any, res: any) {
         totalPrice: product.productPrice * product.quantity,
         batteryDetails: product.batteryDetails,
       })),
-      createdDate: (formData.useCustomDate === true && formData.customDate) ? new Date(formData.customDate) : new Date(),
+      createdDate: (formData.useCustomDate === true || formData.useCustomDate === 'true') && formData.customDate ? new Date(formData.customDate) : new Date(),
     };
+
+    // Debug the final createdDate
+    console.log('📅 Final createdDate:', invoice.createdDate);
+    console.log('📅 Final createdDate type:', typeof invoice.createdDate);
 
     // Calculate remaining amount
     const totalProductAmount = getAllSum(invoice.products, 'totalPrice');

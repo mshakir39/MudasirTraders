@@ -223,7 +223,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                     setInvoiceData((prev: any) => ({
                       ...prev,
                       useCustomDate: newValue,
-                      customDate: newValue ? prev.customDate : new Date().toISOString().slice(0, 16)
+                      customDate: newValue ? prev.customDate : null
                     }));
                   }}
                 />
