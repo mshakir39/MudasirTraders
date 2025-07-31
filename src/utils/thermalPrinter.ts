@@ -48,7 +48,8 @@ class ThermalPrinter {
               padding: 0;
               width: 80mm;
               font-family: 'Courier New', monospace;
-              font-size: 10px;
+              font-size: 12px;
+              font-weight: 900;
               line-height: 1.1;
             }
             .receipt {
@@ -156,11 +157,24 @@ ${receiptContent}
     content += `Date: ${convertDate(data.createdDate).dateTime}\n`;
     content += line('=');
 
-    // Products header
-    content += 'No  Description        Qty  Rate    Total\n';
+    // Products header aligned with column values
+    const noWidth = 3;      // "No" column width
+    const descWidth = 18;   // Description column width
+    const qtyWidth = 5;     // Quantity column width
+    const rateWidth = 9;    // Rate column width
+    const totalWidth = 9;   // Total column width
+    
+    // Create header with proper alignment
+    const noHeader = 'No'.padStart(noWidth);
+    const descHeader = 'Description'.padEnd(descWidth);
+    const qtyHeader = 'Qty'.padStart(qtyWidth);
+    const rateHeader = 'Rate'.padStart(rateWidth);
+    const totalHeader = 'Total'.padStart(totalWidth);
+    
+    content += `${noHeader} ${descHeader} ${qtyHeader} ${rateHeader} ${totalHeader}\n`;
     content += line('-');
 
-    // Products
+    // Products with proper column alignment
     data.products.forEach((item: any, index: number) => {
       let name = item?.batteryDetails 
         ? `${item.brandName}-${item.batteryDetails.name}` 
@@ -178,22 +192,24 @@ ${receiptContent}
         }
       }
       
-      const no = String(index + 1).padStart(2);
-      // Ensure description doesn't exceed 18 characters
-      const description = name.length > 18 ? name.substring(0, 15) + '...' : name.padEnd(18);
-      const qty = String(item.quantity).padStart(3);
-      const rate = String(item.productPrice).padStart(6);
-      const total = String(item.totalPrice).padStart(7);
+      // Format each column with proper alignment
+      const no = String(index + 1).padStart(noWidth);
+      const description = name.length > descWidth ? name.substring(0, descWidth - 3) + '...' : name.padEnd(descWidth);
+      const qty = String(item.quantity).padStart(qtyWidth);
+      const rate = String(item.productPrice).padStart(rateWidth);
+      const total = String(item.totalPrice).padStart(totalWidth);
 
-      // Verify total line length doesn't exceed width
-      const line = `${no}  ${description} ${qty} ${rate} ${total}`;
+      // Create the line with proper spacing
+      const line = `${no} ${description} ${qty} ${rate} ${total}`;
+      
+      // Check if line fits within width
       if (line.length <= width) {
         content += `${line}\n`;
       } else {
         // If line is too long, truncate description further
-        const maxDescLength = width - no.length - 2 - 3 - 6 - 7 - 4; // account for spaces
-        const truncatedDesc = name.substring(0, Math.max(0, maxDescLength - 3)) + '...';
-        content += `${no}  ${truncatedDesc.padEnd(18)} ${qty} ${rate} ${total}\n`;
+        const availableWidth = width - noWidth - 1 - qtyWidth - 1 - rateWidth - 1 - totalWidth - 1; // account for spaces
+        const truncatedDesc = name.substring(0, Math.max(0, availableWidth - 3)) + '...';
+        content += `${no} ${truncatedDesc.padEnd(availableWidth)} ${qty} ${rate} ${total}\n`;
       }
     });
 
