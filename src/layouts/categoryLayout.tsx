@@ -7,7 +7,12 @@ import Input from '@/components/customInput';
 import { unstable_noStore } from 'next/cache';
 import { toast } from 'react-toastify';
 import { revalidatePathCustom } from '@/actions/revalidatePathCustom';
-import { createCategory, updateCategory, patchCategory, getCategoryHistory } from '@/actions/categoryActions';
+import {
+  createCategory,
+  updateCategory,
+  patchCategory,
+  getCategoryHistory,
+} from '@/actions/categoryActions';
 import { ICategory, IBrand, IBatterySeries } from '@/interfaces';
 import { FaEye, FaUpload } from 'react-icons/fa6';
 import { useCategoryStore } from '@/store/categoryStore';
@@ -46,28 +51,39 @@ interface HistoryEntry {
   updatedAt?: string | Date;
 }
 
-const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, initialBrands }) => {
+const CategoryLayout: React.FC<CategoryLayoutProps> = ({
+  initialCategories,
+  initialBrands,
+}) => {
   unstable_noStore();
   const { categories, fetchCategories, setCategories } = useCategoryStore();
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const [detailData, setDetailData] = React.useState<CategoryWithBatteryData>();
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [searchQuery, setSearchQuery] = React.useState<string>('');
-  const [editingBattery, setEditingBattery] = React.useState<string | null>(null);
+  const [editingBattery, setEditingBattery] = React.useState<string | null>(
+    null
+  );
   const [editingPrice, setEditingPrice] = React.useState<{
     [key: string]: number;
   }>({});
   const [editingSalesTax, setEditingSalesTax] = React.useState<{
     [key: string]: number;
   }>({});
-  const [isEditingGlobalSalesTax, setIsEditingGlobalSalesTax] = React.useState<boolean>(false);
+  const [isEditingGlobalSalesTax, setIsEditingGlobalSalesTax] =
+    React.useState<boolean>(false);
   const [globalSalesTax, setGlobalSalesTax] = React.useState<string>('18');
   const [isPdfModalOpen, setIsPdfModalOpen] = React.useState<boolean>(false);
   const [brands, setBrands] = React.useState<IBrand[]>(initialBrands);
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = React.useState<boolean>(false);
-  const [historyData, setHistoryData] = React.useState<CategoryWithBatteryData[]>([]);
-  const [selectedHistoryEntry, setSelectedHistoryEntry] = React.useState<CategoryWithBatteryData | null>(null);
-  const [isLoadingHistory, setIsLoadingHistory] = React.useState<boolean>(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] =
+    React.useState<boolean>(false);
+  const [historyData, setHistoryData] = React.useState<
+    CategoryWithBatteryData[]
+  >([]);
+  const [selectedHistoryEntry, setSelectedHistoryEntry] =
+    React.useState<CategoryWithBatteryData | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] =
+    React.useState<boolean>(false);
 
   useEffect(() => {
     // Initialize categories from server-side props
@@ -79,126 +95,149 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
   }, [initialCategories, setCategories, fetchCategories]);
 
   const brandOptions = brands
-    .filter(brand => brand.id) // Filter out brands without IDs
+    .filter((brand) => brand.id) // Filter out brands without IDs
     .map((brand) => ({
       label: brand.brandName,
       value: brand.id as string, // We know id exists because of the filter
     }));
 
-  const handleViewHistory = useCallback(async (categoryId: string) => {
-    if (!categoryId) return;
-    try {
-      setIsLoadingHistory(true);
-      const result = await getCategoryHistory(categoryId);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch history');
-      }
-      
-      // Ensure the data exists and has the correct shape
-      if (!result.data || !Array.isArray(result.data)) {
-        throw new Error('Invalid history data received');
-      }
-      
-      // Transform the history data into the expected format
-      const typedData = result.data.map((entry: HistoryEntry) => {
-        // Ensure we have a valid ID
-        const entryId = entry._id || entry.categoryId;
-        if (!entryId) {
-          throw new Error('History entry missing ID');
+  const handleViewHistory = useCallback(
+    async (categoryId: string) => {
+      if (!categoryId) return;
+      try {
+        setIsLoadingHistory(true);
+        const result = await getCategoryHistory(categoryId);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch history');
         }
-        
-        // Handle dates safely
-        const historyDate = new Date(entry.historyDate ?? '');
-        const createdAt = entry.createdAt ? new Date(entry.createdAt) : historyDate;
-        const updatedAt = entry.updatedAt ? new Date(entry.updatedAt) : historyDate;
 
-        return {
-          id: entryId,
-          brandName: entry.brandName,
-          series: entry.series,
-          salesTax: entry.salesTax,
-          historyDate,
-          createdAt,
-          updatedAt
-        } as CategoryWithBatteryData;
-      });
-      
-      setHistoryData(typedData);
-      setIsHistoryModalOpen(true);
-    } catch (error) {
-      console.error('Error fetching history:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to fetch history');
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, [setHistoryData, setIsHistoryModalOpen, setIsLoadingHistory]);
+        // Ensure the data exists and has the correct shape
+        if (!result.data || !Array.isArray(result.data)) {
+          throw new Error('Invalid history data received');
+        }
 
-  const columns = React.useMemo<ColumnDef<CategoryWithBatteryData>[]>(() => [
-    {
-      accessorKey: 'brandName',
-      header: 'BrandName',
-    },
-    {
-      accessorKey: 'series',
-      header: 'Series',
-      cell: ({ row }) => {
-        const series = row.original.series;
-        if (series.length === 0) return 'No series';
-        
-        // Show first 3 series, then indicate how many more
-        const displaySeries = series.slice(0, 3).map(s => s.name);
-        const remainingCount = series.length - 3;
-        
-        return (
-          <div className="space-y-1">
-            <div className="text-sm">
-              {displaySeries.join(', ')}
-              {remainingCount > 0 && (
-                <span className="text-gray-500 ml-1">
-                  +{remainingCount} more
-                </span>
-              )}
-            </div>
-            <div className="text-xs text-gray-400">
-              {series.length} total series
-            </div>
-          </div>
+        // Transform the history data into the expected format
+        const typedData = result.data.map((entry: HistoryEntry) => {
+          // Ensure we have a valid ID
+          const entryId = entry._id || entry.categoryId;
+          if (!entryId) {
+            throw new Error('History entry missing ID');
+          }
+
+          // Handle dates safely
+          const historyDate = new Date(entry.historyDate ?? '');
+          const createdAt = entry.createdAt
+            ? new Date(entry.createdAt)
+            : historyDate;
+          const updatedAt = entry.updatedAt
+            ? new Date(entry.updatedAt)
+            : historyDate;
+
+          return {
+            id: entryId,
+            brandName: entry.brandName,
+            series: entry.series,
+            salesTax: entry.salesTax,
+            historyDate,
+            createdAt,
+            updatedAt,
+          } as CategoryWithBatteryData;
+        });
+
+        setHistoryData(typedData);
+        setIsHistoryModalOpen(true);
+      } catch (error) {
+        console.error('Error fetching history:', error);
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to fetch history'
         );
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    },
+    [setHistoryData, setIsHistoryModalOpen, setIsLoadingHistory]
+  );
+
+  const columns = React.useMemo<ColumnDef<CategoryWithBatteryData>[]>(
+    () => [
+      {
+        accessorKey: 'brandName',
+        header: 'BrandName',
       },
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <FaEye
-            className='cursor-pointer text-blue-600 hover:text-blue-800 transition-colors'
-            title='View'
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsModalOpen(true);
-              setDetailData(row.original);
-              setGlobalSalesTax(row.original.salesTax.toString());
-            }}
-          />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleViewHistory(row.original.id!);
-            }}
-            className="flex items-center gap-1 px-2 py-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
-            disabled={isLoadingHistory}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            History
-          </button>
-        </div>
-      ),
-    },
-  ], [isLoadingHistory, handleViewHistory]);
+      {
+        accessorKey: 'series',
+        header: 'Series',
+        cell: ({ row }) => {
+          const series = row.original.series;
+          if (series.length === 0) return 'No series';
+
+          // Show first 3 series, then indicate how many more
+          const displaySeries = series.slice(0, 3).map((s) => s.name);
+          const remainingCount = series.length - 3;
+
+          return (
+            <div className='space-y-1'>
+              <div className='text-sm'>
+                {displaySeries.join(', ')}
+                {remainingCount > 0 && (
+                  <span className='ml-1 text-gray-500'>
+                    +{remainingCount} more
+                  </span>
+                )}
+              </div>
+              <div className='text-xs text-gray-400'>
+                {series.length} total series
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-3'>
+            <FaEye
+              className='cursor-pointer text-blue-600 transition-colors hover:text-blue-800'
+              title='View'
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsModalOpen(true);
+                setDetailData(row.original);
+                setGlobalSalesTax(row.original.salesTax.toString());
+              }}
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewHistory(row.original.id!);
+              }}
+              className='flex items-center gap-1 px-2 py-1 text-sm text-blue-600 transition-colors hover:text-blue-800'
+              disabled={isLoadingHistory}
+            >
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                className='h-4 w-4'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+                />
+              </svg>
+              History
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [isLoadingHistory, handleViewHistory]
+  );
 
   const handlePdfUploadSuccess = async (data: {
     brandName: string;
@@ -207,7 +246,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
   }) => {
     try {
       setIsLoading(true);
-      
+
       // Check if category already exists for this brand
       const existingCategory = categories.find(
         (cat) => cat.brandName === data.brandName
@@ -216,7 +255,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
       const categoryData: Omit<ICategory, 'id'> = {
         brandName: data.brandName,
         series: data.series,
-        salesTax: Number(data.salesTax)
+        salesTax: Number(data.salesTax),
       };
 
       if (existingCategory && existingCategory.id) {
@@ -227,7 +266,9 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
           throw new Error(result.error || 'Failed to update category');
         }
 
-        toast.success(`Updated existing category for ${data.brandName} with ${data.series.length} series`);
+        toast.success(
+          `Updated existing category for ${data.brandName} with ${data.series.length} series`
+        );
       } else if (!existingCategory) {
         // Create new category
         const result = await createCategory(categoryData);
@@ -236,7 +277,9 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
           throw new Error(result.error || 'Failed to create category');
         }
 
-        toast.success(`Created new category for ${data.brandName} with ${data.series.length} series`);
+        toast.success(
+          `Created new category for ${data.brandName} with ${data.series.length} series`
+        );
       } else {
         throw new Error('Category is missing an id');
       }
@@ -247,7 +290,9 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
     } catch (error) {
       console.error('Error saving category from PDF:', error);
       toast.error(
-        error instanceof Error ? error.message : 'Failed to save category from PDF'
+        error instanceof Error
+          ? error.message
+          : 'Failed to save category from PDF'
       );
     } finally {
       setIsLoading(false);
@@ -369,7 +414,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
   }, [detailData, searchQuery]);
 
   return (
-    <div className='md:p-6 p-0 py-6'>
+    <div className='p-0 py-6 md:p-6'>
       <div className='flex items-center justify-between py-2'>
         <h1 className='text-2xl font-bold'>Categories</h1>
         <div className='flex gap-2'>
@@ -385,7 +430,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
         data={categories as CategoryWithBatteryData[]}
         columns={columns}
         enableSearch={true}
-        searchPlaceholder="Search categories..."
+        searchPlaceholder='Search categories...'
         enablePagination={true}
         pageSize={10}
         showButton={false}
@@ -409,21 +454,32 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
         }}
         title={
           detailData ? (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">{detailData.brandName}</h2>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+            <div className='flex flex-col gap-2'>
+              <div className='flex items-center justify-between'>
+                <h2 className='text-xl font-bold text-gray-900'>
+                  {detailData.brandName}
+                </h2>
+                <div className='flex items-center gap-3'>
+                  <div className='flex items-center gap-2'>
+                    <div className='flex items-center gap-1 text-sm text-gray-600'>
+                      <svg
+                        className='h-4 w-4'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                      >
+                        <path
+                          fillRule='evenodd'
+                          d='M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z'
+                          clipRule='evenodd'
+                        />
                       </svg>
-                      <span className="font-medium">
-                        {filteredSeries.length} {filteredSeries.length === 1 ? 'Product' : 'Products'}
+                      <span className='font-medium'>
+                        {filteredSeries.length}{' '}
+                        {filteredSeries.length === 1 ? 'Product' : 'Products'}
                       </span>
                     </div>
                     {searchQuery && (
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      <span className='rounded bg-gray-100 px-2 py-1 text-xs text-gray-500'>
                         filtered from {detailData.series.length}
                       </span>
                     )}
@@ -450,7 +506,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                 }
               />
             </div>
-            
+
             {/* Sales Tax Control - Full width on mobile, smaller on desktop */}
             <div className='w-full sm:w-1/3 lg:w-1/4'>
               <div className='mb-1 flex items-center justify-between'>
@@ -458,7 +514,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                 {!isEditingGlobalSalesTax ? (
                   <button
                     onClick={() => setIsEditingGlobalSalesTax(true)}
-                    className='rounded px-2 py-1 text-sm text-blue-500 hover:bg-blue-50 hover:text-blue-700 touch-manipulation'
+                    className='touch-manipulation rounded px-2 py-1 text-sm text-blue-500 hover:bg-blue-50 hover:text-blue-700'
                   >
                     Edit
                   </button>
@@ -466,7 +522,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                   <div className='flex gap-1 sm:gap-2'>
                     <button
                       onClick={handleSaveGlobalSalesTax}
-                      className='rounded px-2 py-1 text-sm text-green-500 hover:bg-green-50 hover:text-green-700 touch-manipulation'
+                      className='touch-manipulation rounded px-2 py-1 text-sm text-green-500 hover:bg-green-50 hover:text-green-700'
                       disabled={isLoading}
                     >
                       Save
@@ -476,7 +532,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                         setIsEditingGlobalSalesTax(false);
                         setGlobalSalesTax('18'); // Reset to default
                       }}
-                      className='rounded px-2 py-1 text-sm text-red-500 hover:bg-red-50 hover:text-red-700 touch-manipulation'
+                      className='touch-manipulation rounded px-2 py-1 text-sm text-red-500 hover:bg-red-50 hover:text-red-700'
                     >
                       Cancel
                     </button>
@@ -511,14 +567,16 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                 filteredSeries.map((item: BatteryData, index: number) => (
                   <div
                     key={index}
-                    className='rounded-lg bg-white p-3 sm:p-4 shadow transition-shadow hover:shadow-md'
+                    className='rounded-lg bg-white p-3 shadow transition-shadow hover:shadow-md sm:p-4'
                   >
                     {/* Mobile Card Layout */}
                     <div className='block sm:hidden'>
                       {/* Header Row */}
                       <div className='mb-3 flex items-start justify-between'>
                         <div className='flex-1'>
-                          <h3 className='font-semibold text-gray-900'>{item.name}</h3>
+                          <h3 className='font-semibold text-gray-900'>
+                            {item.name}
+                          </h3>
                           <div className='mt-1 flex flex-wrap gap-2 text-sm text-gray-600'>
                             <span>Plate: {item.plate}</span>
                             <span>•</span>
@@ -538,7 +596,9 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                         {/* Retail Price */}
                         <div className='rounded-lg bg-gray-50 p-3'>
                           <div className='mb-2 flex items-center justify-between'>
-                            <span className='text-sm font-medium text-gray-700'>Retail Price</span>
+                            <span className='text-sm font-medium text-gray-700'>
+                              Retail Price
+                            </span>
                             {editingBattery !== item.name ? (
                               <button
                                 onClick={() => {
@@ -548,7 +608,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                                     [item.name]: item.retailPrice || 0,
                                   }));
                                 }}
-                                className='rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-600 hover:bg-blue-200 touch-manipulation'
+                                className='touch-manipulation rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-600 hover:bg-blue-200'
                               >
                                 Edit
                               </button>
@@ -556,7 +616,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                               <div className='flex gap-2'>
                                 <button
                                   onClick={() => handleSavePrice(item.name)}
-                                  className='rounded-full bg-green-100 px-3 py-1 text-sm text-green-600 hover:bg-green-200 touch-manipulation'
+                                  className='touch-manipulation rounded-full bg-green-100 px-3 py-1 text-sm text-green-600 hover:bg-green-200'
                                   disabled={isLoading}
                                 >
                                   Save
@@ -566,7 +626,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                                     setEditingBattery(null);
                                     setEditingPrice({});
                                   }}
-                                  className='rounded-full bg-red-100 px-3 py-1 text-sm text-red-600 hover:bg-red-200 touch-manipulation'
+                                  className='touch-manipulation rounded-full bg-red-100 px-3 py-1 text-sm text-red-600 hover:bg-red-200'
                                 >
                                   Cancel
                                 </button>
@@ -576,8 +636,14 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                           {editingBattery === item.name ? (
                             <input
                               type='number'
-                              value={editingPrice[item.name] ?? item.retailPrice ?? ''}
-                              onChange={(e) => handlePriceChange(item.name, e.target.value)}
+                              value={
+                                editingPrice[item.name] ??
+                                item.retailPrice ??
+                                ''
+                              }
+                              onChange={(e) =>
+                                handlePriceChange(item.name, e.target.value)
+                              }
                               className='w-full rounded border p-2 text-base focus:border-blue-500 focus:outline-none'
                               placeholder='Enter price'
                             />
@@ -592,16 +658,26 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                         <div className='grid grid-cols-2 gap-3'>
                           <div className='rounded-lg bg-gray-50 p-3'>
                             <span className='text-xs text-gray-500'>
-                              Sales Tax ({item.salesTax ?? detailData?.salesTax ?? 18}%)
+                              Sales Tax (
+                              {item.salesTax ?? detailData?.salesTax ?? 18}%)
                             </span>
                             <p className='font-medium text-gray-900'>
-                              Rs {item.retailPrice
-                                ? Math.round((item.retailPrice * (item.salesTax ?? detailData?.salesTax ?? 18)) / 100)
+                              Rs{' '}
+                              {item.retailPrice
+                                ? Math.round(
+                                    (item.retailPrice *
+                                      (item.salesTax ??
+                                        detailData?.salesTax ??
+                                        18)) /
+                                      100
+                                  )
                                 : 'N/A'}
                             </p>
                           </div>
                           <div className='rounded-lg bg-gray-50 p-3'>
-                            <span className='text-xs text-gray-500'>Max Retail Price</span>
+                            <span className='text-xs text-gray-500'>
+                              Max Retail Price
+                            </span>
                             <p className='font-medium text-gray-900'>
                               Rs {item.maxRetailPrice || 'N/A'}
                             </p>
@@ -615,11 +691,15 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                       <div className='grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7'>
                         <div>
                           <span className='text-sm text-gray-500'>Name</span>
-                          <p className='font-medium text-gray-900 break-words'>{item.name}</p>
+                          <p className='break-words font-medium text-gray-900'>
+                            {item.name}
+                          </p>
                         </div>
                         <div>
                           <span className='text-sm text-gray-500'>Plate</span>
-                          <p className='font-medium text-gray-900'>{item.plate}</p>
+                          <p className='font-medium text-gray-900'>
+                            {item.plate}
+                          </p>
                         </div>
                         <div>
                           <span className='text-sm text-gray-500'>AH</span>
@@ -627,7 +707,9 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                         </div>
                         <div className='col-span-2 md:col-span-1 lg:col-span-1'>
                           <div className='mb-1 flex items-center justify-between'>
-                            <span className='text-sm text-gray-500'>Retail Price</span>
+                            <span className='text-sm text-gray-500'>
+                              Retail Price
+                            </span>
                             {editingBattery !== item.name ? (
                               <button
                                 onClick={() => {
@@ -637,7 +719,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                                     [item.name]: item.retailPrice || 0,
                                   }));
                                 }}
-                                className='rounded px-2 py-1 text-sm text-blue-500 hover:bg-blue-50 hover:text-blue-700 touch-manipulation'
+                                className='touch-manipulation rounded px-2 py-1 text-sm text-blue-500 hover:bg-blue-50 hover:text-blue-700'
                               >
                                 Edit
                               </button>
@@ -645,7 +727,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                               <div className='flex gap-1'>
                                 <button
                                   onClick={() => handleSavePrice(item.name)}
-                                  className='rounded px-2 py-1 text-xs text-green-500 hover:bg-green-50 hover:text-green-700 touch-manipulation'
+                                  className='touch-manipulation rounded px-2 py-1 text-xs text-green-500 hover:bg-green-50 hover:text-green-700'
                                   disabled={isLoading}
                                 >
                                   Save
@@ -655,7 +737,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                                     setEditingBattery(null);
                                     setEditingPrice({});
                                   }}
-                                  className='rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50 hover:text-red-700 touch-manipulation'
+                                  className='touch-manipulation rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50 hover:text-red-700'
                                 >
                                   Cancel
                                 </button>
@@ -665,8 +747,14 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                           {editingBattery === item.name ? (
                             <input
                               type='number'
-                              value={editingPrice[item.name] ?? item.retailPrice ?? ''}
-                              onChange={(e) => handlePriceChange(item.name, e.target.value)}
+                              value={
+                                editingPrice[item.name] ??
+                                item.retailPrice ??
+                                ''
+                              }
+                              onChange={(e) =>
+                                handlePriceChange(item.name, e.target.value)
+                              }
                               className='w-full rounded border p-1 text-sm focus:border-blue-500 focus:outline-none'
                               placeholder='Enter price'
                             />
@@ -679,17 +767,27 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                         <div>
                           <div className='flex items-center justify-between'>
                             <span className='text-sm text-gray-500'>
-                              Sales Tax ({item.salesTax ?? detailData?.salesTax ?? 18}%)
+                              Sales Tax (
+                              {item.salesTax ?? detailData?.salesTax ?? 18}%)
                             </span>
                           </div>
                           <p className='font-medium text-gray-900'>
-                            Rs {item.retailPrice
-                              ? Math.round((item.retailPrice * (item.salesTax ?? detailData?.salesTax ?? 18)) / 100)
+                            Rs{' '}
+                            {item.retailPrice
+                              ? Math.round(
+                                  (item.retailPrice *
+                                    (item.salesTax ??
+                                      detailData?.salesTax ??
+                                      18)) /
+                                    100
+                                )
                               : 'N/A'}
                           </p>
                         </div>
                         <div>
-                          <span className='text-sm text-gray-500'>Max Retail Price</span>
+                          <span className='text-sm text-gray-500'>
+                            Max Retail Price
+                          </span>
                           <p className='font-medium text-gray-900'>
                             Rs {item.maxRetailPrice || 'N/A'}
                           </p>
@@ -697,7 +795,9 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                         {item.type && (
                           <div>
                             <span className='text-sm text-gray-500'>Type</span>
-                            <p className='font-medium text-gray-900'>{item.type}</p>
+                            <p className='font-medium text-gray-900'>
+                              {item.type}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -707,14 +807,21 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
               ) : (
                 <div className='rounded-lg bg-gray-50 py-8 text-center'>
                   <div className='mx-auto max-w-md px-4'>
-                    <div className='text-gray-400 mb-3'>
-                      <svg className='mx-auto h-12 w-12' fill='currentColor' viewBox='0 0 24 24'>
-                        <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/>
+                    <div className='mb-3 text-gray-400'>
+                      <svg
+                        className='mx-auto h-12 w-12'
+                        fill='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' />
                       </svg>
                     </div>
-                    <h3 className='text-lg font-medium text-gray-900 mb-1'>No batteries found</h3>
+                    <h3 className='mb-1 text-lg font-medium text-gray-900'>
+                      No batteries found
+                    </h3>
                     <p className='text-sm text-gray-500'>
-                      No batteries match your search criteria. Try adjusting your search terms.
+                      No batteries match your search criteria. Try adjusting
+                      your search terms.
                     </p>
                   </div>
                 </div>
@@ -732,41 +839,45 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
           setIsHistoryModalOpen(false);
           setSelectedHistoryEntry(null);
         }}
-        title="Category History"
+        title='Category History'
       >
-        <div className="max-h-[80vh] overflow-y-auto">
+        <div className='max-h-[80vh] overflow-y-auto'>
           {isLoadingHistory ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className='flex items-center justify-center py-8'>
+              <div className='h-8 w-8 animate-spin rounded-full border-b-2 border-blue-500'></div>
             </div>
           ) : historyData.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className='py-8 text-center text-gray-500'>
               No history available
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {!selectedHistoryEntry ? (
                 // History List View
-                <div className="grid gap-4">
+                <div className='grid gap-4'>
                   {historyData.map((entry, index) => (
                     <div
                       key={index}
-                      className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                      className='cursor-pointer rounded-lg border p-4 hover:bg-gray-50'
                       onClick={() => setSelectedHistoryEntry(entry)}
                     >
-                      <div className="flex justify-between items-center">
+                      <div className='flex items-center justify-between'>
                         <div>
-                          <h3 className="font-medium">{entry.brandName}</h3>
-                          <p className="text-sm text-gray-500">
+                          <h3 className='font-medium'>{entry.brandName}</h3>
+                          <p className='text-sm text-gray-500'>
                             {entry.series.length} series items
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-600">
-                            {new Date(entry.historyDate ?? '').toLocaleDateString()}
+                        <div className='text-right'>
+                          <p className='text-sm text-gray-600'>
+                            {new Date(
+                              entry.historyDate ?? ''
+                            ).toLocaleDateString()}
                           </p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(entry.historyDate ?? '').toLocaleTimeString()}
+                          <p className='text-xs text-gray-500'>
+                            {new Date(
+                              entry.historyDate ?? ''
+                            ).toLocaleTimeString()}
                           </p>
                         </div>
                       </div>
@@ -778,80 +889,133 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({ initialCategories, init
                 <div>
                   <button
                     onClick={() => setSelectedHistoryEntry(null)}
-                    className="mb-4 text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    className='mb-4 flex items-center gap-1 text-blue-600 hover:text-blue-800'
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    <svg
+                      xmlns='http://www.w3.org/2000/svg'
+                      className='h-4 w-4'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M15 19l-7-7 7-7'
+                      />
                     </svg>
                     Back to History List
                   </button>
-                  
-                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+
+                  <div className='mb-4 border-l-4 border-yellow-400 bg-yellow-50 p-4'>
+                    <div className='flex'>
+                      <div className='flex-shrink-0'>
+                        <svg
+                          className='h-5 w-5 text-yellow-400'
+                          viewBox='0 0 20 20'
+                          fill='currentColor'
+                        >
+                          <path
+                            fillRule='evenodd'
+                            d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
+                            clipRule='evenodd'
+                          />
                         </svg>
                       </div>
-                      <div className="ml-3">
-                        <p className="text-sm text-yellow-700">
-                          This is a historical view from {new Date(selectedHistoryEntry.historyDate ?? '').toLocaleString()}
+                      <div className='ml-3'>
+                        <p className='text-sm text-yellow-700'>
+                          This is a historical view from{' '}
+                          {new Date(
+                            selectedHistoryEntry.historyDate ?? ''
+                          ).toLocaleString()}
                         </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Render the same battery list view but with historical data */}
-                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                    {selectedHistoryEntry.series.map((item: BatteryData, index: number) => (
-                      <div
-                        key={index}
-                        className="rounded-lg bg-white p-3 sm:p-4 shadow"
-                      >
-                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
-                          <div>
-                            <span className="text-sm text-gray-500">Name</span>
-                            <p className="font-medium text-gray-900 break-words">{item.name}</p>
-                          </div>
-                          <div>
-                            <span className="text-sm text-gray-500">Plate</span>
-                            <p className="font-medium text-gray-900">{item.plate}</p>
-                          </div>
-                          <div>
-                            <span className="text-sm text-gray-500">AH</span>
-                            <p className="font-medium text-gray-900">{item.ah}</p>
-                          </div>
-                          <div>
-                            <span className="text-sm text-gray-500">Retail Price</span>
-                            <p className="font-medium text-gray-900">
-                              Rs {item.retailPrice || 'N/A'}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-sm text-gray-500">
-                              Sales Tax ({item.salesTax ?? selectedHistoryEntry.salesTax ?? 18}%)
-                            </span>
-                            <p className="font-medium text-gray-900">
-                              Rs {item.retailPrice
-                                ? Math.round((item.retailPrice * (item.salesTax ?? selectedHistoryEntry.salesTax ?? 18)) / 100)
-                                : 'N/A'}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-sm text-gray-500">Max Retail Price</span>
-                            <p className="font-medium text-gray-900">
-                              Rs {item.maxRetailPrice || 'N/A'}
-                            </p>
-                          </div>
-                          {item.type && (
+                  <div className='grid grid-cols-1 gap-3 sm:gap-4'>
+                    {selectedHistoryEntry.series.map(
+                      (item: BatteryData, index: number) => (
+                        <div
+                          key={index}
+                          className='rounded-lg bg-white p-3 shadow sm:p-4'
+                        >
+                          <div className='grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7'>
                             <div>
-                              <span className="text-sm text-gray-500">Type</span>
-                              <p className="font-medium text-gray-900">{item.type}</p>
+                              <span className='text-sm text-gray-500'>
+                                Name
+                              </span>
+                              <p className='break-words font-medium text-gray-900'>
+                                {item.name}
+                              </p>
                             </div>
-                          )}
+                            <div>
+                              <span className='text-sm text-gray-500'>
+                                Plate
+                              </span>
+                              <p className='font-medium text-gray-900'>
+                                {item.plate}
+                              </p>
+                            </div>
+                            <div>
+                              <span className='text-sm text-gray-500'>AH</span>
+                              <p className='font-medium text-gray-900'>
+                                {item.ah}
+                              </p>
+                            </div>
+                            <div>
+                              <span className='text-sm text-gray-500'>
+                                Retail Price
+                              </span>
+                              <p className='font-medium text-gray-900'>
+                                Rs {item.retailPrice || 'N/A'}
+                              </p>
+                            </div>
+                            <div>
+                              <span className='text-sm text-gray-500'>
+                                Sales Tax (
+                                {item.salesTax ??
+                                  selectedHistoryEntry.salesTax ??
+                                  18}
+                                %)
+                              </span>
+                              <p className='font-medium text-gray-900'>
+                                Rs{' '}
+                                {item.retailPrice
+                                  ? Math.round(
+                                      (item.retailPrice *
+                                        (item.salesTax ??
+                                          selectedHistoryEntry.salesTax ??
+                                          18)) /
+                                        100
+                                    )
+                                  : 'N/A'}
+                              </p>
+                            </div>
+                            <div>
+                              <span className='text-sm text-gray-500'>
+                                Max Retail Price
+                              </span>
+                              <p className='font-medium text-gray-900'>
+                                Rs {item.maxRetailPrice || 'N/A'}
+                              </p>
+                            </div>
+                            {item.type && (
+                              <div>
+                                <span className='text-sm text-gray-500'>
+                                  Type
+                                </span>
+                                <p className='font-medium text-gray-900'>
+                                  {item.type}
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 </div>
               )}

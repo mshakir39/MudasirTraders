@@ -31,62 +31,68 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
     }
   }, [initialBrands, setBrands, fetchBrands]);
 
-  const handleDelete = useCallback(async (id: string | undefined) => {
-    if (!id) {
-      toast.error('Cannot delete brand: ID is missing');
-      return;
-    }
-    
-    if (!confirm('Are you sure you want to delete this brand?')) return;
-    
-    try {
-      const result = await deleteBrand(id);
-
-      if (result.success) {
-        toast.success('Brand deleted successfully');
-        await revalidatePathCustom('/brands');
-        await fetchBrands(); // Refresh store after delete
-      } else {
-        toast.error(result.error || 'Failed to delete brand');
+  const handleDelete = useCallback(
+    async (id: string | undefined) => {
+      if (!id) {
+        toast.error('Cannot delete brand: ID is missing');
+        return;
       }
-    } catch (error) {
-      console.error('Error deleting brand:', error);
-      toast.error('An error occurred while deleting the brand');
-    }
-  }, [fetchBrands]);
 
-  const columns = React.useMemo<ColumnDef<IBrand>[]>(() => [
-    { 
-      accessorKey: 'brandName',
-      header: 'Brand Name',
+      if (!confirm('Are you sure you want to delete this brand?')) return;
+
+      try {
+        const result = await deleteBrand(id);
+
+        if (result.success) {
+          toast.success('Brand deleted successfully');
+          await revalidatePathCustom('/brands');
+          await fetchBrands(); // Refresh store after delete
+        } else {
+          toast.error(result.error || 'Failed to delete brand');
+        }
+      } catch (error) {
+        console.error('Error deleting brand:', error);
+        toast.error('An error occurred while deleting the brand');
+      }
     },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDelete(row.original.id);
-          }}
-          className='text-red-500 hover:text-red-700 transition-colors'
-          title='Delete Brand'
-        >
-          <FaTrash />
-        </button>
-      ),
-    },
-  ], [handleDelete]);
+    [fetchBrands]
+  );
+
+  const columns = React.useMemo<ColumnDef<IBrand>[]>(
+    () => [
+      {
+        accessorKey: 'brandName',
+        header: 'Brand Name',
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(row.original.id);
+            }}
+            className='text-red-500 transition-colors hover:text-red-700'
+            title='Delete Brand'
+          >
+            <FaTrash />
+          </button>
+        ),
+      },
+    ],
+    [handleDelete]
+  );
 
   return (
-    <div className='md:p-6 p-0 py-6'>
-      <h1 className="text-2xl font-bold">Brands</h1>
-      
+    <div className='p-0 py-6 md:p-6'>
+      <h1 className='text-2xl font-bold'>Brands</h1>
+
       <Table
         data={brands}
         columns={columns}
         enableSearch={true}
-        searchPlaceholder="Search brands..."
+        searchPlaceholder='Search brands...'
         showButton={false}
       />
     </div>

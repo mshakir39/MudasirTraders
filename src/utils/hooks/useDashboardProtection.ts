@@ -13,13 +13,13 @@ export const useDashboardProtection = () => {
   const checkDashboardAccess = () => {
     const isUnlocked = sessionStorage.getItem('dashboardUnlocked') === 'true';
     const unlockTime = sessionStorage.getItem('dashboardUnlockTime');
-    
+
     if (isUnlocked && unlockTime) {
       const unlockTimestamp = parseInt(unlockTime);
       const currentTime = Date.now();
       const sessionTimeout = 30 * 60 * 1000; // 30 minutes
       const warningTimeout = 25 * 60 * 1000; // 25 minutes (5 min warning)
-      
+
       // Check if session has expired
       if (currentTime - unlockTimestamp > sessionTimeout) {
         // Session expired, lock dashboard
@@ -28,17 +28,17 @@ export const useDashboardProtection = () => {
         setIsLocked(true);
         return false;
       }
-      
+
       // Show warning if session is about to expire
       if (currentTime - unlockTimestamp > warningTimeout) {
         // You can add a toast notification here if needed
         console.log('Dashboard session will expire soon');
       }
-      
+
       setIsLocked(false);
       return true;
     }
-    
+
     setIsLocked(true);
     return false;
   };
@@ -72,7 +72,7 @@ export const useDashboardProtection = () => {
       // We just left the dashboard, ALWAYS lock it regardless of current state
       lockDashboard();
     }
-    
+
     if (pathname === '/') {
       // We're on dashboard route - ALWAYS require password
       const hasAccess = checkDashboardAccess();
@@ -87,7 +87,7 @@ export const useDashboardProtection = () => {
       // We're not on dashboard route
       setShowPasswordModal(false);
     }
-    
+
     // Update previous path
     setPreviousPath(pathname);
   }, [pathname, previousPath, lockDashboard]);
@@ -99,6 +99,6 @@ export const useDashboardProtection = () => {
     unlockDashboard,
     lockDashboard,
     handlePasswordSuccess,
-    checkDashboardAccess
+    checkDashboardAccess,
   };
-}; 
+};

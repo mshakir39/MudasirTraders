@@ -10,12 +10,15 @@ const DashboardPasswordPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  
-  console.log('Dashboard Password:', process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD);
+
+  console.log(
+    'Dashboard Password:',
+    process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!password.trim()) {
       toast.error('Please enter the password');
       return;
@@ -43,68 +46,75 @@ const DashboardPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="text-center mb-8">
-            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-              <FaLock className="h-8 w-8 text-red-600" />
+    <div className='flex min-h-screen items-center justify-center bg-gray-50 px-4'>
+      <div className='w-full max-w-md'>
+        <div className='rounded-lg bg-white p-8 shadow-lg'>
+          <div className='mb-8 text-center'>
+            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100'>
+              <FaLock className='h-8 w-8 text-red-600' />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className='mb-2 text-2xl font-bold text-gray-900'>
               Dashboard Access Required
             </h1>
-            <p className="text-gray-600">
+            <p className='text-gray-600'>
               Please enter the password to access the dashboard.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className='space-y-6'>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor='password'
+                className='mb-2 block text-sm font-medium text-gray-700'
+              >
                 Password
               </label>
-              <div className="relative">
+              <div className='relative'>
                 <input
-                  id="password"
+                  id='password'
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
-                  placeholder="Enter dashboard password"
+                  className='w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
+                  placeholder='Enter dashboard password'
                   disabled={isLoading}
                 />
                 <button
-                  type="button"
+                  type='button'
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className='absolute right-3 top-1/2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600'
                   disabled={isLoading}
                 >
-                  {showPassword ? <FaEyeSlash className="h-5 w-5" /> : <FaEye className="h-5 w-5" />}
+                  {showPassword ? (
+                    <FaEyeSlash className='h-5 w-5' />
+                  ) : (
+                    <FaEye className='h-5 w-5' />
+                  )}
                 </button>
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className='flex gap-3'>
               <button
-                type="submit"
+                type='submit'
                 disabled={isLoading}
-                className="flex-1 bg-blue-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className='flex-1 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 {isLoading ? 'Unlocking...' : 'Unlock Dashboard'}
               </button>
               <button
-                type="button"
+                type='button'
                 onClick={handleCancel}
                 disabled={isLoading}
-                className="px-6 py-3 text-gray-600 font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className='rounded-lg border border-gray-300 px-6 py-3 font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 Cancel
               </button>
             </div>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs text-blue-500 mt-2">
+          <div className='mt-6 text-center'>
+            <p className='mt-2 text-xs text-blue-500'>
               You can navigate to other pages using the sidebar
             </p>
           </div>
@@ -114,4 +124,4 @@ const DashboardPasswordPage: React.FC = () => {
   );
 };
 
-export default DashboardPasswordPage; 
+export default DashboardPasswordPage;

@@ -38,12 +38,14 @@ export async function createStock(data: StockData) {
   try {
     const result = await executeOperation('stock', 'insertStock', {
       brandName: data.brandName,
-      seriesStock: [{
-        series: data.series,
-        productCost: data.productCost,
-        inStock: data.inStock,
-        createdDate: new Date(),
-      }],
+      seriesStock: [
+        {
+          series: data.series,
+          productCost: data.productCost,
+          inStock: data.inStock,
+          createdDate: new Date(),
+        },
+      ],
     });
     return { success: true, data: result };
   } catch (error: any) {
@@ -54,29 +56,33 @@ export async function createStock(data: StockData) {
 export async function updateStock(data: StockData) {
   try {
     const { ObjectId } = require('mongodb');
-    
+
     // First save current state to history
     const db = await connectToMongoDB();
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    
+
     const collection = db.collection('stock');
     const historyCollection = db.collection('stockHistory');
-    
+
     // Find current stock for this brand
-    const currentStock = await collection.findOne({ brandName: data.brandName });
+    const currentStock = await collection.findOne({
+      brandName: data.brandName,
+    });
     if (currentStock) {
       // Find the specific series being updated to capture changes
-      const currentSeries = currentStock.seriesStock?.find((s: SeriesStock) => s.series === data.series);
-      
+      const currentSeries = currentStock.seriesStock?.find(
+        (s: SeriesStock) => s.series === data.series
+      );
+
       if (currentSeries) {
         // Calculate changes
         const oldQuantity = currentSeries.inStock || 0;
         const newQuantity = parseInt(data.inStock) || 0;
         const oldCost = currentSeries.productCost || 0;
         const newCost = parseInt(data.productCost) || 0;
-        
+
         // Save series-level history (every change, no daily grouping)
         await historyCollection.insertOne({
           brandName: data.brandName,
@@ -87,7 +93,7 @@ export async function updateStock(data: StockData) {
           oldCost: oldCost,
           newCost: newCost,
           costDifference: newCost - oldCost,
-          historyDate: new Date()
+          historyDate: new Date(),
         });
       }
     }
@@ -95,14 +101,16 @@ export async function updateStock(data: StockData) {
     // Then update with new data
     const result = await executeOperation('stock', 'updateSeriesStock', {
       brandName: data.brandName,
-      seriesStock: [{
-        series: data.series,
-        productCost: data.productCost,
-        inStock: data.inStock,
-        updatedDate: new Date(),
-      }],
+      seriesStock: [
+        {
+          series: data.series,
+          productCost: data.productCost,
+          inStock: data.inStock,
+          updatedDate: new Date(),
+        },
+      ],
     });
-    
+
     console.log('Update stock result:', result);
     return { success: true, data: result };
   } catch (error: any) {
@@ -111,39 +119,43 @@ export async function updateStock(data: StockData) {
   }
 }
 
-export async function updateStockQuantity(brandName: string, series: string, quantity: number) {
+export async function updateStockQuantity(
+  brandName: string,
+  series: string,
+  quantity: number
+) {
   try {
     const { ObjectId } = require('mongodb');
-    
+
     // First save current state to history
     const db = await connectToMongoDB();
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    
+
     const collection = db.collection('stock');
     const historyCollection = db.collection('stockHistory');
-    
+
     // Find current stock for this brand
     const currentStock = await collection.findOne({ brandName });
     if (currentStock) {
       // Remove _id to avoid duplicate key error
       const { _id, ...historyData } = currentStock;
-      
+
       // Check if a history entry already exists for today
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      
+
       const existingHistory = await historyCollection.findOne({
         brandName,
         historyDate: {
           $gte: today,
-          $lt: tomorrow
-        }
+          $lt: tomorrow,
+        },
       });
-      
+
       if (existingHistory) {
         // Update existing history entry for today
         await historyCollection.updateOne(
@@ -151,15 +163,15 @@ export async function updateStockQuantity(brandName: string, series: string, qua
           {
             $set: {
               ...historyData,
-              historyDate: new Date()
-            }
+              historyDate: new Date(),
+            },
           }
         );
       } else {
         // Create new history entry
         await historyCollection.insertOne({
           ...historyData,
-          historyDate: new Date()
+          historyDate: new Date(),
         });
       }
     }
@@ -176,39 +188,43 @@ export async function updateStockQuantity(brandName: string, series: string, qua
   }
 }
 
-export async function updateStockAndSoldCount(brandName: string, series: string, quantity: number) {
+export async function updateStockAndSoldCount(
+  brandName: string,
+  series: string,
+  quantity: number
+) {
   try {
     const { ObjectId } = require('mongodb');
-    
+
     // First save current state to history
     const db = await connectToMongoDB();
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    
+
     const collection = db.collection('stock');
     const historyCollection = db.collection('stockHistory');
-    
+
     // Find current stock for this brand
     const currentStock = await collection.findOne({ brandName });
     if (currentStock) {
       // Remove _id to avoid duplicate key error
       const { _id, ...historyData } = currentStock;
-      
+
       // Check if a history entry already exists for today
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
-      
+
       const existingHistory = await historyCollection.findOne({
         brandName,
         historyDate: {
           $gte: today,
-          $lt: tomorrow
-        }
+          $lt: tomorrow,
+        },
       });
-      
+
       if (existingHistory) {
         // Update existing history entry for today
         await historyCollection.updateOne(
@@ -216,15 +232,15 @@ export async function updateStockAndSoldCount(brandName: string, series: string,
           {
             $set: {
               ...historyData,
-              historyDate: new Date()
-            }
+              historyDate: new Date(),
+            },
           }
         );
       } else {
         // Create new history entry
         await historyCollection.insertOne({
           ...historyData,
-          historyDate: new Date()
+          historyDate: new Date(),
         });
       }
     }
@@ -257,22 +273,22 @@ export async function getStockHistory(brandName: string, series?: string) {
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    
+
     const historyCollection = db.collection('stockHistory');
-    
+
     // Build query based on parameters
     const query: any = { brandName };
     if (series) {
       query.series = series;
     }
-    
+
     const rawHistory = await historyCollection
       .find(query)
       .sort({ historyDate: -1 })
       .toArray();
 
     // Transform the raw data into the expected format
-    const history = rawHistory.map(entry => ({
+    const history = rawHistory.map((entry) => ({
       _id: entry._id.toString(),
       brandName: entry.brandName,
       series: entry.series,
@@ -284,7 +300,7 @@ export async function getStockHistory(brandName: string, series?: string) {
       costDifference: entry.costDifference,
       historyDate: new Date(entry.historyDate),
       createdAt: entry.createdAt ? new Date(entry.createdAt) : undefined,
-      updatedAt: entry.updatedAt ? new Date(entry.updatedAt) : undefined
+      updatedAt: entry.updatedAt ? new Date(entry.updatedAt) : undefined,
     })) as StockHistoryEntry[];
 
     return { success: true, data: history };
@@ -308,21 +324,23 @@ export async function checkSeriesExistsInStock(field: string, value: string) {
 export async function deleteStock(brandName: string, series: string) {
   try {
     const { ObjectId } = require('mongodb');
-    
+
     // First save current state to history before deletion
     const db = await connectToMongoDB();
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    
+
     const collection = db.collection('stock');
     const historyCollection = db.collection('stockHistory');
-    
+
     // Find current stock for this brand and series
     const currentStock = await collection.findOne({ brandName });
     if (currentStock) {
-      const currentSeries = currentStock.seriesStock?.find((s: SeriesStock) => s.series === series);
-      
+      const currentSeries = currentStock.seriesStock?.find(
+        (s: SeriesStock) => s.series === series
+      );
+
       if (currentSeries) {
         // Save deletion to history
         await historyCollection.insertOne({
@@ -335,7 +353,7 @@ export async function deleteStock(brandName: string, series: string) {
           newCost: 0,
           costDifference: -(currentSeries.productCost || 0),
           historyDate: new Date(),
-          action: 'deleted'
+          action: 'deleted',
         });
       }
     }
@@ -349,4 +367,4 @@ export async function deleteStock(brandName: string, series: string) {
   } catch (error: any) {
     return { success: false, error: error.message };
   }
-} 
+}

@@ -7,7 +7,7 @@ export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   const sales = await executeOperation('sales', 'find', {});
-  
+
   // Sort sales by date (newest first)
   if (Array.isArray(sales)) {
     sales.sort((a: any, b: any) => {
@@ -16,6 +16,6 @@ export async function GET(req: NextRequest) {
       return dateB - dateA; // Descending order (newest first)
     });
   }
-  
+
   return Response.json(sales);
 }

@@ -24,4 +24,4 @@ export const useBrandStore = create<BrandStore>((set) => ({
       set({ brands: [] });
     }
   },
-})); 
+}));

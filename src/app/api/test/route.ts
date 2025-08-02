@@ -6,4 +6,4 @@ export async function GET() {
 
 export async function POST() {
   return Response.json({ message: 'POST test route working' });
-} 
+}

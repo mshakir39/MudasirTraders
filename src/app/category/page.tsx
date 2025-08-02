@@ -13,8 +13,8 @@ async function Category() {
   const brands = await getBrands();
 
   return (
-    <CategoryLayout 
-      initialCategories={categories} 
+    <CategoryLayout
+      initialCategories={categories}
       initialBrands={brands as IBrand[]}
     />
   );

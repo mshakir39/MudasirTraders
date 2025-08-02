@@ -16,7 +16,10 @@ interface StoreDetail {
 export async function getStoreDetail() {
   try {
     const storeDetail = await executeOperation('storeDetail', 'findAll');
-    return { success: true, data: Array.isArray(storeDetail) ? storeDetail[0] : null };
+    return {
+      success: true,
+      data: Array.isArray(storeDetail) ? storeDetail[0] : null,
+    };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -34,7 +37,10 @@ export async function createStoreDetail(data: StoreDetail) {
   }
 }
 
-export async function updateStoreDetail(id: string, data: Partial<StoreDetail>) {
+export async function updateStoreDetail(
+  id: string,
+  data: Partial<StoreDetail>
+) {
   try {
     const result = await executeOperation('storeDetail', 'updateOne', {
       documentId: id,
@@ -57,4 +63,4 @@ export async function upsertStoreDetail(data: StoreDetail) {
   } catch (error: any) {
     return { success: false, error: error.message };
   }
-} 
+}

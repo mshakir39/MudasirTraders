@@ -2,6 +2,7 @@ import React from 'react';
 import Accordion from '@/components/accordion';
 import Dropdown from '@/components/dropdown';
 import Input from '@/components/customInput';
+import { normalizeInStock } from '@/utils/stockUtils';
 
 interface ProductSectionProps {
   accordionData: any;
@@ -22,59 +23,81 @@ const ProductSection: React.FC<ProductSectionProps> = ({
   accordionMethods,
   stock,
 }) => {
-  
-
   // Function to filter series options based on stock availability
   const getFilteredSeriesOptions = (accordionIndex: number) => {
     const selectedBrand = accordionData[accordionIndex]?.brandName;
-    const originalSeriesOptions = accordionData[accordionIndex]?.seriesOption || [];
-    
+    const originalSeriesOptions =
+      accordionData[accordionIndex]?.seriesOption || [];
+
     // If no brand is selected, return empty array
     if (!selectedBrand) {
       return [];
     }
-    
-    // If no original series options, try to get them from categories
-    if (originalSeriesOptions.length === 0) {
-      const category = categories.find((cat) => cat.brandName === selectedBrand);
-      if (category) {
-        const seriesOptions = category.series.map((battery: any) => ({
+
+    // Get series from stock data first (only those with stock > 0)
+    let stockSeriesOptions: any[] = [];
+    if (stock) {
+      const brandStock = stock.find(
+        (stockItem) => stockItem.brandName === selectedBrand
+      );
+
+      if (brandStock && brandStock.seriesStock) {
+        stockSeriesOptions = brandStock.seriesStock
+          .filter((stockItem: any) => {
+            const stockQuantity = normalizeInStock(stockItem.inStock);
+
+            return stockQuantity > 0;
+          })
+          .map((stockItem: any) => {
+            return {
+              label: stockItem.series,
+              value: stockItem.series,
+              batteryDetails: stockItem.batteryDetails || null,
+              stockQuantity: normalizeInStock(stockItem.inStock),
+            };
+          });
+      }
+    }
+
+    // Get series from categories (only for series that have stock > 0)
+    let categorySeriesOptions: any[] = [];
+    const category = categories.find((cat) => cat.brandName === selectedBrand);
+    if (category) {
+      categorySeriesOptions = category.series
+        .filter((battery: any) => {
+          // Check if this series exists in stock with quantity > 0
+          const stockItem = stockSeriesOptions.find(
+            (opt) => opt.value === battery.name
+          );
+          return stockItem && stockItem.stockQuantity > 0;
+        })
+        .map((battery: any) => ({
           label: `${battery.name} (${battery.plate}, ${battery.ah}AH${battery.type ? `, ${battery.type}` : ''})`,
           value: battery.name,
           batteryDetails: battery,
         }));
-        return seriesOptions;
-      }
-    }
-    
-    if (!stock) {
-      return originalSeriesOptions;
     }
 
-    // Find stock data for the selected brand
-    const brandStock = stock.find(stockItem => stockItem.brandName === selectedBrand);
-    
-    if (!brandStock || !brandStock.seriesStock) {
-      return originalSeriesOptions;
-    }
-
-    // Filter series options to only include those with stock > 0
-    const filteredOptions = originalSeriesOptions.filter((option: { value: string }) => {
-      const stockItem = brandStock.seriesStock.find((stock: { series: string; batteryDetails?: { name: string }; inStock: string | number }) => 
-        stock.series === option.value || 
-        stock.batteryDetails?.name === option.value
+    // Combine and deduplicate series options
+    const allSeriesOptions = [...categorySeriesOptions];
+    stockSeriesOptions.forEach((stockOption) => {
+      const exists = allSeriesOptions.some(
+        (catOption) => catOption.value === stockOption.value
       );
-      // Convert inStock to number for proper comparison
-      const stockQuantity = stockItem ? parseInt(String(stockItem.inStock)) || 0 : 0;
-      return stockItem && stockQuantity > 0;
+      if (!exists) {
+        // For series that only exist in stock (not in categories), use the stock option
+        allSeriesOptions.push({
+          label: stockOption.label,
+          value: stockOption.value,
+          batteryDetails: stockOption.batteryDetails,
+        });
+      } else {
+      }
     });
-    
-    // Fallback: if filtering results in empty array, show all series options
-    if (filteredOptions.length === 0) {
-      return originalSeriesOptions;
-    }
 
-    return filteredOptions;
+    // Always use combined options to ensure all available series are shown
+
+    return allSeriesOptions;
   };
   const getAccordionContent = (accordionIndex: number) => {
     const accordionDataItem = accordionData[accordionIndex];
@@ -85,126 +108,132 @@ const ProductSection: React.FC<ProductSectionProps> = ({
     return (
       <>
         <div className='w-full'>
-          <div className='grid grid-cols-2 w-full gap-4 mb-4 mt-4'>
-            <div className="w-full">
-           
-            <Dropdown
+          <div className='mb-4 mt-4 grid w-full grid-cols-2 gap-4'>
+            <div className='w-full'>
+              <Dropdown
                 key={`brand-${accordionIndex}`}
                 className={'w-full'}
-              options={brandOptions}
+                options={brandOptions}
                 onSelect={(option) => {
-                  accordionMethods.handleAccordionChange(accordionIndex, 'brandName', option.value);
-                }}
-              placeholder='Select Brand'
-              defaultValue={accordionData[accordionIndex]?.brandName}
-              required
-            />
-            </div>
-            <div className="w-full">
-          
-            <Dropdown
-                key={`series-${accordionIndex}`}
-                className={'w-full'}
-              options={getFilteredSeriesOptions(accordionIndex)}
-                onSelect={(option) => {
-                  accordionMethods.handleAccordionChange(accordionIndex, 'series', option.value);
-                }}
-              placeholder='Select Series'
-              defaultValue={accordionData[accordionIndex]?.series}
-              required
-            />
-          </div>
-          
-
-          </div>
-          
-
-          
-          <div className='grid grid-cols-2 w-full gap-4 mb-4'>
-            <div className="w-full">
-            <Input
-                parentClass='w-full'
-              type='number'
-              label='Product Price'
-              name='productPrice'
-              min={1}
-              step="0.01"
-              required
-              value={accordionDataItem.productPrice}
-                onChange={(e) => {
-                accordionMethods.handleAccordionChange(
-                  accordionIndex,
-                  'productPrice',
-                  e.target.value
+                  accordionMethods.handleAccordionChange(
+                    accordionIndex,
+                    'brandName',
+                    option.value
                   );
                 }}
-            />
+                placeholder='Select Brand'
+                defaultValue={accordionData[accordionIndex]?.brandName}
+                required
+              />
             </div>
-            <div className="w-full">
-            <Input
-                parentClass='w-full'
-              type='number'
-              label='Quantity'
-              value={accordionDataItem.quantity}
-              onChange={(e) => {
-                accordionMethods.handleAccordionChange(accordionIndex, 'quantity', e.target.value);
-              }}
-            />
+            <div className='w-full'>
+              <Dropdown
+                key={`series-${accordionIndex}`}
+                className={'w-full'}
+                options={getFilteredSeriesOptions(accordionIndex)}
+                onSelect={(option) => {
+                  accordionMethods.handleAccordionChange(
+                    accordionIndex,
+                    'series',
+                    option.value
+                  );
+                }}
+                placeholder='Select Series'
+                defaultValue={accordionData[accordionIndex]?.series}
+                required
+              />
             </div>
           </div>
 
-          <div className='grid grid-cols-2 w-full gap-4 mb-4'>
-            <div className="w-full">
-            <Input
+          <div className='mb-4 grid w-full grid-cols-2 gap-4'>
+            <div className='w-full'>
+              <Input
                 parentClass='w-full'
-              type='date'
-                label='Warranty Start Date'
-              name='warrentyStartDate'
-              value={accordionDataItem.warrentyStartDate}
-              onChange={(e) =>
-                accordionMethods.handleAccordionChange(
-                  accordionIndex,
-                  'warrentyStartDate',
-                  e.target.value
-                )
-              }
-            />
+                type='number'
+                label='Product Price'
+                name='productPrice'
+                min={1}
+                step='0.01'
+                required
+                value={accordionDataItem.productPrice}
+                onChange={(e) => {
+                  accordionMethods.handleAccordionChange(
+                    accordionIndex,
+                    'productPrice',
+                    e.target.value
+                  );
+                }}
+              />
             </div>
-            <div className="w-full">
-            <Input
+            <div className='w-full'>
+              <Input
                 parentClass='w-full'
-              type='number'
-              label='Warranty Duration (Months)'
-              name='warrentyDuration'
-              min={1}
-              value={accordionDataItem.warrentyDuration}
-              onChange={(e) =>
-                accordionMethods.handleAccordionChange(
-                  accordionIndex,
-                  'warrentyDuration',
-                  e.target.value
-                )
-              }
-            />
+                type='number'
+                label='Quantity'
+                value={accordionDataItem.quantity}
+                onChange={(e) => {
+                  accordionMethods.handleAccordionChange(
+                    accordionIndex,
+                    'quantity',
+                    e.target.value
+                  );
+                }}
+              />
+            </div>
+          </div>
+
+          <div className='mb-4 grid w-full grid-cols-2 gap-4'>
+            <div className='w-full'>
+              <Input
+                parentClass='w-full'
+                type='date'
+                label='Warranty Start Date'
+                name='warrentyStartDate'
+                value={accordionDataItem.warrentyStartDate}
+                onChange={(e) =>
+                  accordionMethods.handleAccordionChange(
+                    accordionIndex,
+                    'warrentyStartDate',
+                    e.target.value
+                  )
+                }
+              />
+            </div>
+            <div className='w-full'>
+              <Input
+                parentClass='w-full'
+                type='number'
+                label='Warranty Duration (Months)'
+                name='warrentyDuration'
+                min={1}
+                value={accordionDataItem.warrentyDuration}
+                onChange={(e) =>
+                  accordionMethods.handleAccordionChange(
+                    accordionIndex,
+                    'warrentyDuration',
+                    e.target.value
+                  )
+                }
+              />
             </div>
           </div>
         </div>
 
-        <div className='w-full mb-4'>
-        <Input
+        <div className='mb-4 w-full'>
+          <Input
             parentClass='w-full'
-          type='text'
+            type='text'
             label='Warranty Code'
-          name='warrentyCode'
-          value={accordionDataItem.warrentyCode}
-          onChange={(e) =>
-            accordionMethods.handleAccordionChange(
-              accordionIndex,
-              'warrentyCode',
-              e.target.value
-            )
-          }
-        />
+            name='warrentyCode'
+            value={accordionDataItem.warrentyCode}
+            onChange={(e) =>
+              accordionMethods.handleAccordionChange(
+                accordionIndex,
+                'warrentyCode',
+                e.target.value
+              )
+            }
+          />
         </div>
       </>
     );
@@ -214,12 +243,16 @@ const ProductSection: React.FC<ProductSectionProps> = ({
     <>
       {Object.keys(accordionData).map((accordionIndex: any, index) => (
         <Accordion
-          addOnClick={() => accordionMethods.handleAddAccordion(Number(accordionIndex))}
+          addOnClick={() =>
+            accordionMethods.handleAddAccordion(Number(accordionIndex))
+          }
           index={index}
           addIconClass={`${index === Object.keys(accordionData).length - 1 ? '' : 'hidden'}`}
           removeIconClass={`${index === 0 ? 'hidden' : ''}`}
           removeOnClick={() => {
-            accordionMethods.handleRemoveAccordion(parseInt(accordionIndex, 10));
+            accordionMethods.handleRemoveAccordion(
+              parseInt(accordionIndex, 10)
+            );
           }}
           expandedAccordionIndex={expandedAccordionIndex}
           handleAccordionClick={onAccordionClick}

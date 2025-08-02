@@ -14,5 +14,8 @@ export async function POST(req: NextRequest) {
     address,
     createdDate: new Date(),
   });
-  return Response.json({ success: true, message: 'Customer added successfully' });
-} 
+  return Response.json({
+    success: true,
+    message: 'Customer added successfully',
+  });
+}

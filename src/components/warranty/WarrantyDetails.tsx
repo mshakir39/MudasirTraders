@@ -24,64 +24,91 @@ const formatDate = (dateString: string): string => {
 const WarrantyDetails: React.FC<WarrantyDetailsProps> = ({ warranty }) => {
   const startDate = new Date(warranty.warrentyStartDate);
   const endDate = isValid(startDate) ? new Date(startDate) : new Date();
-  
+
   if (isValid(startDate)) {
     endDate.setMonth(endDate.getMonth() + warranty.warrentyDuration);
   }
-  
+
   const isExpired = isValid(endDate) && endDate < new Date();
-  const daysRemaining = isValid(endDate) 
-    ? Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+  const daysRemaining = isValid(endDate)
+    ? Math.ceil(
+        (endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      )
     : 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Warranty Status</h2>
-        <div className={`inline-block px-4 py-2 rounded-full ${
-          isExpired ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-        }`}>
+    <div className='rounded-lg bg-white p-6 shadow-md'>
+      <div className='mb-6'>
+        <h2 className='mb-2 text-xl font-semibold'>Warranty Status</h2>
+        <div
+          className={`inline-block rounded-full px-4 py-2 ${
+            isExpired
+              ? 'bg-red-100 text-red-800'
+              : 'bg-green-100 text-green-800'
+          }`}
+        >
           {isExpired ? 'Expired' : `${daysRemaining} days remaining`}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
         <div>
-          <h3 className="font-semibold mb-4">Product Information</h3>
-          <div className="space-y-2">
-            <p><span className="text-gray-600">Product:</span> {warranty.productName}</p>
-            <p><span className="text-gray-600">Brand:</span> {warranty.brandName}</p>
-            <p><span className="text-gray-600">Series:</span> {warranty.series}</p>
-            <p><span className="text-gray-600">Warranty Code:</span> {warranty.warrentyCode}</p>
+          <h3 className='mb-4 font-semibold'>Product Information</h3>
+          <div className='space-y-2'>
+            <p>
+              <span className='text-gray-600'>Product:</span>{' '}
+              {warranty.productName}
+            </p>
+            <p>
+              <span className='text-gray-600'>Brand:</span> {warranty.brandName}
+            </p>
+            <p>
+              <span className='text-gray-600'>Series:</span> {warranty.series}
+            </p>
+            <p>
+              <span className='text-gray-600'>Warranty Code:</span>{' '}
+              {warranty.warrentyCode}
+            </p>
           </div>
         </div>
 
         <div>
-          <h3 className="font-semibold mb-4">Warranty Period</h3>
-          <div className="space-y-2">
+          <h3 className='mb-4 font-semibold'>Warranty Period</h3>
+          <div className='space-y-2'>
             <p>
-              <span className="text-gray-600">Start Date:</span>{' '}
+              <span className='text-gray-600'>Start Date:</span>{' '}
               {formatDate(warranty.warrentyStartDate)}
             </p>
             <p>
-              <span className="text-gray-600">End Date:</span>{' '}
-              {isValid(endDate) ? formatDate(endDate.toISOString()) : 'Invalid Date'}
+              <span className='text-gray-600'>End Date:</span>{' '}
+              {isValid(endDate)
+                ? formatDate(endDate.toISOString())
+                : 'Invalid Date'}
             </p>
             <p>
-              <span className="text-gray-600">Duration:</span>{' '}
+              <span className='text-gray-600'>Duration:</span>{' '}
               {warranty.warrentyDuration} months
             </p>
           </div>
         </div>
 
         <div>
-          <h3 className="font-semibold mb-4">Customer Information</h3>
-          <div className="space-y-2">
-            <p><span className="text-gray-600">Name:</span> {warranty.customerName}</p>
-            <p><span className="text-gray-600">Contact:</span> {warranty.customerContactNumber}</p>
-            <p><span className="text-gray-600">Invoice:</span> {warranty.invoiceNumber}</p>
+          <h3 className='mb-4 font-semibold'>Customer Information</h3>
+          <div className='space-y-2'>
             <p>
-              <span className="text-gray-600">Purchase Date:</span>{' '}
+              <span className='text-gray-600'>Name:</span>{' '}
+              {warranty.customerName}
+            </p>
+            <p>
+              <span className='text-gray-600'>Contact:</span>{' '}
+              {warranty.customerContactNumber}
+            </p>
+            <p>
+              <span className='text-gray-600'>Invoice:</span>{' '}
+              {warranty.invoiceNumber}
+            </p>
+            <p>
+              <span className='text-gray-600'>Purchase Date:</span>{' '}
               {formatDate(warranty.saleDate)}
             </p>
           </div>
@@ -91,4 +118,4 @@ const WarrantyDetails: React.FC<WarrantyDetailsProps> = ({ warranty }) => {
   );
 };
 
-export default WarrantyDetails; 
+export default WarrantyDetails;

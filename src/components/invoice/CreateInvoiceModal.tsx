@@ -8,6 +8,7 @@ import PaymentSection from './PaymentSection';
 import Modal from '@/components/modal';
 import Button from '@/components/button';
 import Input from '@/components/customInput';
+import { normalizeStockData } from '@/utils/stockUtils';
 
 interface CreateInvoiceModalProps {
   isOpen: boolean;
@@ -44,20 +45,32 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
 
   const transformData = (data: { [key: number]: any }): any[] => {
     return Object.values(data).map((item) => {
-      const { seriesOption, batteryDetails, warrentyStartDate, warrentyDuration, ...rest } = item;
+      const {
+        seriesOption,
+        batteryDetails,
+        warrentyStartDate,
+        warrentyDuration,
+        ...rest
+      } = item;
 
       return {
         ...rest,
         warrentyStartDate,
         warrentyDuration,
-        warrantyEndDate: calculateEndDate(item.warrantyStartDate, item.warrantyDuration),
+        warrantyEndDate: calculateEndDate(
+          item.warrantyStartDate,
+          item.warrantyDuration
+        ),
         totalPrice: Number(rest.productPrice) * Number(rest.quantity),
         batteryDetails,
       };
     });
   };
 
-  const calculateEndDate = (startDate: string, months: number | string): string => {
+  const calculateEndDate = (
+    startDate: string,
+    months: number | string
+  ): string => {
     if (!startDate || isNaN(new Date(startDate).getTime())) {
       return '';
     }
@@ -86,8 +99,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     }
 
     // Check if any products have been added
-    const hasProducts = Object.values(accordionData).some((item: any) =>
-      item.brandName || item.series || item.productPrice || item.quantity
+    const hasProducts = Object.values(accordionData).some(
+      (item: any) =>
+        item.brandName || item.series || item.productPrice || item.quantity
     );
 
     if (hasProducts) {
@@ -114,7 +128,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
     }
 
     // Validate payment method
-    if (!invoiceData?.paymentMethod || invoiceData?.paymentMethod.length === 0) {
+    if (
+      !invoiceData?.paymentMethod ||
+      invoiceData?.paymentMethod.length === 0
+    ) {
       toast.error('Please select at least one payment method');
       return false;
     }
@@ -125,7 +142,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
         toast.error('Please select a date and time for the invoice');
         return false;
       }
-      
+
       const selectedDate = new Date(invoiceData.customDate);
       if (isNaN(selectedDate.getTime())) {
         toast.error('Please select a valid date and time');
@@ -149,16 +166,19 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       formData.batteriesRate = 0;
       formData.batteriesCountAndWeight = '';
     }
-    
+
     // Ensure custom date fields are properly set
     if (!formData.useCustomDate) {
       formData.customDate = null; // Clear custom date when toggle is off
     }
-    
+
     // Set customer type and related fields
     formData.customerType = invoiceData?.customerType || 'WalkIn Customer';
-    formData.clientName = invoiceData?.customerType === 'Regular' ? invoiceData?.clientName : invoiceData?.customerName;
-    
+    formData.clientName =
+      invoiceData?.customerType === 'Regular'
+        ? invoiceData?.clientName
+        : invoiceData?.customerName;
+
     // Ensure customerId is included for regular customers
     if (invoiceData?.customerType === 'Regular') {
       formData.customerId = invoiceData?.customerId;
@@ -166,7 +186,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       // For walk-in customers, set customerId to null or remove it
       formData.customerId = null;
     }
-    
+
     formData.productDetail = transformData(accordionData);
 
     console.log('📋 Form data being submitted:', formData);
@@ -182,6 +202,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       expandedAccordionIndex === accordionIndex ? -1 : accordionIndex
     );
   };
+  // Normalize stock data to ensure consistent data types
+  const normalizedStock = normalizeStockData(stock);
 
   return (
     <Modal
@@ -208,29 +230,29 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             onChange={onChange}
           />
 
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">
+          <div className='mb-4'>
+            <div className='mb-2 flex items-center justify-between'>
+              <label className='text-sm font-medium text-gray-700'>
                 Use Custom Date & Time
               </label>
-              <label className="relative inline-flex items-center cursor-pointer">
+              <label className='relative inline-flex cursor-pointer items-center'>
                 <input
-                  type="checkbox"
-                  className="sr-only peer"
+                  type='checkbox'
+                  className='peer sr-only'
                   checked={invoiceData?.useCustomDate || false}
                   onChange={(e) => {
                     const newValue = e.target.checked;
                     setInvoiceData((prev: any) => ({
                       ...prev,
                       useCustomDate: newValue,
-                      customDate: newValue ? prev.customDate : null
+                      customDate: newValue ? prev.customDate : null,
                     }));
                   }}
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300"></div>
               </label>
             </div>
-            
+
             {invoiceData?.useCustomDate ? (
               <>
                 <Input
@@ -241,13 +263,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                   onChange={onChange}
                   required
                 />
-                <p className="text-sm text-gray-600 mt-1">
-                  Select the date and time for this invoice. Use this for old invoices or specific timing.
+                <p className='mt-1 text-sm text-gray-600'>
+                  Select the date and time for this invoice. Use this for old
+                  invoices or specific timing.
                 </p>
               </>
             ) : (
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">
+              <div className='rounded-lg bg-gray-50 p-3'>
+                <p className='text-sm text-gray-600'>
                   Invoice will be created with current date and time.
                 </p>
               </div>
@@ -261,7 +284,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             expandedAccordionIndex={expandedAccordionIndex}
             onAccordionClick={handleAccordionClick}
             accordionMethods={accordionMethods}
-            stock={stock}
+            stock={normalizedStock}
           />
 
           <PaymentSection

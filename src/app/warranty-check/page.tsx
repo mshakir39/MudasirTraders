@@ -37,41 +37,44 @@ export default function WarrantyCheckPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
+    <div className='container mx-auto px-4 py-8'>
+      <div className='mx-auto max-w-4xl'>
         {/* Header Section */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <FaShieldAlt className="text-4xl text-blue-600 mr-3" />
-            <h1 className="text-3xl font-bold">Battery Warranty Check</h1>
+        <div className='mb-8 text-center'>
+          <div className='mb-4 flex items-center justify-center'>
+            <FaShieldAlt className='mr-3 text-4xl text-blue-600' />
+            <h1 className='text-3xl font-bold'>Battery Warranty Check</h1>
           </div>
-          <p className="text-gray-600">Enter your warranty code to check the status of your battery warranty</p>
+          <p className='text-gray-600'>
+            Enter your warranty code to check the status of your battery
+            warranty
+          </p>
         </div>
 
         {/* Search Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className='mb-8 rounded-lg bg-white p-6 shadow-md'>
           <form onSubmit={handleSearch}>
-            <div className="flex gap-4">
-              <div className="flex-1">
+            <div className='flex gap-4'>
+              <div className='flex-1'>
                 <Input
-                  type="text"
-                  placeholder="Enter warranty code (e.g., ABC123XYZ)"
+                  type='text'
+                  placeholder='Enter warranty code (e.g., ABC123XYZ)'
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  parentClass="w-full"
-                  label="Warranty Code"
+                  parentClass='w-full'
+                  label='Warranty Code'
                 />
               </div>
               <button
-                type="submit"
+                type='submit'
                 disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300 h-[42px] mt-6"
+                className='mt-6 h-[42px] rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:bg-blue-300'
               >
                 {loading ? (
                   'Searching...'
                 ) : (
-                  <div className="flex items-center">
-                    <FaSearch className="mr-2" />
+                  <div className='flex items-center'>
+                    <FaSearch className='mr-2' />
                     Search
                   </div>
                 )}
@@ -82,21 +85,28 @@ export default function WarrantyCheckPage() {
 
         {/* Information Section (shown when no search result) */}
         {!warrantyData && !loading && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <div className="flex items-start mb-4">
-              <FaInfoCircle className="text-blue-600 text-xl mt-1 mr-3" />
-              <h2 className="text-xl font-semibold text-blue-800">How to Find Your Warranty Code</h2>
+          <div className='rounded-lg border border-blue-200 bg-blue-50 p-6'>
+            <div className='mb-4 flex items-start'>
+              <FaInfoCircle className='mr-3 mt-1 text-xl text-blue-600' />
+              <h2 className='text-xl font-semibold text-blue-800'>
+                How to Find Your Warranty Code
+              </h2>
             </div>
-            <div className="ml-8">
-              <p className="text-gray-700 mb-4">Your warranty code can be found:</p>
-              <ul className="list-disc list-inside text-gray-700 space-y-2">
+            <div className='ml-8'>
+              <p className='mb-4 text-gray-700'>
+                Your warranty code can be found:
+              </p>
+              <ul className='list-inside list-disc space-y-2 text-gray-700'>
                 <li>On your battery purchase invoice</li>
                 <li>On the warranty card provided with your battery</li>
                 <li>In the warranty section of your sales receipt</li>
               </ul>
-              <div className="mt-4 text-sm text-gray-600">
+              <div className='mt-4 text-sm text-gray-600'>
                 <p>The warranty code format looks like: XXX-XXXXXXX</p>
-                <p>If you cannot find your warranty code, please contact our support team.</p>
+                <p>
+                  If you cannot find your warranty code, please contact our
+                  support team.
+                </p>
               </div>
             </div>
           </div>
@@ -107,4 +117,4 @@ export default function WarrantyCheckPage() {
       </div>
     </div>
   );
-} 
+}

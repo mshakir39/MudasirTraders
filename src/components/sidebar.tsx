@@ -2,7 +2,17 @@
 import Link from 'next/link';
 import React, { useCallback, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { FaCarBattery, FaFileInvoice, FaTags, FaBox, FaShoppingCart, FaUsers, FaChartBar, FaList, FaShieldAlt } from 'react-icons/fa';
+import {
+  FaCarBattery,
+  FaFileInvoice,
+  FaTags,
+  FaBox,
+  FaShoppingCart,
+  FaUsers,
+  FaChartBar,
+  FaList,
+  FaShieldAlt,
+} from 'react-icons/fa';
 import { FaUserFriends } from 'react-icons/fa';
 import { TbCategoryPlus } from 'react-icons/tb';
 import { IoMdSettings } from 'react-icons/io';
@@ -77,7 +87,7 @@ const Sidebar = ({ className }: any) => {
     const handleClickOutside = (event: MouseEvent) => {
       const sidebar = document.getElementById('sidebar');
       const target = event.target as Node;
-      
+
       if (isMobileMenuOpen && sidebar && !sidebar.contains(target)) {
         setIsMobileMenuOpen(false);
       }
@@ -146,23 +156,23 @@ const Sidebar = ({ className }: any) => {
   const sidebarContent = (
     <>
       {/* Mobile Header with Close Button */}
-      <div className="flex items-center justify-between p-4 md:hidden">
-        <span className="text-lg font-semibold text-[#4287f5]">
+      <div className='flex items-center justify-between p-4 md:hidden'>
+        <span className='text-lg font-semibold text-[#4287f5]'>
           {storeDetail?.storeName || 'Store'}
         </span>
         <button
           onClick={() => setIsMobileMenuOpen(false)}
-          className="rounded-full p-2 hover:bg-gray-100"
+          className='rounded-full p-2 hover:bg-gray-100'
         >
-          <HiX className="h-5 w-5 text-gray-600" />
+          <HiX className='h-5 w-5 text-gray-600' />
         </button>
       </div>
 
-      <div className="flex h-full flex-col justify-between p-4">
+      <div className='flex h-full flex-col justify-between p-4'>
         {/* Header - Desktop Only */}
-        <div className="flex flex-col">
+        <div className='flex flex-col'>
           <span
-            className={`mb-8 text-center font-semibold text-[#4287f5] transition-all duration-300 hidden md:block
+            className={`mb-8 hidden text-center font-semibold text-[#4287f5] transition-all duration-300 md:block
             ${isCollapsed ? 'text-base' : 'text-xl'}`}
           >
             {isCollapsed
@@ -171,11 +181,11 @@ const Sidebar = ({ className }: any) => {
           </span>
 
           {/* Navigation Links */}
-          <div className="flex flex-col space-y-2">
+          <div className='flex flex-col space-y-2'>
             <Link
-              href="/"
+              href='/'
               onClick={handleMobileLinkClick}
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
+              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
                 ${
                   isActiveDashboard
                     ? 'bg-[#4287f5] text-white'
@@ -199,9 +209,9 @@ const Sidebar = ({ className }: any) => {
             </Link>
 
             <Link
-              href="/brands"
+              href='/brands'
               onClick={handleMobileLinkClick}
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
+              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
                 ${
                   isActiveBrands
                     ? 'bg-[#4287f5] text-white'
@@ -225,9 +235,9 @@ const Sidebar = ({ className }: any) => {
             </Link>
 
             <Link
-              href="/category"
+              href='/category'
               onClick={handleMobileLinkClick}
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
+              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
                 ${
                   isActiveCategory
                     ? 'bg-[#4287f5] text-white'
@@ -251,9 +261,9 @@ const Sidebar = ({ className }: any) => {
             </Link>
 
             <Link
-              href="/stock"
+              href='/stock'
               onClick={handleMobileLinkClick}
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
+              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
                 ${
                   isActiveStock
                     ? 'bg-[#4287f5] text-white'
@@ -277,9 +287,9 @@ const Sidebar = ({ className }: any) => {
             </Link>
 
             <Link
-              href="/invoices"
+              href='/invoices'
               onClick={handleMobileLinkClick}
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
+              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
                 ${
                   isActiveInvoices
                     ? 'bg-[#4287f5] text-white'
@@ -303,9 +313,9 @@ const Sidebar = ({ className }: any) => {
             </Link>
 
             <Link
-              href="/sales"
+              href='/sales'
               onClick={handleMobileLinkClick}
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
+              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
                 ${
                   isActiveSales
                     ? 'bg-[#4287f5] text-white'
@@ -329,9 +339,9 @@ const Sidebar = ({ className }: any) => {
             </Link>
 
             <Link
-              href="/customers"
+              href='/customers'
               onClick={handleMobileLinkClick}
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
+              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
                 ${
                   isActiveCustomers
                     ? 'bg-[#4287f5] text-white'
@@ -355,9 +365,9 @@ const Sidebar = ({ className }: any) => {
             </Link>
 
             <Link
-              href="/warranty-check"
+              href='/warranty-check'
               onClick={handleMobileLinkClick}
-              className={`sidebarItem flex items-center rounded-lg p-3 transition-all duration-200 touch-manipulation
+              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
                 ${
                   isActiveWarrantyCheck
                     ? 'bg-[#4287f5] text-white'
@@ -383,15 +393,15 @@ const Sidebar = ({ className }: any) => {
         </div>
 
         {/* Footer Actions */}
-        <div className="flex flex-col space-y-2 mt-auto">
+        <div className='mt-auto flex flex-col space-y-2'>
           <button
             onClick={() => {
               setIsModalOpen(true);
               setIsMobileMenuOpen(false);
             }}
-            className="sidebarItem flex items-center rounded-lg p-3 text-gray-700 transition-all duration-200 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6] touch-manipulation"
+            className='sidebarItem flex touch-manipulation items-center rounded-lg p-3 text-gray-700 transition-all duration-200 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
           >
-            <IoMdSettings className="h-6 w-6 flex-shrink-0 text-gray-600 group-hover:text-white" />
+            <IoMdSettings className='h-6 w-6 flex-shrink-0 text-gray-600 group-hover:text-white' />
             <span
               className={`ml-3 font-medium transition-all duration-300 ${
                 isCollapsed ? 'hidden' : 'block'
@@ -406,9 +416,9 @@ const Sidebar = ({ className }: any) => {
               Cookies.remove('userId');
               signOut({ callbackUrl: '/signIn' });
             }}
-            className="sidebarItem flex items-center rounded-lg p-3 text-gray-700 transition-all duration-200 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6] touch-manipulation"
+            className='sidebarItem flex touch-manipulation items-center rounded-lg p-3 text-gray-700 transition-all duration-200 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
           >
-            <IoLogOut className="h-6 w-6 flex-shrink-0 text-gray-600 group-hover:text-white" />
+            <IoLogOut className='h-6 w-6 flex-shrink-0 text-gray-600 group-hover:text-white' />
             <span
               className={`ml-3 font-medium transition-all duration-300 ${
                 isCollapsed ? 'hidden' : 'block'
@@ -431,35 +441,35 @@ const Sidebar = ({ className }: any) => {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="fixed top-4 left-4 z-50 rounded-lg bg-white p-2 shadow-lg md:hidden"
+        className='fixed left-4 top-4 z-50 rounded-lg bg-white p-2 shadow-lg md:hidden'
       >
-        <RiMenuUnfoldLine className="h-6 w-6 text-[#4287f5]" />
+        <RiMenuUnfoldLine className='h-6 w-6 text-[#4287f5]' />
       </button>
 
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden" />
+        <div className='fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden' />
       )}
 
       {/* Desktop Sidebar */}
       <div
-        id="sidebar"
+        id='sidebar'
         className={`
           ${className}
-          hidden md:relative md:flex md:flex-col
-          h-svh bg-white shadow-lg transition-all duration-300 ease-in-out
+          hidden h-svh bg-white shadow-lg
+          transition-all duration-300 ease-in-out md:relative md:flex md:flex-col
           ${isCollapsed ? 'w-20' : 'w-64'}
         `}
       >
         {/* Desktop Toggle Button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-9 z-50 rounded-full bg-white p-1.5 shadow-md hover:bg-gray-100 hidden md:block"
+          className='absolute -right-3 top-9 z-50 hidden rounded-full bg-white p-1.5 shadow-md hover:bg-gray-100 md:block'
         >
           {isCollapsed ? (
-            <RiMenuUnfoldLine className="h-4 w-4 text-[#4287f5]" />
+            <RiMenuUnfoldLine className='h-4 w-4 text-[#4287f5]' />
           ) : (
-            <RiMenuFoldLine className="h-4 w-4 text-[#4287f5]" />
+            <RiMenuFoldLine className='h-4 w-4 text-[#4287f5]' />
           )}
         </button>
 
@@ -468,9 +478,9 @@ const Sidebar = ({ className }: any) => {
 
       {/* Mobile Sidebar */}
       <div
-        id="sidebar"
+        id='sidebar'
         className={`
-          fixed top-0 left-0 z-50 h-full w-80 max-w-[85vw] bg-white shadow-lg transition-transform duration-300 ease-in-out md:hidden
+          fixed left-0 top-0 z-50 h-full w-80 max-w-[85vw] bg-white shadow-lg transition-transform duration-300 ease-in-out md:hidden
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
@@ -480,26 +490,26 @@ const Sidebar = ({ className }: any) => {
       {/* Settings Modal */}
       {isModalOpen && (
         <Modal
-          parentClass="hidden"
-          dialogPanelClass="!w-[95%] sm:!w-[90%] md:!w-[60%] lg:!w-[40%] max-w-md mx-auto"
+          parentClass='hidden'
+          dialogPanelClass='!w-[95%] sm:!w-[90%] md:!w-[60%] lg:!w-[40%] max-w-md mx-auto'
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          title="Store Detail"
+          title='Store Detail'
         >
           <form onSubmit={handleSubmit}>
-            <div className="mt-4 flex w-full flex-col gap-4">
+            <div className='mt-4 flex w-full flex-col gap-4'>
               <Input
-                type="text"
-                label="Store Name"
-                name="storeName"
+                type='text'
+                label='Store Name'
+                name='storeName'
                 onChange={handleChange}
                 required
               />
               <Button
-                className="w-full sm:w-fit"
-                variant="fill"
-                text="Save"
-                type="submit"
+                className='w-full sm:w-fit'
+                variant='fill'
+                text='Save'
+                type='submit'
                 isPending={isLoading}
               />
             </div>

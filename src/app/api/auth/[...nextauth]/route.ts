@@ -8,7 +8,7 @@ declare module 'next-auth' {
     user: {
       id: string;
       email?: string | null;
-    } & DefaultSession['user']
+    } & DefaultSession['user'];
   }
 }
 
@@ -98,7 +98,7 @@ const handler = NextAuth({
 
   // Add debug for production troubleshooting
   debug: process.env.NODE_ENV === 'development',
-  
+
   // Add error handling
   events: {
     async signIn({ user, account, profile, isNewUser }) {

@@ -64,7 +64,7 @@ export async function deleteInvoice(id: string) {
 export async function getInvoices() {
   try {
     const invoices = await executeOperation('invoices', 'findAll');
-    
+
     // Sort invoices by creation date (newest first)
     if (Array.isArray(invoices)) {
       invoices.sort((a: any, b: any) => {
@@ -73,7 +73,7 @@ export async function getInvoices() {
         return dateB - dateA; // Descending order (newest first)
       });
     }
-    
+
     return { success: true, data: invoices };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -116,7 +116,10 @@ export async function getInvoicesByDateRange(startDate: Date, endDate: Date) {
   }
 }
 
-export async function updateInvoicePaymentStatus(id: string, paymentStatus: 'pending' | 'paid' | 'partial') {
+export async function updateInvoicePaymentStatus(
+  id: string,
+  paymentStatus: 'pending' | 'paid' | 'partial'
+) {
   try {
     const result = await executeOperation('invoices', 'updateOne', {
       documentId: id,
@@ -127,4 +130,4 @@ export async function updateInvoicePaymentStatus(id: string, paymentStatus: 'pen
   } catch (error: any) {
     return { success: false, error: error.message };
   }
-} 
+}

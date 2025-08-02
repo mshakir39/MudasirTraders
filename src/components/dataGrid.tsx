@@ -65,7 +65,7 @@ const DataGridDemo = React.memo(function DataGridDemo({
     disableRowSelectionOnClick: true,
     autoHeight: true,
     rowHeight: 52,
-    ...rest
+    ...rest,
   };
 
   if (enablePagination) {
@@ -104,26 +104,22 @@ const DataGridDemo = React.memo(function DataGridDemo({
         <SearchField
           value={search}
           onChange={handleSearch}
-          placeholder="Search..."
+          placeholder='Search...'
           className={`w-80 ${searchParentClassName}`}
         />
         <div className='flex items-center gap-4'>
           {Number(stockCost ? stockCost : 0) > 0 && (
-            <span className='font-bold whitespace-nowrap'>
+            <span className='whitespace-nowrap font-bold'>
               Total Stock Cost: {Math.round(stockCost || 0).toLocaleString()}
             </span>
           )}
           {showButton && (
-            <Button
-              variant='fill'
-              text={buttonTitle}
-              onClick={buttonOnClick}
-            />
+            <Button variant='fill' text={buttonTitle} onClick={buttonOnClick} />
           )}
         </div>
       </div>
 
-      <div className="mt-6">
+      <div className='mt-6'>
         {filteredRows && filteredRows.length > 0 ? (
           <div style={{ width: '100%', height: '100%' }}>
             <DataGrid {...gridProps} />

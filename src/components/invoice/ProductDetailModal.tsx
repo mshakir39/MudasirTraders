@@ -15,56 +15,59 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onClose,
   data,
 }) => {
-  const columns = React.useMemo<ColumnDef<any>[]>(() => [
-    {
-      accessorKey: 'brandName',
-      header: 'Brand',
-    },
-    {
-      accessorKey: 'series',
-      header: 'Series',
-      cell: ({ row }) => {
-        const details = row.original.batteryDetails;
-        return details
-          ? `${details.name} (${details.plate}, ${details.ah}AH${details.type ? `, ${details.type}` : ''})`
-          : row.original.series;
+  const columns = React.useMemo<ColumnDef<any>[]>(
+    () => [
+      {
+        accessorKey: 'brandName',
+        header: 'Brand',
       },
-    },
-    {
-      accessorKey: 'productPrice',
-      header: 'Price/Item',
-      cell: ({ row }) => 'Rs ' + row.original.productPrice,
-    },
-    {
-      accessorKey: 'quantity',
-      header: 'Quantity',
-    },
-    {
-      accessorKey: 'warrentyCode',
-      header: 'Battery Code',
-    },
-    {
-      accessorKey: 'warrentyStartDate',
-      header: 'Warrenty Start Date',
-      cell: ({ row }) => {
-        const { dateOnly } = convertDate(row.original.warrentyStartDate);
-        return <span>{dateOnly}</span>;
+      {
+        accessorKey: 'series',
+        header: 'Series',
+        cell: ({ row }) => {
+          const details = row.original.batteryDetails;
+          return details
+            ? `${details.name} (${details.plate}, ${details.ah}AH${details.type ? `, ${details.type}` : ''})`
+            : row.original.series;
+        },
       },
-    },
-    {
-      accessorKey: 'warrentyEndDate',
-      header: 'Warrenty End Date',
-      cell: ({ row }) => {
-        const { dateOnly } = convertDate(row.original.warrentyEndDate);
-        return <span>{dateOnly}</span>;
+      {
+        accessorKey: 'productPrice',
+        header: 'Price/Item',
+        cell: ({ row }) => 'Rs ' + row.original.productPrice,
       },
-    },
-    {
-      accessorKey: 'totalPrice',
-      header: 'Total Price',
-      cell: ({ row }) => 'Rs ' + row.original.totalPrice,
-    },
-  ], []);
+      {
+        accessorKey: 'quantity',
+        header: 'Quantity',
+      },
+      {
+        accessorKey: 'warrentyCode',
+        header: 'Battery Code',
+      },
+      {
+        accessorKey: 'warrentyStartDate',
+        header: 'Warrenty Start Date',
+        cell: ({ row }) => {
+          const { dateOnly } = convertDate(row.original.warrentyStartDate);
+          return <span>{dateOnly}</span>;
+        },
+      },
+      {
+        accessorKey: 'warrentyEndDate',
+        header: 'Warrenty End Date',
+        cell: ({ row }) => {
+          const { dateOnly } = convertDate(row.original.warrentyEndDate);
+          return <span>{dateOnly}</span>;
+        },
+      },
+      {
+        accessorKey: 'totalPrice',
+        header: 'Total Price',
+        cell: ({ row }) => 'Rs ' + row.original.totalPrice,
+      },
+    ],
+    []
+  );
 
   return (
     <Modal

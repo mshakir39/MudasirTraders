@@ -5,17 +5,19 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const url = request.url;
 
-  const authToken = request.cookies.get('next-auth.session-token') || request.cookies.get('__Secure-next-auth.session-token');
+  const authToken =
+    request.cookies.get('next-auth.session-token') ||
+    request.cookies.get('__Secure-next-auth.session-token');
   const dashboardUnlocked = request.cookies.get('dashboard-unlocked');
-    
+
   // Step 1: Handle Authentication
   const isPublicPage =
     pathname === '/signIn' || pathname === '/dashboard-password';
-  
+
   if (!authToken && !isPublicPage) {
     return NextResponse.redirect(new URL('/signIn', url));
-      }
-  
+  }
+
   if (authToken && pathname === '/signIn') {
     return NextResponse.redirect(new URL('/category', url));
   }

@@ -11,8 +11,6 @@ function GoogleSignIn() {
     });
   };
 
-
-
   // checking if sessions exists
   if (session) {
     // rendering components for logged in users

@@ -47,7 +47,9 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
     }
   }, [isOpen]);
 
-  const handleChangeEditInvoice = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeEditInvoice = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const { name, value } = event.target;
     setEditInvoiceData((prevFormData: any) => ({
       ...prevFormData,
@@ -62,18 +64,26 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
     }));
   };
 
-  const handleSubmitEditInvoice = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitEditInvoice = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
     e.stopPropagation();
 
     // Validate payment method
-    if (!editInvoiceData.paymentMethod || editInvoiceData.paymentMethod.length === 0) {
+    if (
+      !editInvoiceData.paymentMethod ||
+      editInvoiceData.paymentMethod.length === 0
+    ) {
       toast.error('Please select at least one payment method');
       return;
     }
 
     // Validate amount
-    if (!editInvoiceData.additionalPayment || parseFloat(editInvoiceData.additionalPayment) <= 0) {
+    if (
+      !editInvoiceData.additionalPayment ||
+      parseFloat(editInvoiceData.additionalPayment) <= 0
+    ) {
       toast.error('Please enter a valid amount');
       return;
     }
@@ -96,22 +106,22 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
     >
       <form onSubmit={handleSubmitEditInvoice}>
         <div className='space-y-4'>
-        <Input
+          <Input
             type='number'
-          label='Additional Amount'
-          name='additionalPayment'
+            label='Additional Amount'
+            name='additionalPayment'
             value={editInvoiceData.additionalPayment}
-          onChange={handleChangeEditInvoice}
+            onChange={handleChangeEditInvoice}
             min={0}
-            step="0.01"
+            step='0.01'
             required
           />
-          
+
           <div className='flex flex-col gap-2'>
             <span className='text-sm font-medium text-gray-700'>
-              Payment Method: <span className="text-red-500">*</span>
+              Payment Method: <span className='text-red-500'>*</span>
             </span>
-            <div className="p-4 bg-gray-50 rounded-md">
+            <div className='rounded-md bg-gray-50 p-4'>
               <CheckboxGroup
                 options={paymentOptions}
                 onChange={handlePaymentMethodChange}
@@ -120,9 +130,9 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
             </div>
           </div>
         </div>
-        
+
         <Button
-          className='w-fit mt-4'
+          className='mt-4 w-fit'
           variant='fill'
           text='Add Amount'
           type='submit'

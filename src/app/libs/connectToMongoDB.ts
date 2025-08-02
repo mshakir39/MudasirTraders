@@ -31,8 +31,11 @@ function extractDbNameFromUri(uri: string): string | null {
 
 export async function connectToMongoDB(): Promise<Db | null> {
   // During build time, return null to prevent connection attempts
-  if (process.env.NEXT_PHASE === 'phase-production-build' || 
-      process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === undefined) {
+  if (
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    (process.env.NODE_ENV === 'production' &&
+      process.env.VERCEL_ENV === undefined)
+  ) {
     console.log('🚫 Skipping MongoDB connection during build phase');
     return null;
   }
@@ -42,8 +45,9 @@ export async function connectToMongoDB(): Promise<Db | null> {
   // If already connecting, wait and return existing connection
   if (connection.isConnecting) {
     let attempts = 0;
-    while (connection.isConnecting && attempts < 50) { // Wait up to 5 seconds
-      await new Promise(resolve => setTimeout(resolve, 100));
+    while (connection.isConnecting && attempts < 50) {
+      // Wait up to 5 seconds
+      await new Promise((resolve) => setTimeout(resolve, 100));
       attempts++;
     }
     if (connection.db) return connection.db;
@@ -52,7 +56,7 @@ export async function connectToMongoDB(): Promise<Db | null> {
   // Check if existing connection is still valid
   if (connection.client && connection.db && !connection.isConnecting) {
     const timeSinceLastUsed = currentTime - connection.lastUsed;
-    
+
     if (timeSinceLastUsed < CONNECTION_TIMEOUT) {
       try {
         // Quick ping to verify connection is alive
@@ -61,7 +65,10 @@ export async function connectToMongoDB(): Promise<Db | null> {
         scheduleCleanup();
         return connection.db;
       } catch (error) {
-        console.warn('⚠️ MongoDB connection ping failed, reconnecting...', error);
+        console.warn(
+          '⚠️ MongoDB connection ping failed, reconnecting...',
+          error
+        );
         await closeConnection();
       }
     } else {
@@ -106,17 +113,20 @@ export async function connectToMongoDB(): Promise<Db | null> {
     });
 
     console.log(`🔄 Connecting to MongoDB database: ${dbName}`);
-    
+
     // Connect with timeout
     const connectPromise = client.connect();
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Connection timeout after 20 seconds')), 20000)
+      setTimeout(
+        () => reject(new Error('Connection timeout after 20 seconds')),
+        20000
+      )
     );
 
     await Promise.race([connectPromise, timeoutPromise]);
-    
+
     const db = client.db(dbName);
-    
+
     // Test the connection
     await db.admin().ping();
 
@@ -137,7 +147,6 @@ export async function connectToMongoDB(): Promise<Db | null> {
     // Schedule automatic cleanup
     scheduleCleanup();
     return db;
-
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
     connection.isConnecting = false;
@@ -165,7 +174,9 @@ function setupEventHandlers(client: MongoClient) {
   // Handle process termination
   if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
     const gracefulShutdown = async (signal: string) => {
-      console.log(`Received ${signal}. Gracefully shutting down MongoDB connection.`);
+      console.log(
+        `Received ${signal}. Gracefully shutting down MongoDB connection.`
+      );
       await closeConnection();
       process.exit(0);
     };
@@ -180,7 +191,7 @@ function resetConnection() {
   connection.db = null;
   connection.lastUsed = 0;
   connection.isConnecting = false;
-  
+
   if (cleanupTimer) {
     clearTimeout(cleanupTimer);
     cleanupTimer = null;
@@ -215,7 +226,7 @@ async function closeConnection() {
       console.error('❌ Error closing MongoDB connection:', error);
     }
   }
-  
+
   resetConnection();
 }
 
@@ -227,13 +238,18 @@ export function getConnectionStats() {
   return {
     isConnected: !!connection.client && !!connection.db,
     lastUsed: connection.lastUsed,
-    timeSinceLastUsed: connection.lastUsed ? Date.now() - connection.lastUsed : 0,
+    timeSinceLastUsed: connection.lastUsed
+      ? Date.now() - connection.lastUsed
+      : 0,
     isConnecting: connection.isConnecting,
   };
 }
 
 // Export a function to check if we're in build mode
 export function isBuildMode(): boolean {
-  return process.env.NEXT_PHASE === 'phase-production-build' || 
-         (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === undefined);
+  return (
+    process.env.NEXT_PHASE === 'phase-production-build' ||
+    (process.env.NODE_ENV === 'production' &&
+      process.env.VERCEL_ENV === undefined)
+  );
 }

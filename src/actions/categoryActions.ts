@@ -25,54 +25,63 @@ interface CategoryData {
   salesTax: number;
 }
 
-export async function createCategory(data: Partial<ICategory>): Promise<ActionResponse<ICategory>> {
+export async function createCategory(
+  data: Partial<ICategory>
+): Promise<ActionResponse<ICategory>> {
   'use server';
   try {
     const result = await executeOperation('categories', 'insertOne', {
       ...data,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
     return { success: true, data: result as ICategory };
   } catch (error) {
     console.error('Error creating category:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to create category' };
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to create category',
+    };
   }
 }
 
-export async function updateCategory(id: string, data: Partial<ICategory>): Promise<ActionResponse<ICategory>> {
+export async function updateCategory(
+  id: string,
+  data: Partial<ICategory>
+): Promise<ActionResponse<ICategory>> {
   'use server';
   try {
     const { ObjectId } = require('mongodb');
-    
+
     // First save current state to history
     const db = await connectToMongoDB();
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    
+
     const collection = db.collection('categories');
     const historyCollection = db.collection('categoryHistory');
-    
+
     const currentCategory = await collection.findOne({ _id: new ObjectId(id) });
     if (currentCategory) {
       // Remove _id to avoid duplicate key error, MongoDB will auto-generate new _id
       const { _id, ...historyData } = currentCategory;
-      
+
       // Check if a history entry already exists for today
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Start of today
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1); // Start of tomorrow
-      
+
       const existingHistory = await historyCollection.findOne({
         categoryId: new ObjectId(id),
         historyDate: {
           $gte: today,
-          $lt: tomorrow
-        }
+          $lt: tomorrow,
+        },
       });
-      
+
       if (existingHistory) {
         // Update existing history entry for today
         await historyCollection.updateOne(
@@ -80,8 +89,8 @@ export async function updateCategory(id: string, data: Partial<ICategory>): Prom
           {
             $set: {
               ...historyData,
-              historyDate: new Date()
-            }
+              historyDate: new Date(),
+            },
           }
         );
       } else {
@@ -89,7 +98,7 @@ export async function updateCategory(id: string, data: Partial<ICategory>): Prom
         await historyCollection.insertOne({
           categoryId: new ObjectId(id),
           ...historyData,
-          historyDate: new Date()
+          historyDate: new Date(),
         });
       }
     }
@@ -99,49 +108,56 @@ export async function updateCategory(id: string, data: Partial<ICategory>): Prom
       id,
       data: {
         ...data,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
     return { success: true, data: result as ICategory };
   } catch (error) {
     console.error('Error updating category:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to update category' };
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to update category',
+    };
   }
 }
 
-export async function patchCategory(id: string, data: Partial<ICategory>): Promise<ActionResponse<ICategory>> {
+export async function patchCategory(
+  id: string,
+  data: Partial<ICategory>
+): Promise<ActionResponse<ICategory>> {
   'use server';
   try {
     const { ObjectId } = require('mongodb');
-    
+
     // First save current state to history
     const db = await connectToMongoDB();
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    
+
     const collection = db.collection('categories');
     const historyCollection = db.collection('categoryHistory');
-    
+
     const currentCategory = await collection.findOne({ _id: new ObjectId(id) });
     if (currentCategory) {
       // Remove _id to avoid duplicate key error, MongoDB will auto-generate new _id
       const { _id, ...historyData } = currentCategory;
-      
+
       // Check if a history entry already exists for today
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Start of today
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1); // Start of tomorrow
-      
+
       const existingHistory = await historyCollection.findOne({
         categoryId: new ObjectId(id),
         historyDate: {
           $gte: today,
-          $lt: tomorrow
-        }
+          $lt: tomorrow,
+        },
       });
-      
+
       if (existingHistory) {
         // Update existing history entry for today
         await historyCollection.updateOne(
@@ -149,8 +165,8 @@ export async function patchCategory(id: string, data: Partial<ICategory>): Promi
           {
             $set: {
               ...historyData,
-              historyDate: new Date()
-            }
+              historyDate: new Date(),
+            },
           }
         );
       } else {
@@ -158,7 +174,7 @@ export async function patchCategory(id: string, data: Partial<ICategory>): Promi
         await historyCollection.insertOne({
           categoryId: new ObjectId(id),
           ...historyData,
-          historyDate: new Date()
+          historyDate: new Date(),
         });
       }
     }
@@ -168,13 +184,17 @@ export async function patchCategory(id: string, data: Partial<ICategory>): Promi
       id,
       data: {
         ...data,
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
     return { success: true, data: result as ICategory };
   } catch (error) {
     console.error('Error patching category:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to patch category' };
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to patch category',
+    };
   }
 }
 
@@ -184,7 +204,9 @@ interface CategoryHistory extends ICategory {
   _id?: string;
 }
 
-export async function getCategoryHistory(categoryId: string): Promise<ActionResponse<CategoryHistory[]>> {
+export async function getCategoryHistory(
+  categoryId: string
+): Promise<ActionResponse<CategoryHistory[]>> {
   'use server';
   try {
     const { ObjectId } = require('mongodb');
@@ -192,16 +214,16 @@ export async function getCategoryHistory(categoryId: string): Promise<ActionResp
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    
+
     const historyCollection = db.collection('categoryHistory');
-    
+
     const rawHistory = await historyCollection
       .find({ categoryId: new ObjectId(categoryId) })
       .sort({ historyDate: -1 })
       .toArray();
 
     // Transform the raw data into the expected format
-    const history = rawHistory.map(entry => ({
+    const history = rawHistory.map((entry) => ({
       _id: entry._id.toString(),
       categoryId: entry.categoryId.toString(),
       brandName: entry.brandName,
@@ -209,12 +231,18 @@ export async function getCategoryHistory(categoryId: string): Promise<ActionResp
       salesTax: entry.salesTax,
       historyDate: new Date(entry.historyDate),
       createdAt: entry.createdAt ? new Date(entry.createdAt) : undefined,
-      updatedAt: entry.updatedAt ? new Date(entry.updatedAt) : undefined
+      updatedAt: entry.updatedAt ? new Date(entry.updatedAt) : undefined,
     })) as CategoryHistory[];
 
     return { success: true, data: history };
   } catch (error) {
     console.error('Error fetching category history:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch category history' };
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to fetch category history',
+    };
   }
-} 
+}

@@ -17,37 +17,41 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
 }) => {
   return (
     <>
-      <div className='flex gap-4 mt-2'>
-        <label className="flex items-center gap-2">
+      <div className='mt-2 flex gap-4'>
+        <label className='flex items-center gap-2'>
           <input
             type='radio'
             name='customerType'
             value='WalkIn Customer'
             checked={invoiceData?.customerType === 'WalkIn Customer'}
-            onChange={(e) => setInvoiceData((prev: any) => ({ 
-              ...prev,
-              customerType: e.target.value
-            }))}
+            onChange={(e) =>
+              setInvoiceData((prev: any) => ({
+                ...prev,
+                customerType: e.target.value,
+              }))
+            }
           />
           Walk-In Customer
         </label>
-        <label className="flex items-center gap-2">
+        <label className='flex items-center gap-2'>
           <input
             type='radio'
             name='customerType'
             value='Regular'
             checked={invoiceData?.customerType === 'Regular'}
-            onChange={(e) => setInvoiceData((prev: any) => ({ 
-              ...prev,
-              customerType: e.target.value
-            }))}
+            onChange={(e) =>
+              setInvoiceData((prev: any) => ({
+                ...prev,
+                customerType: e.target.value,
+              }))
+            }
           />
           Regular Customer
         </label>
       </div>
 
       {invoiceData?.customerType === 'Regular' && (
-        <div 
+        <div
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -60,22 +64,24 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
           <Dropdown
             key={invoiceData.customerType}
             className='mt-2'
-            options={customers.map(customer => ({
+            options={customers.map((customer) => ({
               label: customer.name,
-              value: customer.id.toString()
+              value: customer.id.toString(),
             }))}
             defaultValue={invoiceData.customerId?.toString() || ''}
             onSelect={(option) => {
-              const selectedCustomer = customers.find(c => c.id.toString() === option.value);
+              const selectedCustomer = customers.find(
+                (c) => c.id.toString() === option.value
+              );
               if (selectedCustomer) {
-                console.log("selectedCustomer",selectedCustomer)
+                console.log('selectedCustomer', selectedCustomer);
                 setInvoiceData((prev: any) => ({
                   ...prev,
                   customerName: selectedCustomer.name,
                   customerAddress: selectedCustomer.address,
                   customerContactNumber: selectedCustomer.contactInfo,
                   clientName: selectedCustomer.name,
-                  customerId: selectedCustomer.id
+                  customerId: selectedCustomer.id,
                 }));
               }
             }}
@@ -92,8 +98,14 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
         minLength={2}
         maxLength={100}
         onChange={handleChange}
-        readOnly={invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId}
-        placeholder={invoiceData?.customerType === 'Regular' && !invoiceData?.customerId ? 'Select a customer above' : ''}
+        readOnly={
+          invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId
+        }
+        placeholder={
+          invoiceData?.customerType === 'Regular' && !invoiceData?.customerId
+            ? 'Select a customer above'
+            : ''
+        }
       />
       <Input
         type='text'
@@ -104,8 +116,14 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
         minLength={5}
         maxLength={200}
         onChange={handleChange}
-        readOnly={invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId}
-        placeholder={invoiceData?.customerType === 'Regular' && !invoiceData?.customerId ? 'Select a customer above' : ''}
+        readOnly={
+          invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId
+        }
+        placeholder={
+          invoiceData?.customerType === 'Regular' && !invoiceData?.customerId
+            ? 'Select a customer above'
+            : ''
+        }
       />
       <Input
         type='tel'
@@ -115,8 +133,14 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
         pattern='[0-9+\-\s]+'
         maxLength={20}
         onChange={handleChange}
-        readOnly={invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId}
-        placeholder={invoiceData?.customerType === 'Regular' && !invoiceData?.customerId ? 'Select a customer above' : ''}
+        readOnly={
+          invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId
+        }
+        placeholder={
+          invoiceData?.customerType === 'Regular' && !invoiceData?.customerId
+            ? 'Select a customer above'
+            : ''
+        }
       />
 
       <Input
@@ -131,4 +155,4 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
   );
 };
 
-export default CustomerForm; 
+export default CustomerForm;

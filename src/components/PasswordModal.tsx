@@ -12,7 +12,11 @@ interface PasswordModalProps {
   onClose?: () => void;
 }
 
-const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onSuccess, onClose }) => {
+const PasswordModal: React.FC<PasswordModalProps> = ({
+  isOpen,
+  onSuccess,
+  onClose,
+}) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +26,7 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onSuccess, onClos
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!password.trim()) {
       toast.error('Please enter the password');
       return;
@@ -36,7 +40,7 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onSuccess, onClos
         // Store authentication in sessionStorage
         sessionStorage.setItem('dashboardUnlocked', 'true');
         sessionStorage.setItem('dashboardUnlockTime', Date.now().toString());
-        
+
         toast.success('Access granted!');
         setPassword('');
         onSuccess();
@@ -59,68 +63,74 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onSuccess, onClos
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Dashboard Access Required"
-      size="small"
+      title='Dashboard Access Required'
+      size='small'
       preventBackdropClose={false}
     >
-      <div className="space-y-6">
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-            <FaLock className="h-8 w-8 text-red-600" />
+      <div className='space-y-6'>
+        <div className='text-center'>
+          <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100'>
+            <FaLock className='h-8 w-8 text-red-600' />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className='mb-2 text-lg font-medium text-gray-900'>
             Dashboard is Password Protected
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className='text-sm text-gray-500'>
             Please enter the correct password to access the dashboard.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
+        <form onSubmit={handleSubmit} className='space-y-4'>
+          <div className='relative'>
             <Input
               type={showPassword ? 'text' : 'password'}
-              label="Password"
+              label='Password'
               value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              placeholder="Enter dashboard password"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setPassword(e.target.value)
+              }
+              placeholder='Enter dashboard password'
               required
               autoFocus
             />
             <button
-              type="button"
-              className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
+              type='button'
+              className='absolute right-3 top-8 text-gray-400 hover:text-gray-600'
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <FaEyeSlash className="h-4 w-4" /> : <FaEye className="h-4 w-4" />}
+              {showPassword ? (
+                <FaEyeSlash className='h-4 w-4' />
+              ) : (
+                <FaEye className='h-4 w-4' />
+              )}
             </button>
           </div>
 
-          <div className="flex flex-col gap-3 pt-4">
+          <div className='flex flex-col gap-3 pt-4'>
             <Button
-              type="submit"
-              variant="fill"
-              text="Unlock Dashboard"
+              type='submit'
+              variant='fill'
+              text='Unlock Dashboard'
               onClick={handleSubmit}
               isPending={isLoading}
               disabled={isLoading}
-              className="w-full h-12 text-base font-medium"
+              className='h-12 w-full text-base font-medium'
             />
             <Button
-              type="button"
-              variant="outline"
-              text="Cancel"
+              type='button'
+              variant='outline'
+              text='Cancel'
               onClick={handleClose}
-              className="w-full h-12 text-base"
+              className='h-12 w-full text-base'
             />
           </div>
         </form>
 
-        <div className="text-center">
-          <p className="text-xs text-gray-400">
+        <div className='text-center'>
+          <p className='text-xs text-gray-400'>
             Contact administrator for access credentials
           </p>
-          <p className="text-xs text-blue-500 mt-2">
+          <p className='mt-2 text-xs text-blue-500'>
             You can close this modal and navigate to other pages
           </p>
         </div>
@@ -129,4 +139,4 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onSuccess, onClos
   );
 };
 
-export default PasswordModal; 
+export default PasswordModal;

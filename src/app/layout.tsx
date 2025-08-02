@@ -24,11 +24,11 @@ export default function RootLayout({
     <html lang='en'>
       <body className={inter.className}>
         <SessionWrapper>
-            <div className='flex min-h-screen w-full'>
-              <SideBar />
-              <main className='flex-1 overflow-x-hidden p-4'>{children}</main>
-              <ToastContainer />
-            </div>
+          <div className='flex min-h-screen w-full'>
+            <SideBar />
+            <main className='flex-1 overflow-x-hidden p-4'>{children}</main>
+            <ToastContainer />
+          </div>
         </SessionWrapper>
       </body>
     </html>

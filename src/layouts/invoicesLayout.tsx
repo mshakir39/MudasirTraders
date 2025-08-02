@@ -18,8 +18,6 @@ import { useInvoiceForm } from '@/components/invoice/useInvoiceForm';
 import { useAccordionData } from '@/components/invoice/useAccordionData';
 import { useCustomers } from '@/components/invoice/useCustomers';
 
-
-
 interface InvoiceLayoutProps {
   categories: ICategory[];
   invoices: any;
@@ -41,8 +39,14 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
   console.log('📦 InvoiceLayout - Categories received:', categories);
 
   // Custom hooks
-  const { invoiceData, setInvoiceData, handleChange, resetInvoiceData } = useInvoiceForm();
-  const { accordionData, setAccordionData, resetAccordionData, ...accordionMethods } = useAccordionData(categories, stock);
+  const { invoiceData, setInvoiceData, handleChange, resetInvoiceData } =
+    useInvoiceForm();
+  const {
+    accordionData,
+    setAccordionData,
+    resetAccordionData,
+    ...accordionMethods
+  } = useAccordionData(categories, stock);
   const { customers } = useCustomers();
 
   const brandOptions = categories.map((category) => ({
@@ -108,12 +112,11 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
   };
 
   return (
-    
-    <div className='flex flex-col md:p-6 p-0 py-6'>
+    <div className='flex flex-col p-0 py-6 md:p-6'>
       <div className='flex w-full justify-between py-2'>
         <span className='text-2xl font-bold'>Invoices</span>
       </div>
-      
+
       <InvoiceGrid
         invoices={invoices}
         onCreateInvoice={handleCreateInvoice}

@@ -17,8 +17,8 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
 }) => {
   return (
     <>
-      <div className='flex gap-4 mt-2'>
-        <label className="flex items-center gap-2">
+      <div className='mt-2 flex gap-4'>
+        <label className='flex items-center gap-2'>
           <input
             type='radio'
             name='customerType'
@@ -28,7 +28,7 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
           />
           Walk-In Customer
         </label>
-        <label className="flex items-center gap-2">
+        <label className='flex items-center gap-2'>
           <input
             type='radio'
             name='customerType'
@@ -45,22 +45,24 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
           <Dropdown
             key={invoiceData.customerType}
             className='mt-2'
-            options={customers.map(customer => ({
+            options={customers.map((customer) => ({
               label: customer.name,
-              value: customer.id.toString()
+              value: customer.id.toString(),
             }))}
             defaultValue={invoiceData.customerId?.toString() || ''}
             onSelect={(option) => {
-              const selectedCustomer = customers.find(c => c.id.toString() === option.value);
+              const selectedCustomer = customers.find(
+                (c) => c.id.toString() === option.value
+              );
               if (selectedCustomer) {
-                console.log("selectedCustomer",selectedCustomer)
+                console.log('selectedCustomer', selectedCustomer);
                 setInvoiceData((prev: any) => ({
                   ...prev,
                   customerName: selectedCustomer.name,
                   customerAddress: selectedCustomer.address,
                   customerContactNumber: selectedCustomer.contactInfo,
                   clientName: selectedCustomer.name,
-                  customerId: selectedCustomer.id // Ensure it's a number
+                  customerId: selectedCustomer.id, // Ensure it's a number
                 }));
               }
             }}
@@ -78,8 +80,14 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
         minLength={2}
         maxLength={100}
         onChange={onChange}
-        readOnly={invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId}
-        placeholder={invoiceData?.customerType === 'Regular' && !invoiceData?.customerId ? 'Select a customer above' : ''}
+        readOnly={
+          invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId
+        }
+        placeholder={
+          invoiceData?.customerType === 'Regular' && !invoiceData?.customerId
+            ? 'Select a customer above'
+            : ''
+        }
       />
 
       <Input
@@ -91,8 +99,14 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
         minLength={5}
         maxLength={200}
         onChange={onChange}
-        readOnly={invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId}
-        placeholder={invoiceData?.customerType === 'Regular' && !invoiceData?.customerId ? 'Select a customer above' : ''}
+        readOnly={
+          invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId
+        }
+        placeholder={
+          invoiceData?.customerType === 'Regular' && !invoiceData?.customerId
+            ? 'Select a customer above'
+            : ''
+        }
       />
 
       <Input
@@ -103,8 +117,14 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
         pattern='[0-9+\-\s]+'
         maxLength={20}
         onChange={onChange}
-        readOnly={invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId}
-        placeholder={invoiceData?.customerType === 'Regular' && !invoiceData?.customerId ? 'Select a customer above' : ''}
+        readOnly={
+          invoiceData?.customerType === 'Regular' && !!invoiceData?.customerId
+        }
+        placeholder={
+          invoiceData?.customerType === 'Regular' && !invoiceData?.customerId
+            ? 'Select a customer above'
+            : ''
+        }
       />
     </>
   );

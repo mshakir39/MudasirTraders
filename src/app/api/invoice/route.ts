@@ -5,14 +5,14 @@ import { ObjectId } from 'mongodb';
 
 export async function POST(req: any, res: any) {
   const formData = await req.json();
-  
+
   // Debug custom date logic
   console.log('🔍 Custom Date Debug:');
   console.log('useCustomDate:', formData.useCustomDate);
   console.log('customDate:', formData.customDate);
   console.log('useCustomDate type:', typeof formData.useCustomDate);
   console.log('customDate type:', typeof formData.customDate);
-  
+
   try {
     const lastInvoice: any = await executeOperation('invoices', 'findLast');
     let nextInvoiceNumber;
@@ -31,7 +31,8 @@ export async function POST(req: any, res: any) {
       customerAddress: formData.customerAddress,
       customerContactNumber: formData.customerContactNumber,
       customerType: formData.customerType || 'WalkIn Customer', // Add customer type
-      customerId: formData.customerType === 'Regular' ? formData.customerId : null, // Add customerId for regular customers
+      customerId:
+        formData.customerType === 'Regular' ? formData.customerId : null, // Add customerId for regular customers
       vehicleNo: formData.vehicleNo,
       paymentMethod: formData.paymentMethod,
       batteriesCountAndWeight: formData?.batteriesCountAndWeight,
@@ -50,7 +51,12 @@ export async function POST(req: any, res: any) {
         totalPrice: product.productPrice * product.quantity,
         batteryDetails: product.batteryDetails,
       })),
-      createdDate: (formData.useCustomDate === true || formData.useCustomDate === 'true') && formData.customDate ? new Date(formData.customDate) : new Date(),
+      createdDate:
+        (formData.useCustomDate === true ||
+          formData.useCustomDate === 'true') &&
+        formData.customDate
+          ? new Date(formData.customDate)
+          : new Date(),
     };
 
     // Debug the final createdDate
@@ -61,10 +67,11 @@ export async function POST(req: any, res: any) {
     const totalProductAmount = getAllSum(invoice.products, 'totalPrice');
     const receivedAmount = parseFloat(formData?.receivedAmount || '0') || 0;
     const batteriesRate = parseFloat(formData?.batteriesRate || '0') || 0;
-    
+
     // Calculate remaining amount
-    invoice.remainingAmount = totalProductAmount - receivedAmount - batteriesRate;
-    
+    invoice.remainingAmount =
+      totalProductAmount - receivedAmount - batteriesRate;
+
     // Debug the calculation
     console.log('💰 Amount Calculation Debug:');
     console.log('  totalProductAmount:', totalProductAmount);
@@ -73,7 +80,7 @@ export async function POST(req: any, res: any) {
     console.log('  batteriesRate (raw):', formData?.batteriesRate);
     console.log('  batteriesRate (parsed):', batteriesRate);
     console.log('  remainingAmount:', invoice.remainingAmount);
-    
+
     // Set payment status based on remaining amount
     if (invoice.remainingAmount === 0) {
       invoice.paymentStatus = 'paid';
@@ -166,13 +173,13 @@ export async function PATCH(req: any, res: any) {
 export async function DELETE(req: any, res: any) {
   try {
     const { id } = await req.json();
-    
+
     if (!id) {
       return Response.json({ error: 'Invoice ID is required' });
     }
 
     const invoiceId = new ObjectId(id);
-    
+
     // 1. First, get the invoice details before deleting
     const invoice: any = await executeOperation('invoices', 'findOne', {
       _id: invoiceId,
@@ -182,12 +189,15 @@ export async function DELETE(req: any, res: any) {
       return Response.json({ error: 'Invoice not found' });
     }
 
-    console.log('🗑️ Starting complete invoice deletion for:', invoice.invoiceNo);
+    console.log(
+      '🗑️ Starting complete invoice deletion for:',
+      invoice.invoiceNo
+    );
     console.log('📋 Invoice details:', {
       customerName: invoice.customerName,
       totalProducts: invoice.products?.length || 0,
       totalAmount: invoice.remainingAmount,
-      paymentMethod: invoice.paymentMethod
+      paymentMethod: invoice.paymentMethod,
     });
 
     // 2. Preserve warranty data before deletion (for warranty lookups)
@@ -206,16 +216,21 @@ export async function DELETE(req: any, res: any) {
                 series: product.series,
                 warrentyStartDate: product.warrentyStartDate,
                 warrentyEndDate: product.warrentyEndDate,
-                warrentyDuration: product.warrentyDuration
+                warrentyDuration: product.warrentyDuration,
               },
               originalInvoiceNo: invoice.invoiceNo,
               originalInvoiceId: invoice._id,
               deletedAt: new Date(),
-              deletionReason: 'Invoice deleted by user'
+              deletionReason: 'Invoice deleted by user',
             });
-            console.log(`✅ Warranty data preserved for: ${product.warrentyCode}`);
+            console.log(
+              `✅ Warranty data preserved for: ${product.warrentyCode}`
+            );
           } catch (warrantyError) {
-            console.warn(`⚠️ Failed to preserve warranty data for ${product.warrentyCode}:`, warrantyError);
+            console.warn(
+              `⚠️ Failed to preserve warranty data for ${product.warrentyCode}:`,
+              warrantyError
+            );
           }
         }
       }
@@ -231,15 +246,20 @@ export async function DELETE(req: any, res: any) {
         console.log(`🔄 Restoring stock for ${seriesName}: +${quantity} units`);
 
         try {
-                  // Restore stock quantities (increase inStock, decrease soldCount)
-        await executeOperation('stock', 'restoreStockFromInvoice', {
-          series: seriesName,
-          quantity: parseInt(quantity) || 0,
-        });
+          // Restore stock quantities (increase inStock, decrease soldCount)
+          await executeOperation('stock', 'restoreStockFromInvoice', {
+            series: seriesName,
+            quantity: parseInt(quantity) || 0,
+          });
           console.log(`✅ Stock restored for ${seriesName}`);
         } catch (stockError: any) {
-          console.error(`❌ Failed to restore stock for ${seriesName}:`, stockError);
-          throw new Error(`Failed to restore stock for ${seriesName}: ${stockError.message}`);
+          console.error(
+            `❌ Failed to restore stock for ${seriesName}:`,
+            stockError
+          );
+          throw new Error(
+            `Failed to restore stock for ${seriesName}: ${stockError.message}`
+          );
         }
       }
     }
@@ -264,7 +284,7 @@ export async function DELETE(req: any, res: any) {
         deletedAt: new Date(),
         deletionReason: 'Invoice deleted by user',
         originalId: invoice._id,
-        invoiceNo: invoice.invoiceNo
+        invoiceNo: invoice.invoiceNo,
       });
       console.log('✅ Invoice data archived');
     } catch (archiveError) {
@@ -286,7 +306,7 @@ export async function DELETE(req: any, res: any) {
 
     console.log('🎉 Complete invoice deletion successful:', invoice.invoiceNo);
 
-    return Response.json({ 
+    return Response.json({
       message: 'Invoice completely deleted and all related data reverted',
       deletedInvoiceNo: invoice.invoiceNo,
       actionsCompleted: [
@@ -294,15 +314,14 @@ export async function DELETE(req: any, res: any) {
         'Stock quantities restored',
         'Sales record deleted',
         'Invoice data archived',
-        'Main invoice deleted'
-      ]
+        'Main invoice deleted',
+      ],
     });
-
   } catch (err: any) {
     console.error('❌ Error during invoice deletion:', err);
-    return Response.json({ 
+    return Response.json({
       error: err.message,
-      details: 'Invoice deletion failed. Please check the logs for details.'
+      details: 'Invoice deletion failed. Please check the logs for details.',
     });
   }
 }

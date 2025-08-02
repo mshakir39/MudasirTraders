@@ -56,9 +56,9 @@ const Modal: FunctionComponent<ModalProps> = ({
         }}
         as={Fragment}
       >
-        <Dialog 
-          as='div' 
-          className='relative z-10' 
+        <Dialog
+          as='div'
+          className='relative z-10'
           onClose={handleClose}
           // Make the dialog static when preventBackdropClose is true
           static={preventBackdropClose}
@@ -89,7 +89,7 @@ const Modal: FunctionComponent<ModalProps> = ({
                 <Dialog.Panel
                   className={`w-full ${sizeClasses[size]} transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all ${dialogPanelClass}`}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className='flex items-center justify-between'>
                     <Dialog.Title
                       as='h3'
                       className='text-lg font-bold leading-6 text-gray-900'
@@ -98,13 +98,23 @@ const Modal: FunctionComponent<ModalProps> = ({
                     </Dialog.Title>
                     {/* Close button that always works */}
                     <button
-                      type="button"
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      type='button'
+                      className='text-gray-400 transition-colors hover:text-gray-600'
                       onClick={handleForceClose}
                     >
-                      <span className="sr-only">Close</span>
-                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      <span className='sr-only'>Close</span>
+                      <svg
+                        className='h-6 w-6'
+                        fill='none'
+                        viewBox='0 0 24 24'
+                        stroke='currentColor'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth='2'
+                          d='M6 18L18 6M6 6l12 12'
+                        />
                       </svg>
                     </button>
                   </div>

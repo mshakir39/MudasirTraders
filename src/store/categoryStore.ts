@@ -21,4 +21,4 @@ export const useCategoryStore = create<CategoryStore>((set) => ({
       console.error('Error fetching categories:', error);
     }
   },
-})); 
+}));

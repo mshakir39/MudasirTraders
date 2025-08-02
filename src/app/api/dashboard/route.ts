@@ -83,17 +83,19 @@ export async function GET(request: NextRequest) {
     if (revenueStart && revenueEnd) {
       revenueDateRange = {
         start: new Date(revenueStart),
-        end: new Date(revenueEnd)
+        end: new Date(revenueEnd),
       };
     } else {
       const today = new Date();
-      const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+      const thirtyDaysAgo = new Date(
+        today.getTime() - 30 * 24 * 60 * 60 * 1000
+      );
       revenueDateRange = { start: thirtyDaysAgo, end: today };
     }
     if (topProductsStart && topProductsEnd) {
       topProductsDateRange = {
         start: new Date(topProductsStart),
-        end: new Date(topProductsEnd)
+        end: new Date(topProductsEnd),
       };
     } else {
       topProductsDateRange = revenueDateRange;
@@ -101,33 +103,43 @@ export async function GET(request: NextRequest) {
     if (salesTrendStart && salesTrendEnd) {
       salesTrendDateRange = {
         start: new Date(salesTrendStart),
-        end: new Date(salesTrendEnd)
+        end: new Date(salesTrendEnd),
       };
     } else {
       const today = new Date();
-      const fourteenDaysAgo = new Date(today.getTime() - (14 * 24 * 60 * 60 * 1000));
+      const fourteenDaysAgo = new Date(
+        today.getTime() - 14 * 24 * 60 * 60 * 1000
+      );
       salesTrendDateRange = { start: fourteenDaysAgo, end: today };
     }
 
     // REVENUE SALES FILTERING
-    const filteredSalesForRevenue = Array.isArray(salesDocs) ? salesDocs.filter((sale: any) => {
-      if (!sale.date) return false;
-      const saleDate = new Date(sale.date);
-      return saleDate >= revenueDateRange!.start && saleDate <= revenueDateRange!.end;
-    }) : [];
+    const filteredSalesForRevenue = Array.isArray(salesDocs)
+      ? salesDocs.filter((sale: any) => {
+          if (!sale.date) return false;
+          const saleDate = new Date(sale.date);
+          return (
+            saleDate >= revenueDateRange!.start &&
+            saleDate <= revenueDateRange!.end
+          );
+        })
+      : [];
 
     const totalSales = filteredSalesForRevenue.length;
-    const totalRevenue = filteredSalesForRevenue.reduce((sum: number, sale: any) => {
-      return sum + toNumber(sale.totalAmount);
-    }, 0);
+    const totalRevenue = filteredSalesForRevenue.reduce(
+      (sum: number, sale: any) => {
+        return sum + toNumber(sale.totalAmount);
+      },
+      0
+    );
 
     // PROFIT CALCULATION (NEW!)
     // Build a lookup for stock cost per (brand+series)
     const stockCostLookup: Record<string, number> = {};
-    stock.forEach(stockItem => {
+    stock.forEach((stockItem) => {
       const brand = stockItem.brandName || '';
       if (Array.isArray(stockItem.seriesStock)) {
-        stockItem.seriesStock.forEach(series => {
+        stockItem.seriesStock.forEach((series) => {
           const key = `${brand}|||${series.series}`;
           stockCostLookup[key] = toNumber(series.productCost);
         });
@@ -140,19 +152,25 @@ export async function GET(request: NextRequest) {
         const key = `${product.brandName || ''}|||${product.series || ''}`;
         const unitCost = stockCostLookup[key] || 0;
         const qty = toNumber(product.quantity);
-        return prodSum + (unitCost * qty);
+        return prodSum + unitCost * qty;
       }, 0);
       return sum + saleCost;
     }, 0);
     const totalProfit = totalRevenue - totalCost;
-    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    const profitMargin =
+      totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
     // TOP PRODUCTS
-    const filteredSalesForTopProducts = Array.isArray(salesDocs) ? salesDocs.filter((sale: any) => {
-      if (!sale.date) return false;
-      const saleDate = new Date(sale.date);
-      return saleDate >= topProductsDateRange!.start && saleDate <= topProductsDateRange!.end;
-    }) : [];
+    const filteredSalesForTopProducts = Array.isArray(salesDocs)
+      ? salesDocs.filter((sale: any) => {
+          if (!sale.date) return false;
+          const saleDate = new Date(sale.date);
+          return (
+            saleDate >= topProductsDateRange!.start &&
+            saleDate <= topProductsDateRange!.end
+          );
+        })
+      : [];
 
     const actualSalesCount: { [key: string]: number } = {};
     filteredSalesForTopProducts.forEach((sale: any) => {
@@ -167,9 +185,10 @@ export async function GET(request: NextRequest) {
       }
     });
     const productSales = stock.reduce((sales: any[], document) => {
-      if (!document.seriesStock || !Array.isArray(document.seriesStock)) return sales;
+      if (!document.seriesStock || !Array.isArray(document.seriesStock))
+        return sales;
       const documentBrandName = document.brandName || '';
-      const documentSales = document.seriesStock.map(series => {
+      const documentSales = document.seriesStock.map((series) => {
         const seriesName = series.series || 'Unknown';
         const key = `${documentBrandName}-${seriesName}`;
         const actualSoldCount = actualSalesCount[key] || 0;
@@ -183,38 +202,52 @@ export async function GET(request: NextRequest) {
       return [...sales, ...documentSales];
     }, []);
     const topSellingProducts = productSales
-      .filter(product => product.soldCount > 0)
+      .filter((product) => product.soldCount > 0)
       .sort((a, b) => b.soldCount - a.soldCount)
       .slice(0, 5);
 
     // PENDING PAYMENTS
-    const totalPending = Array.isArray(invoicesDocs) ? invoicesDocs.reduce((sum: number, invoice: any) => {
-      return sum + toNumber(invoice.remainingAmount);
-    }, 0) : 0;
+    const totalPending = Array.isArray(invoicesDocs)
+      ? invoicesDocs.reduce((sum: number, invoice: any) => {
+          return sum + toNumber(invoice.remainingAmount);
+        }, 0)
+      : 0;
 
     // SALES TREND
     const salesTrend = [];
-    const diffTime = Math.abs(salesTrendDateRange!.end.getTime() - salesTrendDateRange!.start.getTime());
+    const diffTime = Math.abs(
+      salesTrendDateRange!.end.getTime() - salesTrendDateRange!.start.getTime()
+    );
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     for (let i = 0; i < diffDays; i++) {
       const date = new Date(salesTrendDateRange!.start);
       date.setDate(date.getDate() + i);
       const dateStr = date.toISOString().split('T')[0];
-      const dailySales = Array.isArray(salesDocs) ? salesDocs.filter((sale: any) => {
-        if (!sale.date) return false;
-        const saleDate = new Date(sale.date).toISOString().split('T')[0];
-        return saleDate === dateStr;
-      }) : [];
-      const dailyRevenue = dailySales.reduce((sum: number, sale: any) => sum + toNumber(sale.totalAmount), 0);
+      const dailySales = Array.isArray(salesDocs)
+        ? salesDocs.filter((sale: any) => {
+            if (!sale.date) return false;
+            const saleDate = new Date(sale.date).toISOString().split('T')[0];
+            return saleDate === dateStr;
+          })
+        : [];
+      const dailyRevenue = dailySales.reduce(
+        (sum: number, sale: any) => sum + toNumber(sale.totalAmount),
+        0
+      );
       salesTrend.push({
-        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        date: date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        }),
         sales: dailySales.length,
-        revenue: dailyRevenue
+        revenue: dailyRevenue,
       });
     }
 
     // INVENTORY BY BRAND
-    const brandInventory: { [key: string]: { value: number; products: number } } = {};
+    const brandInventory: {
+      [key: string]: { value: number; products: number };
+    } = {};
     stock.forEach((document) => {
       const brandName = document.brandName || 'Generic';
       if (!brandInventory[brandName]) {
@@ -229,11 +262,13 @@ export async function GET(request: NextRequest) {
         });
       }
     });
-    const inventoryByBrand = Object.entries(brandInventory).map(([brand, data]) => ({
-      brand,
-      value: data.value,
-      products: data.products
-    }));
+    const inventoryByBrand = Object.entries(brandInventory).map(
+      ([brand, data]) => ({
+        brand,
+        value: data.value,
+        products: data.products,
+      })
+    );
 
     // BUILD FINAL RESPONSE
     const dashboardStats = {
@@ -243,7 +278,8 @@ export async function GET(request: NextRequest) {
       outOfStockCount,
       totalSales,
       totalRevenue,
-      averageOrderValue: totalSales > 0 ? Math.round(totalRevenue / totalSales) : 0,
+      averageOrderValue:
+        totalSales > 0 ? Math.round(totalRevenue / totalSales) : 0,
       totalProfit,
       profitMargin: Math.round(profitMargin * 10) / 10,
       totalPending,
@@ -255,11 +291,10 @@ export async function GET(request: NextRequest) {
         lowStock: lowStockCount,
         outOfStock: outOfStockCount,
         pendingPayments: totalPending > 0 ? totalPending : 0,
-      }
+      },
     };
 
     return NextResponse.json(dashboardStats);
-
   } catch (error) {
     console.error('❌ Error in dashboard route:', error);
     return NextResponse.json(

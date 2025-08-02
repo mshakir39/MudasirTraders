@@ -90,25 +90,25 @@ export function Table<TData>({
     <div className={`flex w-full flex-col ${tableParentClassName}`}>
       {/* Header with Search and Button */}
       {(enableSearch || showButton || stockCost !== undefined) && (
-        <div className="mt-6 flex items-center justify-between gap-4">
-      {enableSearch && (
+        <div className='mt-6 flex items-center justify-between gap-4'>
+          {enableSearch && (
             <div className={`w-80 ${searchParentClassName}`}>
-          <SearchField
-            value={globalFilter}
-            onChange={setGlobalFilter}
-            placeholder={searchPlaceholder}
-          />
+              <SearchField
+                value={globalFilter}
+                onChange={setGlobalFilter}
+                placeholder={searchPlaceholder}
+              />
             </div>
           )}
-          <div className="flex items-center gap-4">
+          <div className='flex items-center gap-4'>
             {stockCost !== undefined && stockCost > 0 && (
-              <span className="font-bold whitespace-nowrap">
+              <span className='whitespace-nowrap font-bold'>
                 Total Stock Cost: {Math.round(stockCost).toLocaleString()}
               </span>
             )}
             {showButton && buttonOnClick && (
               <Button
-                variant="fill"
+                variant='fill'
                 text={buttonTitle}
                 onClick={buttonOnClick}
               />
@@ -118,19 +118,19 @@ export function Table<TData>({
       )}
 
       {/* Table */}
-      <div className="mt-6 rounded-lg border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      <div className='mt-6 rounded-lg border border-gray-200'>
+        <div className='overflow-x-auto'>
+          <table className='w-full'>
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr
                   key={headerGroup.id}
-                  className="border-b border-gray-200 bg-gray-50"
+                  className='border-b border-gray-200 bg-gray-50'
                 >
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-4 py-3 text-left text-sm font-medium text-gray-700"
+                      className='px-4 py-3 text-left text-sm font-medium text-gray-700'
                     >
                       {header.isPlaceholder ? null : (
                         <div
@@ -151,8 +151,8 @@ export function Table<TData>({
                                 header.column.getIsSorted() === 'asc'
                                   ? 'rotate-180 text-blue-600'
                                   : header.column.getIsSorted() === 'desc'
-                                  ? 'text-blue-600'
-                                  : 'text-gray-400'
+                                    ? 'text-blue-600'
+                                    : 'text-gray-400'
                               }`}
                             />
                           )}
@@ -164,34 +164,38 @@ export function Table<TData>({
               ))}
             </thead>
             <tbody>
-              {(enablePagination ? paginatedRows : filteredRows).map((row, i) => (
-                <tr
-                  key={row.id}
-                  onClick={() => onRowClick?.(row.original)}
-                  className={`border-b border-gray-200 transition-colors ${
-                    i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                  } ${
-                    onRowClick ? 'cursor-pointer hover:bg-blue-50' : 'hover:bg-gray-50'
-                  }`}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="px-4 py-3 text-sm text-gray-900"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {(enablePagination ? paginatedRows : filteredRows).map(
+                (row, i) => (
+                  <tr
+                    key={row.id}
+                    onClick={() => onRowClick?.(row.original)}
+                    className={`border-b border-gray-200 transition-colors ${
+                      i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                    } ${
+                      onRowClick
+                        ? 'cursor-pointer hover:bg-blue-50'
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        className='px-4 py-3 text-sm text-gray-900'
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                )
+              )}
               {filteredRows.length === 0 && (
                 <tr>
                   <td
                     colSpan={columns.length}
-                    className="px-4 py-8 text-center text-gray-500"
+                    className='px-4 py-8 text-center text-gray-500'
                   >
                     {emptyMessage}
                   </td>
@@ -204,15 +208,15 @@ export function Table<TData>({
 
       {/* Pagination */}
       {enablePagination && totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+        <div className='mt-4 flex items-center justify-between gap-2'>
+          <div className='flex items-center gap-2'>
             <select
               value={pageSize}
               onChange={(e) => {
                 setPageSize(Number(e.target.value));
                 setCurrentPage(0);
               }}
-              className="rounded border border-gray-200 px-2 py-1 text-sm"
+              className='rounded border border-gray-200 px-2 py-1 text-sm'
             >
               {[5, 10, 20, 30, 50].map((size) => (
                 <option key={size} value={size}>
@@ -220,18 +224,18 @@ export function Table<TData>({
                 </option>
               ))}
             </select>
-            <span className="text-sm text-gray-600">entries</span>
+            <span className='text-sm text-gray-600'>entries</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <button
-              className="rounded border border-gray-200 px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50 transition-colors"
+              className='rounded border border-gray-200 px-3 py-1 text-sm transition-colors hover:bg-gray-50 disabled:opacity-50'
               onClick={handlePreviousPage}
               disabled={currentPage === 0}
             >
               Previous
             </button>
-            <div className="flex items-center gap-1">
+            <div className='flex items-center gap-1'>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNumber;
                 if (totalPages <= 5) {
@@ -260,7 +264,7 @@ export function Table<TData>({
               })}
             </div>
             <button
-              className="rounded border border-gray-200 px-3 py-1 text-sm disabled:opacity-50 hover:bg-gray-50 transition-colors"
+              className='rounded border border-gray-200 px-3 py-1 text-sm transition-colors hover:bg-gray-50 disabled:opacity-50'
               onClick={handleNextPage}
               disabled={currentPage >= totalPages - 1}
             >
@@ -268,7 +272,7 @@ export function Table<TData>({
             </button>
           </div>
 
-          <div className="text-sm text-gray-600">
+          <div className='text-sm text-gray-600'>
             Showing {currentPage * pageSize + 1} to{' '}
             {Math.min((currentPage + 1) * pageSize, filteredRows.length)} of{' '}
             {filteredRows.length} entries

@@ -6,18 +6,18 @@ interface DashboardHeaderProps {
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLock }) => (
-  <div className='mb-8 flex justify-between items-start'>
+  <div className='mb-8 flex items-start justify-between'>
     <div>
-      <h1 className='text-2xl font-semibold text-gray-900'>
-        Dashboard
-      </h1>
-      <p className='text-gray-600 mt-1'>Welcome back! Here&apos;s what&apos;s happening with your store.</p>
+      <h1 className='text-2xl font-semibold text-gray-900'>Dashboard</h1>
+      <p className='mt-1 text-gray-600'>
+        Welcome back! Here&apos;s what&apos;s happening with your store.
+      </p>
     </div>
-    
+
     {onLock && (
       <button
         onClick={onLock}
-        className='flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:text-red-700 transition-colors'
+        className='flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 hover:text-red-700'
         title='Lock Dashboard'
       >
         <FaLock className='h-4 w-4' />

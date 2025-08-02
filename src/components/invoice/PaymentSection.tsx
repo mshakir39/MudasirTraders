@@ -34,21 +34,21 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
     return Object.values(accordionData).reduce((total: number, row: any) => {
       const price = parseFloat(String(row.productPrice)) || 0;
       const quantity = parseInt(String(row.quantity)) || 0;
-      return total + (price * quantity);
+      return total + price * quantity;
     }, 0);
   }, [accordionData]);
 
   const handleCheckboxChange = useCallback(
     (values: string[]) => {
       console.log('Payment methods selected:', values);
-      
+
       // FIXED: More robust state update with validation
       setInvoiceData((prev: any) => {
         const newState = {
           ...prev,
           paymentMethod: values,
         };
-        
+
         console.log('Updated invoice data:', newState);
         return newState;
       });
@@ -64,17 +64,17 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
   }, [setInvoiceData, totalAmount]);
 
   // FIXED: Ensure paymentMethod is always an array
-  const currentPaymentMethods = Array.isArray(invoiceData?.paymentMethod) 
-    ? invoiceData.paymentMethod 
+  const currentPaymentMethods = Array.isArray(invoiceData?.paymentMethod)
+    ? invoiceData.paymentMethod
     : [];
 
   return (
     <>
       <div className='flex flex-col gap-2'>
         <span className='text-sm font-medium text-gray-700'>
-          Payment Method: <span className="text-red-500">*</span>
+          Payment Method: <span className='text-red-500'>*</span>
         </span>
-        <div className="p-4 bg-gray-50 rounded-md">
+        <div className='rounded-md bg-gray-50 p-4'>
           <CheckboxGroup
             options={options}
             onChange={handleCheckboxChange}
@@ -101,7 +101,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
                 label='Batteries Total Rate'
                 name='batteriesRate'
                 min={0}
-                step="0.01"
+                step='0.01'
                 onChange={onChange}
               />
             </div>
@@ -110,28 +110,30 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
       </div>
 
       <div className='mt-1'>
-        <div className='flex items-center gap-4 mb-2'>
+        <div className='mb-2 flex items-center gap-4'>
           <span className='text-sm font-medium text-gray-600'>
             Total Amount: Rs {totalAmount.toFixed(2)}
           </span>
           <button
-            type="button"
+            type='button'
             onClick={handleAddTotalAmount}
-            className='flex items-center justify-center w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition-colors duration-200 cursor-pointer'
-            title="Add total amount to received amount"
+            className='flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-blue-500 text-white transition-colors duration-200 hover:bg-blue-600'
+            title='Add total amount to received amount'
           >
             <FaPlus className='text-xs' />
           </button>
         </div>
-        
+
         {currentPaymentMethods.includes('Pay Later') && (
-          <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              💡 <strong>Pay Later:</strong> Customer can pay any amount now and the remaining balance can be paid later using the &quot;Add Payment&quot; button.
+          <div className='mb-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3'>
+            <p className='text-sm text-yellow-800'>
+              💡 <strong>Pay Later:</strong> Customer can pay any amount now and
+              the remaining balance can be paid later using the &quot;Add
+              Payment&quot; button.
             </p>
           </div>
         )}
-        
+
         <Input
           type='number'
           label='Amount Received'
@@ -139,7 +141,7 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
           value={invoiceData?.receivedAmount || ''}
           min={0}
           max={totalAmount}
-          step="0.01"
+          step='0.01'
           onChange={onChange}
           placeholder={`Max: Rs ${totalAmount.toFixed(2)}`}
         />

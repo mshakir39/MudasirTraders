@@ -11,20 +11,20 @@ interface CheckboxGroupProps {
 }
 
 // Alternative implementation using different event approach
-const CheckboxGroup: React.FC<CheckboxGroupProps> = ({ 
-  options, 
-  onChange, 
-  checkedValues = [] 
+const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
+  options,
+  onChange,
+  checkedValues = [],
 }) => {
   const handleItemClick = (value: string) => {
     console.log('Item clicked:', value);
     const safeCheckedValues = Array.isArray(checkedValues) ? checkedValues : [];
     const isCurrentlyChecked = safeCheckedValues.includes(value);
-    
+
     const newValues = isCurrentlyChecked
       ? safeCheckedValues.filter((v) => v !== value)
       : [...safeCheckedValues, value];
-    
+
     console.log('New values:', newValues);
     onChange(newValues);
   };
@@ -32,37 +32,45 @@ const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
   const safeCheckedValues = Array.isArray(checkedValues) ? checkedValues : [];
 
   return (
-    <div className="flex flex-row flex-wrap gap-x-4 gap-y-2">
+    <div className='flex flex-row flex-wrap gap-x-4 gap-y-2'>
       {options.map((option) => {
         const isChecked = safeCheckedValues.includes(option.value);
-        
+
         return (
           <div
             key={option.id}
-            className="relative flex items-center py-2 px-2 hover:bg-gray-50 rounded cursor-pointer border border-transparent hover:border-gray-200"
+            className='relative flex cursor-pointer items-center rounded border border-transparent px-2 py-2 hover:border-gray-200 hover:bg-gray-50'
             onClick={() => handleItemClick(option.value)}
-            style={{ 
+            style={{
               userSelect: 'none',
               WebkitUserSelect: 'none',
               MozUserSelect: 'none',
-              msUserSelect: 'none'
+              msUserSelect: 'none',
             }}
           >
             {/* Visual checkbox - not a real input */}
-            <div 
-              className={`h-5 w-5 border-2 rounded flex items-center justify-center cursor-pointer transition-colors ${
-                isChecked 
-                  ? 'bg-blue-600 border-blue-600 text-white' 
+            <div
+              className={`flex h-5 w-5 cursor-pointer items-center justify-center rounded border-2 transition-colors ${
+                isChecked
+                  ? 'border-blue-600 bg-blue-600 text-white'
                   : 'border-gray-300 bg-white hover:border-blue-400'
               }`}
             >
               {isChecked && (
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  className='h-3 w-3'
+                  fill='currentColor'
+                  viewBox='0 0 20 20'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                    clipRule='evenodd'
+                  />
                 </svg>
               )}
             </div>
-            <span className="ml-3 text-sm font-medium text-gray-700 cursor-pointer">
+            <span className='ml-3 cursor-pointer text-sm font-medium text-gray-700'>
               {option.label}
             </span>
           </div>

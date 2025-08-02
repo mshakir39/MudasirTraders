@@ -27,14 +27,14 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
   const fetchCustomerInvoices = useCallback(async () => {
     setIsLoading(true);
     console.log('🔍 Fetching invoices for customer:', customer);
-    
+
     try {
       const url = `/api/customers/${customer.id}/invoices`;
       console.log('📡 API URL:', url);
-      
+
       const response = await fetch(url);
       console.log('📡 Response status:', response.status);
-      
+
       if (response.ok) {
         const invoices = await response.json();
         console.log('✅ Received invoices:', invoices);
@@ -86,16 +86,20 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
   // Calculate summary statistics
   const totalInvoices = customerInvoices.length;
   const totalAmount = customerInvoices.reduce((sum, invoice) => {
-    const invoiceTotal = invoice.products?.reduce((productSum: number, product: any) => 
-      productSum + (product.totalPrice || 0), 0
-    ) || 0;
+    const invoiceTotal =
+      invoice.products?.reduce(
+        (productSum: number, product: any) =>
+          productSum + (product.totalPrice || 0),
+        0
+      ) || 0;
     return sum + invoiceTotal;
   }, 0);
-  const totalRemaining = customerInvoices.reduce((sum, invoice) => 
-    sum + (invoice.remainingAmount || 0), 0
+  const totalRemaining = customerInvoices.reduce(
+    (sum, invoice) => sum + (invoice.remainingAmount || 0),
+    0
   );
-  const paidInvoices = customerInvoices.filter(invoice => 
-    (invoice.remainingAmount || 0) === 0
+  const paidInvoices = customerInvoices.filter(
+    (invoice) => (invoice.remainingAmount || 0) === 0
   ).length;
 
   return (
@@ -105,38 +109,52 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
         isOpen={isOpen}
         onClose={onClose}
         title={`Invoices - ${customer.name}`}
-        dialogPanelClass="!w-[95%] !max-w-7xl"
+        dialogPanelClass='!w-[95%] !max-w-7xl'
         preventBackdropClose={isSubModalOpen} // Prevent closing when sub-modal is open
       >
-        <div className="mt-4">
+        <div className='mt-4'>
           {/* Customer Summary */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className='mb-6 rounded-lg bg-gray-50 p-4'>
+            <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
               <div>
-                <span className="font-medium text-gray-600">Total Invoices:</span>
-                <div className="text-lg font-bold text-blue-600">{totalInvoices}</div>
+                <span className='font-medium text-gray-600'>
+                  Total Invoices:
+                </span>
+                <div className='text-lg font-bold text-blue-600'>
+                  {totalInvoices}
+                </div>
               </div>
               <div>
-                <span className="font-medium text-gray-600">Total Amount:</span>
-                <div className="text-lg font-bold text-green-600">Rs {totalAmount.toLocaleString()}</div>
+                <span className='font-medium text-gray-600'>Total Amount:</span>
+                <div className='text-lg font-bold text-green-600'>
+                  Rs {totalAmount.toLocaleString()}
+                </div>
               </div>
               <div>
-                <span className="font-medium text-gray-600">Total Remaining:</span>
-                <div className={`text-lg font-bold ${totalRemaining > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                <span className='font-medium text-gray-600'>
+                  Total Remaining:
+                </span>
+                <div
+                  className={`text-lg font-bold ${totalRemaining > 0 ? 'text-red-600' : 'text-green-600'}`}
+                >
                   Rs {totalRemaining.toLocaleString()}
                 </div>
               </div>
               <div>
-                <span className="font-medium text-gray-600">Paid Invoices:</span>
-                <div className="text-lg font-bold text-green-600">{paidInvoices}/{totalInvoices}</div>
+                <span className='font-medium text-gray-600'>
+                  Paid Invoices:
+                </span>
+                <div className='text-lg font-bold text-green-600'>
+                  {paidInvoices}/{totalInvoices}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Invoice Grid */}
           {isLoading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="text-gray-500">Loading customer invoices...</div>
+            <div className='flex items-center justify-center py-8'>
+              <div className='text-gray-500'>Loading customer invoices...</div>
             </div>
           ) : (
             <InvoiceGrid
@@ -162,7 +180,7 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
           )}
 
           {!isLoading && customerInvoices.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className='py-8 text-center text-gray-500'>
               No invoices found for this customer.
             </div>
           )}

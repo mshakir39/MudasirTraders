@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 
 export const useInvoiceForm = () => {
-  const [invoiceData, setInvoiceData] = useState<any>({ 
+  const [invoiceData, setInvoiceData] = useState<any>({
     customerType: 'WalkIn Customer',
     customerName: '',
     customerAddress: '',
@@ -10,12 +10,12 @@ export const useInvoiceForm = () => {
     customerId: null,
     receivedAmount: '', // Initialize receivedAmount as empty string
     useCustomDate: false, // Default to current date
-    customDate: new Date().toISOString().slice(0, 16) // Default to current date/time
+    customDate: new Date().toISOString().slice(0, 16), // Default to current date/time
   });
 
   const handleChange = useCallback((e: any) => {
     const { name, value } = e.target;
-    
+
     if (name === 'customerType' && value === 'WalkIn Customer') {
       setInvoiceData((prevInv: any) => ({
         ...prevInv,
@@ -32,7 +32,7 @@ export const useInvoiceForm = () => {
   }, []);
 
   const resetInvoiceData = () => {
-    setInvoiceData({ 
+    setInvoiceData({
       customerType: 'WalkIn Customer',
       customerName: '',
       customerAddress: '',
@@ -41,7 +41,7 @@ export const useInvoiceForm = () => {
       customerId: null,
       receivedAmount: '', // Initialize receivedAmount as empty string
       useCustomDate: false, // Default to current date
-      customDate: new Date().toISOString().slice(0, 16) // Default to current date/time
+      customDate: new Date().toISOString().slice(0, 16), // Default to current date/time
     });
   };
 

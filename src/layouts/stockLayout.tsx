@@ -10,7 +10,12 @@ import Input from '@/components/customInput';
 import Button from '@/components/button';
 import { FaEdit, FaHistory, FaTrash } from 'react-icons/fa';
 import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
-import { createStock, updateStock, getStockHistory, deleteStock } from '@/actions/stockActions';
+import {
+  createStock,
+  updateStock,
+  getStockHistory,
+  deleteStock,
+} from '@/actions/stockActions';
 import { ICategory, IDropdownOption, IStock } from '../../interfaces';
 import { getSeries } from '@/models/getSeries';
 import { convertDate } from '@/utils/convertTime';
@@ -102,142 +107,170 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   const [currentBrandName, setCurrentBrandName] = useState<string>('');
   const [stockHistory, setStockHistory] = useState<any[]>([]);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState<boolean>(false);
-  const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<any | null>(null);
+  const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<any | null>(
+    null
+  );
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
-  const [deleteItem, setDeleteItem] = useState<{ brandName: string; series: string; seriesName: string } | null>(null);
+  const [deleteItem, setDeleteItem] = useState<{
+    brandName: string;
+    series: string;
+    seriesName: string;
+  } | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
-  const handleEditClick = useCallback((item: StockBatteryData, brandName: string) => {
-    setEditModalData({
-      brandName,
-      series: item.series,
-      productCost: item.productCost.toString(),
-      inStock: item.inStock.toString(),
-    });
-    setModalType('edit');
-    setIsModalOpen(true);
-  }, []);
+  const handleEditClick = useCallback(
+    (item: StockBatteryData, brandName: string) => {
+      setEditModalData({
+        brandName,
+        series: item.series,
+        productCost: item.productCost.toString(),
+        inStock: item.inStock.toString(),
+      });
+      setModalType('edit');
+      setIsModalOpen(true);
+    },
+    []
+  );
 
-  const handleDeleteClick = useCallback(async (item: StockBatteryData, brandName: string) => {
-    if (window.confirm('Are you sure you want to delete this stock?')) {
-      setIsDeleting(true);
-      try {
-        const result = await deleteStock(brandName, item.series);
+  const handleDeleteClick = useCallback(
+    async (item: StockBatteryData, brandName: string) => {
+      if (window.confirm('Are you sure you want to delete this stock?')) {
+        setIsDeleting(true);
+        try {
+          const result = await deleteStock(brandName, item.series);
 
-        if (result.success) {
-          toast.success('Stock deleted successfully');
-          await revalidatePathCustom('/stock');
-          fetchData(brandName);
-        } else {
-          toast.error(result.error || 'Failed to delete stock');
+          if (result.success) {
+            toast.success('Stock deleted successfully');
+            await revalidatePathCustom('/stock');
+            fetchData(brandName);
+          } else {
+            toast.error(result.error || 'Failed to delete stock');
+          }
+        } catch (error) {
+          console.error('Error deleting stock:', error);
+          toast.error('An error occurred while deleting stock');
+        } finally {
+          setIsDeleting(false);
         }
+      }
+    },
+    []
+  );
+
+  const handleViewStockHistory = useCallback(
+    async (brandName: string, series?: string) => {
+      if (!brandName) return;
+      try {
+        setIsLoadingHistory(true);
+        const result = await getStockHistory(brandName, series);
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to fetch stock history');
+        }
+
+        if (!result.data || !Array.isArray(result.data)) {
+          throw new Error('Invalid stock history data received');
+        }
+
+        setStockHistory(result.data);
+        setIsHistoryModalOpen(true);
       } catch (error) {
-        console.error('Error deleting stock:', error);
-        toast.error('An error occurred while deleting stock');
-      } finally {
-        setIsDeleting(false);
-      }
-    }
-  }, []);
-
-  const handleViewStockHistory = useCallback(async (brandName: string, series?: string) => {
-    if (!brandName) return;
-    try {
-      setIsLoadingHistory(true);
-      const result = await getStockHistory(brandName, series);
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch stock history');
-      }
-      
-      if (!result.data || !Array.isArray(result.data)) {
-        throw new Error('Invalid stock history data received');
-      }
-      
-      setStockHistory(result.data);
-      setIsHistoryModalOpen(true);
-    } catch (error) {
-      console.error('Error fetching stock history:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to fetch stock history');
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, []);
-
-  const columns = React.useMemo<ColumnDef<StockBatteryData>[]>(() => [
-    {
-      accessorKey: 'series',
-      header: 'Series',
-      cell: ({ row }) => {
-        const batteryDetails = row.original.batteryDetails;
-        return batteryDetails ? (
-          <div>
-            <div>{batteryDetails.name}</div>
-            <div className="text-xs text-gray-500">
-              {batteryDetails.plate} plates, {batteryDetails.ah}AH
-              {batteryDetails.type && `, ${batteryDetails.type}`}
-            </div>
-          </div>
-        ) : (
-          row.original.series
+        console.error('Error fetching stock history:', error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to fetch stock history'
         );
+      } finally {
+        setIsLoadingHistory(false);
       }
     },
-    {
-      accessorKey: 'productCost',
-      header: 'Product Cost',
-      cell: ({ row }) => `Rs ${Number(row.original.productCost).toLocaleString()}`
-    },
-    {
-      accessorKey: 'inStock',
-      header: 'In Stock',
-      cell: ({ row }) => Number(row.original.inStock).toLocaleString()
-    },
-    {
-      accessorKey: 'soldCount',
-      header: 'Sold Count',
-      cell: ({ row }) => Number(row.original.soldCount || 0).toLocaleString()
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEditClick(row.original, currentBrandName);
-            }}
-            className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
-            title="Edit Stock"
-          >
-            <FaEdit size={16} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleViewStockHistory(currentBrandName, row.original.series);
-            }}
-            className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
-            title="View History"
-          >
-            <FaHistory size={16} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteClick(row.original, currentBrandName);
-            }}
-            className="p-2 text-red-600 hover:text-red-800 transition-colors"
-            title="Delete Stock"
-          >
-            <FaTrash size={16} />
-          </button>
-        </div>
-      )
-    }
-  ], [currentBrandName, handleEditClick, handleDeleteClick, handleViewStockHistory]);
+    []
+  );
+
+  const columns = React.useMemo<ColumnDef<StockBatteryData>[]>(
+    () => [
+      {
+        accessorKey: 'series',
+        header: 'Series',
+        cell: ({ row }) => {
+          const batteryDetails = row.original.batteryDetails;
+          return batteryDetails ? (
+            <div>
+              <div>{batteryDetails.name}</div>
+              <div className='text-xs text-gray-500'>
+                {batteryDetails.plate} plates, {batteryDetails.ah}AH
+                {batteryDetails.type && `, ${batteryDetails.type}`}
+              </div>
+            </div>
+          ) : (
+            row.original.series
+          );
+        },
+      },
+      {
+        accessorKey: 'productCost',
+        header: 'Product Cost',
+        cell: ({ row }) =>
+          `Rs ${Number(row.original.productCost).toLocaleString()}`,
+      },
+      {
+        accessorKey: 'inStock',
+        header: 'In Stock',
+        cell: ({ row }) => Number(row.original.inStock).toLocaleString(),
+      },
+      {
+        accessorKey: 'soldCount',
+        header: 'Sold Count',
+        cell: ({ row }) => Number(row.original.soldCount || 0).toLocaleString(),
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-2'>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditClick(row.original, currentBrandName);
+              }}
+              className='p-2 text-blue-600 transition-colors hover:text-blue-800'
+              title='Edit Stock'
+            >
+              <FaEdit size={16} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewStockHistory(currentBrandName, row.original.series);
+              }}
+              className='p-2 text-gray-600 transition-colors hover:text-gray-800'
+              title='View History'
+            >
+              <FaHistory size={16} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteClick(row.original, currentBrandName);
+              }}
+              className='p-2 text-red-600 transition-colors hover:text-red-800'
+              title='Delete Stock'
+            >
+              <FaTrash size={16} />
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [
+      currentBrandName,
+      handleEditClick,
+      handleDeleteClick,
+      handleViewStockHistory,
+    ]
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -282,7 +315,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           updatedDate: obj.updatedDate,
         };
       }
-        return item;
+      return item;
     });
   }
 
@@ -292,7 +325,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
 
     try {
       console.log('Edit modal data:', editModalData);
-      
+
       if (!editModalData || !editModalData.series) {
         throw new Error('Invalid edit data');
       }
@@ -321,7 +354,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
       setIsModalOpen(false);
       setModalType('');
       toast.success('Stock updated successfully');
-      
+
       // Refresh the current view
       if (editModalData.brandName === currentBrandName) {
         fetchData(currentBrandName);
@@ -376,7 +409,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           // Handle null/undefined plate values
           const plateDisplay = battery.plate ? battery.plate : 'N/A';
           const label = `${battery.name} (${plateDisplay}, ${battery.ah}AH${battery.type ? `, ${battery.type}` : ''})`;
-          
+
           return {
             label,
             value: battery.name,
@@ -432,7 +465,9 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
 
       // If no currentBrandName is set, initialize with first category
       if (!currentBrandName) {
-        console.log('No current brand name set, initializing with first category');
+        console.log(
+          'No current brand name set, initializing with first category'
+        );
         setCurrentBrandName(firstCategoryBrandName);
       }
 
@@ -459,7 +494,9 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
       console.log('Filtered stock for current brand:', filteredStock);
 
       if (filteredStock && filteredStock.length > 0 && currentBrandName) {
-        const category = categories.find((cat) => cat.brandName === currentBrandName);
+        const category = categories.find(
+          (cat) => cat.brandName === currentBrandName
+        );
         const newData = filteredStock[0].seriesStock?.map(
           (item: StockBatteryData, index: number) =>
             transformStockData(item, category || categories[0], index)
@@ -512,11 +549,11 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   const handleTabClick = (id: number, brandName: string) => {
     setCurrentBrandName(brandName);
     const filtered = stock?.filter((item) => item.brandName === brandName);
-    
+
     // Reset table data and stock cost by default
     setTableData([]);
     setStockCost(0);
-    
+
     // Only set data if we have stock for this brand
     if (filtered && filtered.length > 0) {
       const transformedData = filtered[0].seriesStock.map((item, index) => {
@@ -524,7 +561,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         return category ? transformStockData(item, category, index) : item;
       });
       setTableData(transformedData);
-      
+
       // Calculate total cost for this brand
       const totalAmount = filtered[0].seriesStock.reduce(
         (acc: number, current: StockBatteryData) => {
@@ -541,20 +578,18 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   };
 
   return (
-    <div className='min-h-screen bg-gray-50 sm:bg-white pt-14 sm:pt-0'>
+    <div className='min-h-screen bg-gray-50 pt-14 sm:bg-white sm:pt-0'>
       {/* Mobile Header */}
-      <div className='fixed top-0 left-0 right-0 bg-white px-4 py-2 shadow-sm sm:hidden z-10 h-14'>
-        <div className='flex items-center justify-between h-full'>
+      <div className='fixed left-0 right-0 top-0 z-10 h-14 bg-white px-4 py-2 shadow-sm sm:hidden'>
+        <div className='flex h-full items-center justify-between'>
           {/* Left side - Menu icon positioned to align with content below */}
-          <div className='flex items-center gap-0 flex-1 min-w-0'>
+          <div className='flex min-w-0 flex-1 items-center gap-0'></div>
 
-          </div>
-          
           {/* Center - Title */}
-          <div className='absolute left-1/2 transform -translate-x-1/2'>
+          <div className='absolute left-1/2 -translate-x-1/2 transform'>
             <h1 className='text-base font-semibold text-gray-900'>Stock</h1>
           </div>
-          
+
           {/* Right side - Add Stock button */}
           <button
             onClick={() => {
@@ -569,27 +604,29 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
               setModalType('add');
               setIsModalOpen(true);
             }}
-            className='rounded-lg bg-blue-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-600 touch-manipulation flex-shrink-0'
+            className='flex-shrink-0 touch-manipulation rounded-lg bg-blue-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-600'
           >
             Add Stock
           </button>
         </div>
       </div>
-  
+
       {/* Desktop/Tablet Header */}
-      <div className='hidden sm:block p-4 sm:p-6 lg:p-8'>
-        <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-2'>
-          <h1 className='text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900'>Stock</h1>
+      <div className='hidden p-4 sm:block sm:p-6 lg:p-8'>
+        <div className='flex flex-col gap-4 py-2 sm:flex-row sm:items-center sm:justify-between'>
+          <h1 className='text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl'>
+            Stock
+          </h1>
         </div>
       </div>
-  
+
       {/* Main Content Container */}
       <div className='px-4 pb-4 sm:px-6 lg:px-8'>
         {/* Tabs Section - Mobile Optimized */}
-        <div className='mb-4 sm:mb-6 bg-white sm:bg-transparent rounded-lg sm:rounded-none shadow-sm sm:shadow-none'>
+        <div className='mb-4 rounded-lg bg-white shadow-sm sm:mb-6 sm:rounded-none sm:bg-transparent sm:shadow-none'>
           <div className='p-4 sm:p-0'>
-            <div className='flex items-center justify-between mb-4'>
-              <div className='overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 flex-1'>
+            <div className='mb-4 flex items-center justify-between'>
+              <div className='-mx-4 flex-1 overflow-x-auto px-4 sm:mx-0 sm:px-0'>
                 <Tabs
                   tabs={categories.map((category, index) => ({
                     id: index,
@@ -602,39 +639,53 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
             </div>
           </div>
         </div>
-  
+
         {/* Stock Summary Card - Mobile */}
-        <div className='mb-4 bg-white rounded-lg shadow-sm p-4 sm:hidden'>
+        <div className='mb-4 rounded-lg bg-white p-4 shadow-sm sm:hidden'>
           <div className='flex items-center justify-between'>
             <div>
               <p className='text-sm text-gray-500'>Total Stock Cost</p>
-              <p className='text-lg font-semibold text-gray-900'>PKR {stockCost?.toLocaleString()}</p>
+              <p className='text-lg font-semibold text-gray-900'>
+                PKR {stockCost?.toLocaleString()}
+              </p>
             </div>
             <div className='text-right'>
               <p className='text-sm text-gray-500'>Items</p>
-              <p className='text-lg font-semibold text-gray-900'>{tableData?.length || 0}</p>
+              <p className='text-lg font-semibold text-gray-900'>
+                {tableData?.length || 0}
+              </p>
             </div>
           </div>
         </div>
-  
+
         {/* Data Grid Section - Mobile Optimized */}
-        <div className='bg-white rounded-lg shadow-sm sm:shadow-none sm:bg-transparent sm:rounded-none'>
+        <div className='rounded-lg bg-white shadow-sm sm:rounded-none sm:bg-transparent sm:shadow-none'>
           {/* Mobile Search */}
-          <div className='p-4 border-b border-gray-200 sm:hidden'>
+          <div className='border-b border-gray-200 p-4 sm:hidden'>
             <div className='relative'>
               <input
                 type='text'
                 placeholder='Search stock...'
-                className='w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+                className='w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
               />
               <div className='absolute inset-y-0 left-0 flex items-center pl-3'>
-                <svg className='h-4 w-4 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
+                <svg
+                  className='h-4 w-4 text-gray-400'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+                  />
                 </svg>
               </div>
             </div>
           </div>
-  
+
           {/* Mobile List View */}
           <div className='sm:hidden'>
             {tableData && tableData.length > 0 ? (
@@ -643,14 +694,18 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                   <div key={index} className='p-4'>
                     <div className='flex items-center justify-between'>
                       <div className='flex-1'>
-                        <h3 className='text-sm font-medium text-gray-900'>{row.series}</h3>
+                        <h3 className='text-sm font-medium text-gray-900'>
+                          {row.series}
+                        </h3>
                         <div className='mt-1 flex items-center gap-4 text-xs text-gray-500'>
                           <span>Stock: {row.inStock}</span>
-                          <span>Cost: PKR {row.productCost?.toLocaleString()}</span>
+                          <span>
+                            Cost: PKR {row.productCost?.toLocaleString()}
+                          </span>
                         </div>
                       </div>
                       <div className='flex items-center gap-2'>
-                        <button 
+                        <button
                           onClick={() => {
                             // Handle edit functionality
                             setEditModalData({
@@ -662,23 +717,37 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                             setModalType('edit');
                             setIsModalOpen(true);
                           }}
-                          className='rounded-lg bg-gray-100 p-2 text-gray-600 hover:bg-gray-200 touch-manipulation'
+                          className='touch-manipulation rounded-lg bg-gray-100 p-2 text-gray-600 hover:bg-gray-200'
                         >
-                          <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z' />
+                          <svg
+                            className='h-4 w-4'
+                            fill='none'
+                            stroke='currentColor'
+                            viewBox='0 0 24 24'
+                          >
+                            <path
+                              strokeLinecap='round'
+                              strokeLinejoin='round'
+                              strokeWidth={2}
+                              d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z'
+                            />
                           </svg>
                         </button>
-                        <button 
-                          onClick={() => handleViewStockHistory(currentBrandName, row.series)}
-                          className='rounded-lg bg-blue-100 p-2 text-blue-600 hover:bg-blue-200 touch-manipulation'
-                          title="View History"
+                        <button
+                          onClick={() =>
+                            handleViewStockHistory(currentBrandName, row.series)
+                          }
+                          className='touch-manipulation rounded-lg bg-blue-100 p-2 text-blue-600 hover:bg-blue-200'
+                          title='View History'
                         >
                           <FaHistory className='h-4 w-4' />
                         </button>
-                        <button 
-                          onClick={() => handleDeleteClick(row, currentBrandName)}
-                          className='rounded-lg bg-red-100 p-2 text-red-600 hover:bg-red-200 touch-manipulation'
-                          title="Delete Stock"
+                        <button
+                          onClick={() =>
+                            handleDeleteClick(row, currentBrandName)
+                          }
+                          className='touch-manipulation rounded-lg bg-red-100 p-2 text-red-600 hover:bg-red-200'
+                          title='Delete Stock'
                         >
                           <FaTrash className='h-4 w-4' />
                         </button>
@@ -689,24 +758,38 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
               </div>
             ) : (
               <div className='p-8 text-center'>
-                <div className='text-gray-400 mb-2'>
-                  <svg className='mx-auto h-12 w-12' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1} d='M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4' />
+                <div className='mb-2 text-gray-400'>
+                  <svg
+                    className='mx-auto h-12 w-12'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={1}
+                      d='M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4'
+                    />
                   </svg>
                 </div>
-                <h3 className='text-sm font-medium text-gray-900 mb-1'>No stock items</h3>
-                <p className='text-sm text-gray-500'>Get started by adding your first stock item.</p>
+                <h3 className='mb-1 text-sm font-medium text-gray-900'>
+                  No stock items
+                </h3>
+                <p className='text-sm text-gray-500'>
+                  Get started by adding your first stock item.
+                </p>
               </div>
             )}
           </div>
-  
+
           {/* Desktop Data Grid */}
           <div className='hidden sm:block'>
             <Table
               data={tableData}
               columns={columns}
               enableSearch={true}
-              searchPlaceholder="Search stock..."
+              searchPlaceholder='Search stock...'
               stockCost={stockCost}
               buttonTitle='Create Stock'
               showButton={true}
@@ -726,7 +809,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           </div>
         </div>
       </div>
-  
+
       {/* Modal - Mobile Optimized */}
       <Modal
         isOpen={isModalOpen}
@@ -748,16 +831,16 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           setModalType('');
         }}
         title={modalType === 'add' ? 'Add Stock' : 'Edit Stock'}
-        dialogPanelClass="w-full max-w-sm sm:max-w-md md:max-w-lg mx-4 sm:mx-auto"
+        dialogPanelClass='w-full max-w-sm sm:max-w-md md:max-w-lg mx-4 sm:mx-auto'
       >
-        <form 
+        <form
           onSubmit={modalType === 'add' ? handleSubmit : handleSubmitEdit}
-          className="space-y-4"
+          className='space-y-4'
         >
           <div className='flex w-full flex-col gap-4'>
             {/* Series Dropdown - Mobile Optimized */}
             <div className='w-full'>
-              <label className='block text-sm font-medium text-gray-700 mb-2'>
+              <label className='mb-2 block text-sm font-medium text-gray-700'>
                 Select Series
               </label>
               <div
@@ -765,10 +848,10 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                   event.preventDefault();
                   event.stopPropagation();
                 }}
-                className="relative w-full"
+                className='relative w-full'
               >
                 <Dropdown
-                  className="w-full"
+                  className='w-full'
                   options={seriesOptions}
                   onSelect={handleSelectSeriesOption}
                   placeholder='Select Series'
@@ -780,7 +863,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                 />
               </div>
             </div>
-  
+
             {/* Cost Input - Enhanced for Mobile */}
             <div className='w-full'>
               <Input
@@ -794,13 +877,13 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                 }
                 onChange={modalType === 'add' ? handleChange : handleEditChange}
                 required={modalType === 'add'}
-                className="w-full text-base h-12 border border-gray-300 rounded-lg px-4 focus:border-blue-500 focus:outline-none focus:ring-0 focus:shadow-none"
+                className='h-12 w-full rounded-lg border border-gray-300 px-4 text-base focus:border-blue-500 focus:shadow-none focus:outline-none focus:ring-0'
                 style={{ outline: 'none', boxShadow: 'none' }}
-                inputMode="decimal"
-                placeholder="0.00"
+                inputMode='decimal'
+                placeholder='0.00'
               />
             </div>
-  
+
             {/* Quantity Input - Enhanced for Mobile */}
             <div className='w-full'>
               <Input
@@ -814,19 +897,19 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                 }
                 onChange={modalType === 'add' ? handleChange : handleEditChange}
                 required={modalType === 'add'}
-                className="w-full text-base h-12 border border-gray-300 rounded-lg px-4 focus:border-blue-500 focus:outline-none focus:ring-0 focus:shadow-none"
+                className='h-12 w-full rounded-lg border border-gray-300 px-4 text-base focus:border-blue-500 focus:shadow-none focus:outline-none focus:ring-0'
                 style={{ outline: 'none', boxShadow: 'none' }}
-                inputMode="numeric"
-                placeholder="0"
-                min="0"
-                step="1"
+                inputMode='numeric'
+                placeholder='0'
+                min='0'
+                step='1'
               />
             </div>
-  
+
             {/* Action Buttons - Mobile First */}
-            <div className='flex flex-col gap-3 pt-4 w-full'>
+            <div className='flex w-full flex-col gap-3 pt-4'>
               <Button
-                className='w-full h-12 text-base font-medium focus:outline-none focus:ring-0'
+                className='h-12 w-full text-base font-medium focus:outline-none focus:ring-0'
                 variant='fill'
                 text={modalType === 'add' ? 'Add Stock' : 'Update Stock'}
                 type='submit'
@@ -834,7 +917,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                 disabled={isLoading}
               />
               <Button
-                className='w-full h-12 text-base focus:outline-none focus:ring-0'
+                className='h-12 w-full text-base focus:outline-none focus:ring-0'
                 variant='outline'
                 text='Cancel'
                 type='button'
@@ -869,41 +952,52 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           setIsHistoryModalOpen(false);
           setSelectedHistoryEntry(null);
         }}
-        title="Stock History"
+        title='Stock History'
       >
-        <div className="max-h-[80vh] overflow-y-auto">
+        <div className='max-h-[80vh] overflow-y-auto'>
           {isLoadingHistory ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <div className='flex items-center justify-center py-8'>
+              <div className='h-8 w-8 animate-spin rounded-full border-b-2 border-blue-500'></div>
             </div>
           ) : stockHistory.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className='py-8 text-center text-gray-500'>
               No stock history available
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {!selectedHistoryEntry ? (
                 // History List View
-                <div className="grid gap-4">
+                <div className='grid gap-4'>
                   {stockHistory.map((entry, index) => (
                     <div
                       key={index}
-                      className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                      className='cursor-pointer rounded-lg border p-4 hover:bg-gray-50'
                       onClick={() => setSelectedHistoryEntry(entry)}
                     >
-                      <div className="flex justify-between items-center">
+                      <div className='flex items-center justify-between'>
                         <div>
-                          <h3 className="font-medium">{entry.brandName} - {entry.series}</h3>
-                          <div className="mt-1 text-sm text-gray-500">
-                            <span className="mr-4">Quantity: {entry.oldQuantity} → {entry.newQuantity} ({entry.quantityDifference > 0 ? '+' : ''}{entry.quantityDifference})</span>
-                            <span>Cost: Rs {entry.oldCost} → Rs {entry.newCost} ({entry.costDifference > 0 ? '+' : ''}Rs {entry.costDifference})</span>
+                          <h3 className='font-medium'>
+                            {entry.brandName} - {entry.series}
+                          </h3>
+                          <div className='mt-1 text-sm text-gray-500'>
+                            <span className='mr-4'>
+                              Quantity: {entry.oldQuantity} →{' '}
+                              {entry.newQuantity} (
+                              {entry.quantityDifference > 0 ? '+' : ''}
+                              {entry.quantityDifference})
+                            </span>
+                            <span>
+                              Cost: Rs {entry.oldCost} → Rs {entry.newCost} (
+                              {entry.costDifference > 0 ? '+' : ''}Rs{' '}
+                              {entry.costDifference})
+                            </span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-600">
+                        <div className='text-right'>
+                          <p className='text-sm text-gray-600'>
                             {new Date(entry.historyDate).toLocaleDateString()}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className='text-xs text-gray-500'>
                             {new Date(entry.historyDate).toLocaleTimeString()}
                           </p>
                         </div>
@@ -916,67 +1010,117 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                 <div>
                   <button
                     onClick={() => setSelectedHistoryEntry(null)}
-                    className="mb-4 text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                    className='mb-4 flex items-center gap-1 text-blue-600 hover:text-blue-800'
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    <svg
+                      xmlns='http://www.w3.org/2000/svg'
+                      className='h-4 w-4'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M15 19l-7-7 7-7'
+                      />
                     </svg>
                     Back to History List
                   </button>
-                  
-                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+
+                  <div className='mb-4 border-l-4 border-yellow-400 bg-yellow-50 p-4'>
+                    <div className='flex'>
+                      <div className='flex-shrink-0'>
+                        <svg
+                          className='h-5 w-5 text-yellow-400'
+                          viewBox='0 0 20 20'
+                          fill='currentColor'
+                        >
+                          <path
+                            fillRule='evenodd'
+                            d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
+                            clipRule='evenodd'
+                          />
                         </svg>
                       </div>
-                      <div className="ml-3">
-                        <p className="text-sm text-yellow-700">
-                          This is a historical view from {new Date(selectedHistoryEntry.historyDate).toLocaleString()}
+                      <div className='ml-3'>
+                        <p className='text-sm text-yellow-700'>
+                          This is a historical view from{' '}
+                          {new Date(
+                            selectedHistoryEntry.historyDate
+                          ).toLocaleString()}
                         </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Render the series-level history detail */}
-                  <div className="rounded-lg bg-white p-4 shadow">
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div className='rounded-lg bg-white p-4 shadow'>
+                    <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
                       <div>
-                        <span className="text-sm text-gray-500">Brand</span>
-                        <p className="font-medium text-gray-900">{selectedHistoryEntry.brandName}</p>
+                        <span className='text-sm text-gray-500'>Brand</span>
+                        <p className='font-medium text-gray-900'>
+                          {selectedHistoryEntry.brandName}
+                        </p>
                       </div>
                       <div>
-                        <span className="text-sm text-gray-500">Series</span>
-                        <p className="font-medium text-gray-900">{selectedHistoryEntry.series}</p>
+                        <span className='text-sm text-gray-500'>Series</span>
+                        <p className='font-medium text-gray-900'>
+                          {selectedHistoryEntry.series}
+                        </p>
                       </div>
                       <div>
-                        <span className="text-sm text-gray-500">Quantity Change</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-red-600">{selectedHistoryEntry.oldQuantity}</span>
+                        <span className='text-sm text-gray-500'>
+                          Quantity Change
+                        </span>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-red-600'>
+                            {selectedHistoryEntry.oldQuantity}
+                          </span>
                           <span>→</span>
-                          <span className="text-green-600 font-medium">{selectedHistoryEntry.newQuantity}</span>
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            selectedHistoryEntry.quantityDifference > 0 ? 'bg-green-100 text-green-800' : 
-                            selectedHistoryEntry.quantityDifference < 0 ? 'bg-red-100 text-red-800' : 
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {selectedHistoryEntry.quantityDifference > 0 ? '+' : ''}{selectedHistoryEntry.quantityDifference}
+                          <span className='font-medium text-green-600'>
+                            {selectedHistoryEntry.newQuantity}
+                          </span>
+                          <span
+                            className={`rounded px-2 py-1 text-xs ${
+                              selectedHistoryEntry.quantityDifference > 0
+                                ? 'bg-green-100 text-green-800'
+                                : selectedHistoryEntry.quantityDifference < 0
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {selectedHistoryEntry.quantityDifference > 0
+                              ? '+'
+                              : ''}
+                            {selectedHistoryEntry.quantityDifference}
                           </span>
                         </div>
                       </div>
                       <div>
-                        <span className="text-sm text-gray-500">Cost Change</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-red-600">Rs {selectedHistoryEntry.oldCost}</span>
+                        <span className='text-sm text-gray-500'>
+                          Cost Change
+                        </span>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-red-600'>
+                            Rs {selectedHistoryEntry.oldCost}
+                          </span>
                           <span>→</span>
-                          <span className="text-green-600 font-medium">Rs {selectedHistoryEntry.newCost}</span>
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            selectedHistoryEntry.costDifference > 0 ? 'bg-green-100 text-green-800' : 
-                            selectedHistoryEntry.costDifference < 0 ? 'bg-red-100 text-red-800' : 
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {selectedHistoryEntry.costDifference > 0 ? '+' : ''}Rs {selectedHistoryEntry.costDifference}
+                          <span className='font-medium text-green-600'>
+                            Rs {selectedHistoryEntry.newCost}
+                          </span>
+                          <span
+                            className={`rounded px-2 py-1 text-xs ${
+                              selectedHistoryEntry.costDifference > 0
+                                ? 'bg-green-100 text-green-800'
+                                : selectedHistoryEntry.costDifference < 0
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
+                            }`}
+                          >
+                            {selectedHistoryEntry.costDifference > 0 ? '+' : ''}
+                            Rs {selectedHistoryEntry.costDifference}
                           </span>
                         </div>
                       </div>
@@ -996,68 +1140,81 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           setIsDeleteModalOpen(false);
           setDeleteItem(null);
         }}
-        title="Delete Stock"
-        dialogPanelClass="w-full max-w-sm sm:max-w-md mx-4 sm:mx-auto"
+        title='Delete Stock'
+        dialogPanelClass='w-full max-w-sm sm:max-w-md mx-4 sm:mx-auto'
       >
-        <div className="space-y-4">
-          <div className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-              <FaTrash className="h-8 w-8 text-red-600" />
+        <div className='space-y-4'>
+          <div className='text-center'>
+            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100'>
+              <FaTrash className='h-8 w-8 text-red-600' />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className='mb-2 text-lg font-medium text-gray-900'>
               Delete Stock Item
             </h3>
-            <p className="text-sm text-gray-500">
-              Are you sure you want to delete this stock item? This action cannot be undone.
+            <p className='text-sm text-gray-500'>
+              Are you sure you want to delete this stock item? This action
+              cannot be undone.
             </p>
           </div>
 
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
+            <div className='flex'>
+              <div className='flex-shrink-0'>
+                <svg
+                  className='h-5 w-5 text-red-400'
+                  viewBox='0 0 20 20'
+                  fill='currentColor'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
+                    clipRule='evenodd'
+                  />
                 </svg>
               </div>
-              <div className="ml-3">
-                <h4 className="text-sm font-medium text-red-800">
+              <div className='ml-3'>
+                <h4 className='text-sm font-medium text-red-800'>
                   Stock Item to Delete
                 </h4>
-                <div className="mt-2 text-sm text-red-700">
-                  <p><strong>Brand:</strong> {deleteItem?.brandName}</p>
-                  <p><strong>Series:</strong> {deleteItem?.seriesName}</p>
+                <div className='mt-2 text-sm text-red-700'>
+                  <p>
+                    <strong>Brand:</strong> {deleteItem?.brandName}
+                  </p>
+                  <p>
+                    <strong>Series:</strong> {deleteItem?.seriesName}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 pt-4">
+          <div className='flex flex-col gap-3 pt-4'>
             <Button
-              className="w-full h-12 text-base font-medium focus:outline-none focus:ring-0"
-              variant="fill"
-              text="Delete Stock"
+              className='h-12 w-full text-base font-medium focus:outline-none focus:ring-0'
+              variant='fill'
+              text='Delete Stock'
               onClick={() => {
                 setIsDeleting(true);
                 if (deleteItem?.brandName && deleteItem?.series) {
                   deleteStock(deleteItem.brandName, deleteItem.series)
-                  .then(async (result) => {
-                    if (result.success) {
-                      toast.success('Stock deleted successfully');
-                      await revalidatePathCustom('/stock');
-                      setIsDeleteModalOpen(false);
-                      setDeleteItem(null);
-                      fetchData(deleteItem.brandName);
-                    } else {
-                      toast.error(result.error || 'Failed to delete stock');
-                    }
-                  })
-                  .catch((error) => {
-                    console.error('Error deleting stock:', error);
-                    toast.error('An error occurred while deleting stock');
-                  })
-                  .finally(() => {
-                    setIsDeleting(false);
-                  });
+                    .then(async (result) => {
+                      if (result.success) {
+                        toast.success('Stock deleted successfully');
+                        await revalidatePathCustom('/stock');
+                        setIsDeleteModalOpen(false);
+                        setDeleteItem(null);
+                        fetchData(deleteItem.brandName);
+                      } else {
+                        toast.error(result.error || 'Failed to delete stock');
+                      }
+                    })
+                    .catch((error) => {
+                      console.error('Error deleting stock:', error);
+                      toast.error('An error occurred while deleting stock');
+                    })
+                    .finally(() => {
+                      setIsDeleting(false);
+                    });
                 }
               }}
               isPending={isDeleting}
@@ -1065,10 +1222,10 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
               style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
             />
             <Button
-              className="w-full h-12 text-base focus:outline-none focus:ring-0"
-              variant="outline"
-              text="Cancel"
-              type="button"
+              className='h-12 w-full text-base focus:outline-none focus:ring-0'
+              variant='outline'
+              text='Cancel'
+              type='button'
               onClick={() => {
                 setIsDeleteModalOpen(false);
                 setDeleteItem(null);

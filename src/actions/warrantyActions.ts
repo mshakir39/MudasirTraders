@@ -23,25 +23,29 @@ interface WarrantyData {
   deletedAt?: string; // Added for deleted warranty history
 }
 
-export async function searchWarranty(warrantyCode: string): Promise<WarrantySearchResult> {
+export async function searchWarranty(
+  warrantyCode: string
+): Promise<WarrantySearchResult> {
   try {
     console.log('🔍 Searching for warranty code:', warrantyCode);
 
     // First try to find in invoices collection
     console.log('📄 Checking invoices collection...');
-    const invoiceResult = await executeOperation(
-      'invoices',
-      'find',
-      {
-        'products.warrentyCode': warrantyCode
-      }
-    );
+    const invoiceResult = await executeOperation('invoices', 'find', {
+      'products.warrentyCode': warrantyCode,
+    });
 
     console.log('📄 Invoice search result:', invoiceResult);
 
-    if (invoiceResult && Array.isArray(invoiceResult) && invoiceResult.length > 0) {
+    if (
+      invoiceResult &&
+      Array.isArray(invoiceResult) &&
+      invoiceResult.length > 0
+    ) {
       const invoice = invoiceResult[0];
-      const product = invoice.products.find((p: any) => p.warrentyCode === warrantyCode);
+      const product = invoice.products.find(
+        (p: any) => p.warrentyCode === warrantyCode
+      );
 
       if (product) {
         console.log('✅ Found warranty in invoices:', { invoice, product });
@@ -55,7 +59,7 @@ export async function searchWarranty(warrantyCode: string): Promise<WarrantySear
           customerName: invoice.customerName,
           customerContactNumber: invoice.customerContactNumber,
           invoiceNumber: invoice.invoiceNo,
-          saleDate: invoice.createdDate
+          saleDate: invoice.createdDate,
         };
 
         return { success: true, data: warrantyData };
@@ -64,19 +68,17 @@ export async function searchWarranty(warrantyCode: string): Promise<WarrantySear
 
     // If not found in invoices, try sales collection
     console.log('💼 Checking sales collection...');
-    const salesResult = await executeOperation(
-      'sales',
-      'find',
-      {
-        'products.warrentyCode': warrantyCode
-      }
-    );
+    const salesResult = await executeOperation('sales', 'find', {
+      'products.warrentyCode': warrantyCode,
+    });
 
     console.log('💼 Sales search result:', salesResult);
 
     if (salesResult && Array.isArray(salesResult) && salesResult.length > 0) {
       const sale = salesResult[0];
-      const product = sale.products.find((p: any) => p.warrentyCode === warrantyCode);
+      const product = sale.products.find(
+        (p: any) => p.warrentyCode === warrantyCode
+      );
 
       if (product) {
         console.log('✅ Found warranty in sales:', { sale, product });
@@ -90,7 +92,7 @@ export async function searchWarranty(warrantyCode: string): Promise<WarrantySear
           customerName: sale.customerName,
           customerContactNumber: sale.customerContactNumber,
           invoiceNumber: sale.invoiceId,
-          saleDate: sale.date
+          saleDate: sale.date,
         };
 
         return { success: true, data: warrantyData };
@@ -103,16 +105,23 @@ export async function searchWarranty(warrantyCode: string): Promise<WarrantySear
       'warrantyHistory',
       'find',
       {
-        warrentyCode: warrantyCode
+        warrentyCode: warrantyCode,
       }
     );
 
     console.log('📚 Warranty history search result:', warrantyHistoryResult);
 
-    if (warrantyHistoryResult && Array.isArray(warrantyHistoryResult) && warrantyHistoryResult.length > 0) {
+    if (
+      warrantyHistoryResult &&
+      Array.isArray(warrantyHistoryResult) &&
+      warrantyHistoryResult.length > 0
+    ) {
       const warrantyRecord = warrantyHistoryResult[0];
-      console.log('✅ Found warranty in history (deleted invoice):', warrantyRecord);
-      
+      console.log(
+        '✅ Found warranty in history (deleted invoice):',
+        warrantyRecord
+      );
+
       const warrantyData: WarrantyData = {
         productName: `${warrantyRecord.productDetails.brandName} - ${warrantyRecord.productDetails.series}`,
         brandName: warrantyRecord.productDetails.brandName,
@@ -125,7 +134,7 @@ export async function searchWarranty(warrantyCode: string): Promise<WarrantySear
         invoiceNumber: warrantyRecord.originalInvoiceNo,
         saleDate: warrantyRecord.originalInvoice.createdDate,
         isDeleted: true, // Flag to indicate this is from a deleted invoice
-        deletedAt: warrantyRecord.deletedAt
+        deletedAt: warrantyRecord.deletedAt,
       };
 
       return { success: true, data: warrantyData };
@@ -133,9 +142,8 @@ export async function searchWarranty(warrantyCode: string): Promise<WarrantySear
 
     console.log('❌ No warranty found in any collection');
     return { success: false, error: 'No warranty found with this code' };
-
   } catch (error: any) {
     console.error('❌ Error searching warranty:', error);
     return { success: false, error: error.message };
   }
-} 
+}

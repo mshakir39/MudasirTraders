@@ -50,7 +50,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [showInput, setShowInput] = useState(true);
   const [selectedRange, setSelectedRange] = useState<string>('');
-  const [currentRange, setCurrentRange] = useState<[Date, Date]>(getInitialRange());
+  const [currentRange, setCurrentRange] =
+    useState<[Date, Date]>(getInitialRange());
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
@@ -63,8 +64,22 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       value: 'today',
       getRange: () => {
         const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        const start = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          0,
+          0,
+          0
+        );
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          23,
+          59,
+          59
+        );
         return [start, end];
       },
     },
@@ -73,8 +88,22 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       value: 'yesterday',
       getRange: () => {
         const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0);
-        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59);
+        const start = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - 1,
+          0,
+          0,
+          0
+        );
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate() - 1,
+          23,
+          59,
+          59
+        );
         return [start, end];
       },
     },
@@ -108,7 +137,14 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       getRange: () => {
         const now = new Date();
         const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59
+        );
         return [start, end];
       },
     },
@@ -129,8 +165,10 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   useEffect(() => {
     if (!hasInitialized.current) {
       hasInitialized.current = true;
-      console.log('📅 DateRangePicker: One-time initialization - NO parent notification');
-      
+      console.log(
+        '📅 DateRangePicker: One-time initialization - NO parent notification'
+      );
+
       // DO NOT notify parent on mount - let the dashboard handle initial load
       // onDateChange({
       //   start: currentRange[0],
@@ -140,39 +178,42 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   }, []); // EMPTY dependency array - runs once
 
   // Handle custom date selection from Flatpickr
-  const handleCustomDateChange = useCallback((selectedDates: Date[]) => {
-    if (selectedDates.length === 2) {
-      console.log('📅 DateRangePicker: Custom date selected');
-      
-      const [start, end] = selectedDates;
-      // Ensure proper time settings
-      start.setHours(0, 0, 0, 0);
-      end.setHours(23, 59, 59, 999);
+  const handleCustomDateChange = useCallback(
+    (selectedDates: Date[]) => {
+      if (selectedDates.length === 2) {
+        console.log('📅 DateRangePicker: Custom date selected');
 
-      setCurrentRange([start, end]);
-      setSelectedRange(''); // Clear preset selection
+        const [start, end] = selectedDates;
+        // Ensure proper time settings
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
 
-      // Notify parent immediately
-      onDateChange({
-        start,
-        end,
-      });
-    }
-  }, [onDateChange]);
+        setCurrentRange([start, end]);
+        setSelectedRange(''); // Clear preset selection
+
+        // Notify parent immediately
+        onDateChange({
+          start,
+          end,
+        });
+      }
+    },
+    [onDateChange]
+  );
 
   // Handle preset selection
   const handlePresetSelect = (range: PresetRange) => {
     console.log('📅 DateRangePicker: Preset selected:', range.label);
-    
+
     const [start, end] = range.getRange();
     setSelectedRange(range.label);
     setCurrentRange([start, end]);
-    
+
     // Update Flatpickr to reflect the new dates
     if (flatpickrRef.current?.flatpickr) {
       flatpickrRef.current.flatpickr.setDate([start, end], true);
     }
-    
+
     // Notify parent immediately
     onDateChange({
       start,
@@ -196,18 +237,19 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
     if (showDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showDropdown]);
 
   // UI handlers
   const toggleDropdown = () => {
-    setShowDropdown(prev => !prev);
+    setShowDropdown((prev) => !prev);
   };
 
   const toggleInput = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowInput(prev => !prev);
+    setShowInput((prev) => !prev);
   }, []);
 
   // Flatpickr options - stable configuration
@@ -224,17 +266,15 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   return (
     <div className={`relative w-fit ${className}`} ref={containerRef}>
       <div
-        className='inline-flex cursor-pointer items-center gap-2 rounded-md border border-[#e5e7eb] bg-white px-4 py-2 hover:bg-gray-50 transition-colors'
+        className='inline-flex cursor-pointer items-center gap-2 rounded-md border border-[#e5e7eb] bg-white px-4 py-2 transition-colors hover:bg-gray-50'
         onClick={toggleDropdown}
       >
         <IoCalendarOutline className='h-5 w-5 text-gray-500' />
-        <span className='text-sm text-gray-600'>
-          {displayValue}
-        </span>
+        <span className='text-sm text-gray-600'>{displayValue}</span>
       </div>
 
       {showDropdown && (
-        <div className='absolute top-full z-[100] mt-2 w-64 overflow-visible rounded-lg bg-white shadow-lg border border-gray-200'>
+        <div className='absolute top-full z-[100] mt-2 w-64 overflow-visible rounded-lg border border-gray-200 bg-white shadow-lg'>
           <div className='p-4'>
             <div className='mb-4 flex items-center justify-between'>
               <h3 className='font-medium text-gray-700'>
@@ -243,7 +283,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               <button
                 onClick={toggleInput}
                 className='rounded-full bg-blue-500 p-1 transition-colors hover:bg-blue-600'
-                type="button"
+                type='button'
               >
                 {showInput ? (
                   <IoIosArrowUp className='h-4 w-4 text-white' />
@@ -260,9 +300,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                   ref={flatpickrRef}
                   options={flatpickrOptions}
                   value={currentRange}
-                  className='block w-full rounded-lg bg-gray-50 py-2 pl-3 pr-10 text-sm text-gray-600 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors'
+                  className='block w-full rounded-lg bg-gray-50 py-2 pl-3 pr-10 text-sm text-gray-600 transition-colors focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500'
                 />
-                <IoCalendarOutline className='absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400 pointer-events-none' />
+                <IoCalendarOutline className='pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400' />
               </div>
             )}
 
@@ -273,16 +313,20 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                   key={range.value}
                   onClick={() => handlePresetSelect(range)}
                   className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-blue-50 ${
-                    selectedRange === range.label ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    selectedRange === range.label
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-700'
                   }`}
-                  type="button"
+                  type='button'
                 >
-                  <RiFilter2Fill className={`w-4 h-4 flex-shrink-0 ${
-                    selectedRange === range.label ? 'text-blue-500' : 'text-gray-400'
-                  }`} />
-                  <span className='text-sm font-medium'>
-                    {range.label}
-                  </span>
+                  <RiFilter2Fill
+                    className={`h-4 w-4 flex-shrink-0 ${
+                      selectedRange === range.label
+                        ? 'text-blue-500'
+                        : 'text-gray-400'
+                    }`}
+                  />
+                  <span className='text-sm font-medium'>{range.label}</span>
                 </button>
               ))}
             </div>

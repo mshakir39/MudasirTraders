@@ -11,15 +11,21 @@ async function Invoices() {
   const categories = await getCategories();
   const invoicesResult = await getInvoices();
   const stockResult = await getStock();
-  
-  const invoices = invoicesResult.success && Array.isArray(invoicesResult.data) ? invoicesResult.data : [];
-  const stock = stockResult.success && Array.isArray(stockResult.data) ? stockResult.data : [];
+
+  const invoices =
+    invoicesResult.success && Array.isArray(invoicesResult.data)
+      ? invoicesResult.data
+      : [];
+  const stock =
+    stockResult.success && Array.isArray(stockResult.data)
+      ? stockResult.data
+      : [];
 
   return (
-    <InvoiceLayout 
-      categories={Array.isArray(categories) ? categories : []} 
-      invoices={invoices} 
-      stock={stock} 
+    <InvoiceLayout
+      categories={Array.isArray(categories) ? categories : []}
+      invoices={invoices}
+      stock={stock}
     />
   );
 }

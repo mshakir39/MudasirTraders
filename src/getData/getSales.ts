@@ -2,7 +2,7 @@ import { executeOperation } from '@/app/libs/executeOperation';
 
 export async function getSales() {
   const sales = await executeOperation('sales', 'findAll');
-  
+
   // Sort sales by date (newest first)
   if (Array.isArray(sales)) {
     sales.sort((a: any, b: any) => {
@@ -11,6 +11,6 @@ export async function getSales() {
       return dateB - dateA; // Descending order (newest first)
     });
   }
-  
+
   return sales;
-} 
+}

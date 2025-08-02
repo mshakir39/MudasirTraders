@@ -12,6 +12,9 @@ export const metadata: Metadata = {
 
 export default async function SalesPage() {
   const salesResult = await getSales();
-  const sales = salesResult.success && Array.isArray(salesResult.data) ? salesResult.data : [];
+  const sales =
+    salesResult.success && Array.isArray(salesResult.data)
+      ? salesResult.data
+      : [];
   return <SalesLayout sales={sales} />;
-} 
+}

@@ -1,6 +1,12 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState, useRef, useCallback, useTransition } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useTransition,
+} from 'react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -58,13 +64,13 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  
+
   const handleLockDashboard = () => {
     startTransition(() => {
       lockDashboard();
     });
   };
-  
+
   const [stats, setStats] = useState<StreamlinedDashboardStats>(() => {
     if (initialStats) {
       return {
@@ -82,8 +88,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
         alerts: {
           lowStock: 0,
           outOfStock: 0,
-          pendingPayments: 0
-        }
+          pendingPayments: 0,
+        },
       };
     }
     return {
@@ -101,8 +107,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
       alerts: {
         lowStock: 0,
         outOfStock: 0,
-        pendingPayments: 0
-      }
+        pendingPayments: 0,
+      },
     };
   });
   const [loading, setLoading] = useState(true);
@@ -118,60 +124,71 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
     return { start, end };
   });
 
-  const [topProductsDateRange, setTopProductsDateRange] = useState<DateRange>(() => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 29);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  });
+  const [topProductsDateRange, setTopProductsDateRange] = useState<DateRange>(
+    () => {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 29);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+  );
 
-  const [salesTrendDateRange, setSalesTrendDateRange] = useState<DateRange>(() => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - 13);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  });
+  const [salesTrendDateRange, setSalesTrendDateRange] = useState<DateRange>(
+    () => {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(end.getDate() - 13);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      return { start, end };
+    }
+  );
 
   const initialLoadRef = useRef(false);
   const fetchingRef = useRef(false);
 
   // Fetch data with date ranges
-  const fetchData = useCallback(async (revenueRange: DateRange, topProductsRange: DateRange, salesTrendRange: DateRange) => {
-    if (fetchingRef.current) return;
-    try {
-      fetchingRef.current = true;
-      setLoading(true);
-      setError(null);
+  const fetchData = useCallback(
+    async (
+      revenueRange: DateRange,
+      topProductsRange: DateRange,
+      salesTrendRange: DateRange
+    ) => {
+      if (fetchingRef.current) return;
+      try {
+        fetchingRef.current = true;
+        setLoading(true);
+        setError(null);
 
-      const params = new URLSearchParams();
-      params.append('revenueStart', revenueRange.start.toISOString());
-      params.append('revenueEnd', revenueRange.end.toISOString());
-      params.append('topProductsStart', topProductsRange.start.toISOString());
-      params.append('topProductsEnd', topProductsRange.end.toISOString());
-      params.append('salesTrendStart', salesTrendRange.start.toISOString());
-      params.append('salesTrendEnd', salesTrendRange.end.toISOString());
+        const params = new URLSearchParams();
+        params.append('revenueStart', revenueRange.start.toISOString());
+        params.append('revenueEnd', revenueRange.end.toISOString());
+        params.append('topProductsStart', topProductsRange.start.toISOString());
+        params.append('topProductsEnd', topProductsRange.end.toISOString());
+        params.append('salesTrendStart', salesTrendRange.start.toISOString());
+        params.append('salesTrendEnd', salesTrendRange.end.toISOString());
 
-      const url = `/api/dashboard?${params.toString()}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
+        const url = `/api/dashboard?${params.toString()}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
 
-      setStats(data);
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to fetch dashboard data'
-      );
-    } finally {
-      setLoading(false);
-      fetchingRef.current = false;
-    }
-  }, []);
+        setStats(data);
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : 'Failed to fetch dashboard data'
+        );
+      } finally {
+        setLoading(false);
+        fetchingRef.current = false;
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -179,20 +196,29 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
     fetchData(revenueDateRange, topProductsDateRange, salesTrendDateRange);
   }, [revenueDateRange, topProductsDateRange, salesTrendDateRange, fetchData]);
 
-  const handleRevenueDateChange = useCallback((range: DateRange) => {
-    setRevenueDateRange(range);
-    fetchData(range, topProductsDateRange, salesTrendDateRange);
-  }, [topProductsDateRange, salesTrendDateRange, fetchData]);
+  const handleRevenueDateChange = useCallback(
+    (range: DateRange) => {
+      setRevenueDateRange(range);
+      fetchData(range, topProductsDateRange, salesTrendDateRange);
+    },
+    [topProductsDateRange, salesTrendDateRange, fetchData]
+  );
 
-  const handleTopProductsDateChange = useCallback((range: DateRange) => {
-    setTopProductsDateRange(range);
-    fetchData(revenueDateRange, range, salesTrendDateRange);
-  }, [revenueDateRange, salesTrendDateRange, fetchData]);
+  const handleTopProductsDateChange = useCallback(
+    (range: DateRange) => {
+      setTopProductsDateRange(range);
+      fetchData(revenueDateRange, range, salesTrendDateRange);
+    },
+    [revenueDateRange, salesTrendDateRange, fetchData]
+  );
 
-  const handleSalesTrendDateChange = useCallback((range: DateRange) => {
-    setSalesTrendDateRange(range);
-    fetchData(revenueDateRange, topProductsDateRange, range);
-  }, [revenueDateRange, topProductsDateRange, fetchData]);
+  const handleSalesTrendDateChange = useCallback(
+    (range: DateRange) => {
+      setSalesTrendDateRange(range);
+      fetchData(revenueDateRange, topProductsDateRange, range);
+    },
+    [revenueDateRange, topProductsDateRange, fetchData]
+  );
 
   if (loading) return <LoadingSpinner />;
 
@@ -202,13 +228,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
 
   const chartData = {
     salesTrend: stats.salesTrend || [],
-    inventoryByBrand: stats.inventoryByBrand || []
+    inventoryByBrand: stats.inventoryByBrand || [],
   };
 
   return (
-    <div className='p-6 bg-gray-50 min-h-screen'>
+    <div className='min-h-screen bg-gray-50 p-6'>
       <DashboardHeader onLock={handleLockDashboard} />
-      
+
       <AlertsBanner alerts={stats.alerts} />
 
       <DateRangeControls
@@ -224,14 +250,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
 
       {/* Charts Section */}
       <div className='mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2'>
-        <TopSellingProducts 
-          products={stats.topSellingProducts} 
-          dateRange={topProductsDateRange} 
+        <TopSellingProducts
+          products={stats.topSellingProducts}
+          dateRange={topProductsDateRange}
         />
-        
-        <SalesTrendChart 
-          data={chartData.salesTrend} 
-          dateRange={salesTrendDateRange} 
+
+        <SalesTrendChart
+          data={chartData.salesTrend}
+          dateRange={salesTrendDateRange}
         />
       </div>
 
