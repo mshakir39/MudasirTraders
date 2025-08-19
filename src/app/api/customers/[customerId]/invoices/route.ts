@@ -3,12 +3,12 @@ import { executeOperation } from '@/app/libs/executeOperation';
 import { ObjectId } from 'mongodb';
 
 // Place this at the top level, outside of GET
-function isCustomerWithName(val: unknown): val is { name: string } {
+function isCustomerWithName(val: unknown): val is { customerName: string } {
   return (
     !!val &&
     typeof val === 'object' &&
     !Array.isArray(val) &&
-    Object.prototype.hasOwnProperty.call(val, 'name')
+    Object.prototype.hasOwnProperty.call(val, 'customerName')
   );
 }
 
@@ -55,7 +55,7 @@ export async function GET(
 
     // Use the type guard to safely log the customer name
     if (isCustomerWithName(customer)) {
-      console.log('✅ Customer found:', customer.name);
+      console.log('✅ Customer found:', customer.customerName);
     } else {
       console.log('⚠️ Customer not found or invalid:', customer);
     }
@@ -95,7 +95,7 @@ export async function GET(
               invoice.customerId === params.customerId ||
               invoice.customerId?.toString() === params.customerId ||
               invoice.clientName ===
-                (isCustomerWithName(customer) ? customer.name : undefined)) &&
+                (isCustomerWithName(customer) ? customer.customerName : undefined)) &&
             invoice.customerType === 'Regular'
           );
         })

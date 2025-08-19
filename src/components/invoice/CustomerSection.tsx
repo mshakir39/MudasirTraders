@@ -46,7 +46,7 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
             key={invoiceData.customerType}
             className='mt-2'
             options={customers.map((customer) => ({
-              label: customer.name,
+              label: customer.customerName,
               value: customer.id.toString(),
             }))}
             defaultValue={invoiceData.customerId?.toString() || ''}
@@ -58,10 +58,10 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
                 console.log('selectedCustomer', selectedCustomer);
                 setInvoiceData((prev: any) => ({
                   ...prev,
-                  customerName: selectedCustomer.name,
+                  customerName: selectedCustomer.customerName,
                   customerAddress: selectedCustomer.address,
-                  customerContactNumber: selectedCustomer.contactInfo,
-                  clientName: selectedCustomer.name,
+                  customerContactNumber: selectedCustomer.phoneNumber,
+                  clientName: selectedCustomer.customerName,
                   customerId: selectedCustomer.id, // Ensure it's a number
                 }));
               }

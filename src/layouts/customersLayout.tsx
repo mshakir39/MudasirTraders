@@ -14,6 +14,7 @@ interface CustomerData {
   customerName: string;
   phoneNumber: string;
   address: string;
+  email?: string;
 }
 
 const CustomersLayout = ({ customers }: { customers: any[] }) => {
@@ -21,9 +22,10 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
   const [isInvoicesModalOpen, setIsInvoicesModalOpen] = React.useState(false);
   const [selectedCustomer, setSelectedCustomer] = React.useState<any>(null);
   const [form, setForm] = React.useState({
-    name: '',
-    contactInfo: '',
+    customerName: '',
+    phoneNumber: '',
     address: '',
+    email: '',
   });
   const [customerList, setCustomerList] = React.useState(customers);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -32,21 +34,28 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
   const columns = React.useMemo<ColumnDef<any>[]>(
     () => [
       {
-        accessorKey: 'name',
-        header: 'Name',
+        accessorKey: 'customerName',
+        header: 'Customer Name',
       },
       {
-        accessorKey: 'contactInfo',
-        header: 'Contact Info',
+        accessorKey: 'phoneNumber',
+        header: 'Phone Number',
+      },
+      {
+        accessorKey: 'email',
+        header: 'Email',
       },
       {
         accessorKey: 'address',
         header: 'Address',
       },
       {
-        accessorKey: 'createdDate',
+        accessorKey: 'createdAt',
         header: 'Created Date',
-        cell: ({ row }) => new Date(row.original.createdDate).toLocaleString(),
+        cell: ({ row }) => {
+          const date = row.original.createdAt;
+          return date ? new Date(date).toLocaleString() : 'N/A';
+        },
       },
       {
         id: 'viewInvoices',
@@ -88,17 +97,18 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.contactInfo) {
-      toast.error('Name and Contact Info are required');
+    if (!form.customerName || !form.phoneNumber) {
+      toast.error('Customer name and phone number are required');
       return;
     }
 
     setIsLoading(true);
     try {
       const customerData: CustomerData = {
-        customerName: form.name,
-        phoneNumber: form.contactInfo,
+        customerName: form.customerName,
+        phoneNumber: form.phoneNumber,
         address: form.address,
+        email: form.email,
       };
 
       const result = await createCustomer(customerData);
@@ -113,7 +123,7 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
       }
 
       setIsModalOpen(false);
-      setForm({ name: '', contactInfo: '', address: '' });
+      setForm({ customerName: '', phoneNumber: '', address: '', email: '' });
       toast.success('Customer created successfully');
     } catch (error) {
       console.error('Error creating customer:', error);
@@ -144,22 +154,22 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setForm({ name: '', contactInfo: '', address: '' });
+          setForm({ customerName: '', phoneNumber: '', address: '', email: '' });
         }}
         title='Create Customer'
       >
         <form onSubmit={handleCreate} className='mt-4 flex flex-col gap-4'>
           <Input
-            label='Name'
-            name='name'
-            value={form.name}
+            label='Customer Name'
+            name='customerName'
+            value={form.customerName}
             onChange={handleChange}
             required
           />
           <Input
-            label='Contact Info'
-            name='contactInfo'
-            value={form.contactInfo}
+            label='Phone Number'
+            name='phoneNumber'
+            value={form.phoneNumber}
             onChange={handleChange}
             required
           />
@@ -167,6 +177,13 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
             label='Address'
             name='address'
             value={form.address}
+            onChange={handleChange}
+          />
+          <Input
+            label='Email'
+            name='email'
+            type='email'
+            value={form.email}
             onChange={handleChange}
           />
           <Button

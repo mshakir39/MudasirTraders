@@ -3,17 +3,31 @@ import { executeOperation } from '@/app/libs/executeOperation';
 import { getAllSum } from '@/utils/getTotalSum';
 import { ObjectId } from 'mongodb';
 
+// Track processing invoices to prevent duplicates
+const processingInvoices = new Set<string>();
+
 export async function POST(req: any, res: any) {
   const formData = await req.json();
 
-  // Debug custom date logic
-  console.log('🔍 Custom Date Debug:');
-  console.log('useCustomDate:', formData.useCustomDate);
-  console.log('customDate:', formData.customDate);
-  console.log('useCustomDate type:', typeof formData.useCustomDate);
-  console.log('customDate type:', typeof formData.customDate);
+  // Create a unique identifier for this invoice request
+  const requestId = `${formData.customerName}-${formData.customerContactNumber}-${Date.now()}`;
+  
+  // Check if this request is already being processed
+  if (processingInvoices.has(requestId)) {
+    return Response.json({ error: 'Invoice is already being processed. Please wait.' }, { status: 409 });
+  }
+
+  // Add to processing set
+  processingInvoices.add(requestId);
 
   try {
+    // Debug custom date logic
+    console.log('🔍 Custom Date Debug:');
+    console.log('useCustomDate:', formData.useCustomDate);
+    console.log('customDate:', formData.customDate);
+    console.log('useCustomDate type:', typeof formData.useCustomDate);
+    console.log('customDate type:', typeof formData.customDate);
+
     const lastInvoice: any = await executeOperation('invoices', 'findLast');
     let nextInvoiceNumber;
     if (lastInvoice && typeof lastInvoice === 'object') {
@@ -88,14 +102,21 @@ export async function POST(req: any, res: any) {
       invoice.paymentStatus = 'partial';
     }
 
-    // Update stock quantities and sold counts
+    // Validate quantities before updating stock
+    console.log('📦 Validating stock quantities...');
     for (const product of formData.productDetail) {
       const seriesName = product.batteryDetails?.name || product.series;
+      const quantity = parseInt(product.quantity) || 0;
+      
+      if (quantity <= 0) {
+        throw new Error(`Invalid quantity for ${seriesName}: ${quantity}`);
+      }
+
+      // Check current stock before updating
       const stockQuery = {
         'seriesStock.series': seriesName,
       };
 
-      // First check if the stock exists
       const stockExists = await executeOperation(
         'stock',
         'findOne',
@@ -106,17 +127,42 @@ export async function POST(req: any, res: any) {
         throw new Error(`Series '${seriesName}' not found in stock.`);
       }
 
+      // Validate stock availability
+      const stockData = stockExists as any;
+      const currentStock = stockData.seriesStock?.find((item: any) => item.series === seriesName);
+      if (!currentStock) {
+        throw new Error(`Series '${seriesName}' not found in stock data.`);
+      }
+
+      const currentInStock = parseInt(currentStock.inStock) || 0;
+      if (currentInStock < quantity) {
+        throw new Error(`Insufficient stock for ${seriesName}. Available: ${currentInStock}, Requested: ${quantity}`);
+      }
+    }
+
+    // Update stock quantities and sold counts
+    console.log('📦 Updating stock quantities and sold counts...');
+    for (const product of formData.productDetail) {
+      const seriesName = product.batteryDetails?.name || product.series;
+      const quantity = parseInt(product.quantity) || 0;
+
+      console.log(`🔄 Updating stock for ${seriesName}: quantity=${quantity}`);
+
       // Update the stock quantity and increment sold count
       await executeOperation('stock', 'updateStockAndSoldCount', {
         series: seriesName,
-        quantity: parseInt(product.quantity) || 0,
+        quantity: quantity,
       });
+
+      console.log(`✅ Stock updated for ${seriesName}`);
     }
 
     // Insert the invoice into the database
+    console.log('📄 Inserting invoice into database...');
     await executeOperation('invoices', 'insertOne', invoice);
 
     // Insert a sales record into the sales collection
+    console.log('💼 Inserting sales record...');
     await executeOperation('sales', 'insertOne', {
       invoiceId: invoice.invoiceNo,
       date: invoice.createdDate,
@@ -126,9 +172,14 @@ export async function POST(req: any, res: any) {
       paymentMethod: invoice.paymentMethod,
     });
 
+    console.log('✅ Invoice created successfully');
     return Response.json({ message: 'Invoice created successfully' });
   } catch (err: any) {
+    console.error('❌ Error creating invoice:', err);
     return Response.json({ error: err.message });
+  } finally {
+    // Remove from processing set
+    processingInvoices.delete(requestId);
   }
 }
 

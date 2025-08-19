@@ -108,7 +108,7 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title={`Invoices - ${customer.name}`}
+        title={`Invoices - ${customer.customerName}`}
         dialogPanelClass='!w-[95%] !max-w-7xl'
         preventBackdropClose={isSubModalOpen} // Prevent closing when sub-modal is open
       >
