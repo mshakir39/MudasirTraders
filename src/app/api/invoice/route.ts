@@ -59,7 +59,7 @@ export async function POST(req: any, res: any) {
         series: product.series,
         productPrice: product.productPrice,
         quantity: product.quantity,
-        warrentyCode: product.warrentyCode,
+        warrentyCode: product.warrentyCode ? product.warrentyCode.trim() : '',
         warrentyStartDate: product.warrentyStartDate,
         warrentyEndDate: product.warrentyEndDate,
         totalPrice: product.productPrice * product.quantity,
@@ -258,7 +258,7 @@ export async function DELETE(req: any, res: any) {
         if (product.warrentyCode) {
           try {
             await executeOperation('warrantyHistory', 'insertOne', {
-              warrentyCode: product.warrentyCode,
+              warrentyCode: product.warrentyCode ? product.warrentyCode.trim() : '',
               customerName: invoice.customerName,
               customerContactNumber: invoice.customerContactNumber,
               customerAddress: invoice.customerAddress,

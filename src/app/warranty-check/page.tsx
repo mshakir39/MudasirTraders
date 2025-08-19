@@ -14,14 +14,15 @@ export default function WarrantyCheckPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchTerm.trim()) {
+    const trimmedSearchTerm = searchTerm.trim();
+    if (!trimmedSearchTerm) {
       toast.error('Please enter a warranty code');
       return;
     }
 
     setLoading(true);
     try {
-      const result = await searchWarranty(searchTerm);
+      const result = await searchWarranty(trimmedSearchTerm);
       if (result.success) {
         setWarrantyData(result.data);
       } else {
@@ -58,7 +59,7 @@ export default function WarrantyCheckPage() {
               <div className='flex-1'>
                 <Input
                   type='text'
-                  placeholder='Enter warranty code (e.g., ABC123XYZ)'
+                  placeholder='Enter warranty code(s) - supports multiple codes separated by comma or space'
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   parentClass='w-full'
@@ -102,6 +103,8 @@ export default function WarrantyCheckPage() {
                 <li>In the warranty section of your sales receipt</li>
               </ul>
               <div className='mt-4 text-sm text-gray-600'>
+                <p><strong>Multiple Codes:</strong> You can enter multiple warranty codes separated by comma or space</p>
+                <p><strong>Examples:</strong> "ABC123, DEF456" or "ABC123 DEF456" or "1646603376 1291636542"</p>
                 <p>The warranty code format looks like: XXX-XXXXXXX</p>
                 <p>
                   If you cannot find your warranty code, please contact our

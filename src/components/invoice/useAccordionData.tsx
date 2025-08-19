@@ -228,11 +228,16 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
         }));
       } else {
         setAccordionData((prevData: AccordionData) => {
+          // Trim warranty code if that's the field being updated
+          const processedValue = fieldName === 'warrentyCode' && typeof fieldValue === 'string' 
+            ? fieldValue.trim() 
+            : fieldValue;
+            
           const updated = {
             ...prevData,
             [accordionIndex]: {
               ...prevData[accordionIndex],
-              [fieldName]: fieldValue,
+              [fieldName]: processedValue,
             },
           };
           // Calculate new total amount

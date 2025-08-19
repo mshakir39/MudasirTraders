@@ -225,6 +225,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({
             type='text'
             label='Warranty Code'
             name='warrentyCode'
+            placeholder='Enter warranty code(s) - multiple codes separated by comma or space'
             value={accordionDataItem.warrentyCode}
             onChange={(e) =>
               accordionMethods.handleAccordionChange(

@@ -29,7 +29,7 @@ import { getStoreDetail } from '@/getData/getStoreDetail';
 import { signOut } from 'next-auth/react';
 import Cookies from 'js-cookie';
 
-const Sidebar = ({ className }: any) => {
+const Sidebar = ({ className, onCollapseChange }: { className?: string; onCollapseChange?: (collapsed: boolean) => void }) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [storeData, setStoreData] = useState<any>();
@@ -181,7 +181,7 @@ const Sidebar = ({ className }: any) => {
           </span>
 
           {/* Navigation Links */}
-          <div className='flex flex-col space-y-2'>
+          <div className='flex flex-col space-y-2 overflow-y-auto flex-1'>
             <Link
               href='/'
               onClick={handleMobileLinkClick}
@@ -457,13 +457,18 @@ const Sidebar = ({ className }: any) => {
         className={`
           ${className}
           hidden h-svh bg-white shadow-lg
-          transition-all duration-300 ease-in-out md:relative md:flex md:flex-col
+          transition-all duration-300 ease-in-out md:fixed md:left-0 md:top-0 md:z-30 md:flex md:flex-col
           ${isCollapsed ? 'w-20' : 'w-64'}
+          scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent
         `}
       >
         {/* Desktop Toggle Button */}
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={() => {
+            const newCollapsedState = !isCollapsed;
+            setIsCollapsed(newCollapsedState);
+            onCollapseChange?.(newCollapsedState);
+          }}
           className='absolute -right-3 top-9 z-50 hidden rounded-full bg-white p-1.5 shadow-md hover:bg-gray-100 md:block'
         >
           {isCollapsed ? (
