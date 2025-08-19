@@ -248,12 +248,14 @@ export async function executeOperation(
         case 'updateSeriesStock':
           const stock = parseInt(document.seriesStock[0].inStock) || 0;
           const cost = parseFloat(document.seriesStock[0].productCost) || 0;
+          const soldCount = parseInt(document.seriesStock[0].soldCount) || 0;
           const ser = document.seriesStock[0].series;
           console.log('Updating series stock:', {
             brandName,
             ser,
             stock,
             cost,
+            soldCount,
           });
           const updateResult = await db.collection(collectionName).updateMany(
             { brandName, 'seriesStock.series': ser },
@@ -261,6 +263,7 @@ export async function executeOperation(
               $set: {
                 'seriesStock.$.inStock': stock,
                 'seriesStock.$.productCost': cost,
+                'seriesStock.$.soldCount': soldCount,
                 'seriesStock.$.updatedDate':
                   document.seriesStock[0].updatedDate,
               },

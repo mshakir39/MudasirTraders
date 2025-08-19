@@ -22,6 +22,136 @@ const toNumber = (value: any): number => {
   return isNaN(num) ? 0 : num;
 };
 
+// Helper function to validate and fix soldCount data
+const validateSoldCount = (soldCount: any): number => {
+  const num = toNumber(soldCount);
+  if (num < 0) {
+    console.warn(`⚠️ Negative soldCount detected: ${soldCount}, setting to 0`);
+    return 0;
+  }
+  return num;
+};
+
+// Helper function to verify sales-stock synchronization
+const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
+  console.log('🔍 Starting sales-stock sync verification...');
+  
+  const syncIssues: any[] = [];
+  const syncSummary = {
+    totalProducts: 0,
+    syncedProducts: 0,
+    mismatchedProducts: 0,
+    missingInSales: 0,
+    missingInStock: 0,
+  };
+
+  // Create a map of stock data for quick lookup
+  const stockMap = new Map();
+  stockData.forEach((stockDoc) => {
+    if (stockDoc.seriesStock && Array.isArray(stockDoc.seriesStock)) {
+      stockDoc.seriesStock.forEach((series: any) => {
+        const key = `${stockDoc.brandName}-${series.series}`;
+        stockMap.set(key, {
+          brandName: stockDoc.brandName,
+          series: series.series,
+          stockSoldCount: validateSoldCount(series.soldCount),
+          inStock: toNumber(series.inStock),
+        });
+      });
+    }
+  });
+
+  // Calculate actual sales from sales data
+  const salesMap = new Map();
+  salesData.forEach((sale) => {
+    if (Array.isArray(sale.products)) {
+      sale.products.forEach((product: any) => {
+        const brandName = product.brandName || product.batteryDetails?.brandName || '';
+        const series = product.series || product.batteryDetails?.name || '';
+        
+        if (brandName && series) {
+          const key = `${brandName}-${series}`;
+          const quantity = toNumber(product.quantity);
+          
+          if (salesMap.has(key)) {
+            salesMap.set(key, salesMap.get(key) + quantity);
+          } else {
+            salesMap.set(key, quantity);
+          }
+        }
+      });
+    }
+  });
+
+  // Compare stock soldCount with actual sales
+  stockMap.forEach((stockItem, key) => {
+    syncSummary.totalProducts++;
+    const actualSales = salesMap.get(key) || 0;
+    const stockSoldCount = stockItem.stockSoldCount;
+    
+    if (Math.abs(actualSales - stockSoldCount) > 0) {
+      syncSummary.mismatchedProducts++;
+      syncIssues.push({
+        product: key,
+        brandName: stockItem.brandName,
+        series: stockItem.series,
+        stockSoldCount,
+        actualSales,
+        difference: actualSales - stockSoldCount,
+        inStock: stockItem.inStock,
+        issue: actualSales > stockSoldCount ? 'Stock undercounted' : 'Stock overcounted',
+      });
+      
+      console.log(`❌ Sync issue: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}, Diff: ${actualSales - stockSoldCount}`);
+    } else {
+      syncSummary.syncedProducts++;
+      console.log(`✅ Synced: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}`);
+    }
+  });
+
+  // Check for products in sales but not in stock
+  salesMap.forEach((salesCount, key) => {
+    if (!stockMap.has(key)) {
+      syncSummary.missingInStock++;
+      syncIssues.push({
+        product: key,
+        actualSales: salesCount,
+        stockSoldCount: 0,
+        difference: salesCount,
+        issue: 'Product in sales but missing from stock',
+      });
+      console.log(`❌ Missing in stock: ${key} - Sales: ${salesCount}`);
+    }
+  });
+
+  // Check for products in stock but no sales
+  stockMap.forEach((stockItem, key) => {
+    if (!salesMap.has(key) && stockItem.stockSoldCount > 0) {
+      syncSummary.missingInSales++;
+      syncIssues.push({
+        product: key,
+        brandName: stockItem.brandName,
+        series: stockItem.series,
+        stockSoldCount: stockItem.stockSoldCount,
+        actualSales: 0,
+        difference: -stockItem.stockSoldCount,
+        inStock: stockItem.inStock,
+        issue: 'Product in stock with soldCount but no sales records',
+      });
+      console.log(`❌ Missing in sales: ${key} - Stock soldCount: ${stockItem.stockSoldCount}`);
+    }
+  });
+
+  console.log('📊 Sales-Stock Sync Summary:', syncSummary);
+  console.log(`🔍 Found ${syncIssues.length} sync issues`);
+  
+  return {
+    syncSummary,
+    syncIssues,
+    isFullySynced: syncIssues.length === 0,
+  };
+};
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🔄 Starting dashboard data fetch...');
@@ -54,6 +184,9 @@ export async function GET(request: NextRequest) {
     ]);
 
     const stock = stockDocs as unknown as StockItem[];
+
+    // VERIFY SALES-STOCK SYNCHRONIZATION
+    const syncVerification = verifySalesStockSync(salesDocs, stock);
 
     // INVENTORY METRICS
     let totalProducts = 0;
@@ -172,18 +305,66 @@ export async function GET(request: NextRequest) {
         })
       : [];
 
+    console.log(`📅 Top products date range: ${topProductsDateRange!.start.toISOString()} to ${topProductsDateRange!.end.toISOString()}`);
+    console.log(`📊 Total sales in date range: ${filteredSalesForTopProducts.length}`);
+    console.log(`📊 Total sales with products: ${filteredSalesForTopProducts.filter(sale => Array.isArray(sale.products) && sale.products.length > 0).length}`);
+
+    // Debug sales data structure
+    if (filteredSalesForTopProducts.length > 0) {
+      const sampleSale = filteredSalesForTopProducts[0];
+      console.log('📊 Sample sale structure:', {
+        customerName: sampleSale.customerName,
+        date: sampleSale.date,
+        productsCount: sampleSale.products?.length || 0,
+        firstProduct: sampleSale.products?.[0] ? {
+          brandName: sampleSale.products[0].brandName,
+          series: sampleSale.products[0].series,
+          batteryDetails: sampleSale.products[0].batteryDetails,
+          quantity: sampleSale.products[0].quantity
+        } : null
+      });
+    }
+
     const actualSalesCount: { [key: string]: number } = {};
     filteredSalesForTopProducts.forEach((sale: any) => {
       if (Array.isArray(sale.products)) {
         sale.products.forEach((product: any) => {
-          const brandName = product.brandName || '';
-          const series = product.series || 'Unknown';
-          const key = `${brandName}-${series}`;
-          const quantity = toNumber(product.quantity);
-          actualSalesCount[key] = (actualSalesCount[key] || 0) + quantity;
+          // Handle different possible field names for brand and series
+          const brandName = product.brandName || product.batteryDetails?.brandName || '';
+          const series = product.series || product.batteryDetails?.name || 'Unknown';
+          
+          // Only count if we have valid brand and series
+          if (brandName && series && series !== 'Unknown') {
+            const key = `${brandName}-${series}`;
+            const quantity = toNumber(product.quantity);
+            actualSalesCount[key] = (actualSalesCount[key] || 0) + quantity;
+            
+            console.log(`📊 Sales count for ${key}: ${quantity} (total: ${actualSalesCount[key]})`);
+          } else {
+            console.log(`⚠️ Skipping invalid product: brandName="${brandName}", series="${series}"`);
+          }
         });
       }
     });
+
+    console.log('📊 Sales count summary:');
+    const salesKeys = Object.keys(actualSalesCount);
+    console.log(`📊 Total unique products sold: ${salesKeys.length}`);
+    salesKeys.slice(0, 10).forEach(key => {
+      console.log(`📊 ${key}: ${actualSalesCount[key]} units sold`);
+    });
+
+    console.log('📦 Stock data structure check:');
+    console.log(`📦 Total stock documents: ${stock.length}`);
+    stock.slice(0, 3).forEach((doc, index) => {
+      console.log(`📦 Stock doc ${index + 1}: brandName="${doc.brandName}", seriesStock count: ${doc.seriesStock?.length || 0}`);
+      if (doc.seriesStock && doc.seriesStock.length > 0) {
+        doc.seriesStock.slice(0, 2).forEach((series, sIndex) => {
+          console.log(`  Series ${sIndex + 1}: series="${series.series}", inStock=${series.inStock}, soldCount=${series.soldCount}`);
+        });
+      }
+    });
+
     const productSales = stock.reduce((sales: any[], document) => {
       if (!document.seriesStock || !Array.isArray(document.seriesStock))
         return sales;
@@ -192,19 +373,44 @@ export async function GET(request: NextRequest) {
         const seriesName = series.series || 'Unknown';
         const key = `${documentBrandName}-${seriesName}`;
         const actualSoldCount = actualSalesCount[key] || 0;
-        return {
-          brandName: documentBrandName,
-          series: seriesName,
-          soldCount: actualSoldCount,
-          inStock: toNumber(series.inStock),
-        };
-      });
+        
+        console.log(`🔍 Checking stock item: ${key}, actualSoldCount: ${actualSoldCount}, inStock: ${toNumber(series.inStock)}`);
+        
+        // Use calculated sales for date range, but fall back to stock soldCount if needed
+        const stockSoldCount = validateSoldCount(series.soldCount);
+        const dateRangeSoldCount = actualSoldCount || 0;
+        
+        // Prefer date range sales, but use stock soldCount if no sales in date range
+        const finalSoldCount = dateRangeSoldCount > 0 ? dateRangeSoldCount : stockSoldCount;
+        
+        console.log(`🔍 Stock item ${key}: stockSoldCount=${stockSoldCount}, dateRangeSoldCount=${dateRangeSoldCount}, finalSoldCount=${finalSoldCount}`);
+        
+        // Only include products that have been sold in the date range OR have historical sales
+        if (finalSoldCount > 0) {
+          return {
+            brandName: documentBrandName,
+            series: seriesName,
+            soldCount: finalSoldCount,
+            inStock: toNumber(series.inStock),
+            isDateRangeData: dateRangeSoldCount > 0, // Flag to indicate if this is date range data
+          };
+        }
+        return null;
+      }).filter(Boolean); // Remove null entries
       return [...sales, ...documentSales];
     }, []);
     const topSellingProducts = productSales
       .filter((product) => product.soldCount > 0)
       .sort((a, b) => b.soldCount - a.soldCount)
       .slice(0, 5);
+
+    console.log('🏆 Top selling products (date range + fallback to historical):');
+
+    console.log('🏆 Top selling products calculated:', topSellingProducts.length);
+    topSellingProducts.forEach((product, index) => {
+      const dataSource = product.isDateRangeData ? '📅 Date Range' : '📊 Historical';
+      console.log(`  ${index + 1}. ${product.brandName} ${product.series}: ${product.soldCount} sold, ${product.inStock} in stock (${dataSource})`);
+    });
 
     // PENDING PAYMENTS
     const totalPending = Array.isArray(invoicesDocs)
@@ -287,10 +493,12 @@ export async function GET(request: NextRequest) {
       topSellingProducts,
       salesTrend,
       inventoryByBrand,
+      syncVerification, // Add sync verification data
       alerts: {
         lowStock: lowStockCount,
         outOfStock: outOfStockCount,
         pendingPayments: totalPending > 0 ? totalPending : 0,
+        syncIssues: syncVerification.syncIssues.length > 0 ? syncVerification.syncIssues.length : 0,
       },
     };
 
@@ -303,3 +511,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
