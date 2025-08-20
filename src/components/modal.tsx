@@ -58,7 +58,7 @@ const Modal: FunctionComponent<ModalProps> = ({
       >
         <Dialog
           as='div'
-          className='relative z-10'
+          className='relative z-50'
           onClose={handleClose}
           // Make the dialog static when preventBackdropClose is true
           static={preventBackdropClose}

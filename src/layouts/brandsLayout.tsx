@@ -2,13 +2,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { unstable_noStore } from 'next/cache';
 import { toast } from 'react-toastify';
-import { revalidatePathCustom } from '@/actions/revalidatePathCustom';
-import { deleteBrand } from '@/actions/brandActions';
+
 import { useBrandStore } from '@/store/brandStore';
 import { IBrand } from '@/interfaces';
-import { FaTrash } from 'react-icons/fa';
+import { FaTrash, FaPlus } from 'react-icons/fa';
 import Table from '@/components/table';
 import { ColumnDef } from '@tanstack/react-table';
+import Modal from '@/components/modal';
+import Input from '@/components/customInput';
+import Button from '@/components/button';
 
 interface BrandsLayoutProps {
   initialBrands: IBrand[];
@@ -31,6 +33,45 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
     }
   }, [initialBrands, setBrands, fetchBrands]);
 
+  const handleCreateBrand = useCallback(async () => {
+    if (!brand.brandName.trim()) {
+      toast.error('Brand name is required');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/brands', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ brandName: brand.brandName.trim() }),
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        toast.success('Brand created successfully');
+        setBrand({ brandName: '' });
+        setIsModalOpen(false);
+        await fetchBrands(); // Refresh store after create
+      } else {
+        toast.error(result.error || 'Failed to create brand');
+      }
+    } catch (error) {
+      console.error('Error creating brand:', error);
+      toast.error('An error occurred while creating the brand');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [brand.brandName, fetchBrands]);
+
+  const handleOpenModal = useCallback(() => {
+    setIsModalOpen(true);
+    setBrand({ brandName: '' });
+  }, []);
+
   const handleDelete = useCallback(
     async (id: string | undefined) => {
       if (!id) {
@@ -41,11 +82,18 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
       if (!confirm('Are you sure you want to delete this brand?')) return;
 
       try {
-        const result = await deleteBrand(id);
+        const response = await fetch('/api/brands', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id }),
+        });
 
-        if (result.success) {
+        const result = await response.json();
+
+        if (response.ok) {
           toast.success('Brand deleted successfully');
-          await revalidatePathCustom('/brands');
           await fetchBrands(); // Refresh store after delete
         } else {
           toast.error(result.error || 'Failed to delete brand');
@@ -93,8 +141,42 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
         columns={columns}
         enableSearch={true}
         searchPlaceholder='Search brands...'
-        showButton={false}
+        showButton={true}
+        buttonTitle='Add Brand'
+        buttonOnClick={handleOpenModal}
       />
+
+      {/* Create Brand Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title='Add New Brand'
+      >
+        <div className='space-y-4'>
+          <Input
+            type='text'
+            label='Brand Name'
+            placeholder='Enter brand name'
+            value={brand.brandName}
+            onChange={(e) => setBrand({ brandName: e.target.value })}
+            parentClass='w-full'
+          />
+          
+          <div className='flex justify-end gap-3 pt-4'>
+            <Button
+              variant='outline'
+              text='Cancel'
+              onClick={() => setIsModalOpen(false)}
+            />
+            <Button
+              variant='fill'
+              text={isLoading ? 'Creating...' : 'Create Brand'}
+              onClick={handleCreateBrand}
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
