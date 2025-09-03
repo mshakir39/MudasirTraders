@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { cloneDeep } from 'lodash';
 import CustomerSection from './CustomerSection';
@@ -42,6 +42,65 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
   stock,
 }) => {
   const [expandedAccordionIndex, setExpandedAccordionIndex] = useState(-1);
+
+  // Function to sync warranty start dates with custom date
+  const syncWarrantyDatesWithCustomDate = useCallback((customDate: string) => {
+    if (!customDate) return;
+    
+    const customDateOnly = customDate.split('T')[0]; // Extract date part only
+    console.log('🔄 Syncing warranty dates with custom date:', customDateOnly);
+    
+    let updatedCount = 0;
+    
+    // Update all accordion items to use the custom date for warranty start
+    Object.keys(accordionData).forEach((accordionIndex) => {
+      const index = parseInt(accordionIndex);
+      const currentAccordion = accordionData[index];
+      
+      if (currentAccordion && currentAccordion.warrentyDuration) {
+        const oldDate = currentAccordion.warrentyStartDate;
+        
+        // Only update if the date is different
+        if (oldDate !== customDateOnly) {
+          console.log(`📅 Updating Row ${index}: warranty start from ${oldDate} to ${customDateOnly}`);
+          
+          accordionMethods.handleAccordionChange(
+            index,
+            'warrentyStartDate',
+            customDateOnly
+          );
+          
+          updatedCount++;
+        }
+      }
+    });
+    
+    if (updatedCount > 0) {
+      console.log(`✅ Successfully synced ${updatedCount} warranty start date(s) with custom date`);
+      toast.success(`Warranty start dates synced with custom date: ${customDateOnly}`);
+    } else {
+      console.log('ℹ️ No warranty dates needed updating');
+    }
+  }, [accordionData, accordionMethods]);
+
+  // Track if sync has already been performed for the current custom date
+  const [lastSyncedDate, setLastSyncedDate] = useState<string>('');
+
+  // Watch for custom date changes and sync warranty dates
+  useEffect(() => {
+    if (invoiceData?.useCustomDate && invoiceData?.customDate) {
+      const customDateOnly = invoiceData.customDate.split('T')[0];
+      
+      // Only sync if we haven't already synced this exact date
+      if (lastSyncedDate !== customDateOnly) {
+        console.log('🔄 Custom date changed, syncing warranty dates...');
+        syncWarrantyDatesWithCustomDate(invoiceData.customDate);
+        setLastSyncedDate(customDateOnly);
+      } else {
+        console.log('ℹ️ Custom date already synced, skipping duplicate sync');
+      }
+    }
+  }, [invoiceData?.useCustomDate, invoiceData?.customDate, syncWarrantyDatesWithCustomDate, lastSyncedDate]);
 
   const transformData = (data: { [key: number]: any }): any[] => {
     return Object.values(data).map((item) => {
@@ -228,6 +287,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             value={invoiceData?.vehicleNo || ''}
             maxLength={20}
             onChange={onChange}
+            placeholder='Enter vehicle number or use "-" if not applicable'
+            
           />
 
           <div className='mb-4'>
@@ -247,6 +308,28 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                       useCustomDate: newValue,
                       customDate: newValue ? prev.customDate : null,
                     }));
+                    
+                    // If custom date is disabled, reset warranty dates to current date
+                    if (!newValue) {
+                      const currentDate = new Date().toISOString().split('T')[0];
+                      console.log('🔄 Custom date disabled, resetting warranty dates to current date:', currentDate);
+                      
+                      Object.keys(accordionData).forEach((accordionIndex) => {
+                        const index = parseInt(accordionIndex);
+                        const currentAccordion = accordionData[index];
+                        
+                        if (currentAccordion && currentAccordion.warrentyDuration) {
+                          accordionMethods.handleAccordionChange(
+                            index,
+                            'warrentyStartDate',
+                            currentDate
+                          );
+                        }
+                      });
+                      
+                      // Reset the last synced date
+                      setLastSyncedDate('');
+                    }
                   }}
                 />
                 <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300"></div>
@@ -266,6 +349,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
                 <p className='mt-1 text-sm text-gray-600'>
                   Select the date and time for this invoice. Use this for old
                   invoices or specific timing.
+                </p>
+                <p className='mt-1 text-sm text-blue-600 font-medium'>
+                  🔄 Warranty start dates will automatically sync with this custom date
                 </p>
               </>
             ) : (

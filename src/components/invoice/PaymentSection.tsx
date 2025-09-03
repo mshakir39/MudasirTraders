@@ -93,7 +93,9 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
                 name='batteriesCountAndWeight'
                 maxLength={50}
                 onChange={onChange}
+                placeholder='e.g., 21kg, 2 batteries'
               />
+
             </div>
             <div className='mt-1 w-full'>
               <Input

@@ -86,7 +86,7 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
         placeholder={
           invoiceData?.customerType === 'Regular' && !invoiceData?.customerId
             ? 'Select a customer above'
-            : ''
+            : 'Enter customer name or use "-" for walk-in'
         }
       />
 
@@ -95,8 +95,7 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
         label='Customer Address'
         name='customerAddress'
         value={invoiceData?.customerAddress || ''}
-        required
-        minLength={5}
+        minLength={1}
         maxLength={200}
         onChange={onChange}
         readOnly={
@@ -105,7 +104,7 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
         placeholder={
           invoiceData?.customerType === 'Regular' && !invoiceData?.customerId
             ? 'Select a customer above'
-            : ''
+            : 'Enter address or use "-" if not specified'
         }
       />
 
@@ -123,7 +122,7 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
         placeholder={
           invoiceData?.customerType === 'Regular' && !invoiceData?.customerId
             ? 'Select a customer above'
-            : ''
+            : 'Enter phone number or use "-" if not provided'
         }
       />
     </>

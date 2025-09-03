@@ -236,7 +236,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                 </div>
               </div>
 
-              {data?.batteriesCountAndWeight && data?.batteriesRate && (
+              {data?.batteriesRate && data?.batteriesRate > 0 && (
                 <div className='width-transition flex h-[60.5px] w-full items-center justify-end bg-transparent text-lg text-black'>
                   <div
                     style={{
@@ -244,7 +244,10 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                     }}
                     className='width-transition p-[16px] font-bold'
                   >
-                    {data?.batteriesCountAndWeight}
+                    {data?.batteriesCountAndWeight && data?.batteriesCountAndWeight !== '-' 
+                      ? data.batteriesCountAndWeight 
+                      : 'Old Battery'
+                    }
                   </div>
                   <div
                     style={{

@@ -27,6 +27,12 @@ export async function POST(req: any, res: any) {
     console.log('customDate:', formData.customDate);
     console.log('useCustomDate type:', typeof formData.useCustomDate);
     console.log('customDate type:', typeof formData.customDate);
+    
+    // Log warranty auto-sync feature
+    if (formData.useCustomDate === true || formData.useCustomDate === 'true') {
+      console.log('🔄 Warranty Auto-Sync: Custom date enabled - warranty start dates will automatically sync with custom invoice date');
+      console.log('📅 Note: All warranty start dates will be set to the custom invoice date for consistency');
+    }
 
     const lastInvoice: any = await executeOperation('invoices', 'findLast');
     let nextInvoiceNumber;
@@ -40,7 +46,7 @@ export async function POST(req: any, res: any) {
         throw new Error(`Invalid invoice number generated: ${nextNumber}`);
       }
       
-      nextInvoiceNumber = `0000000${nextNumber}`; // Increment the numeric part
+      nextInvoiceNumber = nextNumber.toString().padStart(8, '0'); // Ensure exactly 8 digits
     } else {
       nextInvoiceNumber = '00000001'; // Start with 1 if no invoices exist
     }
@@ -87,13 +93,20 @@ export async function POST(req: any, res: any) {
         
         // Calculate warranty end date if warranty code is provided
         let warrantyEndDate = product.warrentyEndDate;
-        if (product.warrentyCode && product.warrentyStartDate && product.warrentyDuration) {
-          const startDate = new Date(product.warrentyStartDate);
+        
+        // Determine the actual warranty start date to use for calculations
+        let actualWarrantyStartDate = product.warrentyStartDate;
+        if ((formData.useCustomDate === true || formData.useCustomDate === 'true') && formData.customDate) {
+          actualWarrantyStartDate = new Date(formData.customDate).toISOString().split('T')[0];
+        }
+        
+        if (product.warrentyCode && actualWarrantyStartDate && product.warrentyDuration) {
+          const startDate = new Date(actualWarrantyStartDate);
           if (!isNaN(startDate.getTime())) {
             // 🔒 VALIDATION: Ensure warranty start date is not in the future
             const warrantyStartDateNow = new Date();
             if (startDate > warrantyStartDateNow) {
-              throw new Error(`Warranty start date for ${product.brandName} - ${product.series} cannot be in the future: ${product.warrentyStartDate}`);
+              throw new Error(`Warranty start date for ${product.brandName} - ${product.series} cannot be in the future: ${actualWarrantyStartDate}`);
             }
             const endDate = new Date(startDate);
             endDate.setMonth(endDate.getMonth() + parseInt(product.warrentyDuration.toString()));
@@ -113,13 +126,22 @@ export async function POST(req: any, res: any) {
           }
         }
         
+        // Auto-set warranty start date to custom date if enabled
+        let finalWarrantyStartDate = product.warrentyStartDate;
+        if ((formData.useCustomDate === true || formData.useCustomDate === 'true') && formData.customDate) {
+          // Use custom date for warranty start date
+          finalWarrantyStartDate = new Date(formData.customDate).toISOString().split('T')[0];
+          console.log(`📅 Auto-setting warranty start date for ${product.brandName} - ${product.series} to custom date: ${finalWarrantyStartDate}`);
+          console.log(`📅 Original warranty start date was: ${product.warrentyStartDate}`);
+        }
+
         return {
           brandName: product.brandName,
           series: product.series,
           productPrice: product.productPrice,
           quantity: product.quantity,
           warrentyCode: product.warrentyCode ? product.warrentyCode.trim() : '',
-          warrentyStartDate: product.warrentyStartDate,
+          warrentyStartDate: finalWarrantyStartDate,
           warrentyEndDate: warrantyEndDate,
           totalPrice: totalPrice,
           batteryDetails: product.batteryDetails,
@@ -217,18 +239,7 @@ export async function POST(req: any, res: any) {
       throw new Error(`Combined received amount (${receivedAmount}) and batteries rate (${batteriesRate}) cannot exceed total product amount (${totalProductAmount})`);
     }
     
-    // 🔒 VALIDATION: Ensure batteries count/weight is provided when batteries rate is set
-    if (batteriesRate > 0 && (!formData.batteriesCountAndWeight || formData.batteriesCountAndWeight.trim() === '')) {
-      throw new Error('Batteries count and weight is required when batteries rate is provided');
-    }
-    
-    // 🔒 VALIDATION: Ensure batteries count/weight is valid when provided
-    if (formData.batteriesCountAndWeight && formData.batteriesCountAndWeight.trim() !== '') {
-      const batteriesInfo = formData.batteriesCountAndWeight.trim();
-      if (batteriesInfo.length < 2) {
-        throw new Error('Batteries count and weight must be at least 2 characters long');
-      }
-    }
+
     
     // 🔒 VALIDATION: Ensure warranty codes are valid when provided
     for (const product of formData.productDetail) {
@@ -290,14 +301,14 @@ export async function POST(req: any, res: any) {
       throw new Error(`Invalid invoice number format in invoice object: ${invoice.invoiceNo}`);
     }
     
-    // 🔒 VALIDATION: Ensure customer name is not empty
-    if (invoice.customerName.trim() === '' || invoice.customerName === '-') {
-      throw new Error('Customer name cannot be empty or "-" in invoice object');
+    // 🔒 VALIDATION: Ensure customer name is not empty (accepts "-" as valid)
+    if (invoice.customerName.trim() === '') {
+      throw new Error('Customer name cannot be empty in invoice object');
     }
     
-    // 🔒 VALIDATION: Ensure customer contact is not empty
-    if (invoice.customerContactNumber.trim() === '' || invoice.customerContactNumber === '-') {
-      throw new Error('Customer contact number cannot be empty or "-" in invoice object');
+    // 🔒 VALIDATION: Ensure customer contact is not empty (accepts "-" as valid)
+    if (invoice.customerContactNumber.trim() === '') {
+      throw new Error('Customer contact number cannot be empty in invoice object');
     }
     
     // 🔒 VALIDATION: Ensure products array is properly structured
@@ -331,13 +342,21 @@ export async function POST(req: any, res: any) {
       invoice.paymentStatus = 'partial';
     }
 
-    // 🔒 VALIDATION: Ensure customer information is provided
-    if (!formData.customerName || formData.customerName.trim() === '' || formData.customerName === '-') {
-      throw new Error('Customer name is required and cannot be empty or "-"');
+    // 🔒 VALIDATION: Ensure customer information is provided (any text but not empty)
+    if (!formData.customerName || formData.customerName.trim() === '') {
+      throw new Error('Customer name is required. Please enter a name (e.g., "John Doe", "Walk-in Customer", "ABC Company", "-")');
     }
     
-    if (!formData.customerContactNumber || formData.customerContactNumber.trim() === '' || formData.customerContactNumber === '-') {
-      throw new Error('Customer contact number is required and cannot be empty or "-"');
+    if (!formData.customerAddress || formData.customerAddress.trim() === '') {
+      throw new Error('Customer address is required. Please enter a location (e.g., "Downtown Area", "Main Street", "Not specified", "-")');
+    }
+    
+    if (!formData.customerContactNumber || formData.customerContactNumber.trim() === '') {
+      throw new Error('Customer contact number is required. Please enter a number (e.g., "03123456789", "Not provided", "Walk-in customer", "-")');
+    }
+    
+    if (!formData.vehicleNo || formData.vehicleNo.trim() === '') {
+      throw new Error('Vehicle number is required. Please enter a vehicle number (e.g., "ABC-123", "Not applicable", "Walk-in customer", "-")');
     }
     
     // 🔒 VALIDATION: Ensure products are provided
@@ -365,7 +384,7 @@ export async function POST(req: any, res: any) {
       throw new Error('Payment method is required and must be an array');
     }
     
-    // 🔒 VALIDATION: Ensure vehicle number is valid when provided
+    // 🔒 VALIDATION: Ensure vehicle number is valid when provided (accepts "-" as valid)
     if (formData.vehicleNo && formData.vehicleNo.trim() !== '' && formData.vehicleNo !== '-') {
       const vehicleNo = formData.vehicleNo.trim();
       if (vehicleNo.length < 3) {
@@ -470,6 +489,20 @@ export async function POST(req: any, res: any) {
     // 🔒 VALIDATION: Ensure sales record insertion was successful
     if (!salesResult) {
       throw new Error('Failed to insert sales record into database');
+    }
+
+    // Log warranty information summary
+    if (formData.useCustomDate === true || formData.useCustomDate === 'true') {
+      console.log('📋 Warranty Summary (Custom Date Enabled):');
+      invoice.products.forEach((product: any, index: number) => {
+        if (product.warrentyCode && product.warrentyStartDate) {
+          console.log(`  Product ${index + 1}: ${product.brandName} - ${product.series}`);
+          console.log(`    Warranty Code: ${product.warrentyCode}`);
+          console.log(`    Warranty Start: ${product.warrentyStartDate}`);
+          console.log(`    Warranty End: ${product.warrentyEndDate}`);
+          console.log(`    Duration: ${formData.productDetail[index]?.warrentyDuration} months`);
+        }
+      });
     }
 
     console.log('✅ Invoice created successfully');

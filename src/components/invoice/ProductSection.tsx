@@ -198,6 +198,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({
                   )
                 }
               />
+
             </div>
             <div className='w-full'>
               <Input
