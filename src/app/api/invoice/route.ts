@@ -65,7 +65,7 @@ export async function POST(req: any, res: any) {
       customerType: formData.customerType || 'WalkIn Customer', // Add customer type
       customerId:
         formData.customerType === 'Regular' ? formData.customerId : null, // Add customerId for regular customers
-      vehicleNo: formData.vehicleNo,
+      vehicleNo: formData.vehicleNo || '',
       paymentMethod: formData.paymentMethod,
       batteriesCountAndWeight: formData?.batteriesCountAndWeight,
       batteriesRate: 0, // Will be validated and set below
@@ -355,9 +355,6 @@ export async function POST(req: any, res: any) {
       throw new Error('Customer contact number is required. Please enter a number (e.g., "03123456789", "Not provided", "Walk-in customer", "-")');
     }
     
-    if (!formData.vehicleNo || formData.vehicleNo.trim() === '') {
-      throw new Error('Vehicle number is required. Please enter a vehicle number (e.g., "ABC-123", "Not applicable", "Walk-in customer", "-")');
-    }
     
     // 🔒 VALIDATION: Ensure products are provided
     if (!formData.productDetail || !Array.isArray(formData.productDetail) || formData.productDetail.length === 0) {
@@ -384,13 +381,6 @@ export async function POST(req: any, res: any) {
       throw new Error('Payment method is required and must be an array');
     }
     
-    // 🔒 VALIDATION: Ensure vehicle number is valid when provided (accepts "-" as valid)
-    if (formData.vehicleNo && formData.vehicleNo.trim() !== '' && formData.vehicleNo !== '-') {
-      const vehicleNo = formData.vehicleNo.trim();
-      if (vehicleNo.length < 3) {
-        throw new Error('Vehicle number must be at least 3 characters long');
-      }
-    }
 
     // Validate quantities before updating stock
     console.log('📦 Validating stock quantities...');

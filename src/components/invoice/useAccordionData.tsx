@@ -37,8 +37,14 @@ const calculateEndDate = (
     return '';
   }
 
+  // Handle empty or invalid months value
+  const monthsValue = parseInt(String(months));
+  if (isNaN(monthsValue) || monthsValue <= 0) {
+    return '';
+  }
+
   const date = new Date(startDate);
-  date.setMonth(date.getMonth() + parseInt(months as string));
+  date.setMonth(date.getMonth() + monthsValue);
   return date.toISOString().split('T')[0];
 };
 

@@ -25,11 +25,11 @@ function GoogleSignIn() {
 
   return (
     <button
-      className='flex h-12 w-fit items-center rounded-lg border border-gray-300 bg-white px-6 py-2 text-sm font-medium text-gray-800 shadow-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:bg-gray-900 dark:text-white'
+      className='group flex h-10 w-full max-w-xs items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200 sm:w-fit sm:max-w-none sm:h-11 sm:px-6 sm:text-sm md:h-12 md:px-8 md:text-base'
       onClick={handleSignIn}
     >
       <svg
-        className='mr-2 h-6 w-6'
+        className='mr-2 h-5 w-5 transition-transform duration-200 group-hover:-translate-x-1 sm:h-5 sm:w-5 md:h-6 md:w-6'
         xmlns='http://www.w3.org/2000/svg'
         xmlnsXlink='http://www.w3.org/1999/xlink'
         width='800px'

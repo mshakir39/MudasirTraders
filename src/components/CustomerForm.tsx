@@ -143,14 +143,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
         }
       />
 
-      <Input
-        type='text'
-        label='Vehicle Number'
-        name='vehicleNo'
-        value={invoiceData?.vehicleNo || ''}
-        maxLength={20}
-        onChange={handleChange}
-      />
     </>
   );
 };

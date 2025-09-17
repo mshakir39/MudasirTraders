@@ -134,8 +134,14 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       return '';
     }
 
+    // Handle empty or invalid months value
+    const monthsValue = parseInt(String(months));
+    if (isNaN(monthsValue) || monthsValue <= 0) {
+      return '';
+    }
+
     const date = new Date(startDate);
-    date.setMonth(date.getMonth() + parseInt(months as string));
+    date.setMonth(date.getMonth() + monthsValue);
     return date.toISOString().split('T')[0];
   };
 
@@ -280,16 +286,6 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             onChange={onChange}
           />
 
-          <Input
-            type='text'
-            label='Vehicle Number'
-            name='vehicleNo'
-            value={invoiceData?.vehicleNo || ''}
-            maxLength={20}
-            onChange={onChange}
-            placeholder='Enter vehicle number or use "-" if not applicable'
-            
-          />
 
           <div className='mb-4'>
             <div className='mb-2 flex items-center justify-between'>
