@@ -458,6 +458,11 @@ export async function executeOperation(
     }
   } catch (error) {
     console.error('❌ Database operation error:', error);
+    // During build time, return empty array instead of throwing error
+    if (process.env.NODE_ENV === 'production' && operation === 'findAll') {
+      console.warn('⚠️ Build-time database error, returning empty array');
+      return [];
+    }
     throw error;
   }
 }

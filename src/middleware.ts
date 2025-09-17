@@ -29,7 +29,6 @@ export function middleware(request: NextRequest) {
 
   // Step 2: Handle Dashboard Access
   if (pathname === '/' && !dashboardUnlocked) {
-    console.log('🔐 Dashboard access denied: no unlock cookie, redirecting to password page');
     return NextResponse.redirect(new URL('/dashboard-password', url));
   }
 
@@ -39,14 +38,17 @@ export function middleware(request: NextRequest) {
     
     // Check if coming from a non-dashboard page
     if (referer) {
-      const refererPath = new URL(referer).pathname;
-      const isRefererDashboardPage = refererPath === '/' || refererPath === '/dashboard-password';
-      
-      if (!isRefererDashboardPage) {
-        console.log(`🔒 Auto-lock: coming back to dashboard from ${refererPath}, redirecting to password`);
-        const response = NextResponse.redirect(new URL('/dashboard-password', url));
-        response.cookies.delete('dashboard-unlocked');
-        return response;
+      try {
+        const refererPath = new URL(referer).pathname;
+        const isRefererDashboardPage = refererPath === '/' || refererPath === '/dashboard-password';
+        
+        if (!isRefererDashboardPage) {
+          const response = NextResponse.redirect(new URL('/dashboard-password', url));
+          response.cookies.delete('dashboard-unlocked');
+          return response;
+        }
+      } catch (error) {
+        // If URL parsing fails, continue with normal flow
       }
     }
   }
@@ -59,7 +61,6 @@ export function middleware(request: NextRequest) {
   // Auto-lock: Delete the dashboard-unlocked cookie when navigating away from dashboard pages
   // This ensures the dashboard is locked when user returns to "/"
   if (!isDashboardRelatedPage && dashboardUnlocked) {
-    console.log(`🔒 Auto-locking dashboard: navigating to ${pathname} (deleting cookie)`);
     response.cookies.delete('dashboard-unlocked');
   }
 

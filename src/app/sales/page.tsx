@@ -11,10 +11,16 @@ export const metadata: Metadata = {
 };
 
 export default async function SalesPage() {
-  const salesResult = await getSales();
-  const sales =
-    salesResult.success && Array.isArray(salesResult.data)
-      ? salesResult.data
-      : [];
-  return <SalesLayout sales={sales} />;
+  try {
+    const salesResult = await getSales();
+    const sales =
+      salesResult.success && Array.isArray(salesResult.data)
+        ? salesResult.data
+        : [];
+    return <SalesLayout sales={sales} />;
+  } catch (error) {
+    console.error('Error fetching sales data:', error);
+    // Return empty data if fetch fails during build
+    return <SalesLayout sales={[]} />;
+  }
 }
