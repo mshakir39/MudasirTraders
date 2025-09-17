@@ -7,7 +7,7 @@ import React, {
   useCallback,
   useTransition,
 } from 'react';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { AlertsBanner } from '@/components/AlertsBanner';

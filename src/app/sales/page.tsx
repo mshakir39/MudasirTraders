@@ -2,8 +2,8 @@ import { getSales } from '@/actions/salesActions';
 import SalesLayout from '@/layouts/salesLayout';
 import { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const dynamic = 'auto';
+export const revalidate = 60; // Cache for 1 minute
 
 export const metadata: Metadata = {
   title: 'Sales | PowerHub',

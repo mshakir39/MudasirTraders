@@ -49,33 +49,23 @@ const Sidebar = ({ className, onCollapseChange }: { className?: string; onCollap
       .toUpperCase();
   };
 
-  const getStoreDetailRecursive = useCallback(async () => {
-    const store = await getStoreDetail();
-    if (store) {
-      setStoreDetail(store.length > 0 ? store[0] : {});
-    } else {
-      getStoreDetailRecursive(); // Call itself only if store is falsy
-    }
-  }, []);
-
   useEffect(() => {
     const fetchStoreDetail = async () => {
-      let store;
-      let attempts = 0;
-      while (!store && attempts < 5) {
-        // Add a limit to the number of attempts
-        store = await getStoreDetail();
-        attempts++;
-      }
-      console.log('store', store);
-      if (store) {
-        setStoreDetail(store.length > 0 ? store[0] : '');
-      } else {
-        // Handle the error case where the data couldn't be fetched
+      try {
+        const store = await getStoreDetail();
+        if (store && Array.isArray(store) && store.length > 0) {
+          setStoreDetail(store[0]);
+        } else {
+          setStoreDetail({ storeName: 'Store' }); // Fallback
+        }
+      } catch (error) {
+        console.error('Error fetching store detail:', error);
+        setStoreDetail({ storeName: 'Store' }); // Fallback
       }
     };
+    
     fetchStoreDetail();
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -129,8 +119,11 @@ const Sidebar = ({ className, onCollapseChange }: { className?: string; onCollap
 
       if (response?.message) {
         toast.success(response?.message);
-        getStoreDetailRecursive();
-        // await revalidatePathCustom('/stock');
+        // Refresh store detail after successful update
+        const updatedStore = await getStoreDetail();
+        if (updatedStore && Array.isArray(updatedStore) && updatedStore.length > 0) {
+          setStoreDetail(updatedStore[0]);
+        }
       }
 
       if (response?.error) {
@@ -144,7 +137,7 @@ const Sidebar = ({ className, onCollapseChange }: { className?: string; onCollap
     }
   };
 
-  const handleChange = React.useCallback((e: any) => {
+  const handleChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setStoreData((prevStore: any) => ({ ...prevStore, [name]: value }));
   }, []);

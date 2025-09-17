@@ -1,7 +1,31 @@
 import React from 'react';
 
-export const LoadingSpinner = () => (
-  <div className='flex h-full w-full items-center justify-center py-8'>
-    <div className='h-12 w-12 animate-spin rounded-full border-b-4 border-t-4 border-[#4287f5]'></div>
-  </div>
-);
+interface LoadingSpinnerProps {
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}
+
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
+  size = 'md', 
+  className = '' 
+}) => {
+  const sizeClasses = {
+    sm: 'h-4 w-4',
+    md: 'h-8 w-8',
+    lg: 'h-12 w-12'
+  };
+
+  return (
+    <div className={`flex items-center justify-center ${className}`}>
+      <div 
+        className={`animate-spin rounded-full border-2 border-gray-300 border-t-blue-600 ${sizeClasses[size]}`}
+        role="status"
+        aria-label="Loading"
+      >
+       
+      </div>
+    </div>
+  );
+};
+
+export default LoadingSpinner;

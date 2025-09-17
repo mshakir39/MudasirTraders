@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getAllInvoices } from '@/getData/getInvoices';
 
 interface CustomerInfo {
@@ -90,27 +90,29 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
     fetchCustomerInfo();
   }, []);
 
-  // Filter suggestions based on input value
-  useEffect(() => {
+  // Memoize filtered suggestions to prevent unnecessary re-renders
+  const filteredSuggestions = useMemo(() => {
     if (value && value.length >= 2 && !readOnly) {
-      const filtered = allCustomerInfo.filter((customer) =>
+      return allCustomerInfo.filter((customer) =>
         customer.name.toLowerCase().includes(value.toLowerCase())
-      );
-      setSuggestions(filtered.slice(0, 10)); // Limit to 10 suggestions
-      setShowSuggestions(filtered.length > 0);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
+      ).slice(0, 10); // Limit to 10 suggestions
     }
+    return [];
   }, [value, allCustomerInfo, readOnly]);
 
+  // Update suggestions when filtered suggestions change
+  useEffect(() => {
+    setSuggestions(filteredSuggestions);
+    setShowSuggestions(filteredSuggestions.length > 0);
+  }, [filteredSuggestions]);
+
   // Handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e);
-  };
+  }, [onChange]);
 
   // Handle suggestion selection
-  const handleSuggestionClick = (customer: CustomerInfo) => {
+  const handleSuggestionClick = useCallback((customer: CustomerInfo) => {
     onChange({
       target: {
         name,
@@ -120,27 +122,27 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
     });
     setShowSuggestions(false);
     inputRef.current?.focus();
-  };
+  }, [onChange, name]);
 
   // Handle input focus
-  const handleInputFocus = () => {
+  const handleInputFocus = useCallback(() => {
     if (value && value.length >= 2 && suggestions.length > 0) {
       setShowSuggestions(true);
     }
-  };
+  }, [value, suggestions.length]);
 
   // Handle input blur
-  const handleInputBlur = (e: React.FocusEvent) => {
+  const handleInputBlur = useCallback((e: React.FocusEvent) => {
     // Delay hiding suggestions to allow clicking on them
     setTimeout(() => {
       if (!suggestionsRef.current?.contains(document.activeElement)) {
         setShowSuggestions(false);
       }
     }, 150);
-  };
+  }, []);
 
   // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!showSuggestions) return;
 
     const currentIndex = suggestions.findIndex(s => s.name === value);
@@ -178,7 +180,7 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
         setShowSuggestions(false);
         break;
     }
-  };
+  }, [showSuggestions, suggestions, value, onChange, name]);
 
   return (
     <div className="relative">

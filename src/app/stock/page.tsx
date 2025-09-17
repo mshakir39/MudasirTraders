@@ -3,8 +3,8 @@ import StockLayout from '../../layouts/stockLayout';
 import { getCategories } from '@/getData/getCategories';
 import { getStock } from '@/actions/stockActions';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const dynamic = 'auto';
+export const revalidate = 60; // Cache for 1 minute
 
 async function page() {
   const categories = await getCategories();

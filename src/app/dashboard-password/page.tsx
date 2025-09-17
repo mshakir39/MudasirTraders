@@ -1,9 +1,9 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { unlockDashboard } from '@/actions/dashboardActions';
+// import { unlockDashboard } from '@/actions/dashboardActions';
 
 const DashboardPasswordPage: React.FC = () => {
   const [password, setPassword] = useState('');
@@ -11,10 +11,11 @@ const DashboardPasswordPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  console.log(
-    'Dashboard Password:',
-    process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD
-  );
+  // Reset component state when mounting (useful when navigating from other routes)
+  useEffect(() => {
+    setIsLoading(false);
+    setPassword('');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,16 +28,27 @@ const DashboardPasswordPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      if (password === process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD) {
-        await unlockDashboard();
+      // Use environment variable with fallback
+      const expectedPassword = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'admin123';
+      
+      if (password === expectedPassword) {
+        // Set dashboard unlocked cookie
+        document.cookie = 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax'; // 30 minutes
+        toast.success('Dashboard unlocked successfully!');
+        
+        // Add a small delay to ensure the toast is visible before redirecting
+        setTimeout(() => {
+          setIsLoading(false);
+          window.location.href = '/';
+        }, 1000);
       } else {
         toast.error('Incorrect password. Please try again.');
         setPassword('');
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Error unlocking dashboard:', error);
       toast.error('An error occurred. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };

@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import CustomersLayout from '@/layouts/customersLayout';
 import { getCustomers } from '@/getData/getCustomers';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const dynamic = 'auto';
+export const revalidate = 60; // Cache for 1 minute
 
 export const metadata: Metadata = {
   title: 'Customers | PowerHub',

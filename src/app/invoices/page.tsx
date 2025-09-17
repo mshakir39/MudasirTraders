@@ -4,8 +4,8 @@ import { getCategories } from '@/getData/getCategories';
 import { getInvoices } from '@/actions/invoiceActions';
 import { getStock } from '@/actions/stockActions';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const dynamic = 'auto';
+export const revalidate = 60; // Cache for 1 minute
 
 async function Invoices() {
   const categories = await getCategories();
