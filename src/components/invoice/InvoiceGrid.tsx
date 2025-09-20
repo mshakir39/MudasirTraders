@@ -177,13 +177,14 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
         id: 'preview',
         header: 'Preview',
         cell: ({ row }) => (
-          <div className='flex h-full w-full items-center justify-start'>
+          <div className='flex h-full w-full items-center justify-start gap-2'>
             <VscPreview
               className='cursor-pointer text-blue-600 hover:text-blue-800'
               onClick={(e) => {
                 e.stopPropagation();
                 onPreview(row.original);
               }}
+              title='Preview Invoice'
             />
           </div>
         ),

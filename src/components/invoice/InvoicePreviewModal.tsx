@@ -8,6 +8,7 @@ import { formatRupees } from '@/utils/formatRupees';
 import { removeParentheses } from '@/utils/formatters';
 import printHtmlAsPdf from '@/utils/printHtmlAsPdf';
 import { printWithThermalPrinter } from '@/utils/thermalPrinter';
+import WhatsAppShareButton from '@/components/WhatsAppShareButton';
 import Modal from '@/components/modal';
 import BasicTable from '@/components/basicTable';
 import PrinterInstructionsModal from '@/components/PrinterInstructionsModal';
@@ -81,6 +82,8 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
     setShowPrinterInstructions(true);
   };
 
+  // WhatsApp handler is now handled by the WhatsAppShareButton component
+
   const handlePrintConfirm = async () => {
     try {
       await printWithThermalPrinter(data);
@@ -126,11 +129,11 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
       title=''
       size='large'
     >
-      <div className='relative flex h-full w-full flex-col' ref={downloadRef}>
+      <div className='relative flex h-full w-full flex-col' ref={downloadRef} data-invoice-modal>
         <div className='thermal-print-title text-[40px] font-bold uppercase text-black'>
           Invoice
         </div>
-        <div className='print-hide absolute right-0 top-0 z-10 flex flex-row gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-lg'>
+        <div className='print-hide absolute right-0 top-0 z-10 flex flex-row items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-lg'>
           <FaDownload
             className='cursor-pointer text-2xl text-[#021B3B] transition-colors hover:text-[#0056b3]'
             onClick={downloadHandler}
@@ -140,6 +143,11 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
             className='cursor-pointer text-2xl text-[#021B3B] transition-colors hover:text-[#0056b3]'
             onClick={printHandler}
             title='Print to Thermal Printer'
+          />
+          <WhatsAppShareButton
+            invoiceData={data}
+            size={32}
+            className='cursor-pointer'
           />
         </div>
         <div className='text-end text-lg font-bold uppercase text-black'>

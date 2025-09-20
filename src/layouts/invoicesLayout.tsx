@@ -4,7 +4,6 @@ import { toast } from 'react-toastify';
 import { POST, PATCH } from '@/utils/api';
 import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
 import { ICategory } from '../../interfaces';
-import arrayStringToArrayObject from '@/utils/arrayStringToArrayObject';
 
 // Component imports
 import InvoiceGrid from '@/components/invoice/InvoiceGrid';

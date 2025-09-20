@@ -3,6 +3,12 @@ import jsPDF from 'jspdf';
 
 const printHtmlAsPdf = async (element: HTMLElement) => {
   try {
+    // Hide elements with print-hide class before generating PDF
+    const elementsToHide = element.querySelectorAll('.print-hide');
+    elementsToHide.forEach((el) => {
+      (el as HTMLElement).style.display = 'none';
+    });
+
     const scaleFactor = 3; // Increase scale factor for higher quality
     const canvas = await html2canvas(element, {
       scale: scaleFactor,
@@ -43,8 +49,18 @@ const printHtmlAsPdf = async (element: HTMLElement) => {
 
     // Save the PDF
     pdf.save('invoice.pdf');
+
+    // Restore elements after PDF generation
+    elementsToHide.forEach((el) => {
+      (el as HTMLElement).style.display = '';
+    });
   } catch (error) {
     console.error('Error generating PDF:', error);
+    // Restore elements even if there's an error
+    const elementsToHide = element.querySelectorAll('.print-hide');
+    elementsToHide.forEach((el) => {
+      (el as HTMLElement).style.display = '';
+    });
   }
 };
 
