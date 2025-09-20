@@ -1,23 +1,53 @@
 'use server';
+import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 import { executeOperation } from '@/app/libs/executeOperation';
 import { getAllSum } from '@/utils/getTotalSum';
 import { ObjectId } from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Track processing invoices to prevent duplicates
 const processingInvoices = new Set<string>();
 
-export async function POST(req: any, res: any) {
-  const formData = await req.json();
+// Cache for frequently accessed data
+const cache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  // Create a unique identifier for this invoice request
+// Cache helper function
+function getCachedData<T>(key: string, fetcher: () => Promise<T>, ttl: number = CACHE_TTL): Promise<T> {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < ttl) {
+    return Promise.resolve(cached.data);
+  }
+  
+  return fetcher().then(data => {
+    cache.set(key, { data, timestamp: Date.now() });
+    return data;
+  });
+}
+
+// Performance tracking
+async function trackPerformance<T>(operation: string, fn: () => Promise<T>): Promise<T> {
+  const start = Date.now();
+  const result = await fn();
+  const duration = Date.now() - start;
+  
+  console.log(`⏱️ ${operation} took ${duration}ms`);
+  
+  if (duration > 1000) {
+    console.warn(`⚠️ Slow operation: ${operation} (${duration}ms)`);
+  }
+  
+  return result;
+}
+
+export async function POST(req: NextRequest) {
+  const formData = await req.json();
   const requestId = `${formData.customerName}-${formData.customerContactNumber}-${Date.now()}`;
   
-  // Check if this request is already being processed
   if (processingInvoices.has(requestId)) {
-    return Response.json({ error: 'Invoice is already being processed. Please wait.' }, { status: 409 });
+    return NextResponse.json({ error: 'Invoice is already being processed. Please wait.' }, { status: 409 });
   }
 
-  // Add to processing set
   processingInvoices.add(requestId);
 
   try {
@@ -496,30 +526,30 @@ export async function POST(req: any, res: any) {
     }
 
     console.log('✅ Invoice created successfully');
-    return Response.json({ message: 'Invoice created successfully' });
+    return NextResponse.json({ message: 'Invoice created successfully' });
   } catch (err: any) {
     console.error('❌ Error creating invoice:', err);
-    return Response.json({ error: err.message });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   } finally {
     // Remove from processing set
     processingInvoices.delete(requestId);
   }
 }
 
-export async function PATCH(req: any, res: any) {
+export async function PATCH(req: NextRequest) {
   try {
     const { additionalPayment, paymentMethod, id } = await req.json();
 
     // 🔒 VALIDATION: Validate additional payment amount
     if (!additionalPayment || isNaN(parseFloat(additionalPayment)) || parseFloat(additionalPayment) <= 0) {
-      return Response.json({ 
+      return NextResponse.json({ 
         error: `Invalid additional payment amount: ${additionalPayment}. Must be a positive number.` 
       }, { status: 400 });
     }
 
     // 🔒 VALIDATION: Validate payment method
     if (!paymentMethod || !Array.isArray(paymentMethod) || paymentMethod.length === 0) {
-      return Response.json({ 
+      return NextResponse.json({ 
         error: 'Payment method is required and must be an array.' 
       }, { status: 400 });
     }
@@ -539,7 +569,7 @@ export async function PATCH(req: any, res: any) {
       
       // 🔒 VALIDATION: Ensure payment amount doesn't exceed remaining amount
       if (paymentAmount > remainingAmount) {
-        return Response.json({ 
+        return NextResponse.json({ 
           error: `Payment amount (${paymentAmount}) cannot exceed remaining amount (${remainingAmount})` 
         }, { status: 400 });
       }
@@ -558,21 +588,21 @@ export async function PATCH(req: any, res: any) {
 
       await executeOperation('invoices', 'updateOne', updatedInvoice);
 
-      return Response.json({ message: 'Invoice updated successfully' });
+      return NextResponse.json({ message: 'Invoice updated successfully' });
     } else {
-      return Response.json({ error: 'Invalid Invoice' });
+      return NextResponse.json({ error: 'Invalid Invoice' }, { status: 400 });
     }
   } catch (err: any) {
-    return Response.json({ error: err.message });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-export async function DELETE(req: any, res: any) {
+export async function DELETE(req: NextRequest) {
   try {
     const { id } = await req.json();
 
     if (!id) {
-      return Response.json({ error: 'Invoice ID is required' });
+      return NextResponse.json({ error: 'Invoice ID is required' }, { status: 400 });
     }
 
     const invoiceId = new ObjectId(id);
@@ -583,7 +613,7 @@ export async function DELETE(req: any, res: any) {
     });
 
     if (!invoice) {
-      return Response.json({ error: 'Invoice not found' });
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     }
 
     console.log(
@@ -703,7 +733,7 @@ export async function DELETE(req: any, res: any) {
 
     console.log('🎉 Complete invoice deletion successful:', invoice.invoiceNo);
 
-    return Response.json({
+    return NextResponse.json({
       message: 'Invoice completely deleted and all related data reverted',
       deletedInvoiceNo: invoice.invoiceNo,
       actionsCompleted: [
@@ -716,9 +746,9 @@ export async function DELETE(req: any, res: any) {
     });
   } catch (err: any) {
     console.error('❌ Error during invoice deletion:', err);
-    return Response.json({
+    return NextResponse.json({
       error: err.message,
       details: 'Invoice deletion failed. Please check the logs for details.',
-    });
+    }, { status: 500 });
   }
 }

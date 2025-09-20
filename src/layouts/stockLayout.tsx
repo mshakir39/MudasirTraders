@@ -18,6 +18,7 @@ import {
 } from '@/actions/stockActions';
 import { ICategory, IDropdownOption, IStock } from '../../interfaces';
 import { getSeries } from '@/models/getSeries';
+import SeriesAutocomplete from '@/components/SeriesAutocomplete';
 import { convertDate } from '@/utils/convertTime';
 
 const Dropdown = dynamic(() => import('@/components/dropdown'));
@@ -28,6 +29,9 @@ interface BatteryDetails {
   plate: string | number | null;
   ah: number;
   type?: string;
+  retailPrice?: number;
+  salesTax?: number;
+  maxRetailPrice?: number;
 }
 
 interface StockBatteryData {
@@ -118,6 +122,48 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     seriesName: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  // Function to get max retail price and sales tax from categories
+  const getMaxRetailPrice = useCallback((brandName: string, seriesName: string) => {
+    const category = categories.find(cat => cat.brandName === brandName);
+    
+    if (category) {
+      // First try exact match
+      let series = category.series.find(s => s.name === seriesName);
+      
+      // If no exact match, try fuzzy matching for common variations
+      if (!series) {
+        series = category.series.find(s => {
+          // Normalize both names for comparison
+          const normalize = (str: string) => str
+            .toLowerCase()
+            .replace(/[\/\\]/g, '') // Remove slashes
+            .replace(/\s+/g, ' ') // Normalize spaces
+            .trim();
+          
+          const normalizedStock = normalize(seriesName);
+          const normalizedCategory = normalize(s.name);
+          
+          return normalizedStock === normalizedCategory;
+        });
+      }
+      
+      // If maxRetailPrice is not available, calculate it from retailPrice and salesTax
+      if (!series?.maxRetailPrice && series?.retailPrice && category.salesTax) {
+        const calculatedMaxRetailPrice = series.retailPrice * (1 + category.salesTax / 100);
+        return {
+          maxRetailPrice: calculatedMaxRetailPrice,
+          salesTax: category.salesTax || 0
+        };
+      }
+      
+      return {
+        maxRetailPrice: series?.maxRetailPrice || 'N/A',
+        salesTax: category.salesTax || 0
+      };
+    }
+    return { maxRetailPrice: 'N/A', salesTax: 0 };
+  }, [categories]);
 
   const handleEditClick = useCallback(
     (item: StockBatteryData, brandName: string) => {
@@ -214,6 +260,36 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         header: 'Product Cost',
         cell: ({ row }) =>
           `Rs ${Number(row.original.productCost).toLocaleString()}`,
+      },
+      {
+        id: 'maxRetailPrice',
+        header: () => {
+          // Get the sales tax for the current brand
+          const category = categories.find(cat => cat.brandName === currentBrandName);
+          const salesTax = category?.salesTax || 0;
+          return `Max Retail Price (${salesTax}% Tax)`;
+        },
+        cell: ({ row }) => {
+          const brandName = currentBrandName;
+          const seriesName = row.original.series;
+          const priceData = getMaxRetailPrice(brandName, seriesName);
+          
+          if (priceData.maxRetailPrice === 'N/A') {
+            return (
+              <div className="flex justify-start items-center w-full">
+                <span className="text-gray-500 font-medium">Rs N/A</span>
+              </div>
+            );
+          }
+          
+          return (
+            <div className="flex justify-start items-center w-full">
+              <span className="font-medium text-gray-900">
+                Rs {Number(priceData.maxRetailPrice).toLocaleString()}
+              </span>
+            </div>
+          );
+        },
       },
       {
         accessorKey: 'inStock',
@@ -850,16 +926,24 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                 }}
                 className='relative w-full'
               >
-                <Dropdown
+                <SeriesAutocomplete
+                  series={seriesOptions.map(option => ({
+                    name: option.value,
+                    plate: option.batteryDetails?.plate || 0,
+                    ah: option.batteryDetails?.ah || 0,
+                    retailPrice: option.batteryDetails?.retailPrice || 0,
+                    type: option.batteryDetails?.type || '',
+                    salesTax: option.batteryDetails?.salesTax || 0,
+                    maxRetailPrice: option.batteryDetails?.maxRetailPrice || 0
+                  }))}
+                  value={modalType === 'edit' ? editModalData.series : stockData.series}
+                  onChange={(value) => {
+                    setStockData(prev => ({ ...prev, series: value }));
+                  }}
+                  placeholder='Search series...'
                   className='w-full'
-                  options={seriesOptions}
-                  onSelect={handleSelectSeriesOption}
-                  placeholder='Select Series'
-                  required={modalType === 'add' && !stockData.series}
-                  defaultValue={
-                    modalType === 'edit' ? editModalData.series : undefined
-                  }
                   disabled={modalType === 'edit'}
+                  showPrices={false}
                 />
               </div>
             </div>

@@ -15,7 +15,7 @@ interface BatteryData {
   type?: string;
   retailPrice?: number;
   salesTax?: number;
-  maxRetailPrice?: number;
+  maxRetailPrice?: number; // Will be calculated automatically
 }
 
 interface ProductData {
@@ -60,7 +60,7 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
   );
   const [salesTax, setSalesTax] = useState<string>('18');
   const [batteryData, setBatteryData] = useState<BatteryData[]>([
-    { name: '', plate: '', ah: 0, retailPrice: 0, maxRetailPrice: 0 },
+    { name: '', plate: '', ah: 0, retailPrice: 0 },
   ]);
   const [jsonData, setJsonData] = useState<string>('');
 
@@ -94,7 +94,7 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
   const addBatteryRow = () => {
     setBatteryData([
       ...batteryData,
-      { name: '', plate: '', ah: 0, retailPrice: 0, maxRetailPrice: 0 },
+      { name: '', plate: '', ah: 0, retailPrice: 0 },
     ]);
   };
 
@@ -398,10 +398,19 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
       return;
     }
 
-    // Filter out empty rows
-    const validData = batteryData.filter(
-      (item) => item.name.trim() && item.plate && item.ah > 0
-    );
+    // Filter out empty rows and calculate maxRetailPrice
+    const validData = batteryData
+      .filter((item) => item.name.trim() && item.plate && item.ah > 0)
+      .map((item) => {
+        const salesTaxAmount = (item.retailPrice || 0) * (Number(salesTax) / 100);
+        const maxRetailPrice = (item.retailPrice || 0) + salesTaxAmount;
+        
+        return {
+          ...item,
+          maxRetailPrice: Math.round(maxRetailPrice * 100) / 100, // Round to 2 decimal places
+          salesTax: Number(salesTax)
+        };
+      });
 
     if (validData.length === 0) {
       toast.error('Please add at least one battery entry');
@@ -443,7 +452,7 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
     setSelectedBrand(null);
     setSalesTax('18');
     setBatteryData([
-      { name: '', plate: '', ah: 0, retailPrice: 0, maxRetailPrice: 0 },
+      { name: '', plate: '', ah: 0, retailPrice: 0 },
     ]);
     setJsonData('');
     setShowConfirmModal(false);
@@ -508,24 +517,21 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
       "plate": 7,
       "ah": 24,
       "retailPrice": 6150.00,
-      "salesTax": 1107.00,
-      "maxRetailPrice": 7257.00
+      "salesTax": 1107.00
     },
     "HT 50 R/L PLUS": {
       "name": "HT 50 R/L PLUS",
       "plate": 7,
       "ah": 26,
       "retailPrice": 6675.00,
-      "salesTax": 1202.00,
-      "maxRetailPrice": 7877.00
+      "salesTax": 1202.00
     },
     "HT 55 R/L": {
       "name": "HT 55 R/L",
       "plate": 9,
       "ah": 30,
       "retailPrice": 7695.00,
-      "salesTax": 1385.00,
-      "maxRetailPrice": 9080.00
+      "salesTax": 1385.00
     }
   }
 }`;
@@ -539,24 +545,21 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
       "plate": 7,
       "ah": 24,
       "retailPrice": 6150.00,
-      "salesTax": 1107.00,
-      "maxRetailPrice": 7257.00
+      "salesTax": 1107.00
     },
     "HT 50 R/L PLUS": {
       "name": "HT 50 R/L PLUS",
       "plate": 7,
       "ah": 26,
       "retailPrice": 6675.00,
-      "salesTax": 1202.00,
-      "maxRetailPrice": 7877.00
+      "salesTax": 1202.00
     },
     "HT 55 R/L": {
       "name": "HT 55 R/L",
       "plate": 9,
       "ah": 30,
       "retailPrice": 7695.00,
-      "salesTax": 1385.00,
-      "maxRetailPrice": 9080.00
+      "salesTax": 1385.00
     },
     "HT 60 R/L": {
       "name": "HT 60 R/L",
@@ -1116,9 +1119,6 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
                             Retail Price
                           </th>
                           <th className='px-2 py-2 text-left text-xs font-medium uppercase text-gray-500'>
-                            Max Price
-                          </th>
-                          <th className='px-2 py-2 text-left text-xs font-medium uppercase text-gray-500'>
                             Action
                           </th>
                         </tr>
@@ -1192,21 +1192,6 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
                               />
                             </td>
                             <td className='px-2 py-2'>
-                              <input
-                                type='number'
-                                value={battery.maxRetailPrice || ''}
-                                onChange={(e) =>
-                                  updateBatteryData(
-                                    index,
-                                    'maxRetailPrice',
-                                    parseInt(e.target.value) || 0
-                                  )
-                                }
-                                placeholder='Max price'
-                                className='w-full rounded border border-gray-300 px-2 py-1 text-sm'
-                              />
-                            </td>
-                            <td className='px-2 py-2'>
                               {batteryData.length > 1 && (
                                 <button
                                   onClick={() => removeBatteryRow(index)}
@@ -1244,8 +1229,7 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
       "plate": 7,
       "ah": 24,
       "retailPrice": 6150.00,
-      "salesTax": 1107.00,
-      "maxRetailPrice": 7257.00
+      "salesTax": 1107.00
     }
   }
 }`}

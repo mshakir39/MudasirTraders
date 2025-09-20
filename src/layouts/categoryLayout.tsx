@@ -12,6 +12,8 @@ import {
   updateCategory,
   patchCategory,
   getCategoryHistory,
+  revertCategoryToHistory,
+  appendSeriesToCategory,
 } from '@/actions/categoryActions';
 import { ICategory, IBrand, IBatterySeries } from '@/interfaces';
 import { FaEye, FaUpload } from 'react-icons/fa6';
@@ -145,6 +147,11 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
           } as CategoryWithBatteryData;
         });
 
+        // Console log the history data for debugging
+        console.log('Phoenix History Data:', typedData);
+        console.log('Latest Phoenix Entry:', typedData[0]);
+        console.log('Total History Entries:', typedData.length);
+        
         setHistoryData(typedData);
         setIsHistoryModalOpen(true);
       } catch (error) {
@@ -259,15 +266,15 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
       };
 
       if (existingCategory && existingCategory.id) {
-        // Update existing category
-        const result = await patchCategory(existingCategory.id, categoryData);
+        // Append new series to existing category instead of replacing
+        const result = await appendSeriesToCategory(existingCategory.id, data.series);
 
         if (!result.success) {
-          throw new Error(result.error || 'Failed to update category');
+          throw new Error(result.error || 'Failed to append series to category');
         }
 
         toast.success(
-          `Updated existing category for ${data.brandName} with ${data.series.length} series`
+          `Added ${data.series.length} new series to existing ${data.brandName} category`
         );
       } else if (!existingCategory) {
         // Create new category
@@ -858,27 +865,73 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
                   {historyData.map((entry, index) => (
                     <div
                       key={index}
-                      className='cursor-pointer rounded-lg border p-4 hover:bg-gray-50'
-                      onClick={() => setSelectedHistoryEntry(entry)}
+                      className='rounded-lg border p-4 hover:bg-gray-50'
                     >
                       <div className='flex items-center justify-between'>
-                        <div>
+                        <div 
+                          className='flex-1 cursor-pointer'
+                          onClick={() => setSelectedHistoryEntry(entry)}
+                        >
                           <h3 className='font-medium'>{entry.brandName}</h3>
                           <p className='text-sm text-gray-500'>
                             {entry.series.length} series items
                           </p>
                         </div>
-                        <div className='text-right'>
-                          <p className='text-sm text-gray-600'>
-                            {new Date(
-                              entry.historyDate ?? ''
-                            ).toLocaleDateString()}
-                          </p>
-                          <p className='text-xs text-gray-500'>
-                            {new Date(
-                              entry.historyDate ?? ''
-                            ).toLocaleTimeString()}
-                          </p>
+                        <div className='flex items-center gap-3'>
+                          <div className='text-right'>
+                            <p className='text-sm text-gray-600'>
+                              {new Date(
+                                entry.historyDate ?? ''
+                              ).toLocaleDateString()}
+                            </p>
+                            <p className='text-xs text-gray-500'>
+                              {new Date(
+                                entry.historyDate ?? ''
+                              ).toLocaleTimeString()}
+                            </p>
+                          </div>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                // Get the original history entry ID from the database
+                                const historyEntryId = (entry as any)._id || entry.id;
+                                console.log('Revert clicked for entry:', {
+                                  entryId: entry.id,
+                                  historyEntryId: historyEntryId,
+                                  brandName: entry.brandName,
+                                  seriesCount: entry.series?.length || 0
+                                });
+                                
+                                if (!historyEntryId) {
+                                  throw new Error('History entry ID not found');
+                                }
+                                
+                                const result = await revertCategoryToHistory(
+                                  entry.id!,
+                                  historyEntryId
+                                );
+                                
+                                console.log('Revert result:', result);
+                                
+                                if (result.success) {
+                                  toast.success('Phoenix reverted successfully!');
+                                  // Refresh the categories and history
+                                  fetchCategories();
+                                  handleViewHistory(entry.id!);
+                                } else {
+                                  console.error('Revert failed:', result.error);
+                                  toast.error(result.error || 'Failed to revert');
+                                }
+                              } catch (error) {
+                                console.error('Error reverting:', error);
+                                toast.error('Failed to revert Phoenix');
+                              }
+                            }}
+                            className='px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded-md hover:bg-orange-200 transition-colors'
+                          >
+                            Revert
+                          </button>
                         </div>
                       </div>
                     </div>
