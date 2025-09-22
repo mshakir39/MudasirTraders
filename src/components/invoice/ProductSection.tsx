@@ -185,8 +185,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({
     }
 
     return (
-      <>
-        <div className='w-full'>
+      <div className='w-full'>
           <div className='mb-4 mt-4 grid w-full grid-cols-2 gap-4'>
             <div className='w-full'>
               <Dropdown
@@ -281,62 +280,109 @@ const ProductSection: React.FC<ProductSectionProps> = ({
             </div>
           </div>
 
-          <div className='mb-4 grid w-full grid-cols-2 gap-4'>
-            <div className='w-full'>
-              <Input
-                parentClass='w-full'
-                type='date'
-                label='Warranty Start Date'
-                name='warrentyStartDate'
-                value={accordionDataItem.warrentyStartDate}
-                onChange={(e) =>
-                  accordionMethods.handleAccordionChange(
-                    accordionIndex,
-                    'warrentyStartDate',
-                    e.target.value
-                  )
-                }
-              />
-
-            </div>
-            <div className='w-full'>
-              <Input
-                parentClass='w-full'
-                type='number'
-                label='Warranty Duration (Months)'
-                name='warrentyDuration'
-                min={1}
-                value={accordionDataItem.warrentyDuration}
-                onChange={(e) =>
-                  accordionMethods.handleAccordionChange(
-                    accordionIndex,
-                    'warrentyDuration',
-                    e.target.value
-                  )
-                }
-              />
+          {/* No Warranty Toggle */}
+          <div className='mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4'>
+            <div className='flex items-center justify-between'>
+              <div className='flex flex-col'>
+                <label className='text-sm font-semibold text-gray-800'>
+                  No Warranty
+                </label>
+                <p className='text-xs text-gray-600 mt-1'>
+                  {accordionDataItem.noWarranty 
+                    ? 'This product has no warranty coverage' 
+                    : 'Enable if this product has no warranty'
+                  }
+                </p>
+              </div>
+              <div className='flex items-center space-x-3'>
+                <button
+                  type='button'
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-4 focus:ring-red-200 ${
+                    accordionDataItem.noWarranty ? 'bg-red-500' : 'bg-gray-300'
+                  }`}
+                  onClick={() => {
+                    console.log('Toggle clicked, current value:', accordionDataItem.noWarranty);
+                    const newValue = !accordionDataItem.noWarranty;
+                    console.log('Setting new value:', newValue);
+                    accordionMethods.handleAccordionChange(
+                      accordionIndex,
+                      'noWarranty',
+                      newValue
+                    );
+                  }}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                      accordionDataItem.noWarranty ? 'translate-x-6' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+                <span className={`text-sm font-medium ${accordionDataItem.noWarranty ? 'text-red-600' : 'text-gray-600'}`}>
+                  {accordionDataItem.noWarranty ? 'No Warranty' : 'Has Warranty'}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className='mb-4 w-full'>
-          <Input
-            parentClass='w-full'
-            type='text'
-            label='Warranty Code'
-            name='warrentyCode'
-            placeholder='Enter warranty code(s) - multiple codes separated by comma or space'
-            value={accordionDataItem.warrentyCode}
-            onChange={(e) =>
-              accordionMethods.handleAccordionChange(
-                accordionIndex,
-                'warrentyCode',
-                e.target.value
-              )
-            }
-          />
-        </div>
-      </>
+          {/* Only show warranty fields if warranty is enabled */}
+          {!accordionDataItem.noWarranty && (
+            <>
+              <div className='mb-4 grid w-full grid-cols-2 gap-4'>
+                <div className='w-full'>
+                  <Input
+                    parentClass='w-full'
+                    type='date'
+                    label='Warranty Start Date'
+                    name='warrentyStartDate'
+                    value={accordionDataItem.warrentyStartDate}
+                    onChange={(e) =>
+                      accordionMethods.handleAccordionChange(
+                        accordionIndex,
+                        'warrentyStartDate',
+                        e.target.value
+                      )
+                    }
+                  />
+                </div>
+                <div className='w-full'>
+                  <Input
+                    parentClass='w-full'
+                    type='number'
+                    label='Warranty Duration (Months)'
+                    name='warrentyDuration'
+                    min={1}
+                    value={accordionDataItem.warrentyDuration}
+                    onChange={(e) =>
+                      accordionMethods.handleAccordionChange(
+                        accordionIndex,
+                        'warrentyDuration',
+                        e.target.value
+                      )
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className='mb-4 w-full'>
+                <Input
+                  parentClass='w-full'
+                  type='text'
+                  label='Warranty Code'
+                  name='warrentyCode'
+                  placeholder='Enter warranty code(s) - multiple codes separated by comma or space'
+                  value={accordionDataItem.warrentyCode}
+                  onChange={(e) =>
+                    accordionMethods.handleAccordionChange(
+                      accordionIndex,
+                      'warrentyCode',
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+            </>
+          )}
+      </div>
     );
   };
 

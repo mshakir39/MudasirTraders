@@ -109,16 +109,18 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
         batteryDetails,
         warrentyStartDate,
         warrentyDuration,
+        noWarranty,
         ...rest
       } = item;
 
       return {
         ...rest,
-        warrentyStartDate,
-        warrentyDuration,
-        warrantyEndDate: calculateEndDate(
-          item.warrantyStartDate,
-          item.warrantyDuration
+        warrentyStartDate: noWarranty ? '' : warrentyStartDate,
+        warrentyDuration: noWarranty ? '0' : warrentyDuration,
+        warrentyCode: noWarranty ? 'No Warranty' : item.warrentyCode,
+        warrantyEndDate: noWarranty ? '' : calculateEndDate(
+          item.warrentyStartDate,
+          item.warrentyDuration
         ),
         totalPrice: Number(rest.productPrice) * Number(rest.quantity),
         batteryDetails,

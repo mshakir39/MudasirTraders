@@ -11,6 +11,7 @@ interface AccordionData {
     warrentyEndDate: string;
     warrentyCode: string;
     warrentyDuration: string;
+    noWarranty: boolean;
     seriesOption: SeriesOption[];
     batteryDetails?: BatteryDetails;
   };
@@ -71,6 +72,7 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
       ),
       warrentyCode: '',
       warrentyDuration: '6',
+      noWarranty: false,
       batteryDetails: undefined,
     },
   });
@@ -99,6 +101,7 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
         warrentyEndDate: calculateEndDate(warrantyStartDate, '6'),
         warrentyCode: '',
         warrentyDuration: '6',
+        noWarranty: false,
         batteryDetails: undefined,
       },
     }));
@@ -232,6 +235,25 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
             warrentyEndDate: calculateEndDate(startDate, duration),
           },
         }));
+      } else if (fieldName === 'noWarranty') {
+        const isNoWarranty = Boolean(fieldValue);
+        console.log('handleAccordionChange - noWarranty:', isNoWarranty, 'for accordion:', accordionIndex);
+        setAccordionData((prevData: AccordionData) => {
+          const newData = {
+            ...prevData,
+            [accordionIndex]: {
+              ...prevData[accordionIndex],
+              noWarranty: isNoWarranty,
+              // Reset warranty fields when no warranty is selected
+              warrentyStartDate: isNoWarranty ? '' : prevData[accordionIndex].warrentyStartDate || new Date().toISOString().split('T')[0],
+              warrentyEndDate: isNoWarranty ? '' : prevData[accordionIndex].warrentyEndDate,
+              warrentyDuration: isNoWarranty ? '0' : prevData[accordionIndex].warrentyDuration || '6',
+              warrentyCode: isNoWarranty ? 'No Warranty' : prevData[accordionIndex].warrentyCode,
+            },
+          };
+          console.log('Updated accordion data:', newData[accordionIndex]);
+          return newData;
+        });
       } else {
         setAccordionData((prevData: AccordionData) => {
           // Trim warranty code if that's the field being updated
@@ -269,6 +291,7 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
         warrentyEndDate: calculateEndDate(warrantyStartDate, '6'),
         warrentyCode: '',
         warrentyDuration: '6',
+        noWarranty: false,
         batteryDetails: undefined,
       },
     });
