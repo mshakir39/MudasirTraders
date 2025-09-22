@@ -13,7 +13,7 @@ const printHtmlAsPdf = async (element: HTMLElement) => {
     const canvas = await html2canvas(element, {
       scale: scaleFactor,
       backgroundColor: '#ffffff', // Set background to white
-    });
+    } as any);
     const imgData = canvas.toDataURL('image/jpeg', 1.0); // Use maximum quality
 
     const pdf = new jsPDF('p', 'mm', 'a4'); // Create a PDF in portrait mode, A4 size

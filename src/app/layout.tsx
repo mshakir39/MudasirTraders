@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import 'react-data-grid/lib/styles.css';
 import 'rsuite-table/dist/css/rsuite-table.css';
 import SessionWrapper from '@/components/sessionWrapper';
 import LayoutWrapper from '@/components/LayoutWrapper';
