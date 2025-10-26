@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import 'rsuite-table/dist/css/rsuite-table.css';
 import SessionWrapper from '@/components/sessionWrapper';
 import LayoutWrapper from '@/components/LayoutWrapper';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -26,6 +27,7 @@ export default function RootLayout({
           <LayoutWrapper>{children}</LayoutWrapper>
           <ToastContainer />
         </SessionWrapper>
+        <SpeedInsights />
       </body>
     </html>
   );
