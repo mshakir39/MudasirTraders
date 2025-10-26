@@ -21,17 +21,23 @@ export async function createDatabaseIndexes() {
       db.collection('invoices').createIndex({ customerContactNumber: 1 }),
       db.collection('invoices').createIndex({ paymentStatus: 1 }),
       db.collection('invoices').createIndex({ customerId: 1 }),
-      
+
       // Compound indexes for common queries
-      db.collection('invoices').createIndex({ customerName: 1, createdDate: -1 }),
-      db.collection('invoices').createIndex({ createdDate: -1, paymentStatus: 1 }),
-      db.collection('invoices').createIndex({ customerName: 1, paymentStatus: 1 }),
-      
+      db
+        .collection('invoices')
+        .createIndex({ customerName: 1, createdDate: -1 }),
+      db
+        .collection('invoices')
+        .createIndex({ createdDate: -1, paymentStatus: 1 }),
+      db
+        .collection('invoices')
+        .createIndex({ customerName: 1, paymentStatus: 1 }),
+
       // Text index for customer search
-      db.collection('invoices').createIndex({ 
-        customerName: 'text', 
-        customerContactNumber: 'text' 
-      })
+      db.collection('invoices').createIndex({
+        customerName: 'text',
+        customerContactNumber: 'text',
+      }),
     ]);
 
     // Sales collection indexes
@@ -41,21 +47,25 @@ export async function createDatabaseIndexes() {
       db.collection('sales').createIndex({ customerName: 1 }),
       db.collection('sales').createIndex({ 'products.brandName': 1 }),
       db.collection('sales').createIndex({ 'products.series': 1 }),
-      db.collection('sales').createIndex({ customerName: 1, date: -1 })
+      db.collection('sales').createIndex({ customerName: 1, date: -1 }),
     ]);
 
     // Stock collection indexes
     await Promise.all([
       db.collection('stock').createIndex({ brandName: 1 }),
       db.collection('stock').createIndex({ 'seriesStock.series': 1 }),
-      db.collection('stock').createIndex({ brandName: 1, 'seriesStock.series': 1 })
+      db
+        .collection('stock')
+        .createIndex({ brandName: 1, 'seriesStock.series': 1 }),
     ]);
 
     // Categories collection indexes
     await Promise.all([
-      db.collection('categories').createIndex({ brandName: 1 }, { unique: true }),
+      db
+        .collection('categories')
+        .createIndex({ brandName: 1 }, { unique: true }),
       db.collection('categories').createIndex({ 'series.name': 1 }),
-      db.collection('categories').createIndex({ salesTax: 1 })
+      db.collection('categories').createIndex({ salesTax: 1 }),
     ]);
 
     // Customers collection indexes
@@ -63,40 +73,45 @@ export async function createDatabaseIndexes() {
       db.collection('customers').createIndex({ customerName: 1 }),
       db.collection('customers').createIndex({ customerContactNumber: 1 }),
       db.collection('customers').createIndex({ customerType: 1 }),
-      db.collection('customers').createIndex({ 
-        customerName: 'text', 
-        customerContactNumber: 'text' 
-      })
+      db.collection('customers').createIndex({
+        customerName: 'text',
+        customerContactNumber: 'text',
+      }),
     ]);
 
     // Warranty history indexes
     await Promise.all([
       db.collection('warrantyHistory').createIndex({ warrentyCode: 1 }),
       db.collection('warrantyHistory').createIndex({ customerName: 1 }),
-      db.collection('warrantyHistory').createIndex({ 'productDetails.brandName': 1 }),
-      db.collection('warrantyHistory').createIndex({ 'productDetails.series': 1 }),
-      db.collection('warrantyHistory').createIndex({ originalInvoiceNo: 1 })
+      db
+        .collection('warrantyHistory')
+        .createIndex({ 'productDetails.brandName': 1 }),
+      db
+        .collection('warrantyHistory')
+        .createIndex({ 'productDetails.series': 1 }),
+      db.collection('warrantyHistory').createIndex({ originalInvoiceNo: 1 }),
     ]);
 
     // Category history indexes
     await Promise.all([
       db.collection('categoryHistory').createIndex({ categoryId: 1 }),
       db.collection('categoryHistory').createIndex({ historyDate: -1 }),
-      db.collection('categoryHistory').createIndex({ categoryId: 1, historyDate: -1 })
+      db
+        .collection('categoryHistory')
+        .createIndex({ categoryId: 1, historyDate: -1 }),
     ]);
 
     // Archived invoices indexes
     await Promise.all([
       db.collection('archivedInvoices').createIndex({ originalInvoiceNo: 1 }),
       db.collection('archivedInvoices').createIndex({ deletedAt: -1 }),
-      db.collection('archivedInvoices').createIndex({ originalId: 1 })
+      db.collection('archivedInvoices').createIndex({ originalId: 1 }),
     ]);
 
     console.log('✅ Database indexes created successfully');
-    
+
     // Log index statistics
     await logIndexStatistics(db);
-    
   } catch (error) {
     console.error('❌ Error creating database indexes:', error);
   }
@@ -106,23 +121,28 @@ export async function createDatabaseIndexes() {
 async function logIndexStatistics(db: any) {
   try {
     const collections = [
-      'invoices', 'sales', 'stock', 'categories', 
-      'customers', 'warrantyHistory', 'categoryHistory'
+      'invoices',
+      'sales',
+      'stock',
+      'categories',
+      'customers',
+      'warrantyHistory',
+      'categoryHistory',
     ];
 
     for (const collectionName of collections) {
       const collection = db.collection(collectionName);
       const indexes = await collection.indexes();
-      
+
       console.log(`📊 ${collectionName} indexes:`, indexes.length);
-      
+
       // Log index sizes
       const stats = await collection.stats();
       console.log(`📈 ${collectionName} stats:`, {
         count: stats.count,
         size: stats.size,
         avgObjSize: stats.avgObjSize,
-        indexSizes: stats.indexSizes
+        indexSizes: stats.indexSizes,
       });
     }
   } catch (error) {
@@ -142,8 +162,13 @@ export async function dropDatabaseIndexes() {
     console.log('🗑️ Dropping database indexes...');
 
     const collections = [
-      'invoices', 'sales', 'stock', 'categories', 
-      'customers', 'warrantyHistory', 'categoryHistory'
+      'invoices',
+      'sales',
+      'stock',
+      'categories',
+      'customers',
+      'warrantyHistory',
+      'categoryHistory',
     ];
 
     for (const collectionName of collections) {
@@ -176,36 +201,38 @@ export async function checkIndexPerformance() {
         collection: 'invoices',
         query: {},
         sort: { createdDate: -1 },
-        limit: 10
+        limit: 10,
       },
       {
         name: 'Customer Invoices',
         collection: 'invoices',
         query: { customerName: 'Test Customer' },
-        sort: { createdDate: -1 }
+        sort: { createdDate: -1 },
       },
       {
         name: 'Stock by Brand',
         collection: 'stock',
-        query: { brandName: 'PHOENIX' }
-      }
+        query: { brandName: 'PHOENIX' },
+      },
     ];
 
     for (const testQuery of testQueries) {
       const start = Date.now();
       const collection = db.collection(testQuery.collection);
-      
+
       let cursor = collection.find(testQuery.query);
       if (testQuery.sort) cursor = cursor.sort(testQuery.sort as any);
       if (testQuery.limit) cursor = cursor.limit(testQuery.limit);
-      
+
       await cursor.toArray();
       const duration = Date.now() - start;
-      
+
       console.log(`⏱️ ${testQuery.name}: ${duration}ms`);
-      
+
       if (duration > 100) {
-        console.warn(`⚠️ Slow query detected: ${testQuery.name} (${duration}ms)`);
+        console.warn(
+          `⚠️ Slow query detected: ${testQuery.name} (${duration}ms)`
+        );
       }
     }
   } catch (error) {

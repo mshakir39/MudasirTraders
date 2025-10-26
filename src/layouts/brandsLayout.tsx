@@ -50,7 +50,7 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
       });
 
       const result = await response.json();
-      
+
       if (response.ok) {
         toast.success('Brand created successfully');
         setBrand({ brandName: '' });
@@ -60,7 +60,6 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
         toast.error(result.error || 'Failed to create brand');
       }
     } catch (error) {
-      console.error('Error creating brand:', error);
       toast.error('An error occurred while creating the brand');
     } finally {
       setIsLoading(false);
@@ -99,7 +98,6 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
           toast.error(result.error || 'Failed to delete brand');
         }
       } catch (error) {
-        console.error('Error deleting brand:', error);
         toast.error('An error occurred while deleting the brand');
       }
     },
@@ -161,7 +159,7 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
             onChange={(e) => setBrand({ brandName: e.target.value })}
             parentClass='w-full'
           />
-          
+
           <div className='flex justify-end gap-3 pt-4'>
             <Button
               variant='outline'

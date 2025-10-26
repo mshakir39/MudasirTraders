@@ -180,11 +180,6 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
 
           // Use combined options (only series with stock > 0)
           const filteredSeriesOptions = allSeriesOptions;
-
-          console.log('📝 Setting accordion data for index:', accordionIndex);
-          console.log('📝 Brand name:', fieldValue);
-          console.log('📝 Series options to set:', filteredSeriesOptions);
-
           setAccordionData((prevData: AccordionData) => {
             const newData = {
               ...prevData,
@@ -195,7 +190,6 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
                 series: '', // Reset series when brand changes
               },
             };
-            console.log('📝 Updated accordion data:', newData);
             return newData;
           });
         }
@@ -237,7 +231,6 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
         }));
       } else if (fieldName === 'noWarranty') {
         const isNoWarranty = Boolean(fieldValue);
-        console.log('handleAccordionChange - noWarranty:', isNoWarranty, 'for accordion:', accordionIndex);
         setAccordionData((prevData: AccordionData) => {
           const newData = {
             ...prevData,
@@ -245,22 +238,31 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
               ...prevData[accordionIndex],
               noWarranty: isNoWarranty,
               // Reset warranty fields when no warranty is selected
-              warrentyStartDate: isNoWarranty ? '' : prevData[accordionIndex].warrentyStartDate || new Date().toISOString().split('T')[0],
-              warrentyEndDate: isNoWarranty ? '' : prevData[accordionIndex].warrentyEndDate,
-              warrentyDuration: isNoWarranty ? '0' : prevData[accordionIndex].warrentyDuration || '6',
-              warrentyCode: isNoWarranty ? 'No Warranty' : prevData[accordionIndex].warrentyCode,
+              warrentyStartDate: isNoWarranty
+                ? ''
+                : prevData[accordionIndex].warrentyStartDate ||
+                  new Date().toISOString().split('T')[0],
+              warrentyEndDate: isNoWarranty
+                ? ''
+                : prevData[accordionIndex].warrentyEndDate,
+              warrentyDuration: isNoWarranty
+                ? '0'
+                : prevData[accordionIndex].warrentyDuration || '6',
+              warrentyCode: isNoWarranty
+                ? 'No Warranty'
+                : prevData[accordionIndex].warrentyCode,
             },
           };
-          console.log('Updated accordion data:', newData[accordionIndex]);
           return newData;
         });
       } else {
         setAccordionData((prevData: AccordionData) => {
           // Trim warranty code if that's the field being updated
-          const processedValue = fieldName === 'warrentyCode' && typeof fieldValue === 'string' 
-            ? fieldValue.trim() 
-            : fieldValue;
-            
+          const processedValue =
+            fieldName === 'warrentyCode' && typeof fieldValue === 'string'
+              ? fieldValue.trim()
+              : fieldValue;
+
           const updated = {
             ...prevData,
             [accordionIndex]: {

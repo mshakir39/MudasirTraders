@@ -65,20 +65,16 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   };
 
   const downloadHandler = () => {
-    console.log('Download button clicked!');
     if (downloadRef.current) {
       printHtmlAsPdf(downloadRef.current);
     } else {
-      console.log('downloadRef.current is null');
     }
   };
 
   const printHandler = async () => {
     if (!data) {
-      console.log('Print button clicked, but no data available yet.');
       return;
     }
-    console.log('Print button clicked!');
     setShowPrinterInstructions(true);
   };
 
@@ -87,9 +83,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   const handlePrintConfirm = async () => {
     try {
       await printWithThermalPrinter(data);
-      console.log('Print successful!');
     } catch (error: any) {
-      console.error('Print failed:', error);
       setErrorModal({
         isOpen: true,
         title: 'Print Failed',
@@ -108,9 +102,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
     let Widths = lastTwoTds.map((td) => `${td.offsetWidth}`) as string[];
     setTdWidths(Widths);
     if (Widths && Widths.length > 0) {
-      console.log(Widths);
     } else {
-      console.log('Undefined or no elements found');
     }
   };
 
@@ -129,7 +121,11 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
       title=''
       size='large'
     >
-      <div className='relative flex h-full w-full flex-col' ref={downloadRef} data-invoice-modal>
+      <div
+        className='relative flex h-full w-full flex-col'
+        ref={downloadRef}
+        data-invoice-modal
+      >
         <div className='thermal-print-title text-[40px] font-bold uppercase text-black'>
           Invoice
         </div>
@@ -252,10 +248,10 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                     }}
                     className='width-transition p-[16px] font-bold'
                   >
-                    {data?.batteriesCountAndWeight && data?.batteriesCountAndWeight !== '-' 
-                      ? data.batteriesCountAndWeight 
-                      : 'Old Battery'
-                    }
+                    {data?.batteriesCountAndWeight &&
+                    data?.batteriesCountAndWeight !== '-'
+                      ? data.batteriesCountAndWeight
+                      : 'Old Battery'}
                   </div>
                   <div
                     style={{

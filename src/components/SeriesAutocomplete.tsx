@@ -112,23 +112,23 @@ const SeriesAutocomplete: React.FC<SeriesAutocompleteProps> = ({
   }, []);
 
   return (
-    <div className="relative">
+    <div className='relative'>
       <input
         ref={inputRef}
-        type="text"
+        type='text'
         value={value}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         onFocus={() => setIsOpen(true)}
         placeholder={placeholder}
         disabled={disabled}
-        className={`w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed h-10 ${className}`}
+        className={`h-10 w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 ${className}`}
       />
-      
+
       {isOpen && filteredSeries.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded border border-gray-300 bg-white shadow-lg"
+          className='absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded border border-gray-300 bg-white shadow-lg'
         >
           {filteredSeries.map((item, index) => (
             <div
@@ -139,22 +139,35 @@ const SeriesAutocomplete: React.FC<SeriesAutocompleteProps> = ({
               onClick={() => handleSeriesSelect(item)}
               onMouseEnter={() => setHighlightedIndex(index)}
             >
-              <div className="font-medium text-gray-900">{item.name}</div>
-              <div className="text-xs text-gray-500 relative">
+              <div className='font-medium text-gray-900'>{item.name}</div>
+              <div className='relative text-xs text-gray-500'>
                 {item.plate} plates • {item.ah}AH
                 {showPrices && (
                   <>
                     {' • '}
-                    <span className="relative inline-block">
-                      <div className="absolute -top-5 left-0 text-[10px] text-gray-400 whitespace-nowrap">Stock Price</div>
-                      <span className="mt-1 block">Rs {item.retailPrice ? Number(item.retailPrice).toLocaleString() : 'N/A'}</span>
-                    </span>
-                    {item.maxRetailPrice && typeof item.maxRetailPrice === 'number' && item.maxRetailPrice > 0 && (
-                      <span className="ml-2 relative inline-block">
-                        <div className="absolute -top-5 left-0 text-[10px] text-green-500 whitespace-nowrap">List Price</div>
-                        <span className="mt-1 block text-green-600">Rs {Number(item.maxRetailPrice).toLocaleString()}</span>
+                    <span className='relative inline-block'>
+                      <div className='absolute -top-5 left-0 whitespace-nowrap text-[10px] text-gray-400'>
+                        Stock Price
+                      </div>
+                      <span className='mt-1 block'>
+                        Rs{' '}
+                        {item.retailPrice
+                          ? Number(item.retailPrice).toLocaleString()
+                          : 'N/A'}
                       </span>
-                    )}
+                    </span>
+                    {item.maxRetailPrice &&
+                      typeof item.maxRetailPrice === 'number' &&
+                      item.maxRetailPrice > 0 && (
+                        <span className='relative ml-2 inline-block'>
+                          <div className='absolute -top-5 left-0 whitespace-nowrap text-[10px] text-green-500'>
+                            List Price
+                          </div>
+                          <span className='mt-1 block text-green-600'>
+                            Rs {Number(item.maxRetailPrice).toLocaleString()}
+                          </span>
+                        </span>
+                      )}
                   </>
                 )}
               </div>
@@ -162,9 +175,9 @@ const SeriesAutocomplete: React.FC<SeriesAutocompleteProps> = ({
           ))}
         </div>
       )}
-      
+
       {isOpen && filteredSeries.length === 0 && value.trim() && (
-        <div className="absolute z-50 mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-500 shadow-lg">
+        <div className='absolute z-50 mt-1 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-500 shadow-lg'>
           No series found
         </div>
       )}

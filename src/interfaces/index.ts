@@ -11,6 +11,7 @@ export interface IBatterySeries {
   retailPrice?: number;
   salesTax?: number;
   maxRetailPrice?: number;
+  batteryType?: 'battery' | 'tonic'; // Track the battery type
 }
 
 export interface ICategory {

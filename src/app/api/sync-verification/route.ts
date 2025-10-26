@@ -21,7 +21,7 @@ const validateSoldCount = (soldCount: any): number => {
 // Helper function to verify sales-stock synchronization
 const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
   console.log('🔍 Starting comprehensive sales-stock sync verification...');
-  
+
   const syncIssues: any[] = [];
   const syncSummary = {
     totalProducts: 0,
@@ -53,23 +53,24 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
   // Calculate actual sales from sales data
   const salesMap = new Map();
   const salesDetails: any[] = [];
-  
+
   salesData.forEach((sale) => {
     if (Array.isArray(sale.products)) {
       sale.products.forEach((product: any) => {
-        const brandName = product.brandName || product.batteryDetails?.brandName || '';
+        const brandName =
+          product.brandName || product.batteryDetails?.brandName || '';
         const series = product.series || product.batteryDetails?.name || '';
-        
+
         if (brandName && series) {
           const key = `${brandName}-${series}`;
           const quantity = toNumber(product.quantity);
-          
+
           if (salesMap.has(key)) {
             salesMap.set(key, salesMap.get(key) + quantity);
           } else {
             salesMap.set(key, quantity);
           }
-          
+
           // Store detailed sales information
           salesDetails.push({
             product: key,
@@ -90,7 +91,7 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
     syncSummary.totalProducts++;
     const actualSales = salesMap.get(key) || 0;
     const stockSoldCount = stockItem.stockSoldCount;
-    
+
     if (Math.abs(actualSales - stockSoldCount) > 0) {
       syncSummary.mismatchedProducts++;
       syncIssues.push({
@@ -102,14 +103,22 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
         difference: actualSales - stockSoldCount,
         inStock: stockItem.inStock,
         productCost: stockItem.productCost,
-        issue: actualSales > stockSoldCount ? 'Stock undercounted' : 'Stock overcounted',
-        severity: Math.abs(actualSales - stockSoldCount) > 5 ? 'High' : 'Medium',
+        issue:
+          actualSales > stockSoldCount
+            ? 'Stock undercounted'
+            : 'Stock overcounted',
+        severity:
+          Math.abs(actualSales - stockSoldCount) > 5 ? 'High' : 'Medium',
       });
-      
-      console.log(`❌ Sync issue: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}, Diff: ${actualSales - stockSoldCount}`);
+
+      console.log(
+        `❌ Sync issue: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}, Diff: ${actualSales - stockSoldCount}`
+      );
     } else {
       syncSummary.syncedProducts++;
-      console.log(`✅ Synced: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}`);
+      console.log(
+        `✅ Synced: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}`
+      );
     }
   });
 
@@ -145,13 +154,15 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
         issue: 'Product in stock with soldCount but no sales records',
         severity: 'Medium',
       });
-      console.log(`❌ Missing in sales: ${key} - Stock soldCount: ${stockItem.stockSoldCount}`);
+      console.log(
+        `❌ Missing in sales: ${key} - Stock soldCount: ${stockItem.stockSoldCount}`
+      );
     }
   });
 
   console.log('📊 Sales-Stock Sync Summary:', syncSummary);
   console.log(`🔍 Found ${syncIssues.length} sync issues`);
-  
+
   return {
     syncSummary,
     syncIssues,
@@ -165,7 +176,7 @@ export async function GET(request: NextRequest) {
   try {
     console.log('🔄 Starting sync verification...');
     const db = await connectToMongoDB();
-    
+
     if (!db) {
       console.error('❌ Failed to connect to MongoDB');
       return Response.json(
@@ -178,16 +189,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
-    
+
     let salesQuery = {};
     if (startDate && endDate) {
       salesQuery = {
         date: {
           $gte: new Date(startDate),
-          $lte: new Date(endDate)
-        }
+          $lte: new Date(endDate),
+        },
       };
-      console.log(`📅 Filtering sales by date range: ${startDate} to ${endDate}`);
+      console.log(
+        `📅 Filtering sales by date range: ${startDate} to ${endDate}`
+      );
     } else {
       console.log('📅 No date range specified - checking all-time sync');
     }
@@ -198,7 +211,9 @@ export async function GET(request: NextRequest) {
       db.collection('stock').find().toArray(),
     ]);
 
-    console.log(`📊 Fetched ${salesDocs.length} sales records and ${stockDocs.length} stock records`);
+    console.log(
+      `📊 Fetched ${salesDocs.length} sales records and ${stockDocs.length} stock records`
+    );
 
     // Perform sync verification
     const syncVerification = verifySalesStockSync(salesDocs, stockDocs);
@@ -208,17 +223,16 @@ export async function GET(request: NextRequest) {
       data: {
         ...syncVerification,
         dateRange: startDate && endDate ? { startDate, endDate } : null,
-        verificationType: startDate && endDate ? 'Date Range' : 'All Time'
+        verificationType: startDate && endDate ? 'Date Range' : 'All Time',
       },
-      message: syncVerification.isFullySynced 
-        ? 'All sales and stock data are perfectly synchronized!' 
+      message: syncVerification.isFullySynced
+        ? 'All sales and stock data are perfectly synchronized!'
         : `Found ${syncVerification.syncIssues.length} synchronization issues that need attention.`,
     });
-
   } catch (error: any) {
     console.error('❌ Error during sync verification:', error);
     return Response.json(
-      { 
+      {
         success: false,
         error: error.message || 'Failed to verify synchronization',
       },

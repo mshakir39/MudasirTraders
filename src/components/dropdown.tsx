@@ -69,6 +69,22 @@ const DropdownComponent: FunctionComponent<DropdownProps> = ({
     }
   }, [defaultValue, options]);
 
+  // Handle changes to the value prop (controlled component)
+  useEffect(() => {
+    if (value) {
+      const option = options.find(
+        (opt) => opt.value === value.value || opt.label === value.label
+      );
+      if (option) {
+        setSelectedOption(option);
+        setInputValue(option.label);
+      }
+    } else {
+      setSelectedOption(null);
+      setInputValue('');
+    }
+  }, [value, options]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (

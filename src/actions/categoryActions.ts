@@ -262,24 +262,34 @@ export async function revertCategoryToHistory(
     const collection = db.collection('categories');
     const historyCollection = db.collection('categoryHistory');
 
-    console.log('Reverting category:', categoryId, 'to history entry:', historyEntryId);
+    console.log(
+      'Reverting category:',
+      categoryId,
+      'to history entry:',
+      historyEntryId
+    );
 
     // Debug: Check what categories exist in the database
     const allCategories = await collection.find({}).toArray();
-    console.log('All categories in database:', allCategories.map(cat => ({
-      _id: cat._id.toString(),
-      brandName: cat.brandName
-    })));
+    console.log(
+      'All categories in database:',
+      allCategories.map((cat) => ({
+        _id: cat._id.toString(),
+        brandName: cat.brandName,
+      }))
+    );
 
     // First save current state to history before reverting
-    const currentCategory = await collection.findOne({ _id: new ObjectId(categoryId) });
+    const currentCategory = await collection.findOne({
+      _id: new ObjectId(categoryId),
+    });
     console.log('Found current category:', currentCategory ? 'Yes' : 'No');
     console.log('Looking for category ID:', categoryId);
     console.log('ObjectId created:', new ObjectId(categoryId).toString());
-    
+
     if (currentCategory) {
       const { _id, ...historyData } = currentCategory;
-      
+
       // Save current state as history entry
       await historyCollection.insertOne({
         categoryId: new ObjectId(categoryId),
@@ -292,8 +302,8 @@ export async function revertCategoryToHistory(
     }
 
     // Get the actual historical data from the database
-    const historicalEntry = await historyCollection.findOne({ 
-      _id: new ObjectId(historyEntryId) 
+    const historicalEntry = await historyCollection.findOne({
+      _id: new ObjectId(historyEntryId),
     });
 
     if (!historicalEntry) {
@@ -303,16 +313,18 @@ export async function revertCategoryToHistory(
     console.log('Found historical entry:', {
       brandName: historicalEntry.brandName,
       seriesCount: historicalEntry.series?.length || 0,
-      salesTax: historicalEntry.salesTax
+      salesTax: historicalEntry.salesTax,
     });
 
     // Check what's currently in the categories collection
-    const existingCategory = await collection.findOne({ _id: new ObjectId(categoryId) });
+    const existingCategory = await collection.findOne({
+      _id: new ObjectId(categoryId),
+    });
     console.log('Current category before revert:', {
       _id: existingCategory?._id,
       brandName: existingCategory?.brandName,
       seriesCount: existingCategory?.series?.length || 0,
-      salesTax: existingCategory?.salesTax
+      salesTax: existingCategory?.salesTax,
     });
 
     // Revert to the selected history entry using the original data
@@ -326,37 +338,50 @@ export async function revertCategoryToHistory(
     console.log('Reverting with data:', {
       brandName: revertData.brandName,
       seriesCount: revertData.series?.length || 0,
-      salesTax: revertData.salesTax
+      salesTax: revertData.salesTax,
     });
 
     // Check if the category exists before trying to update
-    let categoryExists = await collection.findOne({ _id: new ObjectId(categoryId) });
-    console.log('Category exists before update:', categoryExists ? 'Yes' : 'No');
-    
+    let categoryExists = await collection.findOne({
+      _id: new ObjectId(categoryId),
+    });
+    console.log(
+      'Category exists before update:',
+      categoryExists ? 'Yes' : 'No'
+    );
+
     if (!categoryExists) {
       // Try to find by brand name as fallback
       console.log('Category not found by ID, trying to find by brand name...');
       const brandName = historicalEntry.brandName;
       categoryExists = await collection.findOne({ brandName: brandName });
       console.log('Found by brand name:', categoryExists ? 'Yes' : 'No');
-      
+
       if (categoryExists) {
-        console.log('Using category found by brand name:', categoryExists._id.toString());
+        console.log(
+          'Using category found by brand name:',
+          categoryExists._id.toString()
+        );
         // Update the categoryId to the found category's ID
         categoryId = categoryExists._id.toString();
       } else {
         // If category doesn't exist, create it with the historical data
-        console.log('Category not found, creating new category with historical data...');
+        console.log(
+          'Category not found, creating new category with historical data...'
+        );
         const newCategory = {
           brandName: historicalEntry.brandName,
           series: historicalEntry.series,
           salesTax: historicalEntry.salesTax,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         };
-        
+
         const insertResult = await collection.insertOne(newCategory);
-        console.log('New category created:', insertResult.insertedId.toString());
+        console.log(
+          'New category created:',
+          insertResult.insertedId.toString()
+        );
         categoryId = insertResult.insertedId.toString();
         categoryExists = { _id: insertResult.insertedId, ...newCategory };
       }
@@ -374,7 +399,7 @@ export async function revertCategoryToHistory(
     if (updateResult.modifiedCount === 0) {
       // Try alternative update approach
       console.log('Direct update failed, trying alternative approach...');
-      
+
       // Try using replaceOne instead
       console.log('Attempting replaceOne...');
       const replaceResult = await collection.replaceOne(
@@ -382,26 +407,30 @@ export async function revertCategoryToHistory(
         {
           _id: new ObjectId(categoryId),
           ...revertData,
-          createdAt: existingCategory?.createdAt || new Date()
+          createdAt: existingCategory?.createdAt || new Date(),
         }
       );
-      
+
       console.log('Replace result:', replaceResult);
-      
+
       if (replaceResult.modifiedCount === 0) {
         // Try one more approach - delete and insert
-        console.log('Both update and replace failed, trying delete and insert...');
-        
-        const deleteResult = await collection.deleteOne({ _id: new ObjectId(categoryId) });
+        console.log(
+          'Both update and replace failed, trying delete and insert...'
+        );
+
+        const deleteResult = await collection.deleteOne({
+          _id: new ObjectId(categoryId),
+        });
         console.log('Delete result:', deleteResult);
-        
+
         const insertResult = await collection.insertOne({
           _id: new ObjectId(categoryId),
           ...revertData,
-          createdAt: existingCategory?.createdAt || new Date()
+          createdAt: existingCategory?.createdAt || new Date(),
         });
         console.log('Insert result:', insertResult);
-        
+
         if (!insertResult.insertedId) {
           throw new Error('Failed to update category - all methods failed');
         }
@@ -409,36 +438,36 @@ export async function revertCategoryToHistory(
     }
 
     // Get the updated category and verify the update
-    const updatedCategory = await collection.findOne({ _id: new ObjectId(categoryId) });
-    
+    const updatedCategory = await collection.findOne({
+      _id: new ObjectId(categoryId),
+    });
+
     console.log('Updated category after revert:', {
       _id: updatedCategory?._id,
       brandName: updatedCategory?.brandName,
       seriesCount: updatedCategory?.series?.length || 0,
-      salesTax: updatedCategory?.salesTax
+      salesTax: updatedCategory?.salesTax,
     });
-    
+
     // Verify the update was successful
     if (!updatedCategory) {
       throw new Error('Category not found after update');
     }
-    
+
     if (updatedCategory.series?.length !== historicalEntry.series?.length) {
       console.warn('Series count mismatch after revert:', {
         expected: historicalEntry.series?.length,
-        actual: updatedCategory.series?.length
+        actual: updatedCategory.series?.length,
       });
     }
-    
+
     return { success: true, data: updatedCategory as unknown as ICategory };
   } catch (error) {
     console.error('Error reverting category:', error);
     return {
       success: false,
       error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to revert category',
+        error instanceof Error ? error.message : 'Failed to revert category',
     };
   }
 }
@@ -459,10 +488,12 @@ export async function appendSeriesToCategory(
     const historyCollection = db.collection('categoryHistory');
 
     // First save current state to history
-    const currentCategory = await collection.findOne({ _id: new ObjectId(categoryId) });
+    const currentCategory = await collection.findOne({
+      _id: new ObjectId(categoryId),
+    });
     if (currentCategory) {
       const { _id, ...historyData } = currentCategory;
-      
+
       // Save current state as history entry
       await historyCollection.insertOne({
         categoryId: new ObjectId(categoryId),
@@ -478,7 +509,7 @@ export async function appendSeriesToCategory(
     console.log('Appending series:', {
       existingCount: existingSeries.length,
       newCount: newSeries.length,
-      totalCount: updatedSeries.length
+      totalCount: updatedSeries.length,
     });
 
     // Update category with appended series
@@ -499,6 +530,59 @@ export async function appendSeriesToCategory(
         error instanceof Error
           ? error.message
           : 'Failed to append series to category',
+    };
+  }
+}
+
+export async function deleteCategory(
+  categoryId: string
+): Promise<ActionResponse<void>> {
+  'use server';
+  try {
+    const { ObjectId } = require('mongodb');
+    const db = await connectToMongoDB();
+    if (!db) {
+      throw new Error('Failed to connect to database');
+    }
+
+    const collection = db.collection('categories');
+    const historyCollection = db.collection('categoryHistory');
+
+    // First save current state to history before deletion
+    const currentCategory = await collection.findOne({
+      _id: new ObjectId(categoryId),
+    });
+    if (currentCategory) {
+      const { _id, ...historyData } = currentCategory;
+
+      // Save deletion to history
+      await historyCollection.insertOne({
+        categoryId: new ObjectId(categoryId),
+        ...historyData,
+        historyDate: new Date(),
+        action: 'deleted',
+      });
+    }
+
+    // Then delete the entire category document
+    const result = await collection.deleteOne({
+      _id: new ObjectId(categoryId),
+    });
+
+    if (result.deletedCount === 0) {
+      throw new Error('Category not found or already deleted');
+    }
+
+    return {
+      success: true,
+      data: undefined,
+    };
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to delete category',
     };
   }
 }

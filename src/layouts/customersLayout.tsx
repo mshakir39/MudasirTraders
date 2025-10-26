@@ -126,7 +126,6 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
       setForm({ customerName: '', phoneNumber: '', address: '', email: '' });
       toast.success('Customer created successfully');
     } catch (error) {
-      console.error('Error creating customer:', error);
       toast.error(
         error instanceof Error ? error.message : 'Failed to create customer'
       );
@@ -154,7 +153,12 @@ const CustomersLayout = ({ customers }: { customers: any[] }) => {
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setForm({ customerName: '', phoneNumber: '', address: '', email: '' });
+          setForm({
+            customerName: '',
+            phoneNumber: '',
+            address: '',
+            email: '',
+          });
         }}
         title='Create Customer'
       >

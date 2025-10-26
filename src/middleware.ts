@@ -6,7 +6,10 @@ export function middleware(request: NextRequest) {
   const url = request.url;
 
   // Prevent redirect loops
-  if (pathname === '/dashboard-password' && request.headers.get('referer')?.includes('/dashboard-password')) {
+  if (
+    pathname === '/dashboard-password' &&
+    request.headers.get('referer')?.includes('/dashboard-password')
+  ) {
     return NextResponse.next();
   }
 
@@ -35,15 +38,18 @@ export function middleware(request: NextRequest) {
   // Step 2.5: Check if coming back to dashboard from another page (auto-lock)
   if (pathname === '/' && dashboardUnlocked) {
     const referer = request.headers.get('referer');
-    
+
     // Check if coming from a non-dashboard page
     if (referer) {
       try {
         const refererPath = new URL(referer).pathname;
-        const isRefererDashboardPage = refererPath === '/' || refererPath === '/dashboard-password';
-        
+        const isRefererDashboardPage =
+          refererPath === '/' || refererPath === '/dashboard-password';
+
         if (!isRefererDashboardPage) {
-          const response = NextResponse.redirect(new URL('/dashboard-password', url));
+          const response = NextResponse.redirect(
+            new URL('/dashboard-password', url)
+          );
           response.cookies.delete('dashboard-unlocked');
           return response;
         }

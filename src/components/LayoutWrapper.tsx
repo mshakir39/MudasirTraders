@@ -28,7 +28,7 @@ const LayoutWrapper: React.FC<LayoutWrapperProps> = ({ children }) => {
   return (
     <div className='flex min-h-screen w-full'>
       <SideBar onCollapseChange={handleCollapseChange} />
-      <main 
+      <main
         className={`flex-1 overflow-x-hidden p-4 transition-all duration-300 ${
           isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
         }`}

@@ -31,25 +31,29 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
 }) => {
   // Calculate total amount from all products
   const totalAmount = useMemo(() => {
+    // For payment-only scenarios, use the remaining amount from invoice data
+    if (
+      invoiceData?.isPaymentOnly &&
+      invoiceData?.remainingAmount !== undefined
+    ) {
+      return invoiceData.remainingAmount;
+    }
+
     return Object.values(accordionData).reduce((total: number, row: any) => {
       const price = parseFloat(String(row.productPrice)) || 0;
       const quantity = parseInt(String(row.quantity)) || 0;
       return total + price * quantity;
     }, 0);
-  }, [accordionData]);
+  }, [accordionData, invoiceData?.isPaymentOnly, invoiceData?.remainingAmount]);
 
   const handleCheckboxChange = useCallback(
     (values: string[]) => {
-      console.log('Payment methods selected:', values);
-
       // FIXED: More robust state update with validation
       setInvoiceData((prev: any) => {
         const newState = {
           ...prev,
           paymentMethod: values,
         };
-
-        console.log('Updated invoice data:', newState);
         return newState;
       });
     },
@@ -91,17 +95,18 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
                 type='text'
                 label='Battery Count and Weight'
                 name='batteriesCountAndWeight'
+                value={invoiceData?.batteriesCountAndWeight || ''}
                 maxLength={50}
                 onChange={onChange}
                 placeholder='e.g., 21kg, 2 batteries'
               />
-
             </div>
             <div className='mt-1 w-full'>
               <Input
                 type='number'
                 label='Batteries Total Rate'
                 name='batteriesRate'
+                value={invoiceData?.batteriesRate || ''}
                 min={0}
                 step='0.01'
                 onChange={onChange}

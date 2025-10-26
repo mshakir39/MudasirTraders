@@ -70,17 +70,18 @@ const ProductSection: React.FC<ProductSectionProps> = ({
           const stockItem = stockSeriesOptions.find((opt) => {
             // First try exact match
             if (opt.value === battery.name) return true;
-            
+
             // If no exact match, try fuzzy matching
-            const normalize = (str: string) => str
-              .toLowerCase()
-              .replace(/[\/\\]/g, '') // Remove slashes
-              .replace(/\s+/g, ' ') // Normalize spaces
-              .trim();
-            
+            const normalize = (str: string) =>
+              str
+                .toLowerCase()
+                .replace(/[\/\\]/g, '') // Remove slashes
+                .replace(/\s+/g, ' ') // Normalize spaces
+                .trim();
+
             const normalizedStock = normalize(opt.value);
             const normalizedCategory = normalize(battery.name);
-            
+
             return normalizedStock === normalizedCategory;
           });
           return stockItem && stockItem.stockQuantity > 0;
@@ -99,20 +100,21 @@ const ProductSection: React.FC<ProductSectionProps> = ({
       const existingIndex = allSeriesOptions.findIndex((catOption) => {
         // First try exact match
         if (catOption.value === stockOption.value) return true;
-        
+
         // If no exact match, try fuzzy matching
-        const normalize = (str: string) => str
-          .toLowerCase()
-          .replace(/[\/\\]/g, '') // Remove slashes
-          .replace(/\s+/g, ' ') // Normalize spaces
-          .trim();
-        
+        const normalize = (str: string) =>
+          str
+            .toLowerCase()
+            .replace(/[\/\\]/g, '') // Remove slashes
+            .replace(/\s+/g, ' ') // Normalize spaces
+            .trim();
+
         const normalizedStock = normalize(stockOption.value);
         const normalizedCategory = normalize(catOption.value);
-        
+
         return normalizedStock === normalizedCategory;
       });
-      
+
       if (existingIndex === -1) {
         // For series that only exist in stock (not in categories), use the stock option
         allSeriesOptions.push({
@@ -133,47 +135,45 @@ const ProductSection: React.FC<ProductSectionProps> = ({
     // Final deduplication to remove any remaining duplicates based on normalized names
     const finalSeriesOptions: any[] = [];
     const seenNames = new Set<string>();
-    
+
     allSeriesOptions.forEach((option) => {
-      const normalize = (str: string) => str
-        .toLowerCase()
-        .replace(/[\/\\]/g, '') // Remove slashes
-        .replace(/\s+/g, ' ') // Normalize spaces
-        .trim();
-      
+      const normalize = (str: string) =>
+        str
+          .toLowerCase()
+          .replace(/[\/\\]/g, '') // Remove slashes
+          .replace(/\s+/g, ' ') // Normalize spaces
+          .trim();
+
       const normalizedName = normalize(option.value);
-      
+
       if (!seenNames.has(normalizedName)) {
         seenNames.add(normalizedName);
         finalSeriesOptions.push(option);
       } else {
         // If we've seen this normalized name before, keep the one with better data (non-zero values)
-        const existingIndex = finalSeriesOptions.findIndex(existing => 
-          normalize(existing.value) === normalizedName
+        const existingIndex = finalSeriesOptions.findIndex(
+          (existing) => normalize(existing.value) === normalizedName
         );
-        
+
         if (existingIndex !== -1) {
           const existing = finalSeriesOptions[existingIndex];
           const current = option;
-          
+
           // Keep the one with better data (non-zero plate, AH, retailPrice)
-          const existingScore = (existing.batteryDetails?.plate || 0) + (existing.batteryDetails?.ah || 0) + (existing.batteryDetails?.retailPrice || 0);
-          const currentScore = (current.batteryDetails?.plate || 0) + (current.batteryDetails?.ah || 0) + (current.batteryDetails?.retailPrice || 0);
-          
+          const existingScore =
+            (existing.batteryDetails?.plate || 0) +
+            (existing.batteryDetails?.ah || 0) +
+            (existing.batteryDetails?.retailPrice || 0);
+          const currentScore =
+            (current.batteryDetails?.plate || 0) +
+            (current.batteryDetails?.ah || 0) +
+            (current.batteryDetails?.retailPrice || 0);
+
           if (currentScore > existingScore) {
             finalSeriesOptions[existingIndex] = current;
           }
         }
       }
-    });
-
-    // Debug logging to see what series are available
-    console.log('🔍 Invoice Series Options Debug:', {
-      selectedBrand,
-      stockSeriesOptions: stockSeriesOptions.map(s => ({ value: s.value, stockQuantity: s.stockQuantity })),
-      categorySeriesOptions: categorySeriesOptions.map(s => ({ value: s.value, plate: s.batteryDetails?.plate, ah: s.batteryDetails?.ah })),
-      allSeriesOptions: allSeriesOptions.map(s => ({ value: s.value, plate: s.batteryDetails?.plate, ah: s.batteryDetails?.ah })),
-      finalSeriesOptions: finalSeriesOptions.map(s => ({ value: s.value, plate: s.batteryDetails?.plate, ah: s.batteryDetails?.ah }))
     });
 
     return finalSeriesOptions;
@@ -186,202 +186,293 @@ const ProductSection: React.FC<ProductSectionProps> = ({
 
     return (
       <div className='w-full'>
-          <div className='mb-4 mt-4 grid w-full grid-cols-2 gap-4'>
-            <div className='w-full'>
-              <Dropdown
-                key={`brand-${accordionIndex}`}
-                className={'w-full'}
-                options={brandOptions}
-                onSelect={(option) => {
-                  accordionMethods.handleAccordionChange(
-                    accordionIndex,
-                    'brandName',
-                    option.value
-                  );
-                }}
-                placeholder='Select Brand'
-                defaultValue={accordionData[accordionIndex]?.brandName}
-                required
-              />
-            </div>
-            <div className='w-full'>
-              <SeriesAutocomplete
-                key={`series-${accordionIndex}`}
-                series={getFilteredSeriesOptions(accordionIndex).map(option => {
-                  const mappedSeries = {
-                    name: option.value,
-                    plate: option.batteryDetails?.plate || 0,
-                    ah: option.batteryDetails?.ah || 0,
-                    retailPrice: option.batteryDetails?.retailPrice || 0,
-                    type: option.batteryDetails?.type || '',
-                    salesTax: option.batteryDetails?.salesTax || 0,
-                    maxRetailPrice: option.batteryDetails?.maxRetailPrice || 0
-                  };
-                  
-                  // Debug logging for the problematic series
-                  if (option.value === 'MF 70 R/L (ThinThick Pole)') {
-                    console.log('🔍 Invoice Series Debug:', {
-                      optionValue: option.value,
-                      batteryDetails: option.batteryDetails,
-                      mappedSeries: mappedSeries
-                    });
-                  }
-                  
-                  return mappedSeries;
-                })}
-                value={accordionData[accordionIndex]?.series || ''}
-                onChange={(value) => {
-                  accordionMethods.handleAccordionChange(
-                    accordionIndex,
-                    'series',
-                    value
-                  );
-                }}
-                placeholder='Search series...'
-                className='w-full'
-              />
+        <div className='mb-4 mt-4 grid w-full grid-cols-2 gap-4'>
+          <div className='w-full'>
+            <Dropdown
+              className={'w-full'}
+              options={brandOptions}
+              onSelect={(option) => {
+                accordionMethods.handleAccordionChange(
+                  accordionIndex,
+                  'brandName',
+                  option.value
+                );
+              }}
+              placeholder='Select Brand'
+              value={
+                brandOptions.find(
+                  (opt) =>
+                    opt.value === accordionData[accordionIndex]?.brandName
+                ) || null
+              }
+              required
+            />
+            {/* Debug brand options */}
+            <div style={{ fontSize: '10px', color: 'gray', marginTop: '2px' }}>
+              Debug: Brands: {brandOptions.length}, Current:{' '}
+              {accordionData[accordionIndex]?.brandName || 'none'}
             </div>
           </div>
+          <div className='w-full'>
+            <SeriesAutocomplete
+              key={`series-${accordionIndex}`}
+              series={getFilteredSeriesOptions(accordionIndex).map((option) => {
+                const mappedSeries = {
+                  name: option.value,
+                  plate: option.batteryDetails?.plate || 0,
+                  ah: option.batteryDetails?.ah || 0,
+                  retailPrice: option.batteryDetails?.retailPrice || 0,
+                  type: option.batteryDetails?.type || '',
+                  salesTax: option.batteryDetails?.salesTax || 0,
+                  maxRetailPrice: option.batteryDetails?.maxRetailPrice || 0,
+                };
 
-          <div className='mb-4 grid w-full grid-cols-2 gap-4'>
-            <div className='w-full'>
-              <Input
-                parentClass='w-full'
-                type='number'
-                label='Product Price'
-                name='productPrice'
-                min={1}
-                step='0.01'
-                required
-                value={accordionDataItem.productPrice}
-                onChange={(e) => {
+                // Debug logging for the problematic series
+                if (option.value === 'MF 70 R/L (ThinThick Pole)') {
+                }
+
+                return mappedSeries;
+              })}
+              value={accordionData[accordionIndex]?.series || ''}
+              onChange={(value) => {
+                // Check if the selected series is battery tonic (distilled water)
+                const isBatteryTonic =
+                  value &&
+                  (value.toLowerCase().includes('tonic') ||
+                    value.toLowerCase().includes('ml') ||
+                    (value.toLowerCase().includes('battery') &&
+                      value.toLowerCase().includes('water')) ||
+                    value.toLowerCase().includes('distilled'));
+
+                // Update series
+                accordionMethods.handleAccordionChange(
+                  accordionIndex,
+                  'series',
+                  value
+                );
+
+                // Auto-set noWarranty to true for battery tonic
+                if (isBatteryTonic) {
                   accordionMethods.handleAccordionChange(
                     accordionIndex,
-                    'productPrice',
-                    e.target.value
+                    'noWarranty',
+                    true
                   );
-                }}
-              />
-            </div>
-            <div className='w-full'>
-              <Input
-                parentClass='w-full'
-                type='number'
-                label='Quantity'
-                value={accordionDataItem.quantity}
-                onChange={(e) => {
-                  accordionMethods.handleAccordionChange(
-                    accordionIndex,
-                    'quantity',
-                    e.target.value
-                  );
-                }}
-              />
-            </div>
+                }
+              }}
+              placeholder='Search series...'
+              className='w-full'
+            />
           </div>
+        </div>
 
-          {/* No Warranty Toggle */}
-          <div className='mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4'>
-            <div className='flex items-center justify-between'>
-              <div className='flex flex-col'>
-                <label className='text-sm font-semibold text-gray-800'>
-                  No Warranty
-                </label>
-                <p className='text-xs text-gray-600 mt-1'>
-                  {accordionDataItem.noWarranty 
-                    ? 'This product has no warranty coverage' 
-                    : 'Enable if this product has no warranty'
-                  }
-                </p>
+        <div className='mb-4 grid w-full grid-cols-2 gap-4'>
+          <div className='w-full'>
+            <Input
+              parentClass='w-full'
+              type='number'
+              label='Product Price'
+              name='productPrice'
+              min={1}
+              step='0.01'
+              required
+              value={accordionDataItem.productPrice}
+              onChange={(e) => {
+                accordionMethods.handleAccordionChange(
+                  accordionIndex,
+                  'productPrice',
+                  e.target.value
+                );
+              }}
+            />
+          </div>
+          <div className='w-full'>
+            <Input
+              parentClass='w-full'
+              type='number'
+              label='Quantity'
+              value={accordionDataItem.quantity}
+              onChange={(e) => {
+                accordionMethods.handleAccordionChange(
+                  accordionIndex,
+                  'quantity',
+                  e.target.value
+                );
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Check if current series is battery tonic */}
+        {(() => {
+          const currentSeries = accordionDataItem.series || '';
+          const isBatteryTonic =
+            currentSeries &&
+            (currentSeries.toLowerCase().includes('tonic') ||
+              currentSeries.toLowerCase().includes('ml') ||
+              (currentSeries.toLowerCase().includes('battery') &&
+                currentSeries.toLowerCase().includes('water')) ||
+              currentSeries.toLowerCase().includes('distilled'));
+
+          // If it's battery tonic, show info message instead of toggle
+          if (isBatteryTonic) {
+            return (
+              <div className='mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4'>
+                <div className='flex items-center'>
+                  <div className='flex-shrink-0'>
+                    <svg
+                      className='h-5 w-5 text-blue-400'
+                      viewBox='0 0 20 20'
+                      fill='currentColor'
+                    >
+                      <path
+                        fillRule='evenodd'
+                        d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  </div>
+                  <div className='ml-3 flex-1'>
+                    <p className='text-sm font-medium text-blue-800'>
+                      Battery Tonic (Distilled Water) - No Warranty Required
+                    </p>
+                    <p className='mt-1 text-xs text-blue-700'>
+                      Warranty fields are not applicable for this product type.
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className='flex items-center space-x-3'>
-                <button
-                  type='button'
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-4 focus:ring-red-200 ${
-                    accordionDataItem.noWarranty ? 'bg-red-500' : 'bg-gray-300'
-                  }`}
-                  onClick={() => {
-                    console.log('Toggle clicked, current value:', accordionDataItem.noWarranty);
-                    const newValue = !accordionDataItem.noWarranty;
-                    console.log('Setting new value:', newValue);
-                    accordionMethods.handleAccordionChange(
-                      accordionIndex,
-                      'noWarranty',
-                      newValue
-                    );
-                  }}
-                >
-                  <span
-                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                      accordionDataItem.noWarranty ? 'translate-x-6' : 'translate-x-0.5'
+            );
+          }
+
+          // For regular batteries, show the warranty toggle
+          return (
+            <div className='mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4'>
+              <div className='flex items-center justify-between'>
+                <div className='flex flex-col'>
+                  <label className='text-sm font-semibold text-gray-800'>
+                    No Warranty
+                  </label>
+                  <p className='mt-1 text-xs text-gray-600'>
+                    {accordionDataItem.noWarranty
+                      ? 'This product has no warranty coverage'
+                      : 'Enable if this product has no warranty'}
+                  </p>
+                </div>
+                <div className='flex items-center space-x-3'>
+                  <button
+                    type='button'
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-4 focus:ring-red-200 ${
+                      accordionDataItem.noWarranty
+                        ? 'bg-red-500'
+                        : 'bg-gray-300'
                     }`}
-                  />
-                </button>
-                <span className={`text-sm font-medium ${accordionDataItem.noWarranty ? 'text-red-600' : 'text-gray-600'}`}>
-                  {accordionDataItem.noWarranty ? 'No Warranty' : 'Has Warranty'}
-                </span>
+                    onClick={() => {
+                      const newValue = !accordionDataItem.noWarranty;
+                      accordionMethods.handleAccordionChange(
+                        accordionIndex,
+                        'noWarranty',
+                        newValue
+                      );
+                    }}
+                  >
+                    <span
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                        accordionDataItem.noWarranty
+                          ? 'translate-x-6'
+                          : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                  <span
+                    className={`text-sm font-medium ${accordionDataItem.noWarranty ? 'text-red-600' : 'text-gray-600'}`}
+                  >
+                    {accordionDataItem.noWarranty
+                      ? 'No Warranty'
+                      : 'Has Warranty'}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          );
+        })()}
 
-          {/* Only show warranty fields if warranty is enabled */}
-          {!accordionDataItem.noWarranty && (
-            <>
-              <div className='mb-4 grid w-full grid-cols-2 gap-4'>
-                <div className='w-full'>
-                  <Input
-                    parentClass='w-full'
-                    type='date'
-                    label='Warranty Start Date'
-                    name='warrentyStartDate'
-                    value={accordionDataItem.warrentyStartDate}
-                    onChange={(e) =>
-                      accordionMethods.handleAccordionChange(
-                        accordionIndex,
-                        'warrentyStartDate',
-                        e.target.value
-                      )
-                    }
-                  />
-                </div>
-                <div className='w-full'>
-                  <Input
-                    parentClass='w-full'
-                    type='number'
-                    label='Warranty Duration (Months)'
-                    name='warrentyDuration'
-                    min={1}
-                    value={accordionDataItem.warrentyDuration}
-                    onChange={(e) =>
-                      accordionMethods.handleAccordionChange(
-                        accordionIndex,
-                        'warrentyDuration',
-                        e.target.value
-                      )
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className='mb-4 w-full'>
+        {/* Only show warranty fields if warranty is enabled and NOT battery tonic */}
+        {(() => {
+          const currentSeries = accordionDataItem.series || '';
+          const isBatteryTonic =
+            currentSeries &&
+            (currentSeries.toLowerCase().includes('tonic') ||
+              currentSeries.toLowerCase().includes('ml') ||
+              (currentSeries.toLowerCase().includes('battery') &&
+                currentSeries.toLowerCase().includes('water')) ||
+              currentSeries.toLowerCase().includes('distilled'));
+          // Don't show warranty fields if it's battery tonic OR if noWarranty is true
+          return !accordionDataItem.noWarranty && !isBatteryTonic;
+        })() && (
+          <>
+            <div className='mb-4 grid w-full grid-cols-2 gap-4'>
+              <div className='w-full'>
                 <Input
                   parentClass='w-full'
-                  type='text'
-                  label='Warranty Code'
-                  name='warrentyCode'
-                  placeholder='Enter warranty code(s) - multiple codes separated by comma or space'
-                  value={accordionDataItem.warrentyCode}
+                  type='date'
+                  label='Warranty Start Date'
+                  name='warrentyStartDate'
+                  value={accordionDataItem.warrentyStartDate}
                   onChange={(e) =>
                     accordionMethods.handleAccordionChange(
                       accordionIndex,
-                      'warrentyCode',
+                      'warrentyStartDate',
                       e.target.value
                     )
                   }
                 />
               </div>
-            </>
-          )}
+              <div className='w-full'>
+                <Input
+                  parentClass='w-full'
+                  type='number'
+                  label='Warranty Duration (Months)'
+                  name='warrentyDuration'
+                  min={0}
+                  max={120}
+                  placeholder='0-120 months (0 for no warranty)'
+                  value={accordionDataItem.warrentyDuration || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Ensure value is not negative and not greater than 120, allow 0 for no warranty
+                    const numValue = parseInt(value);
+                    if (value === '' || (numValue >= 0 && numValue <= 120)) {
+                      accordionMethods.handleAccordionChange(
+                        accordionIndex,
+                        'warrentyDuration',
+                        value
+                      );
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className='mb-4 w-full'>
+              <Input
+                parentClass='w-full'
+                type='text'
+                label='Warranty Code'
+                name='warrentyCode'
+                placeholder='Enter warranty code(s) - multiple codes separated by comma or space'
+                value={accordionDataItem.warrentyCode}
+                onChange={(e) =>
+                  accordionMethods.handleAccordionChange(
+                    accordionIndex,
+                    'warrentyCode',
+                    e.target.value
+                  )
+                }
+              />
+            </div>
+          </>
+        )}
       </div>
     );
   };

@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { customerName, phoneNumber, address, email } = await req.json();
-    
+
     // Validate required fields
     if (!customerName || !phoneNumber) {
       return Response.json(
@@ -34,8 +34,12 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     };
 
-    const result = await executeOperation('customers', 'insertOne', customerData);
-    
+    const result = await executeOperation(
+      'customers',
+      'insertOne',
+      customerData
+    );
+
     return Response.json({
       success: true,
       message: 'Customer added successfully',

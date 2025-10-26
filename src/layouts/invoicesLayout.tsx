@@ -33,10 +33,6 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
   const [modalData, setModalData] = useState<any>([]);
   const [editInvoiceData, setEditInvoiceData] = useState<any>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  console.log('📦 InvoiceLayout - Stock data received:', stock);
-  console.log('📦 InvoiceLayout - Categories received:', categories);
-
   // Custom hooks
   const { invoiceData, setInvoiceData, handleChange, resetInvoiceData } =
     useInvoiceForm();
@@ -52,7 +48,6 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
     label: category.brandName || '',
     value: category.brandName || '',
   }));
-
   const handleCreateInvoice = () => {
     if (!isModalOpen) {
       setIsModalOpen(true);
@@ -72,19 +67,38 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
   const handleEditInvoice = async (data: any) => {
     try {
       setIsLoading(true);
-      const response: any = await PATCH('api/invoice', data);
-      if (response?.message) {
-        toast.success(response?.message);
-        await revalidatePathCustom('/invoice');
+
+      // Check if this is a full invoice edit or just adding payment
+      if (data.productDetail && data.productDetail.length > 0) {
+        // Full invoice edit - use edit endpoint
+        const response: any = await PATCH('api/invoice/edit', data);
+        if (response?.message) {
+          toast.success(response?.message);
+          await revalidatePathCustom('/invoice');
+        }
+        if (response?.error) {
+          toast.error(response?.error);
+        }
+      } else if (data.additionalPayment !== undefined) {
+        // Just adding payment - use original payment endpoint
+        const response: any = await PATCH('api/invoice', data);
+        if (response?.message) {
+          toast.success(response?.message);
+          await revalidatePathCustom('/invoice');
+        }
+        if (response?.error) {
+          toast.error(response?.error);
+        }
+      } else {
+        // Unknown operation
+        toast.error('Invalid operation data');
       }
-      if (response?.error) {
-        toast.error(response?.error);
-      }
+
       setIsLoading(false);
       setIsModalOpen(false);
     } catch (error) {
-      console.error('Error updating invoice:', error);
       setIsLoading(false);
+      toast.error('Failed to update invoice. Please try again.');
     }
   };
 
@@ -104,7 +118,6 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
       resetInvoiceData();
       resetAccordionData();
     } catch (error) {
-      console.error('Error creating invoice:', error);
       setIsLoading(false);
       toast.error('An error occurred while creating the invoice');
     }
@@ -132,6 +145,11 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
         onEditInvoice={(data) => {
           setModalData(data);
           setModalType('editInvoice');
+          setIsModalOpen(true);
+        }}
+        onAddPayment={(data) => {
+          setModalData({ ...data, isPaymentOnly: true });
+          setModalType('addPayment');
           setIsModalOpen(true);
         }}
       />
@@ -169,6 +187,11 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
           data={modalData}
           onSubmit={handleEditInvoice}
           isLoading={isLoading}
+          categories={categories}
+          customers={customers}
+          brandOptions={brandOptions}
+          stock={stock}
+          accordionMethods={accordionMethods}
         />
       )}
 
@@ -177,6 +200,21 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           data={modalData}
+        />
+      )}
+
+      {modalType === 'addPayment' && (
+        <EditInvoiceModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          data={modalData}
+          onSubmit={handleEditInvoice}
+          isLoading={isLoading}
+          categories={categories}
+          customers={customers}
+          brandOptions={brandOptions}
+          stock={stock}
+          accordionMethods={accordionMethods}
         />
       )}
     </div>

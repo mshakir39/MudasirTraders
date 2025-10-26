@@ -11,9 +11,7 @@ export const useCustomers = () => {
         if (result.success && Array.isArray(result.data)) {
           setCustomers(result.data);
         }
-      } catch (error) {
-        console.error('Error fetching customers:', error);
-      }
+      } catch (error) {}
     };
     fetchCustomers();
   }, []);

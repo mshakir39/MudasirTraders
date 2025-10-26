@@ -30,7 +30,6 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
           setAllInvoices([]);
         }
       } catch (error) {
-        console.error('Error fetching invoice data:', error);
         setAllInvoices([]);
       }
     };
@@ -39,17 +38,20 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
   }, []);
 
   // Handle customer name change for walk-in customers
-  const handleCustomerNameChange = (e: { target: { name: string; value: string; customerInfo?: any } }) => {
+  const handleCustomerNameChange = (e: {
+    target: { name: string; value: string; customerInfo?: any };
+  }) => {
     const customerName = e.target.value;
     const customerInfo = e.target.customerInfo;
-    
+
     if (customerInfo) {
       // Auto-fill customer details from the selected customer info
       setInvoiceData((prev: any) => ({
         ...prev,
         customerName: customerName,
         customerAddress: customerInfo.address || prev.customerAddress || '',
-        customerContactNumber: customerInfo.contactNumber || prev.customerContactNumber || '',
+        customerContactNumber:
+          customerInfo.contactNumber || prev.customerContactNumber || '',
       }));
     } else {
       // Find the most recent invoice for this customer to get their details
@@ -57,21 +59,27 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
       let customerInvoice = allInvoices.find(
         (invoice) => invoice.customerName === customerName
       );
-      
+
       // If not found by name, try to find by partial name match (in case of typos)
       if (!customerInvoice) {
-        customerInvoice = allInvoices.find(
-          (invoice) => invoice.customerName.toLowerCase().includes(customerName.toLowerCase())
+        customerInvoice = allInvoices.find((invoice) =>
+          invoice.customerName
+            .toLowerCase()
+            .includes(customerName.toLowerCase())
         );
       }
-      
+
       if (customerInvoice) {
         // Auto-fill customer details from invoice data
         setInvoiceData((prev: any) => ({
           ...prev,
           customerName: customerName,
-          customerAddress: customerInvoice.customerAddress || prev.customerAddress || '',
-          customerContactNumber: customerInvoice.customerContactNumber || prev.customerContactNumber || '',
+          customerAddress:
+            customerInvoice.customerAddress || prev.customerAddress || '',
+          customerContactNumber:
+            customerInvoice.customerContactNumber ||
+            prev.customerContactNumber ||
+            '',
         }));
       } else {
         // Just update the customer name if no previous data found
@@ -119,7 +127,6 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
                 (c) => c.id.toString() === option.value
               );
               if (selectedCustomer) {
-                console.log('selectedCustomer', selectedCustomer);
                 setInvoiceData((prev: any) => ({
                   ...prev,
                   customerName: selectedCustomer.customerName,
@@ -202,6 +209,17 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
             : 'Enter phone number or use "-" if not provided'
         }
       />
+
+      {/* Vehicle Number field commented out */}
+      {/* <Input
+        type='text'
+        label='Vehicle Number'
+        name='vehicleNo'
+        value={invoiceData?.vehicleNo || ''}
+        maxLength={50}
+        onChange={onChange}
+        placeholder='Enter vehicle number (optional)'
+      /> */}
     </>
   );
 };

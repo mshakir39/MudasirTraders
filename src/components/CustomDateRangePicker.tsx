@@ -165,10 +165,6 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   useEffect(() => {
     if (!hasInitialized.current) {
       hasInitialized.current = true;
-      console.log(
-        '📅 DateRangePicker: One-time initialization - NO parent notification'
-      );
-
       // DO NOT notify parent on mount - let the dashboard handle initial load
       // onDateChange({
       //   start: currentRange[0],
@@ -181,8 +177,6 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const handleCustomDateChange = useCallback(
     (selectedDates: Date[]) => {
       if (selectedDates.length === 2) {
-        console.log('📅 DateRangePicker: Custom date selected');
-
         const [start, end] = selectedDates;
         // Ensure proper time settings
         start.setHours(0, 0, 0, 0);
@@ -203,8 +197,6 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   // Handle preset selection
   const handlePresetSelect = (range: PresetRange) => {
-    console.log('📅 DateRangePicker: Preset selected:', range.label);
-
     const [start, end] = range.getRange();
     setSelectedRange(range.label);
     setCurrentRange([start, end]);

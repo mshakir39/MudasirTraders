@@ -14,9 +14,10 @@ import {
   getCategoryHistory,
   revertCategoryToHistory,
   appendSeriesToCategory,
+  deleteCategory,
 } from '@/actions/categoryActions';
 import { ICategory, IBrand, IBatterySeries } from '@/interfaces';
-import { FaEye, FaUpload } from 'react-icons/fa6';
+import { FaEye, FaUpload, FaTrash } from 'react-icons/fa6';
 import { useCategoryStore } from '@/store/categoryStore';
 import PdfUploadModal from '@/components/PdfUploadModal';
 import { ObjectId } from 'mongodb';
@@ -86,6 +87,19 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
     React.useState<CategoryWithBatteryData | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] =
     React.useState<boolean>(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] =
+    React.useState<boolean>(false);
+  const [deleteItem, setDeleteItem] = React.useState<{
+    batteryName: string;
+    brandName: string;
+  } | null>(null);
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] =
+    React.useState<boolean>(false);
+  const [categoryToDelete, setCategoryToDelete] = React.useState<{
+    id: string;
+    brandName: string;
+    seriesCount: number;
+  } | null>(null);
 
   useEffect(() => {
     // Initialize categories from server-side props
@@ -148,14 +162,9 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
         });
 
         // Console log the history data for debugging
-        console.log('Phoenix History Data:', typedData);
-        console.log('Latest Phoenix Entry:', typedData[0]);
-        console.log('Total History Entries:', typedData.length);
-        
         setHistoryData(typedData);
         setIsHistoryModalOpen(true);
       } catch (error) {
-        console.error('Error fetching history:', error);
         toast.error(
           error instanceof Error ? error.message : 'Failed to fetch history'
         );
@@ -239,6 +248,19 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
               </svg>
               History
             </button>
+            <FaTrash
+              className='cursor-pointer text-red-600 transition-colors hover:text-red-800'
+              title='Delete Category'
+              onClick={(e) => {
+                e.stopPropagation();
+                setCategoryToDelete({
+                  id: row.original.id!,
+                  brandName: row.original.brandName,
+                  seriesCount: row.original.series.length,
+                });
+                setIsDeleteCategoryModalOpen(true);
+              }}
+            />
           </div>
         ),
       },
@@ -248,33 +270,59 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
 
   const handlePdfUploadSuccess = async (data: {
     brandName: string;
-    series: BatteryData[];
+    series: any[];
     salesTax: string;
+    batteryType: 'battery' | 'tonic';
   }) => {
     try {
       setIsLoading(true);
 
-      // Check if category already exists for this brand
+      // Handle Battery Tonic data - use selected brand
+      let finalBrandName = data.brandName;
+      let finalSeries = data.series;
+      let finalSalesTax = Number(data.salesTax);
+
+      if (data.batteryType === 'tonic') {
+        // Handle "Other" brand option for Battery Tonic
+        if (data.brandName === 'other') {
+          finalBrandName = 'Other';
+        }
+        finalSalesTax = 0; // Battery Tonic doesn't have sales tax
+
+        // Ensure all series have batteryType set for Battery Tonic
+        finalSeries = data.series.map((series: any) => ({
+          ...series,
+          batteryType: 'tonic',
+          name: series.name || 'Battery Tonic',
+        }));
+      }
+
+      // Check if category already exists for the final brand
       const existingCategory = categories.find(
-        (cat) => cat.brandName === data.brandName
+        (cat) => cat.brandName === finalBrandName
       );
 
       const categoryData: Omit<ICategory, 'id'> = {
-        brandName: data.brandName,
-        series: data.series,
-        salesTax: Number(data.salesTax),
+        brandName: finalBrandName,
+        series: finalSeries,
+        salesTax: finalSalesTax,
       };
 
       if (existingCategory && existingCategory.id) {
         // Append new series to existing category instead of replacing
-        const result = await appendSeriesToCategory(existingCategory.id, data.series);
+        const result = await appendSeriesToCategory(
+          existingCategory.id,
+          finalSeries
+        );
 
         if (!result.success) {
-          throw new Error(result.error || 'Failed to append series to category');
+          throw new Error(
+            result.error || 'Failed to append series to category'
+          );
         }
 
         toast.success(
-          `Added ${data.series.length} new series to existing ${data.brandName} category`
+          `Added ${finalSeries.length} new series to existing ${finalBrandName} category`
         );
       } else if (!existingCategory) {
         // Create new category
@@ -285,7 +333,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
         }
 
         toast.success(
-          `Created new category for ${data.brandName} with ${data.series.length} series`
+          `Created new category for ${finalBrandName} with ${finalSeries.length} series`
         );
       } else {
         throw new Error('Category is missing an id');
@@ -294,14 +342,13 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
       // Call revalidatePath and wait for it to complete
       await revalidatePathCustom('/category');
       await fetchCategories(); // Refresh the categories list
+      setIsLoading(false);
     } catch (error) {
-      console.error('Error saving category from PDF:', error);
       toast.error(
         error instanceof Error
           ? error.message
           : 'Failed to save category from PDF'
       );
-    } finally {
       setIsLoading(false);
     }
   };
@@ -347,9 +394,97 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
       setEditingPrice({});
       await revalidatePathCustom('/category');
     } catch (error) {
-      console.error('Error updating price:', error);
       toast.error(
         error instanceof Error ? error.message : 'Failed to update price'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteBattery = (batteryName: string) => {
+    if (!detailData) return;
+
+    // Check if this is the last item before opening modal
+    if (detailData.series.length === 1) {
+      // Check if item is a battery tonic
+      const itemToDelete = detailData.series.find(
+        (item) => item.name === batteryName
+      );
+      const isTonic =
+        itemToDelete?.batteryType === 'tonic' ||
+        batteryName?.toLowerCase().includes('tonic');
+      const itemType = isTonic ? 'battery tonic' : 'battery';
+      toast.error(
+        `Cannot delete the last ${itemType} item. Delete the entire category instead.`
+      );
+      return;
+    }
+
+    setDeleteItem({
+      batteryName,
+      brandName: detailData.brandName,
+    });
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteBattery = async () => {
+    if (!deleteItem || !detailData) return;
+
+    try {
+      setIsLoading(true);
+
+      // Check if item is a battery tonic
+      const itemToDelete = detailData.series.find(
+        (item) => item.name === deleteItem.batteryName
+      );
+      const isTonic =
+        itemToDelete?.batteryType === 'tonic' ||
+        deleteItem.batteryName?.toLowerCase().includes('tonic');
+
+      // Filter out the battery to be deleted
+      const updatedSeries = detailData.series.filter(
+        (item) => item.name !== deleteItem.batteryName
+      );
+
+      if (updatedSeries.length === 0) {
+        const itemType = isTonic ? 'battery tonic' : 'battery';
+        toast.error(
+          `Cannot delete the last ${itemType} item. Delete the entire category instead.`
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      const result = await patchCategory(detailData.id!, {
+        brandName: detailData.brandName,
+        series: updatedSeries,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+
+      setDetailData((prev) =>
+        prev
+          ? {
+              ...prev,
+              series: updatedSeries,
+            }
+          : undefined
+      );
+
+      const successMessage = isTonic
+        ? 'Battery tonic (distilled water) deleted successfully'
+        : 'Battery deleted successfully';
+      toast.success(successMessage);
+      await revalidatePathCustom('/category');
+      await fetchCategories(); // Refresh the categories list
+      setIsDeleteModalOpen(false);
+      setDeleteItem(null);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete item'
       );
     } finally {
       setIsLoading(false);
@@ -396,7 +531,6 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
       setIsEditingGlobalSalesTax(false);
       await revalidatePathCustom('/category');
     } catch (error) {
-      console.error('Error updating sales tax:', error);
       toast.error(
         error instanceof Error ? error.message : 'Failed to update sales tax'
       );
@@ -419,7 +553,6 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
         (item.type && item.type.toLowerCase().includes(query))
     );
   }, [detailData, searchQuery]);
-
   return (
     <div className='p-0 py-6 md:p-6'>
       <div className='flex items-center justify-between py-2'>
@@ -456,9 +589,12 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
         size='large'
         isOpen={isModalOpen}
         onClose={() => {
+          // Don't close if delete modal is open
+          if (isDeleteModalOpen) return;
           setIsModalOpen(false);
           setSearchQuery('');
         }}
+        preventBackdropClose={isDeleteModalOpen}
         title={
           detailData ? (
             <div className='flex flex-col gap-2'>
@@ -596,6 +732,14 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
                             )}
                           </div>
                         </div>
+                        <button
+                          onClick={() => handleDeleteBattery(item.name)}
+                          className='ml-2 touch-manipulation rounded-full p-2 text-red-600 transition-colors hover:bg-red-50'
+                          disabled={isLoading}
+                          title='Delete battery'
+                        >
+                          <FaTrash className='h-4 w-4' />
+                        </button>
                       </div>
 
                       {/* Price Section */}
@@ -695,7 +839,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
 
                     {/* Desktop Grid Layout */}
                     <div className='hidden sm:block'>
-                      <div className='grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7'>
+                      <div className='grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-8'>
                         <div>
                           <span className='text-sm text-gray-500'>Name</span>
                           <p className='break-words font-medium text-gray-900'>
@@ -807,6 +951,17 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
                             </p>
                           </div>
                         )}
+                        {/* Delete Button - Desktop */}
+                        <div className='flex items-end justify-end'>
+                          <button
+                            onClick={() => handleDeleteBattery(item.name)}
+                            className='rounded-full p-2 text-red-600 transition-colors hover:bg-red-50'
+                            disabled={isLoading}
+                            title='Delete battery'
+                          >
+                            <FaTrash className='h-4 w-4' />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -868,7 +1023,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
                       className='rounded-lg border p-4 hover:bg-gray-50'
                     >
                       <div className='flex items-center justify-between'>
-                        <div 
+                        <div
                           className='flex-1 cursor-pointer'
                           onClick={() => setSelectedHistoryEntry(entry)}
                         >
@@ -895,40 +1050,33 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
                               e.stopPropagation();
                               try {
                                 // Get the original history entry ID from the database
-                                const historyEntryId = (entry as any)._id || entry.id;
-                                console.log('Revert clicked for entry:', {
-                                  entryId: entry.id,
-                                  historyEntryId: historyEntryId,
-                                  brandName: entry.brandName,
-                                  seriesCount: entry.series?.length || 0
-                                });
-                                
+                                const historyEntryId =
+                                  (entry as any)._id || entry.id;
                                 if (!historyEntryId) {
                                   throw new Error('History entry ID not found');
                                 }
-                                
+
                                 const result = await revertCategoryToHistory(
                                   entry.id!,
                                   historyEntryId
                                 );
-                                
-                                console.log('Revert result:', result);
-                                
                                 if (result.success) {
-                                  toast.success('Phoenix reverted successfully!');
+                                  toast.success(
+                                    'Phoenix reverted successfully!'
+                                  );
                                   // Refresh the categories and history
                                   fetchCategories();
                                   handleViewHistory(entry.id!);
                                 } else {
-                                  console.error('Revert failed:', result.error);
-                                  toast.error(result.error || 'Failed to revert');
+                                  toast.error(
+                                    result.error || 'Failed to revert'
+                                  );
                                 }
                               } catch (error) {
-                                console.error('Error reverting:', error);
                                 toast.error('Failed to revert Phoenix');
                               }
                             }}
-                            className='px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded-md hover:bg-orange-200 transition-colors'
+                            className='rounded-md bg-orange-100 px-3 py-1 text-sm text-orange-700 transition-colors hover:bg-orange-200'
                           >
                             Revert
                           </button>
@@ -1074,6 +1222,255 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
               )}
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setDeleteItem(null);
+        }}
+        title={(() => {
+          const itemToDelete = detailData?.series.find(
+            (item) => item.name === deleteItem?.batteryName
+          );
+          const isTonic =
+            itemToDelete?.batteryType === 'tonic' ||
+            deleteItem?.batteryName?.toLowerCase().includes('tonic');
+          return isTonic ? 'Delete Battery Tonic' : 'Delete Battery';
+        })()}
+        size='small'
+        preventBackdropClose={false}
+      >
+        <div className='space-y-4'>
+          <div className='text-center'>
+            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100'>
+              <FaTrash className='h-8 w-8 text-red-600' />
+            </div>
+            <h3 className='mb-2 text-lg font-medium text-gray-900'>
+              {(() => {
+                const itemToDelete = detailData?.series.find(
+                  (item) => item.name === deleteItem?.batteryName
+                );
+                const isTonic =
+                  itemToDelete?.batteryType === 'tonic' ||
+                  deleteItem?.batteryName?.toLowerCase().includes('tonic');
+                return isTonic
+                  ? 'Delete Battery Tonic (Distilled Water)'
+                  : 'Delete Battery Item';
+              })()}
+            </h3>
+            <p className='text-sm text-gray-500'>
+              {(() => {
+                const itemToDelete = detailData?.series.find(
+                  (item) => item.name === deleteItem?.batteryName
+                );
+                const isTonic =
+                  itemToDelete?.batteryType === 'tonic' ||
+                  deleteItem?.batteryName?.toLowerCase().includes('tonic');
+                return isTonic
+                  ? 'Are you sure you want to delete this battery tonic (distilled water)? This action cannot be undone.'
+                  : 'Are you sure you want to delete this battery? This action cannot be undone.';
+              })()}
+            </p>
+          </div>
+
+          <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
+            <div className='flex'>
+              <div className='flex-shrink-0'>
+                <svg
+                  className='h-5 w-5 text-red-400'
+                  viewBox='0 0 20 20'
+                  fill='currentColor'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+              </div>
+              <div className='ml-3'>
+                <h4 className='text-sm font-medium text-red-800'>
+                  {(() => {
+                    const itemToDelete = detailData?.series.find(
+                      (item) => item.name === deleteItem?.batteryName
+                    );
+                    const isTonic =
+                      itemToDelete?.batteryType === 'tonic' ||
+                      deleteItem?.batteryName?.toLowerCase().includes('tonic');
+                    return isTonic
+                      ? 'Battery Tonic to Delete'
+                      : 'Battery to Delete';
+                  })()}
+                </h4>
+                <div className='mt-2 text-sm text-red-700'>
+                  <p>
+                    <strong>Brand:</strong> {deleteItem?.brandName}
+                  </p>
+                  <p>
+                    <strong>
+                      {(() => {
+                        const itemToDelete = detailData?.series.find(
+                          (item) => item.name === deleteItem?.batteryName
+                        );
+                        const isTonic =
+                          itemToDelete?.batteryType === 'tonic' ||
+                          deleteItem?.batteryName
+                            ?.toLowerCase()
+                            .includes('tonic');
+                        return isTonic ? 'Product:' : 'Battery:';
+                      })()}
+                    </strong>{' '}
+                    {deleteItem?.batteryName}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className='flex flex-col gap-3 pt-4'>
+            <Button
+              className='h-12 w-full text-base font-medium focus:outline-none focus:ring-0'
+              variant='fill'
+              text={(() => {
+                const itemToDelete = detailData?.series.find(
+                  (item) => item.name === deleteItem?.batteryName
+                );
+                const isTonic =
+                  itemToDelete?.batteryType === 'tonic' ||
+                  deleteItem?.batteryName?.toLowerCase().includes('tonic');
+                return isTonic ? 'Delete Battery Tonic' : 'Delete Battery';
+              })()}
+              onClick={confirmDeleteBattery}
+              isPending={isLoading}
+              disabled={isLoading}
+              style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
+            />
+            <Button
+              className='h-12 w-full text-base focus:outline-none focus:ring-0'
+              variant='outline'
+              text='Cancel'
+              type='button'
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setDeleteItem(null);
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Category Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteCategoryModalOpen}
+        onClose={() => {
+          setIsDeleteCategoryModalOpen(false);
+          setCategoryToDelete(null);
+        }}
+        title='Delete Category'
+        size='small'
+      >
+        <div className='space-y-4'>
+          <div className='text-center'>
+            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100'>
+              <FaTrash className='h-8 w-8 text-red-600' />
+            </div>
+            <h3 className='mb-2 text-lg font-medium text-gray-900'>
+              Delete Entire Category
+            </h3>
+            <p className='text-sm text-gray-500'>
+              Are you sure you want to delete the entire{' '}
+              <strong>{categoryToDelete?.brandName}</strong> category? This will
+              permanently remove {categoryToDelete?.seriesCount} series item
+              {categoryToDelete?.seriesCount !== 1 ? 's' : ''} and cannot be
+              undone.
+            </p>
+          </div>
+
+          <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
+            <div className='flex'>
+              <div className='flex-shrink-0'>
+                <svg
+                  className='h-5 w-5 text-red-400'
+                  viewBox='0 0 20 20'
+                  fill='currentColor'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+              </div>
+              <div className='ml-3'>
+                <h4 className='text-sm font-medium text-red-800'>
+                  Warning: Permanent Action
+                </h4>
+                <div className='mt-2 text-sm text-red-700'>
+                  <p>
+                    <strong>Category:</strong> {categoryToDelete?.brandName}
+                  </p>
+                  <p>
+                    <strong>Total Series:</strong>{' '}
+                    {categoryToDelete?.seriesCount}
+                  </p>
+                  <p className='mt-2 text-xs'>
+                    This will delete all battery series associated with this
+                    brand.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className='flex flex-col gap-3 pt-4'>
+            <Button
+              className='h-12 w-full text-base font-medium focus:outline-none focus:ring-0'
+              variant='fill'
+              text={`Delete ${categoryToDelete?.brandName} Category`}
+              onClick={async () => {
+                if (!categoryToDelete) return;
+
+                setIsLoading(true);
+                try {
+                  const result = await deleteCategory(categoryToDelete.id);
+
+                  if (result.success) {
+                    toast.success(
+                      `Successfully deleted ${categoryToDelete.brandName} category`
+                    );
+                    await revalidatePathCustom('/category');
+                    await fetchCategories();
+                    setIsDeleteCategoryModalOpen(false);
+                    setCategoryToDelete(null);
+                  } else {
+                    toast.error(result.error || 'Failed to delete category');
+                  }
+                } catch (error) {
+                  toast.error('An error occurred while deleting category');
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              isPending={isLoading}
+              disabled={isLoading}
+              style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
+            />
+            <Button
+              className='h-12 w-full text-base focus:outline-none focus:ring-0'
+              variant='outline'
+              text='Cancel'
+              type='button'
+              onClick={() => {
+                setIsDeleteCategoryModalOpen(false);
+                setCategoryToDelete(null);
+              }}
+              disabled={isLoading}
+            />
+          </div>
         </div>
       </Modal>
     </div>

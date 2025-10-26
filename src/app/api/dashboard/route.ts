@@ -35,7 +35,7 @@ const validateSoldCount = (soldCount: any): number => {
 // Helper function to verify sales-stock synchronization
 const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
   console.log('🔍 Starting sales-stock sync verification...');
-  
+
   const syncIssues: any[] = [];
   const syncSummary = {
     totalProducts: 0,
@@ -66,13 +66,14 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
   salesData.forEach((sale) => {
     if (Array.isArray(sale.products)) {
       sale.products.forEach((product: any) => {
-        const brandName = product.brandName || product.batteryDetails?.brandName || '';
+        const brandName =
+          product.brandName || product.batteryDetails?.brandName || '';
         const series = product.series || product.batteryDetails?.name || '';
-        
+
         if (brandName && series) {
           const key = `${brandName}-${series}`;
           const quantity = toNumber(product.quantity);
-          
+
           if (salesMap.has(key)) {
             salesMap.set(key, salesMap.get(key) + quantity);
           } else {
@@ -88,7 +89,7 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
     syncSummary.totalProducts++;
     const actualSales = salesMap.get(key) || 0;
     const stockSoldCount = stockItem.stockSoldCount;
-    
+
     if (Math.abs(actualSales - stockSoldCount) > 0) {
       syncSummary.mismatchedProducts++;
       syncIssues.push({
@@ -99,13 +100,20 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
         actualSales,
         difference: actualSales - stockSoldCount,
         inStock: stockItem.inStock,
-        issue: actualSales > stockSoldCount ? 'Stock undercounted' : 'Stock overcounted',
+        issue:
+          actualSales > stockSoldCount
+            ? 'Stock undercounted'
+            : 'Stock overcounted',
       });
-      
-      console.log(`❌ Sync issue: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}, Diff: ${actualSales - stockSoldCount}`);
+
+      console.log(
+        `❌ Sync issue: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}, Diff: ${actualSales - stockSoldCount}`
+      );
     } else {
       syncSummary.syncedProducts++;
-      console.log(`✅ Synced: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}`);
+      console.log(
+        `✅ Synced: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}`
+      );
     }
   });
 
@@ -138,13 +146,15 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
         inStock: stockItem.inStock,
         issue: 'Product in stock with soldCount but no sales records',
       });
-      console.log(`❌ Missing in sales: ${key} - Stock soldCount: ${stockItem.stockSoldCount}`);
+      console.log(
+        `❌ Missing in sales: ${key} - Stock soldCount: ${stockItem.stockSoldCount}`
+      );
     }
   });
 
   console.log('📊 Sales-Stock Sync Summary:', syncSummary);
   console.log(`🔍 Found ${syncIssues.length} sync issues`);
-  
+
   return {
     syncSummary,
     syncIssues,
@@ -305,9 +315,15 @@ export async function GET(request: NextRequest) {
         })
       : [];
 
-    console.log(`📅 Top products date range: ${topProductsDateRange!.start.toISOString()} to ${topProductsDateRange!.end.toISOString()}`);
-    console.log(`📊 Total sales in date range: ${filteredSalesForTopProducts.length}`);
-    console.log(`📊 Total sales with products: ${filteredSalesForTopProducts.filter(sale => Array.isArray(sale.products) && sale.products.length > 0).length}`);
+    console.log(
+      `📅 Top products date range: ${topProductsDateRange!.start.toISOString()} to ${topProductsDateRange!.end.toISOString()}`
+    );
+    console.log(
+      `📊 Total sales in date range: ${filteredSalesForTopProducts.length}`
+    );
+    console.log(
+      `📊 Total sales with products: ${filteredSalesForTopProducts.filter((sale) => Array.isArray(sale.products) && sale.products.length > 0).length}`
+    );
 
     // Debug sales data structure
     if (filteredSalesForTopProducts.length > 0) {
@@ -316,12 +332,14 @@ export async function GET(request: NextRequest) {
         customerName: sampleSale.customerName,
         date: sampleSale.date,
         productsCount: sampleSale.products?.length || 0,
-        firstProduct: sampleSale.products?.[0] ? {
-          brandName: sampleSale.products[0].brandName,
-          series: sampleSale.products[0].series,
-          batteryDetails: sampleSale.products[0].batteryDetails,
-          quantity: sampleSale.products[0].quantity
-        } : null
+        firstProduct: sampleSale.products?.[0]
+          ? {
+              brandName: sampleSale.products[0].brandName,
+              series: sampleSale.products[0].series,
+              batteryDetails: sampleSale.products[0].batteryDetails,
+              quantity: sampleSale.products[0].quantity,
+            }
+          : null,
       });
     }
 
@@ -330,18 +348,24 @@ export async function GET(request: NextRequest) {
       if (Array.isArray(sale.products)) {
         sale.products.forEach((product: any) => {
           // Handle different possible field names for brand and series
-          const brandName = product.brandName || product.batteryDetails?.brandName || '';
-          const series = product.series || product.batteryDetails?.name || 'Unknown';
-          
+          const brandName =
+            product.brandName || product.batteryDetails?.brandName || '';
+          const series =
+            product.series || product.batteryDetails?.name || 'Unknown';
+
           // Only count if we have valid brand and series
           if (brandName && series && series !== 'Unknown') {
             const key = `${brandName}-${series}`;
             const quantity = toNumber(product.quantity);
             actualSalesCount[key] = (actualSalesCount[key] || 0) + quantity;
-            
-            console.log(`📊 Sales count for ${key}: ${quantity} (total: ${actualSalesCount[key]})`);
+
+            console.log(
+              `📊 Sales count for ${key}: ${quantity} (total: ${actualSalesCount[key]})`
+            );
           } else {
-            console.log(`⚠️ Skipping invalid product: brandName="${brandName}", series="${series}"`);
+            console.log(
+              `⚠️ Skipping invalid product: brandName="${brandName}", series="${series}"`
+            );
           }
         });
       }
@@ -350,17 +374,21 @@ export async function GET(request: NextRequest) {
     console.log('📊 Sales count summary:');
     const salesKeys = Object.keys(actualSalesCount);
     console.log(`📊 Total unique products sold: ${salesKeys.length}`);
-    salesKeys.slice(0, 10).forEach(key => {
+    salesKeys.slice(0, 10).forEach((key) => {
       console.log(`📊 ${key}: ${actualSalesCount[key]} units sold`);
     });
 
     console.log('📦 Stock data structure check:');
     console.log(`📦 Total stock documents: ${stock.length}`);
     stock.slice(0, 3).forEach((doc, index) => {
-      console.log(`📦 Stock doc ${index + 1}: brandName="${doc.brandName}", seriesStock count: ${doc.seriesStock?.length || 0}`);
+      console.log(
+        `📦 Stock doc ${index + 1}: brandName="${doc.brandName}", seriesStock count: ${doc.seriesStock?.length || 0}`
+      );
       if (doc.seriesStock && doc.seriesStock.length > 0) {
         doc.seriesStock.slice(0, 2).forEach((series, sIndex) => {
-          console.log(`  Series ${sIndex + 1}: series="${series.series}", inStock=${series.inStock}, soldCount=${series.soldCount}`);
+          console.log(
+            `  Series ${sIndex + 1}: series="${series.series}", inStock=${series.inStock}, soldCount=${series.soldCount}`
+          );
         });
       }
     });
@@ -369,34 +397,41 @@ export async function GET(request: NextRequest) {
       if (!document.seriesStock || !Array.isArray(document.seriesStock))
         return sales;
       const documentBrandName = document.brandName || '';
-      const documentSales = document.seriesStock.map((series) => {
-        const seriesName = series.series || 'Unknown';
-        const key = `${documentBrandName}-${seriesName}`;
-        const actualSoldCount = actualSalesCount[key] || 0;
-        
-        console.log(`🔍 Checking stock item: ${key}, actualSoldCount: ${actualSoldCount}, inStock: ${toNumber(series.inStock)}`);
-        
-        // Use calculated sales for date range, but fall back to stock soldCount if needed
-        const stockSoldCount = validateSoldCount(series.soldCount);
-        const dateRangeSoldCount = actualSoldCount || 0;
-        
-        // Prefer date range sales, but use stock soldCount if no sales in date range
-        const finalSoldCount = dateRangeSoldCount > 0 ? dateRangeSoldCount : stockSoldCount;
-        
-        console.log(`🔍 Stock item ${key}: stockSoldCount=${stockSoldCount}, dateRangeSoldCount=${dateRangeSoldCount}, finalSoldCount=${finalSoldCount}`);
-        
-        // Only include products that have been sold in the date range OR have historical sales
-        if (finalSoldCount > 0) {
-          return {
-            brandName: documentBrandName,
-            series: seriesName,
-            soldCount: finalSoldCount,
-            inStock: toNumber(series.inStock),
-            isDateRangeData: dateRangeSoldCount > 0, // Flag to indicate if this is date range data
-          };
-        }
-        return null;
-      }).filter(Boolean); // Remove null entries
+      const documentSales = document.seriesStock
+        .map((series) => {
+          const seriesName = series.series || 'Unknown';
+          const key = `${documentBrandName}-${seriesName}`;
+          const actualSoldCount = actualSalesCount[key] || 0;
+
+          console.log(
+            `🔍 Checking stock item: ${key}, actualSoldCount: ${actualSoldCount}, inStock: ${toNumber(series.inStock)}`
+          );
+
+          // Use calculated sales for date range, but fall back to stock soldCount if needed
+          const stockSoldCount = validateSoldCount(series.soldCount);
+          const dateRangeSoldCount = actualSoldCount || 0;
+
+          // Prefer date range sales, but use stock soldCount if no sales in date range
+          const finalSoldCount =
+            dateRangeSoldCount > 0 ? dateRangeSoldCount : stockSoldCount;
+
+          console.log(
+            `🔍 Stock item ${key}: stockSoldCount=${stockSoldCount}, dateRangeSoldCount=${dateRangeSoldCount}, finalSoldCount=${finalSoldCount}`
+          );
+
+          // Only include products that have been sold in the date range OR have historical sales
+          if (finalSoldCount > 0) {
+            return {
+              brandName: documentBrandName,
+              series: seriesName,
+              soldCount: finalSoldCount,
+              inStock: toNumber(series.inStock),
+              isDateRangeData: dateRangeSoldCount > 0, // Flag to indicate if this is date range data
+            };
+          }
+          return null;
+        })
+        .filter(Boolean); // Remove null entries
       return [...sales, ...documentSales];
     }, []);
     const topSellingProducts = productSales
@@ -404,12 +439,21 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.soldCount - a.soldCount)
       .slice(0, 5);
 
-    console.log('🏆 Top selling products (date range + fallback to historical):');
+    console.log(
+      '🏆 Top selling products (date range + fallback to historical):'
+    );
 
-    console.log('🏆 Top selling products calculated:', topSellingProducts.length);
+    console.log(
+      '🏆 Top selling products calculated:',
+      topSellingProducts.length
+    );
     topSellingProducts.forEach((product, index) => {
-      const dataSource = product.isDateRangeData ? '📅 Date Range' : '📊 Historical';
-      console.log(`  ${index + 1}. ${product.brandName} ${product.series}: ${product.soldCount} sold, ${product.inStock} in stock (${dataSource})`);
+      const dataSource = product.isDateRangeData
+        ? '📅 Date Range'
+        : '📊 Historical';
+      console.log(
+        `  ${index + 1}. ${product.brandName} ${product.series}: ${product.soldCount} sold, ${product.inStock} in stock (${dataSource})`
+      );
     });
 
     // PENDING PAYMENTS
@@ -498,7 +542,10 @@ export async function GET(request: NextRequest) {
         lowStock: lowStockCount,
         outOfStock: outOfStockCount,
         pendingPayments: totalPending > 0 ? totalPending : 0,
-        syncIssues: syncVerification.syncIssues.length > 0 ? syncVerification.syncIssues.length : 0,
+        syncIssues:
+          syncVerification.syncIssues.length > 0
+            ? syncVerification.syncIssues.length
+            : 0,
       },
     };
 
@@ -511,4 +558,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

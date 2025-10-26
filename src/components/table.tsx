@@ -23,6 +23,9 @@ interface TableProps<TData> {
   buttonOnClick?: () => void;
   buttonTitle?: string;
   showButton?: boolean;
+  secondaryButtonOnClick?: () => void;
+  secondaryButtonTitle?: string;
+  showSecondaryButton?: boolean;
   stockCost?: number;
   pageSize?: number;
   onRowClick?: (row: TData) => void;
@@ -40,6 +43,9 @@ export function Table<TData>({
   buttonOnClick,
   buttonTitle = 'Create',
   showButton = true,
+  secondaryButtonOnClick,
+  secondaryButtonTitle = 'Secondary',
+  showSecondaryButton = false,
   stockCost,
   pageSize: initialPageSize = 10,
   onRowClick,
@@ -105,6 +111,15 @@ export function Table<TData>({
               <span className='whitespace-nowrap font-bold'>
                 Total Stock Cost: {Math.round(stockCost).toLocaleString()}
               </span>
+            )}
+            {showSecondaryButton && secondaryButtonOnClick && (
+              <Button
+                variant='outline'
+                text={secondaryButtonTitle}
+                onClick={secondaryButtonOnClick}
+                style={{ borderColor: '#dc2626', color: '#dc2626' }}
+                className='hover:bg-red-50'
+              />
             )}
             {showButton && buttonOnClick && (
               <Button

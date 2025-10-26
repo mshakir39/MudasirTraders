@@ -15,6 +15,7 @@ import {
   updateStock,
   getStockHistory,
   deleteStock,
+  deleteAllBrandStock,
 } from '@/actions/stockActions';
 import { ICategory, IDropdownOption, IStock } from '../../interfaces';
 import { getSeries } from '@/models/getSeries';
@@ -122,48 +123,60 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     seriesName: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] =
+    useState<boolean>(false);
+  const [isDeletingAll, setIsDeletingAll] = useState<boolean>(false);
 
   // Function to get max retail price and sales tax from categories
-  const getMaxRetailPrice = useCallback((brandName: string, seriesName: string) => {
-    const category = categories.find(cat => cat.brandName === brandName);
-    
-    if (category) {
-      // First try exact match
-      let series = category.series.find(s => s.name === seriesName);
-      
-      // If no exact match, try fuzzy matching for common variations
-      if (!series) {
-        series = category.series.find(s => {
-          // Normalize both names for comparison
-          const normalize = (str: string) => str
-            .toLowerCase()
-            .replace(/[\/\\]/g, '') // Remove slashes
-            .replace(/\s+/g, ' ') // Normalize spaces
-            .trim();
-          
-          const normalizedStock = normalize(seriesName);
-          const normalizedCategory = normalize(s.name);
-          
-          return normalizedStock === normalizedCategory;
-        });
-      }
-      
-      // If maxRetailPrice is not available, calculate it from retailPrice and salesTax
-      if (!series?.maxRetailPrice && series?.retailPrice && category.salesTax) {
-        const calculatedMaxRetailPrice = series.retailPrice * (1 + category.salesTax / 100);
+  const getMaxRetailPrice = useCallback(
+    (brandName: string, seriesName: string) => {
+      const category = categories.find((cat) => cat.brandName === brandName);
+
+      if (category) {
+        // First try exact match
+        let series = category.series.find((s) => s.name === seriesName);
+
+        // If no exact match, try fuzzy matching for common variations
+        if (!series) {
+          series = category.series.find((s) => {
+            // Normalize both names for comparison
+            const normalize = (str: string) =>
+              str
+                .toLowerCase()
+                .replace(/[\/\\]/g, '') // Remove slashes
+                .replace(/\s+/g, ' ') // Normalize spaces
+                .trim();
+
+            const normalizedStock = normalize(seriesName);
+            const normalizedCategory = normalize(s.name);
+
+            return normalizedStock === normalizedCategory;
+          });
+        }
+
+        // If maxRetailPrice is not available, calculate it from retailPrice and salesTax
+        if (
+          !series?.maxRetailPrice &&
+          series?.retailPrice &&
+          category.salesTax
+        ) {
+          const calculatedMaxRetailPrice =
+            series.retailPrice * (1 + category.salesTax / 100);
+          return {
+            maxRetailPrice: calculatedMaxRetailPrice,
+            salesTax: category.salesTax || 0,
+          };
+        }
+
         return {
-          maxRetailPrice: calculatedMaxRetailPrice,
-          salesTax: category.salesTax || 0
+          maxRetailPrice: series?.maxRetailPrice || 'N/A',
+          salesTax: category.salesTax || 0,
         };
       }
-      
-      return {
-        maxRetailPrice: series?.maxRetailPrice || 'N/A',
-        salesTax: category.salesTax || 0
-      };
-    }
-    return { maxRetailPrice: 'N/A', salesTax: 0 };
-  }, [categories]);
+      return { maxRetailPrice: 'N/A', salesTax: 0 };
+    },
+    [categories]
+  );
 
   const handleEditClick = useCallback(
     (item: StockBatteryData, brandName: string) => {
@@ -189,12 +202,11 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           if (result.success) {
             toast.success('Stock deleted successfully');
             await revalidatePathCustom('/stock');
-            fetchData(brandName);
+            window.location.reload();
           } else {
             toast.error(result.error || 'Failed to delete stock');
           }
         } catch (error) {
-          console.error('Error deleting stock:', error);
           toast.error('An error occurred while deleting stock');
         } finally {
           setIsDeleting(false);
@@ -222,7 +234,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         setStockHistory(result.data);
         setIsHistoryModalOpen(true);
       } catch (error) {
-        console.error('Error fetching stock history:', error);
         toast.error(
           error instanceof Error
             ? error.message
@@ -265,7 +276,9 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         id: 'maxRetailPrice',
         header: () => {
           // Get the sales tax for the current brand
-          const category = categories.find(cat => cat.brandName === currentBrandName);
+          const category = categories.find(
+            (cat) => cat.brandName === currentBrandName
+          );
           const salesTax = category?.salesTax || 0;
           return `Max Retail Price (${salesTax}% Tax)`;
         },
@@ -273,18 +286,18 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           const brandName = currentBrandName;
           const seriesName = row.original.series;
           const priceData = getMaxRetailPrice(brandName, seriesName);
-          
+
           if (priceData.maxRetailPrice === 'N/A') {
             return (
-              <div className="flex justify-start items-center w-full">
-                <span className="text-gray-500 font-medium">Rs N/A</span>
+              <div className='flex w-full items-center justify-start'>
+                <span className='font-medium text-gray-500'>Rs N/A</span>
               </div>
             );
           }
-          
+
           return (
-            <div className="flex justify-start items-center w-full">
-              <span className="font-medium text-gray-900">
+            <div className='flex w-full items-center justify-start'>
+              <span className='font-medium text-gray-900'>
                 Rs {Number(priceData.maxRetailPrice).toLocaleString()}
               </span>
             </div>
@@ -342,6 +355,8 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     ],
     [
       currentBrandName,
+      categories,
+      getMaxRetailPrice,
       handleEditClick,
       handleDeleteClick,
       handleViewStockHistory,
@@ -370,7 +385,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         toast.error(result.error || 'Failed to add stock');
       }
     } catch (error) {
-      console.error('Error posting data:', error);
       toast.error('Failed to add stock');
     } finally {
       setIsLoading(false);
@@ -400,8 +414,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     setIsLoading(true);
 
     try {
-      console.log('Edit modal data:', editModalData);
-
       if (!editModalData || !editModalData.series) {
         throw new Error('Invalid edit data');
       }
@@ -412,9 +424,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         productCost: editModalData.productCost,
         inStock: editModalData.inStock,
       });
-
-      console.log('Update result:', result);
-
       if (!result.success) {
         throw new Error(result.error || 'Failed to update stock');
       }
@@ -436,7 +445,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         fetchData(currentBrandName);
       }
     } catch (error) {
-      console.error('Error updating stock:', error);
       toast.error(
         error instanceof Error ? error.message : 'Failed to update stock'
       );
@@ -475,9 +483,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
 
   const fetchData = useCallback(
     async (brandName: string) => {
-      console.log('fetchData called with brandName:', brandName);
       const category = categories.find((cat) => cat.brandName === brandName);
-      console.log('category found:', category);
       if (category) {
         // Cast the series to BatteryDetails[] since we know the structure
         const seriesArray = category.series as unknown as BatteryDetails[];
@@ -497,7 +503,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
             },
           };
         });
-        console.log('seriesOptions created:', seriesOptions);
         setSeriesOptions(seriesOptions);
       }
     },
@@ -532,24 +537,15 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   };
 
   useEffect(() => {
-    console.log('useEffect triggered with categories:', categories);
-    console.log('Current stock data:', stock);
-
     if (categories.length > 0) {
       const firstCategoryBrandName = categories[0].brandName || '';
-      console.log('First category brand name:', firstCategoryBrandName);
-
       // If no currentBrandName is set, initialize with first category
       if (!currentBrandName) {
-        console.log(
-          'No current brand name set, initializing with first category'
-        );
         setCurrentBrandName(firstCategoryBrandName);
       }
 
       // Initialize stock for the current category if it doesn't exist
       if (!stock || stock.length === 0) {
-        console.log('No stock data exists, initializing current category');
         if (currentBrandName) {
           fetchData(currentBrandName);
           setStockData({
@@ -567,8 +563,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
       const filteredStock = stock?.filter(
         (item) => item.brandName === currentBrandName
       );
-      console.log('Filtered stock for current brand:', filteredStock);
-
       if (filteredStock && filteredStock.length > 0 && currentBrandName) {
         const category = categories.find(
           (cat) => cat.brandName === currentBrandName
@@ -596,7 +590,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         });
         setTableData(newData || []);
       } else {
-        console.log('No filtered stock found for current category');
         if (currentBrandName) {
           fetchData(currentBrandName);
           setStockData({
@@ -610,7 +603,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         setTableData([]);
       }
     } else {
-      console.log('No categories available');
       setTableData([]);
     }
   }, [categories, fetchData, stock, currentBrandName]);
@@ -881,6 +873,11 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                 setModalType('add');
                 setIsModalOpen(true);
               }}
+              secondaryButtonTitle='Delete All Stock'
+              showSecondaryButton={tableData.length > 0}
+              secondaryButtonOnClick={() => {
+                setIsDeleteAllModalOpen(true);
+              }}
             />
           </div>
         </div>
@@ -927,18 +924,22 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                 className='relative w-full'
               >
                 <SeriesAutocomplete
-                  series={seriesOptions.map(option => ({
+                  series={seriesOptions.map((option) => ({
                     name: option.value,
                     plate: option.batteryDetails?.plate || 0,
                     ah: option.batteryDetails?.ah || 0,
                     retailPrice: option.batteryDetails?.retailPrice || 0,
                     type: option.batteryDetails?.type || '',
                     salesTax: option.batteryDetails?.salesTax || 0,
-                    maxRetailPrice: option.batteryDetails?.maxRetailPrice || 0
+                    maxRetailPrice: option.batteryDetails?.maxRetailPrice || 0,
                   }))}
-                  value={modalType === 'edit' ? editModalData.series : stockData.series}
+                  value={
+                    modalType === 'edit'
+                      ? editModalData.series
+                      : stockData.series
+                  }
                   onChange={(value) => {
-                    setStockData(prev => ({ ...prev, series: value }));
+                    setStockData((prev) => ({ ...prev, series: value }));
                   }}
                   placeholder='Search series...'
                   className='w-full'
@@ -1293,7 +1294,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                       }
                     })
                     .catch((error) => {
-                      console.error('Error deleting stock:', error);
                       toast.error('An error occurred while deleting stock');
                     })
                     .finally(() => {
@@ -1314,6 +1314,111 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                 setIsDeleteModalOpen(false);
                 setDeleteItem(null);
               }}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete All Stock Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteAllModalOpen}
+        onClose={() => {
+          setIsDeleteAllModalOpen(false);
+        }}
+        title='Delete All Stock'
+        dialogPanelClass='w-full max-w-sm sm:max-w-md mx-4 sm:mx-auto'
+      >
+        <div className='space-y-4'>
+          <div className='text-center'>
+            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100'>
+              <FaTrash className='h-8 w-8 text-red-600' />
+            </div>
+            <h3 className='mb-2 text-lg font-medium text-gray-900'>
+              Delete All Stock Items
+            </h3>
+            <p className='text-sm text-gray-500'>
+              Are you sure you want to delete all stock items for{' '}
+              <strong>{currentBrandName}</strong>? This will permanently remove{' '}
+              {tableData.length} item{tableData.length !== 1 ? 's' : ''} and
+              cannot be undone.
+            </p>
+          </div>
+
+          <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
+            <div className='flex'>
+              <div className='flex-shrink-0'>
+                <svg
+                  className='h-5 w-5 text-red-400'
+                  viewBox='0 0 20 20'
+                  fill='currentColor'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+              </div>
+              <div className='ml-3'>
+                <h4 className='text-sm font-medium text-red-800'>
+                  Warning: Permanent Action
+                </h4>
+                <div className='mt-2 text-sm text-red-700'>
+                  <p>
+                    <strong>Brand:</strong> {currentBrandName}
+                  </p>
+                  <p>
+                    <strong>Total Items:</strong> {tableData.length}
+                  </p>
+                  <p>
+                    <strong>Total Cost:</strong> PKR{' '}
+                    {stockCost?.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className='flex flex-col gap-3 pt-4'>
+            <Button
+              className='h-12 w-full text-base font-medium focus:outline-none focus:ring-0'
+              variant='fill'
+              text={`Delete All ${tableData.length} Item${tableData.length !== 1 ? 's' : ''}`}
+              onClick={async () => {
+                setIsDeletingAll(true);
+                try {
+                  const result = await deleteAllBrandStock(currentBrandName);
+
+                  if (result.success) {
+                    toast.success(
+                      `Successfully deleted all stock for ${currentBrandName}`
+                    );
+                    await revalidatePathCustom('/stock');
+                    setIsDeleteAllModalOpen(false);
+                    // Refresh data to show empty table
+                    fetchData(currentBrandName);
+                  } else {
+                    toast.error(result.error || 'Failed to delete all stock');
+                  }
+                } catch (error) {
+                  toast.error('An error occurred while deleting stock');
+                } finally {
+                  setIsDeletingAll(false);
+                }
+              }}
+              isPending={isDeletingAll}
+              disabled={isDeletingAll}
+              style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
+            />
+            <Button
+              className='h-12 w-full text-base focus:outline-none focus:ring-0'
+              variant='outline'
+              text='Cancel'
+              type='button'
+              onClick={() => {
+                setIsDeleteAllModalOpen(false);
+              }}
+              disabled={isDeletingAll}
             />
           </div>
         </div>

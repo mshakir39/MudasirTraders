@@ -96,7 +96,6 @@ const PrinterInstructionsModal: React.FC<PrinterInstructionsModalProps> = ({
                 await onConfirm();
                 onClose();
               } catch (error) {
-                console.error('Print failed:', error);
               } finally {
                 setIsPrinting(false);
               }

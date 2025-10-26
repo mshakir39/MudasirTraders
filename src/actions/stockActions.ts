@@ -368,3 +368,53 @@ export async function deleteStock(brandName: string, series: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function deleteAllBrandStock(brandName: string) {
+  try {
+    const { ObjectId } = require('mongodb');
+
+    // First save current state to history before deletion
+    const db = await connectToMongoDB();
+    if (!db) {
+      throw new Error('Failed to connect to database');
+    }
+
+    const collection = db.collection('stock');
+    const historyCollection = db.collection('stockHistory');
+
+    // Find current stock for this brand
+    const currentStock = await collection.findOne({ brandName });
+    if (currentStock && currentStock.seriesStock) {
+      // Save all series deletions to history
+      const historyPromises = currentStock.seriesStock.map(
+        (seriesItem: SeriesStock) => {
+          return historyCollection.insertOne({
+            brandName: brandName,
+            series: seriesItem.series,
+            oldQuantity: seriesItem.inStock || 0,
+            newQuantity: 0,
+            quantityDifference: -(seriesItem.inStock || 0),
+            oldCost: seriesItem.productCost || 0,
+            newCost: 0,
+            costDifference: -(seriesItem.productCost || 0),
+            historyDate: new Date(),
+            action: 'deleted_all',
+          });
+        }
+      );
+
+      await Promise.all(historyPromises);
+    }
+
+    // Then delete the entire brand stock document
+    const result = await collection.deleteOne({ brandName });
+
+    return {
+      success: true,
+      data: result,
+      message: `Successfully deleted all stock items for ${brandName}`,
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

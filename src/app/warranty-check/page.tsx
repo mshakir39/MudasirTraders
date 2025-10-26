@@ -103,8 +103,14 @@ export default function WarrantyCheckPage() {
                 <li>In the warranty section of your sales receipt</li>
               </ul>
               <div className='mt-4 text-sm text-gray-600'>
-                <p><strong>Multiple Codes:</strong> You can enter multiple warranty codes separated by comma or space</p>
-                <p><strong>Examples:</strong> &quot;ABC123, DEF456&quot; or &quot;ABC123 DEF456&quot; or &quot;1646603376 1291636542&quot;</p>
+                <p>
+                  <strong>Multiple Codes:</strong> You can enter multiple
+                  warranty codes separated by comma or space
+                </p>
+                <p>
+                  <strong>Examples:</strong> &quot;ABC123, DEF456&quot; or
+                  &quot;ABC123 DEF456&quot; or &quot;1646603376 1291636542&quot;
+                </p>
                 <p>The warranty code format looks like: XXX-XXXXXXX</p>
                 <p>
                   If you cannot find your warranty code, please contact our

@@ -5,7 +5,7 @@ function page() {
     <div className='flex min-h-screen w-full flex-col items-center justify-center bg-white px-4 py-12'>
       <div className='w-full space-y-8 text-center'>
         <div className='space-y-4'>
-          <h1 className='text-2xl font-semibold text-gray-900 sm:text-3xl md:text-4xl lg:text-5xl leading-tight'>
+          <h1 className='text-2xl font-semibold leading-tight text-gray-900 sm:text-3xl md:text-4xl lg:text-5xl'>
             WelCome to{' '}
             <span className='text-[#5b4eea]'>Battery Inventory Manager</span>
           </h1>
@@ -13,7 +13,7 @@ function page() {
             Continue SignIn to Access All features
           </p>
         </div>
-        
+
         <div className='flex w-full justify-center py-4'>
           <GoogleSignIn />
         </div>
@@ -24,7 +24,7 @@ function page() {
             Contact us at{' '}
             <a
               href='mailto:owner@mudasirtraders.com'
-              className='text-blue-600 hover:text-blue-800 underline transition-colors duration-200'
+              className='text-blue-600 underline transition-colors duration-200 hover:text-blue-800'
             >
               owner@mudasirtraders.com
             </a>{' '}
@@ -34,7 +34,7 @@ function page() {
             Call/Text{' '}
             <a
               href='tel:+923349627745'
-              className='text-blue-600 hover:text-blue-800 underline transition-colors duration-200'
+              className='text-blue-600 underline transition-colors duration-200 hover:text-blue-800'
             >
               +923349627745
             </a>

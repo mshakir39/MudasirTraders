@@ -6,18 +6,29 @@ import EditInvoiceModal from '@/components/invoice/EditInvoiceModal';
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal';
 import { toast } from 'react-toastify';
 import { PATCH } from '@/utils/api';
+import { useAccordionData } from '@/components/invoice/useAccordionData';
 
 interface CustomerInvoicesModalProps {
   isOpen: boolean;
   onClose: () => void;
   customer: any;
+  categories?: any[];
+  stock?: any[];
 }
 
 const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
   isOpen,
   onClose,
   customer,
+  categories = [],
+  stock = [],
 }) => {
+  const { ...accordionMethods } = useAccordionData(categories, stock);
+
+  const brandOptions = categories.map((category) => ({
+    label: category.brandName || '',
+    value: category.brandName || '',
+  }));
   const [customerInvoices, setCustomerInvoices] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubModalOpen, setIsSubModalOpen] = useState(false);
@@ -26,26 +37,17 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
 
   const fetchCustomerInvoices = useCallback(async () => {
     setIsLoading(true);
-    console.log('🔍 Fetching invoices for customer:', customer);
-
     try {
       const url = `/api/customers/${customer.id}/invoices`;
-      console.log('📡 API URL:', url);
-
       const response = await fetch(url);
-      console.log('📡 Response status:', response.status);
-
       if (response.ok) {
         const invoices = await response.json();
-        console.log('✅ Received invoices:', invoices);
         setCustomerInvoices(invoices);
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('❌ API Error:', response.status, errorData);
         setCustomerInvoices([]);
       }
     } catch (error) {
-      console.error('💥 Fetch Error:', error);
       setCustomerInvoices([]);
     } finally {
       setIsLoading(false);
@@ -72,7 +74,6 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
       setIsLoading(false);
       setIsSubModalOpen(false);
     } catch (error) {
-      console.error('Error updating invoice:', error);
       setIsLoading(false);
     }
   };
@@ -176,6 +177,11 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
                 setSubModalType('editInvoice');
                 setIsSubModalOpen(true);
               }}
+              onAddPayment={(data) => {
+                setModalData({ ...data, isPaymentOnly: true });
+                setSubModalType('addPayment');
+                setIsSubModalOpen(true);
+              }}
             />
           )}
 
@@ -203,6 +209,26 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
           data={modalData}
           onSubmit={handleEditInvoice}
           isLoading={isLoading}
+          categories={categories}
+          customers={[]}
+          brandOptions={brandOptions}
+          stock={stock}
+          accordionMethods={accordionMethods}
+        />
+      )}
+
+      {subModalType === 'addPayment' && (
+        <EditInvoiceModal
+          isOpen={isSubModalOpen}
+          onClose={handleCloseSubModal}
+          data={modalData}
+          onSubmit={handleEditInvoice}
+          isLoading={isLoading}
+          categories={categories}
+          customers={[]}
+          brandOptions={brandOptions}
+          stock={stock}
+          accordionMethods={accordionMethods}
         />
       )}
 

@@ -74,7 +74,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
                 (c) => c.id.toString() === option.value
               );
               if (selectedCustomer) {
-                console.log('selectedCustomer', selectedCustomer);
                 setInvoiceData((prev: any) => ({
                   ...prev,
                   customerName: selectedCustomer.customerName,
@@ -142,7 +141,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({
             : ''
         }
       />
-
     </>
   );
 };

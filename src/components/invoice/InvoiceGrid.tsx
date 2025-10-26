@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { VscPreview } from 'react-icons/vsc';
 import { convertDate } from '@/utils/convertTime';
 import Table from '@/components/table';
@@ -13,6 +13,7 @@ interface InvoiceGridProps {
   onViewProducts: (data: any) => void;
   onPreview: (data: any) => void;
   onEditInvoice: (data: any) => void;
+  onAddPayment: (data: any) => void;
   showCreateButton?: boolean;
 }
 
@@ -22,6 +23,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
   onViewProducts,
   onPreview,
   onEditInvoice,
+  onAddPayment,
   showCreateButton = true,
 }) => {
   const [deleteModal, setDeleteModal] = useState<{
@@ -34,13 +36,37 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
     invoiceNo: '',
   });
 
-  const handleDeleteClick = (invoiceId: string, invoiceNo: string) => {
-    setDeleteModal({
+  const [revertPaymentModal, setRevertPaymentModal] = useState<{
+    isOpen: boolean;
+    invoiceId: string;
+    invoiceNo: string;
+    payments: any[];
+  }>({
+    isOpen: false,
+    invoiceId: '',
+    invoiceNo: '',
+    payments: [],
+  });
+
+  const handleDeleteClick = useCallback(
+    (invoiceId: string, invoiceNo: string) => {
+      setDeleteModal({
+        isOpen: true,
+        invoiceId,
+        invoiceNo,
+      });
+    },
+    []
+  );
+
+  const handleRevertPaymentClick = useCallback((invoice: any) => {
+    setRevertPaymentModal({
       isOpen: true,
-      invoiceId,
-      invoiceNo,
+      invoiceId: invoice.id,
+      invoiceNo: invoice.invoiceNo,
+      payments: invoice.additionalPayment || [],
     });
-  };
+  }, []);
 
   const handleDeleteConfirm = async () => {
     try {
@@ -62,7 +88,6 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
         toast.error(result.error || 'Failed to delete invoice');
       }
     } catch (error) {
-      console.error('Error deleting invoice:', error);
       toast.error('Failed to delete invoice');
     } finally {
       setDeleteModal({ isOpen: false, invoiceId: '', invoiceNo: '' });
@@ -88,12 +113,10 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
 
       if (response.ok) {
         toast.success(result.message);
-        console.log('Stock cleanup result:', result);
       } else {
         toast.error(result.error || 'Failed to cleanup stock data');
       }
     } catch (error) {
-      console.error('Error cleaning up stock data:', error);
       toast.error('Failed to cleanup stock data');
     }
   };
@@ -179,7 +202,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
         cell: ({ row }) => (
           <div className='flex h-full w-full items-center justify-start gap-2'>
             <VscPreview
-              className='cursor-pointer text-blue-600 hover:text-blue-800'
+              className='cursor-pointer text-blue-600 transition-colors duration-200 hover:text-blue-800'
               onClick={(e) => {
                 e.stopPropagation();
                 onPreview(row.original);
@@ -190,21 +213,61 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
         ),
       },
       {
+        id: 'edit',
+        header: 'Edit',
+        cell: ({ row }) => (
+          <div className='flex h-full w-full items-center justify-start'>
+            <span
+              className='cursor-pointer text-blue-600 transition-colors duration-200 hover:text-blue-800'
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditInvoice(row.original);
+              }}
+              title='Edit Invoice'
+            >
+              ✏️ Edit
+            </span>
+          </div>
+        ),
+      },
+      {
         id: 'makeItPaid',
-        header: 'Add Remaining Amount',
+        header: 'Add Payment',
         cell: ({ row }) => (
           <div className='flex h-full w-full items-center justify-start'>
             {row.original.remainingAmount > 0 && (
               <span
-                className='cursor-pointer text-blue-500 hover:text-blue-700'
+                className='cursor-pointer text-emerald-600 transition-colors duration-200 hover:text-emerald-800'
                 onClick={(e) => {
                   e.stopPropagation();
-                  onEditInvoice(row.original);
+                  onAddPayment(row.original);
                 }}
+                title='Add Payment'
               >
-                Add Amount
+                💰 Pay
               </span>
             )}
+          </div>
+        ),
+      },
+      {
+        id: 'revertPayment',
+        header: 'Revert Payment',
+        cell: ({ row }) => (
+          <div className='flex h-full w-full items-center justify-start'>
+            {row.original.additionalPayment &&
+              row.original.additionalPayment.length > 0 && (
+                <span
+                  className='cursor-pointer text-orange-600 transition-colors duration-200 hover:text-orange-800'
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRevertPaymentClick(row.original);
+                  }}
+                  title='Revert Payment'
+                >
+                  ↩️ Revert
+                </span>
+              )}
           </div>
         ),
       },
@@ -214,7 +277,7 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
         cell: ({ row }) => (
           <div className='flex h-full w-full items-center justify-start'>
             <button
-              className='cursor-pointer rounded-full p-2 text-red-500 transition-colors duration-200 hover:text-red-700'
+              className='cursor-pointer rounded-full p-2 text-red-600 transition-colors duration-200 hover:text-red-800'
               onClick={(e) => {
                 e.stopPropagation();
                 handleDeleteClick(row.original.id, row.original.invoiceNo);
@@ -227,10 +290,15 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
         ),
       },
     ],
-    [onViewProducts, onPreview, onEditInvoice, handleDeleteClick]
+    [
+      onViewProducts,
+      onPreview,
+      onEditInvoice,
+      onAddPayment,
+      handleDeleteClick,
+      handleRevertPaymentClick,
+    ]
   );
-
-  console.log('invoices', invoices);
   return (
     <>
       <Table
@@ -302,7 +370,136 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
           </div>
         </div>
       </Modal>
+      <RevertPaymentModal
+        isOpen={revertPaymentModal.isOpen}
+        onClose={() =>
+          setRevertPaymentModal({
+            isOpen: false,
+            invoiceId: '',
+            invoiceNo: '',
+            payments: [],
+          })
+        }
+        invoiceId={revertPaymentModal.invoiceId}
+        invoiceNo={revertPaymentModal.invoiceNo}
+        payments={revertPaymentModal.payments}
+      />
     </>
+  );
+};
+
+const RevertPaymentModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  invoiceId: string;
+  invoiceNo: string;
+  payments: any[];
+}> = ({ isOpen, onClose, invoiceId, invoiceNo, payments }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleRevertPayment = async (paymentIndex: number) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/invoice/revert-payment', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invoiceId,
+          paymentIndex,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast.success(
+          `Payment of Rs ${result.revertedAmount} reverted successfully. New remaining: Rs ${result.newRemainingAmount}`
+        );
+        onClose();
+        window.location.reload();
+      } else {
+        toast.error(result.error || 'Failed to revert payment');
+      }
+    } catch (error: any) {
+      toast.error('An error occurred while reverting payment');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatDate = (date: string) => {
+    const { dateTime } = convertDate(date);
+    return dateTime;
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Revert Payment - Invoice #${invoiceNo}`}
+      size='medium'
+    >
+      <div className='space-y-4'>
+        <div className='rounded-lg border border-orange-200 bg-orange-50 p-4'>
+          <p className='text-sm text-orange-800'>
+            ℹ️ <strong>Note:</strong> Reverting a payment will restore the
+            invoice&apos;s remaining balance and remove the payment from
+            history.
+          </p>
+        </div>
+
+        {payments.length === 0 ? (
+          <p className='text-center text-gray-500'>
+            No additional payments found.
+          </p>
+        ) : (
+          <div className='space-y-3'>
+            <h4 className='font-semibold text-gray-700'>
+              Select a payment to revert:
+            </h4>
+            {payments.map((payment, index) => (
+              <div
+                key={index}
+                className='flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:bg-gray-50'
+              >
+                <div className='flex-1'>
+                  <div className='font-medium text-gray-900'>
+                    Rs {payment.amount}
+                  </div>
+                  <div className='text-sm text-gray-500'>
+                    {formatDate(payment.addedDate)}
+                  </div>
+                  {payment.paymentMethod && (
+                    <div className='mt-1 text-xs text-gray-600'>
+                      Payment Method: {payment.paymentMethod.join(' + ')}
+                    </div>
+                  )}
+                </div>
+                <Button
+                  variant='outline'
+                  text='Revert'
+                  onClick={() => handleRevertPayment(index)}
+                  className='border-orange-500 text-orange-600 hover:bg-orange-50'
+                  disabled={isLoading}
+                  isPending={isLoading}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className='flex justify-end pt-4'>
+          <Button
+            variant='outline'
+            text='Close'
+            onClick={onClose}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+    </Modal>
   );
 };
 

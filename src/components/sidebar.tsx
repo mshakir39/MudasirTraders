@@ -29,7 +29,13 @@ import { getStoreDetail } from '@/getData/getStoreDetail';
 import { signOut } from 'next-auth/react';
 import Cookies from 'js-cookie';
 
-const Sidebar = ({ className, onCollapseChange }: { className?: string; onCollapseChange?: (collapsed: boolean) => void }) => {
+const Sidebar = ({
+  className,
+  onCollapseChange,
+}: {
+  className?: string;
+  onCollapseChange?: (collapsed: boolean) => void;
+}) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [storeData, setStoreData] = useState<any>();
@@ -59,11 +65,10 @@ const Sidebar = ({ className, onCollapseChange }: { className?: string; onCollap
           setStoreDetail({ storeName: 'Store' }); // Fallback
         }
       } catch (error) {
-        console.error('Error fetching store detail:', error);
         setStoreDetail({ storeName: 'Store' }); // Fallback
       }
     };
-    
+
     fetchStoreDetail();
   }, []); // Empty dependency array - only run once on mount
 
@@ -114,14 +119,17 @@ const Sidebar = ({ className, onCollapseChange }: { className?: string; onCollap
       setIsLoading(true);
       let data = { ...storeDetail };
       data.storeName = storeData.storeName;
-      console.log('data', data);
       const response: any = await POST('api/storeDetail', data);
 
       if (response?.message) {
         toast.success(response?.message);
         // Refresh store detail after successful update
         const updatedStore = await getStoreDetail();
-        if (updatedStore && Array.isArray(updatedStore) && updatedStore.length > 0) {
+        if (
+          updatedStore &&
+          Array.isArray(updatedStore) &&
+          updatedStore.length > 0
+        ) {
           setStoreDetail(updatedStore[0]);
         }
       }
@@ -132,15 +140,16 @@ const Sidebar = ({ className, onCollapseChange }: { className?: string; onCollap
 
       setIsLoading(false);
       setIsModalOpen(false);
-    } catch (error) {
-      console.error('Error updating data:', error);
-    }
+    } catch (error) {}
   };
 
-  const handleChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setStoreData((prevStore: any) => ({ ...prevStore, [name]: value }));
-  }, []);
+  const handleChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setStoreData((prevStore: any) => ({ ...prevStore, [name]: value }));
+    },
+    []
+  );
 
   const handleMobileLinkClick = () => {
     setIsMobileMenuOpen(false);
@@ -174,7 +183,7 @@ const Sidebar = ({ className, onCollapseChange }: { className?: string; onCollap
           </span>
 
           {/* Navigation Links */}
-          <div className='flex flex-col space-y-2 overflow-y-auto flex-1'>
+          <div className='flex flex-1 flex-col space-y-2 overflow-y-auto'>
             <Link
               href='/'
               onClick={handleMobileLinkClick}

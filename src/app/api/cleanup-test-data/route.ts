@@ -8,12 +8,12 @@ export async function POST(request: NextRequest) {
     // Test invoice IDs to delete
     const testInvoiceIds = [
       '00000004',
-      '00000005', 
+      '00000005',
       '00000006',
       '00000007',
       '00000008',
       '00000009',
-      '000000010'
+      '000000010',
     ];
 
     let deletedSales = 0;
@@ -23,12 +23,18 @@ export async function POST(request: NextRequest) {
     for (const invoiceId of testInvoiceIds) {
       try {
         const salesResult = await executeOperation('sales', 'deleteOne', {
-          invoiceId
+          invoiceId,
         });
-        
-        if (salesResult && typeof salesResult === 'object' && 'deletedCount' in salesResult) {
+
+        if (
+          salesResult &&
+          typeof salesResult === 'object' &&
+          'deletedCount' in salesResult
+        ) {
           deletedSales += salesResult.deletedCount || 0;
-          console.log(`🗑️ Deleted ${salesResult.deletedCount || 0} sales for invoice ${invoiceId}`);
+          console.log(
+            `🗑️ Deleted ${salesResult.deletedCount || 0} sales for invoice ${invoiceId}`
+          );
         }
       } catch (error) {
         console.error(`Error deleting sales for invoice ${invoiceId}:`, error);
@@ -39,33 +45,46 @@ export async function POST(request: NextRequest) {
     for (const invoiceId of testInvoiceIds) {
       try {
         const invoicesResult = await executeOperation('invoices', 'deleteOne', {
-          invoiceNo: invoiceId
+          invoiceNo: invoiceId,
         });
-        
-        if (invoicesResult && typeof invoicesResult === 'object' && 'deletedCount' in invoicesResult) {
+
+        if (
+          invoicesResult &&
+          typeof invoicesResult === 'object' &&
+          'deletedCount' in invoicesResult
+        ) {
           deletedInvoices += invoicesResult.deletedCount || 0;
-          console.log(`🗑️ Deleted ${invoicesResult.deletedCount || 0} invoices for invoice ${invoiceId}`);
+          console.log(
+            `🗑️ Deleted ${invoicesResult.deletedCount || 0} invoices for invoice ${invoiceId}`
+          );
         }
       } catch (error) {
-        console.error(`Error deleting invoices for invoice ${invoiceId}:`, error);
+        console.error(
+          `Error deleting invoices for invoice ${invoiceId}:`,
+          error
+        );
       }
     }
 
-    console.log(`✅ Cleanup completed: ${deletedSales} sales and ${deletedInvoices} invoices deleted`);
+    console.log(
+      `✅ Cleanup completed: ${deletedSales} sales and ${deletedInvoices} invoices deleted`
+    );
 
     return NextResponse.json({
       success: true,
       message: 'Test data cleanup completed',
       deletedSales,
       deletedInvoices,
-      testInvoiceIds
+      testInvoiceIds,
     });
-
   } catch (error: any) {
     console.error('Error during cleanup:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }

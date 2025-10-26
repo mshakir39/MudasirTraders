@@ -29,13 +29,15 @@ const DashboardPasswordPage: React.FC = () => {
 
     try {
       // Use environment variable with fallback
-      const expectedPassword = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'admin123';
-      
+      const expectedPassword =
+        process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'admin123';
+
       if (password === expectedPassword) {
         // Set dashboard unlocked cookie
-        document.cookie = 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax'; // 30 minutes
+        document.cookie =
+          'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax'; // 30 minutes
         toast.success('Dashboard unlocked successfully!');
-        
+
         // Add a small delay to ensure the toast is visible before redirecting
         setTimeout(() => {
           setIsLoading(false);

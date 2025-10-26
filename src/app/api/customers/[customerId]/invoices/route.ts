@@ -95,7 +95,9 @@ export async function GET(
               invoice.customerId === params.customerId ||
               invoice.customerId?.toString() === params.customerId ||
               invoice.clientName ===
-                (isCustomerWithName(customer) ? customer.customerName : undefined)) &&
+                (isCustomerWithName(customer)
+                  ? customer.customerName
+                  : undefined)) &&
             invoice.customerType === 'Regular'
           );
         })

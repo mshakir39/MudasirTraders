@@ -285,11 +285,9 @@ export async function executeOperation(
             );
           }
 
-          return await db
-            .collection(collectionName)
-            .updateOne({ brandName }, {
-              $pull: { seriesStock: { series: series } },
-            } as any);
+          return await db.collection(collectionName).updateOne({ brandName }, {
+            $pull: { seriesStock: { series: series } },
+          } as any);
 
         case 'updateOne':
           // For categories, replace the entire series array and salesTax field

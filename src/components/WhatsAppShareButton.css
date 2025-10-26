@@ -27,6 +27,6 @@
 
 /* Focus styles for accessibility */
 .whatsapp-share-button:focus {
-  outline: 2px solid #25D366;
+  outline: 2px solid #25d366;
   outline-offset: 2px;
 }

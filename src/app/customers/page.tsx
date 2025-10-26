@@ -19,8 +19,6 @@ export default async function CustomersPage() {
   } catch (error) {
     console.error('Error fetching customers:', error);
     // Return empty customers array if fetch fails during build
-    return (
-      <CustomersLayout customers={[]} />
-    );
+    return <CustomersLayout customers={[]} />;
   }
 }

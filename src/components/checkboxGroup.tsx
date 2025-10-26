@@ -17,15 +17,12 @@ const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
   checkedValues = [],
 }) => {
   const handleItemClick = (value: string) => {
-    console.log('Item clicked:', value);
     const safeCheckedValues = Array.isArray(checkedValues) ? checkedValues : [];
     const isCurrentlyChecked = safeCheckedValues.includes(value);
 
     const newValues = isCurrentlyChecked
       ? safeCheckedValues.filter((v) => v !== value)
       : [...safeCheckedValues, value];
-
-    console.log('New values:', newValues);
     onChange(newValues);
   };
 

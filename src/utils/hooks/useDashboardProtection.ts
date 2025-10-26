@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
 export const useDashboardProtection = () => {
@@ -44,7 +44,7 @@ export const useDashboardProtection = () => {
   };
 
   // Lock dashboard
-  const lockDashboard = () => {
+  const lockDashboard = useCallback(() => {
     sessionStorage.removeItem('dashboardUnlocked');
     sessionStorage.removeItem('dashboardUnlockTime');
     setIsLocked(true);
@@ -52,7 +52,7 @@ export const useDashboardProtection = () => {
     if (pathname === '/') {
       setShowPasswordModal(true);
     }
-  };
+  }, [pathname]);
 
   // Unlock dashboard
   const unlockDashboard = () => {

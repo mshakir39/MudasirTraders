@@ -1,6 +1,6 @@
 // components/PdfUploadModal.tsx - Enhanced Version with JSON Import
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import Modal from './modal';
 import Button from './button';
@@ -10,21 +10,23 @@ import { FaPlus, FaTrash, FaSave, FaUpload, FaCode } from 'react-icons/fa';
 
 interface BatteryData {
   name: string;
-  plate: string | number;
-  ah: number;
+  plate?: string | number; // Optional for Battery Tonic
+  ah?: number; // Optional for Battery Tonic
   type?: string;
   retailPrice?: number;
-  salesTax?: number;
+  salesTax?: number; // Optional for Battery Tonic
   maxRetailPrice?: number; // Will be calculated automatically
+  batteryType?: 'battery' | 'tonic'; // Track the battery type
 }
 
 interface ProductData {
   name: string;
-  plate: number;
-  ah: number;
+  plate?: number; // Optional for Battery Tonic
+  ah?: number; // Optional for Battery Tonic
   retailPrice: number;
-  salesTax: number;
-  maxRetailPrice: number;
+  salesTax?: number; // Optional for Battery Tonic
+  maxRetailPrice?: number;
+  batteryType?: 'battery' | 'tonic'; // Track the battery type
 }
 
 interface JsonUploadData {
@@ -42,6 +44,7 @@ interface PdfUploadModalProps {
     brandName: string;
     series: BatteryData[];
     salesTax: string;
+    batteryType: 'battery' | 'tonic';
   }) => void;
   brands: { label: string; value: string }[];
   categories?: { brandName: string; series: any[] }[];
@@ -55,14 +58,39 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
   categories,
 }) => {
   const [activeTab, setActiveTab] = useState<'manual' | 'json'>('manual');
+  const [batteryType, setBatteryType] = useState<'battery' | 'tonic'>(
+    'battery'
+  );
   const [selectedBrand, setSelectedBrand] = useState<DropdownOption | null>(
     null
   );
   const [salesTax, setSalesTax] = useState<string>('18');
   const [batteryData, setBatteryData] = useState<BatteryData[]>([
-    { name: '', plate: '', ah: 0, retailPrice: 0 },
+    batteryType === 'battery'
+      ? { name: '', plate: '', ah: 0, retailPrice: 0, batteryType }
+      : { name: 'Battery Tonic', retailPrice: 0, batteryType },
   ]);
   const [jsonData, setJsonData] = useState<string>('');
+
+  // Update sales tax when battery type changes
+  useEffect(() => {
+    if (batteryType === 'tonic') {
+      setSalesTax('0'); // Battery Tonic has no sales tax
+    } else {
+      setSalesTax('18'); // Default sales tax for battery data
+    }
+  }, [batteryType]);
+
+  // Update battery type in existing battery data when toggle changes
+  useEffect(() => {
+    setBatteryData((prevData) =>
+      prevData.map((battery) => ({
+        ...battery,
+        batteryType,
+        name: batteryType === 'tonic' ? 'Battery Tonic' : battery.name,
+      }))
+    );
+  }, [batteryType]);
 
   // Confirmation modal states
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
@@ -94,7 +122,9 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
   const addBatteryRow = () => {
     setBatteryData([
       ...batteryData,
-      { name: '', plate: '', ah: 0, retailPrice: 0 },
+      batteryType === 'battery'
+        ? { name: '', plate: '', ah: 0, retailPrice: 0, batteryType }
+        : { name: 'Battery Tonic', retailPrice: 0, batteryType },
     ]);
   };
 
@@ -172,22 +202,27 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
   };
 
   const convertJsonToBatteryData = (
-    jsonData: JsonUploadData
+    jsonData: JsonUploadData,
+    batteryType: 'battery' | 'tonic' = 'battery'
   ): BatteryData[] => {
     return Object.values(jsonData.products).map((product) => {
       // Calculate sales tax amount based on the global salesTax percentage
-      const salesTaxAmount = (product.retailPrice * jsonData.salesTax) / 100;
+      const salesTaxAmount =
+        batteryType === 'battery'
+          ? (product.retailPrice * jsonData.salesTax) / 100
+          : 0;
 
       // Calculate max retail price (retail price + sales tax)
       const maxRetailPrice = product.retailPrice + salesTaxAmount;
 
       return {
         name: product.name,
-        plate: product.plate,
-        ah: product.ah,
+        plate: batteryType === 'battery' ? product.plate : undefined,
+        ah: batteryType === 'battery' ? product.ah : undefined,
         retailPrice: product.retailPrice,
-        salesTax: jsonData.salesTax, // Use the global salesTax percentage
+        salesTax: batteryType === 'battery' ? jsonData.salesTax : 0, // Battery Tonic doesn't have sales tax
         maxRetailPrice: Math.round(maxRetailPrice * 100) / 100, // Round to 2 decimal places
+        batteryType,
       };
     });
   };
@@ -334,11 +369,15 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
           brandName: parsedData.brandName,
           seriesCount: existingCategory.series?.length || 0,
           action: () => {
-            const batteryData = convertJsonToBatteryData(parsedData);
+            const batteryData = convertJsonToBatteryData(
+              parsedData,
+              batteryType
+            );
             onSuccess({
               brandName: parsedData.brandName,
               series: batteryData,
               salesTax: parsedData.salesTax.toString(),
+              batteryType,
             });
             handleClose();
           },
@@ -347,12 +386,13 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
         return;
       }
 
-      const batteryData = convertJsonToBatteryData(parsedData);
+      const batteryData = convertJsonToBatteryData(parsedData, batteryType);
 
       onSuccess({
         brandName: parsedData.brandName,
         series: batteryData,
         salesTax: parsedData.salesTax.toString(),
+        batteryType,
       });
 
       handleClose();
@@ -393,22 +433,34 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
       return;
     }
 
-    if (!salesTax || isNaN(Number(salesTax))) {
+    if (batteryType === 'battery' && (!salesTax || isNaN(Number(salesTax)))) {
       toast.error('Please enter a valid sales tax percentage');
       return;
     }
 
     // Filter out empty rows and calculate maxRetailPrice
     const validData = batteryData
-      .filter((item) => item.name.trim() && item.plate && item.ah > 0)
+      .filter((item) => {
+        if (batteryType === 'tonic') {
+          // For Battery Tonic, only require name and retailPrice
+          return item.name.trim() && item.name === 'Battery Tonic';
+        } else {
+          // For regular batteries, require name, plate, and ah
+          return item.name.trim() && item.plate && (item.ah || 0) > 0;
+        }
+      })
       .map((item) => {
-        const salesTaxAmount = (item.retailPrice || 0) * (Number(salesTax) / 100);
+        const salesTaxAmount =
+          batteryType === 'tonic'
+            ? 0
+            : (item.retailPrice || 0) * (Number(salesTax) / 100);
         const maxRetailPrice = (item.retailPrice || 0) + salesTaxAmount;
-        
+
         return {
           ...item,
           maxRetailPrice: Math.round(maxRetailPrice * 100) / 100, // Round to 2 decimal places
-          salesTax: Number(salesTax)
+          salesTax: batteryType === 'tonic' ? 0 : Number(salesTax),
+          batteryType,
         };
       });
 
@@ -430,6 +482,7 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
             brandName: selectedBrand.label,
             series: validData,
             salesTax,
+            batteryType,
           });
           handleClose();
         },
@@ -442,6 +495,7 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
       brandName: selectedBrand.label,
       series: validData,
       salesTax,
+      batteryType,
     });
 
     handleClose();
@@ -449,10 +503,11 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
 
   const handleClose = () => {
     setActiveTab('manual');
+    setBatteryType('battery');
     setSelectedBrand(null);
     setSalesTax('18');
     setBatteryData([
-      { name: '', plate: '', ah: 0, retailPrice: 0 },
+      { name: '', plate: '', ah: 0, retailPrice: 0, batteryType: 'battery' },
     ]);
     setJsonData('');
     setShowConfirmModal(false);
@@ -1019,11 +1074,42 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
                 <FaUpload className='h-8 w-8 text-blue-600' />
               </div>
               <h3 className='text-lg font-medium text-gray-900'>
-                Add Battery Data
+                Add{' '}
+                {batteryType === 'battery'
+                  ? 'Battery Data'
+                  : 'Battery Tonic Data'}
               </h3>
               <p className='mt-2 text-sm text-gray-500'>
                 Choose between manual entry or JSON import
               </p>
+
+              {/* Battery Type Toggle */}
+              <div className='mt-4 flex items-center justify-center space-x-4'>
+                <span className='text-sm font-medium text-gray-700'>
+                  Data Type:
+                </span>
+                <label className='relative inline-flex cursor-pointer items-center'>
+                  <input
+                    type='checkbox'
+                    className='peer sr-only'
+                    checked={batteryType === 'tonic'}
+                    onChange={(e) =>
+                      setBatteryType(e.target.checked ? 'tonic' : 'battery')
+                    }
+                  />
+                  <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300"></div>
+                </label>
+                <span
+                  className={`text-sm font-medium ${batteryType === 'tonic' ? 'text-blue-600' : 'text-gray-500'}`}
+                >
+                  Battery Tonic
+                </span>
+                <span
+                  className={`text-sm ${batteryType === 'battery' ? 'font-medium text-blue-600' : 'text-gray-500'}`}
+                >
+                  Battery Data
+                </span>
+              </div>
             </div>
 
             {/* Tab Navigation */}
@@ -1068,31 +1154,57 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
                     Select Brand *
                   </label>
                   <Dropdown
-                    options={brands}
+                    options={[...brands, { label: 'Other', value: 'other' }]}
                     onSelect={handleBrandSelect}
                     placeholder='Choose a brand for this data'
                     value={selectedBrand}
+                    disabled={false}
                   />
+
+                  {batteryType === 'tonic' && (
+                    <p className='mt-1 text-xs text-blue-600'>
+                      💡 Battery Tonic will be added as a series to the selected
+                      brand. Choose any brand from the dropdown.
+                    </p>
+                  )}
                 </div>
 
                 {/* Sales Tax */}
                 <div>
                   <Input
                     type='text'
-                    label='Sales Tax %'
+                    label={
+                      batteryType === 'tonic'
+                        ? 'Sales Tax % (Not applicable for Battery Tonic)'
+                        : 'Sales Tax %'
+                    }
                     name='salesTax'
-                    value={salesTax}
+                    value={batteryType === 'tonic' ? '0' : salesTax}
                     onChange={handleSalesTaxChange}
-                    placeholder='Enter sales tax percentage'
+                    placeholder={
+                      batteryType === 'tonic'
+                        ? 'Battery Tonic has no sales tax'
+                        : 'Enter sales tax percentage'
+                    }
                     required
+                    readOnly={batteryType === 'tonic'}
                   />
+                  {batteryType === 'tonic' && (
+                    <p className='mt-1 text-xs text-blue-600'>
+                      💡 Battery Tonic is a consumable product and does not have
+                      sales tax
+                    </p>
+                  )}
                 </div>
 
                 {/* Battery Data Table */}
                 <div>
                   <div className='mb-3 flex items-center justify-between'>
                     <label className='block text-sm font-medium text-gray-700'>
-                      Battery Data *
+                      {batteryType === 'battery'
+                        ? 'Battery Data'
+                        : 'Battery Tonic Data'}{' '}
+                      *
                     </label>
                     <Button
                       variant='outline'
@@ -1107,14 +1219,18 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
                       <thead className='bg-gray-50'>
                         <tr>
                           <th className='px-2 py-2 text-left text-xs font-medium uppercase text-gray-500'>
-                            Name
+                            {batteryType === 'tonic' ? 'Type' : 'Name'}
                           </th>
-                          <th className='px-2 py-2 text-left text-xs font-medium uppercase text-gray-500'>
-                            Plate
-                          </th>
-                          <th className='px-2 py-2 text-left text-xs font-medium uppercase text-gray-500'>
-                            AH
-                          </th>
+                          {batteryType === 'battery' && (
+                            <>
+                              <th className='px-2 py-2 text-left text-xs font-medium uppercase text-gray-500'>
+                                Plate
+                              </th>
+                              <th className='px-2 py-2 text-left text-xs font-medium uppercase text-gray-500'>
+                                AH
+                              </th>
+                            </>
+                          )}
                           <th className='px-2 py-2 text-left text-xs font-medium uppercase text-gray-500'>
                             Retail Price
                           </th>
@@ -1132,50 +1248,60 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
                             }
                           >
                             <td className='px-2 py-2'>
-                              <input
-                                type='text'
-                                value={battery.name}
-                                onChange={(e) =>
-                                  updateBatteryData(
-                                    index,
-                                    'name',
-                                    e.target.value
-                                  )
-                                }
-                                placeholder='Battery name'
-                                className='w-full rounded border border-gray-300 px-2 py-1 text-sm'
-                              />
+                              {batteryType === 'tonic' ? (
+                                <div className='flex items-center rounded border bg-gray-100 px-2 py-1 text-sm text-gray-600'>
+                                  Battery Tonic
+                                </div>
+                              ) : (
+                                <input
+                                  type='text'
+                                  value={battery.name}
+                                  onChange={(e) =>
+                                    updateBatteryData(
+                                      index,
+                                      'name',
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder='Battery name'
+                                  className='w-full rounded border border-gray-300 px-2 py-1 text-sm'
+                                />
+                              )}
                             </td>
-                            <td className='px-2 py-2'>
-                              <input
-                                type='text'
-                                value={battery.plate}
-                                onChange={(e) =>
-                                  updateBatteryData(
-                                    index,
-                                    'plate',
-                                    e.target.value
-                                  )
-                                }
-                                placeholder='Plate count'
-                                className='w-full rounded border border-gray-300 px-2 py-1 text-sm'
-                              />
-                            </td>
-                            <td className='px-2 py-2'>
-                              <input
-                                type='number'
-                                value={battery.ah || ''}
-                                onChange={(e) =>
-                                  updateBatteryData(
-                                    index,
-                                    'ah',
-                                    parseInt(e.target.value) || 0
-                                  )
-                                }
-                                placeholder='AH'
-                                className='w-full rounded border border-gray-300 px-2 py-1 text-sm'
-                              />
-                            </td>
+                            {batteryType === 'battery' && (
+                              <>
+                                <td className='px-2 py-2'>
+                                  <input
+                                    type='text'
+                                    value={battery.plate || ''}
+                                    onChange={(e) =>
+                                      updateBatteryData(
+                                        index,
+                                        'plate',
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder='Plate count'
+                                    className='w-full rounded border border-gray-300 px-2 py-1 text-sm'
+                                  />
+                                </td>
+                                <td className='px-2 py-2'>
+                                  <input
+                                    type='number'
+                                    value={battery.ah || ''}
+                                    onChange={(e) =>
+                                      updateBatteryData(
+                                        index,
+                                        'ah',
+                                        parseInt(e.target.value) || 0
+                                      )
+                                    }
+                                    placeholder='AH'
+                                    className='w-full rounded border border-gray-300 px-2 py-1 text-sm'
+                                  />
+                                </td>
+                              </>
+                            )}
                             <td className='px-2 py-2'>
                               <input
                                 type='number'
@@ -1217,23 +1343,39 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
                     JSON Format Requirements
                   </h4>
                   <p className='mb-3 text-sm text-blue-700'>
-                    Paste JSON data in the following format:
+                    Paste JSON data in the following format
+                    {batteryType === 'tonic'
+                      ? ' for Battery Tonic (only name and retailPrice required)'
+                      : ' for Batteries (all fields required)'}
+                    :
                   </p>
                   <pre className='overflow-x-auto rounded bg-blue-100 p-3 text-xs text-blue-800'>
                     {`{
-  "brandName": "Brand Name",
-  "salesTax": 18,
+  "brandName": "${batteryType === 'tonic' ? 'Any Brand' : 'Brand Name'}",
+  "salesTax": ${batteryType === 'tonic' ? '0' : '18'},
   "products": {
-    "Product Key": {
-      "name": "Product Name",
+    "${batteryType === 'tonic' ? 'Battery Tonic' : 'Product Key'}": {
+      ${
+        batteryType === 'tonic'
+          ? `"name": "Battery Tonic",
+      "retailPrice": 150.00`
+          : `"name": "Product Name",
       "plate": 7,
       "ah": 24,
       "retailPrice": 6150.00,
-      "salesTax": 1107.00
+      "salesTax": 1107.00`
+      }
     }
   }
 }`}
                   </pre>
+                  {batteryType === 'tonic' && (
+                    <p className='mt-2 text-xs text-blue-600'>
+                      💡 Battery Tonic will be added as a series to the selected
+                      brand. Choose any brand or select &quot;Other&quot; for a
+                      new brand.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1273,17 +1415,12 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
                       try {
                         if (jsonData.trim()) {
                           const trimmed = jsonData.trim();
-                          console.log(
-                            'Validating JSON:',
-                            trimmed.substring(0, 100) + '...'
-                          );
                           JSON.parse(trimmed);
                           toast.success('JSON is valid!');
                         } else {
                           toast.error('Please paste JSON data first');
                         }
                       } catch (error) {
-                        console.error('JSON validation error:', error);
                         toast.error(
                           `JSON validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
                         );
@@ -1309,7 +1446,6 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
                             toast.warning(
                               'JSON was partially fixed, but may still have issues. Please check manually.'
                             );
-                            console.log('Fixed JSON:', fixed);
                           }
                         } catch (error) {
                           toast.error('Failed to fix JSON syntax');
