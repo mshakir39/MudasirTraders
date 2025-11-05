@@ -7,6 +7,7 @@ import 'rsuite-table/dist/css/rsuite-table.css';
 import SessionWrapper from '@/components/sessionWrapper';
 import LayoutWrapper from '@/components/LayoutWrapper';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import FaviconManager from '@/components/FaviconManager';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -49,6 +50,7 @@ export default function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
+        <FaviconManager />
         <SessionWrapper>
           <LayoutWrapper>{children}</LayoutWrapper>
           <ToastContainer />
