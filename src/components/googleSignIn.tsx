@@ -8,6 +8,10 @@ function GoogleSignIn() {
   const handleSignIn = () => {
     signIn('google', {
       callbackUrl: `/`,
+      // Force the account chooser so users can switch to @mudasirtraders.com
+      prompt: 'select_account',
+      // Hint the allowed hosted domain; enforcement still happens server-side
+      hd: 'mudasirtraders.com',
     });
   };
 

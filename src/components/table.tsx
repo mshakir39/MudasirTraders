@@ -30,6 +30,11 @@ interface TableProps<TData> {
   pageSize?: number;
   onRowClick?: (row: TData) => void;
   emptyMessage?: string;
+  // Optional: extra text to include in global search per row (hidden column)
+  extraGlobalSearchText?: (row: TData) => string;
+  // Optional: custom global filter matcher; receives the row, the prebuilt
+  // searchable text (hidden column), and the raw filter value.
+  customGlobalFilter?: (row: any, searchText: string, filterValue: string) => boolean;
 }
 
 export function Table<TData>({
@@ -50,34 +55,70 @@ export function Table<TData>({
   pageSize: initialPageSize = 10,
   onRowClick,
   emptyMessage = 'No data found',
+  extraGlobalSearchText,
+  customGlobalFilter,
 }: TableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(initialPageSize);
 
+  // Inject a hidden column for global search if provided
+  const augmentedColumns = React.useMemo<ColumnDef<TData>[]>(() => {
+    if (!extraGlobalSearchText) return columns;
+    return [
+      ...columns,
+      {
+        id: '__global_search',
+        accessorFn: (row: any) => (extraGlobalSearchText?.(row) ?? ''),
+        header: '',
+        cell: () => null,
+      } as unknown as ColumnDef<TData>,
+    ];
+  }, [columns, extraGlobalSearchText]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: augmentedColumns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const hidden = (row.getValue as any)?.('__global_search');
+      // Fallback to concatenating visible cell texts if hidden is absent
+      const fallback = row
+        .getAllCells()
+        .map((c: any) => String(c.getValue?.() ?? ''))
+        .join(' ');
+      const searchText = String(hidden ?? fallback).toLowerCase();
+      const query = String(filterValue ?? '').toLowerCase();
+      if (customGlobalFilter) {
+        try {
+          return customGlobalFilter(row, searchText, query);
+        } catch {
+          // If custom filter throws, fall back to default includes
+        }
+      }
+      return searchText.includes(query);
+    },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       globalFilter,
+      columnVisibility: { __global_search: false } as any,
     },
   });
 
   // Manual pagination
   const filteredRows = table.getFilteredRowModel().rows;
-  const totalPages = Math.ceil(filteredRows.length / pageSize);
+  const sortedRows = table.getSortedRowModel().rows; // apply sorting before rendering
+  const totalPages = Math.ceil(sortedRows.length / pageSize);
   const paginatedRows = React.useMemo(() => {
     const start = currentPage * pageSize;
     const end = start + pageSize;
-    return filteredRows.slice(start, end);
-  }, [filteredRows, currentPage, pageSize]);
+    return sortedRows.slice(start, end);
+  }, [sortedRows, currentPage, pageSize]);
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(0, prev - 1));
@@ -91,6 +132,11 @@ export function Table<TData>({
   React.useEffect(() => {
     setCurrentPage(0);
   }, [globalFilter]);
+
+  // Reset page when sorting changes
+  React.useEffect(() => {
+    setCurrentPage(0);
+  }, [sorting]);
 
   return (
     <div className={`flex w-full flex-col ${tableParentClassName}`}>
@@ -179,7 +225,7 @@ export function Table<TData>({
               ))}
             </thead>
             <tbody>
-              {(enablePagination ? paginatedRows : filteredRows).map(
+              {(enablePagination ? paginatedRows : sortedRows).map(
                 (row, i) => (
                   <tr
                     key={row.id}
@@ -289,8 +335,8 @@ export function Table<TData>({
 
           <div className='text-sm text-gray-600'>
             Showing {currentPage * pageSize + 1} to{' '}
-            {Math.min((currentPage + 1) * pageSize, filteredRows.length)} of{' '}
-            {filteredRows.length} entries
+            {Math.min((currentPage + 1) * pageSize, sortedRows.length)} of{' '}
+            {sortedRows.length} entries
           </div>
         </div>
       )}

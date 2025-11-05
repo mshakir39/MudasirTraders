@@ -165,7 +165,8 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
         },
       },
       {
-        accessorKey: 'remainingAmount',
+        id: 'remainingAmount',
+        accessorFn: (row: any) => Number(row.remainingAmount ?? 0),
         header: 'Remaining Amount',
         cell: ({ row }) => {
           return (

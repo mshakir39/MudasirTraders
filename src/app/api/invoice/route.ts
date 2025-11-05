@@ -191,13 +191,7 @@ export async function POST(req: NextRequest) {
               );
             }
 
-            // 🔒 VALIDATION: Ensure warranty end date is not in the past
-            const warrantyEndDateNow = new Date();
-            if (calculatedEndDate < warrantyEndDateNow) {
-              throw new Error(
-                `Warranty end date for ${product.brandName} - ${product.series} cannot be in the past: ${warrantyEndDate}`
-              );
-            }
+            // Note: Allow warranty end date to be in the past to support backdated invoices
           }
         }
 

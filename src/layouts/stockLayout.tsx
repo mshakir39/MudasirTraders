@@ -267,8 +267,13 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         },
       },
       {
-        accessorKey: 'productCost',
+        id: 'productCost',
         header: 'Product Cost',
+        accessorFn: (row) => {
+          const raw = (row as any).productCost;
+          const num = Number(String(raw).replace(/,/g, ''));
+          return isNaN(num) ? 0 : num;
+        },
         cell: ({ row }) =>
           `Rs ${Number(row.original.productCost).toLocaleString()}`,
       },
@@ -281,6 +286,14 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           );
           const salesTax = category?.salesTax || 0;
           return `Max Retail Price (${salesTax}% Tax)`;
+        },
+        accessorFn: (row) => {
+          const brandName = currentBrandName;
+          const seriesName = (row as any).series;
+          const priceData = getMaxRetailPrice(brandName, seriesName);
+          const value = priceData.maxRetailPrice;
+          const num = Number(String(value).replace(/,/g, ''));
+          return isNaN(num) ? 0 : num;
         },
         cell: ({ row }) => {
           const brandName = currentBrandName;
@@ -861,6 +874,59 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
               stockCost={stockCost}
               buttonTitle='Create Stock'
               showButton={true}
+              extraGlobalSearchText={(row) => {
+                const parts: string[] = [];
+                const series = (row as any)?.series ?? '';
+                const bd = (row as any)?.batteryDetails ?? {};
+                const plateRaw = bd?.plate ?? '';
+                const plate = String(plateRaw).trim();
+                const ah = bd?.ah ? String(bd.ah) : '';
+                const name = bd?.name ? String(bd.name) : '';
+
+                if (series) parts.push(String(series));
+                if (name) parts.push(name);
+                if (ah) parts.push(`${ah}ah`, `${ah} ah`);
+
+                if (plate) {
+                  const n = plate.replace(/\s+/g, '');
+                  // Plate search variants: '11p', '11 p', '11 plate', '11 plates', '11-plate'
+                  parts.push(
+                    `${plate}p`,
+                    `${plate} p`,
+                    `${plate} plate`,
+                    `${plate} plates`,
+                    `${plate}-plate`,
+                    `${plate}-plates`,
+                    `${n}p`,
+                    `${n} p`,
+                    `${n} plate`,
+                    `${n} plates`
+                  );
+                }
+
+                return parts.filter(Boolean).join(' ');
+              }}
+              customGlobalFilter={(row, searchText, query) => {
+                // Detect plate-intent queries like: '9 p', '9 pla', '9 plate', '9 plates'
+                const m = query.match(/^(\s*)(\d{1,3})(\s*)(p|pl|pla|plat|plate|plates)?/);
+                if (m) {
+                  const numStr = m[2];
+                  const hasPlateWord = !!m[4];
+                  // If user typed a number followed by a plate prefix, do exact plate match
+                  if (hasPlateWord) {
+                    const bd = (row.original as any)?.batteryDetails ?? {};
+                    const plateVal = bd?.plate;
+                    const plateNum = Number(String(plateVal).replace(/[^0-9]/g, ''));
+                    const qNum = Number(numStr);
+                    if (!isNaN(plateNum) && !isNaN(qNum)) {
+                      return plateNum === qNum; // do not fall back if intent is plates
+                    }
+                    return false; // plate-intent but cannot parse numbers -> don't match
+                  }
+                }
+                // Fallback to substring match across aggregated text
+                return searchText.includes(query);
+              }}
               buttonOnClick={() => {
                 fetchData(currentBrandName);
                 setStockData({
