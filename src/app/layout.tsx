@@ -14,7 +14,30 @@ export const metadata: Metadata = {
   title: 'Mudasir Traders',
   description: 'Inventory Management System',
   icons: {
-    icon: '/icon-white.svg',
+    icon: [
+      {
+        url: '/icon.svg?v=2',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: light)',
+      },
+      {
+        url: '/icon-white.svg?v=2',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: dark)',
+      },
+    ],
+    shortcut: [
+      {
+        url: '/icon.svg?v=2',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: light)',
+      },
+      {
+        url: '/icon-white.svg?v=2',
+        type: 'image/svg+xml',
+        media: '(prefers-color-scheme: dark)',
+      },
+    ],
   },
 };
 
