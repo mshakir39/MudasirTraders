@@ -13,6 +13,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Mudasir Traders',
   description: 'Inventory Management System',
+  icons: {
+    icon: '/icon-white.svg',
+  },
 };
 
 export default function RootLayout({
