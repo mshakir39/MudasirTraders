@@ -5,6 +5,26 @@ import { getAllSum } from '@/utils/getTotalSum';
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 
+// Escape user-provided text for use inside a RegExp
+function escapeRegex(input: string) {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeText(s: string) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+// Build a regex that requires all tokens (split by space, '/', ',', '(', ')', '-') to appear in any order
+function buildTokenRegex(input: string) {
+  const tokens = String(input || '')
+    .split(/[\s/,()\-]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+  if (tokens.length === 0) return '.*';
+  const lookaheads = tokens.map((t) => `(?=.*${escapeRegex(t)})`).join('');
+  return `^${lookaheads}.*$`;
+}
+
 // Track processing invoices to prevent duplicates
 const processingInvoices = new Set<string>();
 
@@ -601,23 +621,54 @@ export async function POST(req: NextRequest) {
     // Validate quantities before updating stock
     console.log('📦 Validating stock quantities...');
     for (const product of formData.productDetail) {
-      const seriesName = product.batteryDetails?.name || product.series;
+      const seriesName = (product.batteryDetails?.name || product.series || '').trim();
       const quantity = parseInt(product.quantity) || 0;
 
       if (quantity <= 0) {
         throw new Error(`Invalid quantity for ${seriesName}: ${quantity}`);
       }
 
-      // Check current stock before updating
+      // Check current stock before updating (case/whitespace-insensitive)
       const stockQuery = {
-        'seriesStock.series': seriesName,
-      };
+        ...(product.brandName
+          ? {
+              brandName: {
+                $regex: `^\\n?\\r?\\t?\\s*${escapeRegex(
+                  String(product.brandName).trim()
+                )}\\s*$`,
+                $options: 'i',
+              },
+            }
+          : {}),
+        'seriesStock.series': {
+          $regex: buildTokenRegex(seriesName),
+          $options: 'i',
+        },
+      } as any;
 
-      const stockExists = await executeOperation(
-        'stock',
-        'findOne',
-        stockQuery
-      );
+      let stockExists = await executeOperation('stock', 'findOne', stockQuery);
+
+      // Fallback: try without brand filter in case brand text differs
+      if (!stockExists) {
+        const fallbackQuery = {
+          'seriesStock.series': {
+            $regex: buildTokenRegex(seriesName),
+            $options: 'i',
+          },
+        } as any;
+        stockExists = await executeOperation('stock', 'findOne', fallbackQuery);
+        if (stockExists) {
+          try {
+            const foundBrand = String((stockExists as any)?.brandName || '').trim().toLowerCase();
+            const requestedBrand = String(product.brandName || '').trim().toLowerCase();
+            if (requestedBrand && foundBrand && foundBrand !== requestedBrand) {
+              console.warn(
+                `Brand mismatch: requested='${requestedBrand}' found='${foundBrand}' for series='${seriesName}'`
+              );
+            }
+          } catch {}
+        }
+      }
 
       if (!stockExists) {
         throw new Error(`Series '${seriesName}' not found in stock.`);
@@ -625,10 +676,16 @@ export async function POST(req: NextRequest) {
 
       // Validate stock availability
       const stockData = stockExists as any;
-      const currentStock = stockData.seriesStock?.find(
-        (item: any) => item.series === seriesName
-      );
+      const tokenPattern = new RegExp(buildTokenRegex(seriesName), 'i');
+      const currentStock = stockData.seriesStock?.find((item: any) => {
+        const s = String(item.series || '');
+        return normalizeText(s) === normalizeText(seriesName) || tokenPattern.test(s);
+      });
       if (!currentStock) {
+        try {
+          const available = (stockData.seriesStock || []).map((i: any) => i.series);
+          console.warn('Series not found; available series for matched brand:', available);
+        } catch {}
         throw new Error(`Series '${seriesName}' not found in stock data.`);
       }
 
@@ -638,12 +695,17 @@ export async function POST(req: NextRequest) {
           `Insufficient stock for ${seriesName}. Available: ${currentInStock}, Requested: ${quantity}`
         );
       }
+
+      // Preserve the exact stored series value for subsequent updates
+      (product as any)._normalizedSeries = currentStock.series;
     }
 
     // Update stock quantities and sold counts
     console.log('📦 Updating stock quantities and sold counts...');
     for (const product of formData.productDetail) {
-      const seriesName = product.batteryDetails?.name || product.series;
+      const seriesName =
+        (product as any)._normalizedSeries ||
+        (product.batteryDetails?.name || product.series || '').trim();
       const quantity = parseInt(product.quantity) || 0;
 
       console.log(`🔄 Updating stock for ${seriesName}: quantity=${quantity}`);

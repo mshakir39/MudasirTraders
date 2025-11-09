@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import 'rsuite-table/dist/css/rsuite-table.css';
 import SessionWrapper from '@/components/sessionWrapper';
@@ -9,7 +8,7 @@ import LayoutWrapper from '@/components/LayoutWrapper';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import FaviconManager from '@/components/FaviconManager';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'Mudasir Traders',
@@ -53,7 +52,6 @@ export default function RootLayout({
         <FaviconManager />
         <SessionWrapper>
           <LayoutWrapper>{children}</LayoutWrapper>
-          <ToastContainer />
         </SessionWrapper>
         <SpeedInsights />
       </body>

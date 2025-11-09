@@ -1,4 +1,5 @@
 import React from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   ColumnDef,
   flexRender,
@@ -30,11 +31,11 @@ interface TableProps<TData> {
   pageSize?: number;
   onRowClick?: (row: TData) => void;
   emptyMessage?: string;
-  // Optional: extra text to include in global search per row (hidden column)
   extraGlobalSearchText?: (row: TData) => string;
-  // Optional: custom global filter matcher; receives the row, the prebuilt
-  // searchable text (hidden column), and the raw filter value.
   customGlobalFilter?: (row: any, searchText: string, filterValue: string) => boolean;
+  enableRowVirtualization?: boolean;
+  tableBodyHeight?: number;
+  minVisibleRows?: number;
 }
 
 export function Table<TData>({
@@ -57,13 +58,15 @@ export function Table<TData>({
   emptyMessage = 'No data found',
   extraGlobalSearchText,
   customGlobalFilter,
+  enableRowVirtualization = false,
+  tableBodyHeight = 600,
+  minVisibleRows = 10,
 }: TableProps<TData>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(initialPageSize);
 
-  // Inject a hidden column for global search if provided
   const augmentedColumns = React.useMemo<ColumnDef<TData>[]>(() => {
     if (!extraGlobalSearchText) return columns;
     return [
@@ -85,7 +88,6 @@ export function Table<TData>({
     getSortedRowModel: getSortedRowModel(),
     globalFilterFn: (row, _columnId, filterValue) => {
       const hidden = (row.getValue as any)?.('__global_search');
-      // Fallback to concatenating visible cell texts if hidden is absent
       const fallback = row
         .getAllCells()
         .map((c: any) => String(c.getValue?.() ?? ''))
@@ -96,7 +98,7 @@ export function Table<TData>({
         try {
           return customGlobalFilter(row, searchText, query);
         } catch {
-          // If custom filter throws, fall back to default includes
+          // fallback
         }
       }
       return searchText.includes(query);
@@ -110,9 +112,8 @@ export function Table<TData>({
     },
   });
 
-  // Manual pagination
   const filteredRows = table.getFilteredRowModel().rows;
-  const sortedRows = table.getSortedRowModel().rows; // apply sorting before rendering
+  const sortedRows = table.getSortedRowModel().rows;
   const totalPages = Math.ceil(sortedRows.length / pageSize);
   const paginatedRows = React.useMemo(() => {
     const start = currentPage * pageSize;
@@ -128,15 +129,72 @@ export function Table<TData>({
     setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1));
   };
 
-  // Reset page when filter changes
   React.useEffect(() => {
     setCurrentPage(0);
   }, [globalFilter]);
 
-  // Reset page when sorting changes
   React.useEffect(() => {
     setCurrentPage(0);
   }, [sorting]);
+
+  const renderRows = enablePagination ? paginatedRows : sortedRows;
+
+  const scrollParentRef = React.useRef<HTMLDivElement | null>(null);
+  const tbodyRef = React.useRef<HTMLTableSectionElement | null>(null);
+  const [containerHeight, setContainerHeight] = React.useState<number | undefined>(
+    undefined
+  );
+  const rowVirtualizer = enableRowVirtualization
+    ? useVirtualizer({
+        count: renderRows.length,
+        getScrollElement: () => scrollParentRef.current,
+        estimateSize: () => 56,
+        overscan: 6,
+        measureElement: typeof window !== 'undefined'
+          ? (el: Element) => (el as HTMLElement).getBoundingClientRect().height
+          : undefined,
+      })
+    : null;
+
+  React.useEffect(() => {
+    if (!enableRowVirtualization) return;
+    let target = minVisibleRows * 56;
+    try {
+      const rows = tbodyRef.current?.querySelectorAll<HTMLTableRowElement>(
+        'tr:not([aria-hidden])'
+      );
+      if (rows && rows.length > 0) {
+        let total = 0;
+        rows.forEach((r) => {
+          total += r.getBoundingClientRect().height;
+        });
+        const avg = total / rows.length;
+        if (!Number.isNaN(avg) && avg > 0) {
+          target = avg * minVisibleRows;
+        }
+      }
+    } catch {}
+    target = Math.max(tableBodyHeight, Math.ceil(target));
+    setContainerHeight(target);
+  }, [enableRowVirtualization, minVisibleRows, tableBodyHeight, sorting, globalFilter, pageSize, currentPage, rowVirtualizer?.getVirtualItems().length]);
+
+  // Calculate dynamic container style
+  const containerStyle = React.useMemo(() => {
+    if (!enableRowVirtualization) return undefined;
+    
+    // If we have fewer rows than minVisibleRows, don't apply min-height
+    if (renderRows.length <= minVisibleRows) {
+      return {
+        overflowY: 'auto' as const,
+      };
+    }
+    
+    return {
+      maxHeight: containerHeight ?? tableBodyHeight,
+      minHeight: containerHeight ?? minVisibleRows * 56,
+      overflowY: 'auto' as const,
+    };
+  }, [enableRowVirtualization, renderRows.length, minVisibleRows, containerHeight, tableBodyHeight]);
 
   return (
     <div className={`flex w-full flex-col ${tableParentClassName}`}>
@@ -180,8 +238,24 @@ export function Table<TData>({
 
       {/* Table */}
       <div className='mt-6 rounded-lg border border-gray-200'>
-        <div className='overflow-x-auto'>
-          <table className='w-full'>
+        <div
+          className='overflow-x-auto'
+          ref={enableRowVirtualization ? scrollParentRef : undefined}
+          style={containerStyle}
+        >
+          <table className='w-full table-fixed'>
+            {(() => {
+              const headerCount = table.getHeaderGroups()[0]?.headers.length || columns.length;
+              const cols = Array.from({ length: headerCount });
+              const pct = `${(100 / headerCount).toFixed(4)}%`;
+              return (
+                <colgroup>
+                  {cols.map((_, i) => (
+                    <col key={i} style={{ width: pct }} />
+                  ))}
+                </colgroup>
+              );
+            })()}
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr
@@ -191,7 +265,7 @@ export function Table<TData>({
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className='px-4 py-3 text-left text-sm font-medium text-gray-700'
+                      className='px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis'
                     >
                       {header.isPlaceholder ? null : (
                         <div
@@ -224,44 +298,76 @@ export function Table<TData>({
                 </tr>
               ))}
             </thead>
-            <tbody>
-              {(enablePagination ? paginatedRows : sortedRows).map(
-                (row, i) => (
-                  <tr
-                    key={row.id}
-                    onClick={() => onRowClick?.(row.original)}
-                    className={`border-b border-gray-200 transition-colors ${
-                      i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                    } ${
-                      onRowClick
-                        ? 'cursor-pointer hover:bg-blue-50'
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className='px-4 py-3 text-sm text-gray-900'
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
+            <tbody ref={tbodyRef}>
+              {enableRowVirtualization && rowVirtualizer
+                ? (() => {
+                    const virtualItems = rowVirtualizer.getVirtualItems();
+                    const totalSize = rowVirtualizer.getTotalSize();
+                    const top = virtualItems[0]?.start ?? 0;
+                    const bottom = totalSize - (virtualItems[virtualItems.length - 1]?.end ?? 0);
+                    return (
+                      <>
+                        {top > 0 && (
+                          <tr aria-hidden>
+                            <td colSpan={columns.length} style={{ height: top }} />
+                          </tr>
                         )}
-                      </td>
-                    ))}
-                  </tr>
-                )
-              )}
-              {filteredRows.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className='px-4 py-8 text-center text-gray-500'
-                  >
-                    {emptyMessage}
-                  </td>
-                </tr>
-              )}
+                        {virtualItems.map((vi) => {
+                          const row = renderRows[vi.index];
+                          if (!row) return null;
+                          return (
+                            <tr
+                              key={row.id}
+                              onClick={() => onRowClick?.(row.original)}
+                              className={`border-b border-gray-200 transition-colors ${
+                                vi.index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                              } ${
+                                onRowClick
+                                  ? 'cursor-pointer hover:bg-blue-50'
+                                  : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              {row.getVisibleCells().map((cell) => (
+                                <td key={cell.id} className='px-4 py-3 text-sm text-gray-900 whitespace-normal break-words'>
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext()
+                                  )}
+                                </td>
+                              ))}
+                            </tr>
+                          );
+                        })}
+                        {bottom > 0 && (
+                          <tr aria-hidden>
+                            <td colSpan={columns.length} style={{ height: bottom }} />
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })()
+                : renderRows.map((row, i) => (
+                    <tr
+                      key={row.id}
+                      onClick={() => onRowClick?.(row.original)}
+                      className={`border-b border-gray-200 transition-colors ${
+                        i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                      } ${
+                        onRowClick
+                          ? 'cursor-pointer hover:bg-blue-50'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className='px-4 py-3 text-sm text-gray-900 whitespace-normal break-words'>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
             </tbody>
           </table>
         </div>

@@ -2,7 +2,17 @@
 
 import React, { useState, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import SideBar from '@/components/sidebar';
+import dynamic from 'next/dynamic';
+
+const Sidebar = dynamic(() => import('@/components/sidebar'), {
+  ssr: false,
+  loading: () => null,
+});
+
+const ToastContainer = dynamic(
+  () => import('react-toastify').then((m) => m.ToastContainer),
+  { ssr: false }
+);
 
 interface LayoutWrapperProps {
   children: React.ReactNode;
@@ -22,17 +32,23 @@ const LayoutWrapper: React.FC<LayoutWrapperProps> = ({ children }) => {
 
   // If it's the sign-in page, render without sidebar layout
   if (isSignInPage) {
-    return <>{children}</>;
+    return (
+      <>
+        <ToastContainer />
+        {children}
+      </>
+    );
   }
 
   return (
     <div className='flex min-h-screen w-full'>
-      <SideBar onCollapseChange={handleCollapseChange} />
+      <Sidebar onCollapseChange={handleCollapseChange} />
       <main
         className={`flex-1 overflow-x-hidden p-4 transition-all duration-300 ${
           isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
         }`}
       >
+        <ToastContainer />
         {children}
       </main>
     </div>

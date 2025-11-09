@@ -74,5 +74,18 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/',
+    '/signIn',
+    '/dashboard-password',
+    '/brands',
+    '/category',
+    '/customers',
+    '/invoices',
+    '/sales',
+    '/stock',
+    '/warranty-check',
+    '/priceList',
+    '/scrapStock',
+  ],
 };

@@ -1,7 +1,7 @@
-'use client';
+  'use client';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   FaCarBattery,
   FaFileInvoice,
@@ -44,6 +44,7 @@ const Sidebar = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const path = usePathname();
+  const router = useRouter();
 
   // Get initials from store name
   const getInitials = (name: string) => {
@@ -76,6 +77,35 @@ const Sidebar = ({
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [path]);
+
+  // Prefetch commonly used routes to speed up first navigations
+  useEffect(() => {
+    const routesToPrefetch = [
+      '/',
+      '/category',
+      '/sales',
+      '/stock',
+      '/customers',
+      '/brands',
+      '/invoices',
+      '/warranty-check',
+    ];
+
+    const prefetchAll = () => {
+      routesToPrefetch.forEach((r) => {
+        try {
+          router.prefetch(r);
+        } catch {}
+      });
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(prefetchAll);
+    } else {
+      setTimeout(prefetchAll, 200);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle clicks outside sidebar on mobile
   useEffect(() => {
