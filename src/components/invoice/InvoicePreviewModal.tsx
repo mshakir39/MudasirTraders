@@ -240,7 +240,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                 </div>
               </div>
 
-              {data?.batteriesRate && data?.batteriesRate > 0 && (
+              {(Number(data?.batteriesRate) || 0) > 0 && (
                 <div className='width-transition flex h-[60.5px] w-full items-center justify-end bg-transparent text-lg text-black'>
                   <div
                     style={{
@@ -259,12 +259,12 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                     }}
                     className='width-transition relative p-[5.4px] font-bold'
                   >
-                    <span>-</span> {' Rs ' + data?.batteriesRate}
+                    <span>-</span> {' Rs ' + Number(data?.batteriesRate)}
                   </div>
                 </div>
               )}
 
-              {data?.receivedAmount !== '0' && data?.receivedAmount && (
+              {Number(data?.receivedAmount) > 0 && (
                 <div className='width-transition flex h-[60.5px] w-full items-center justify-end bg-transparent text-lg text-black'>
                   <div
                     style={{
@@ -280,7 +280,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                     }}
                     className='width-transition relative p-[5.4px] font-bold'
                   >
-                    <span>-</span> {' Rs ' + data?.receivedAmount}
+                    <span>-</span> {' Rs ' + Number(data?.receivedAmount)}
                   </div>
                 </div>
               )}
