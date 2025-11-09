@@ -144,17 +144,20 @@ export function Table<TData>({
   const [containerHeight, setContainerHeight] = React.useState<number | undefined>(
     undefined
   );
-  const rowVirtualizer = enableRowVirtualization
-    ? useVirtualizer({
-        count: renderRows.length,
-        getScrollElement: () => scrollParentRef.current,
-        estimateSize: () => 56,
-        overscan: 6,
-        measureElement: typeof window !== 'undefined'
-          ? (el: Element) => (el as HTMLElement).getBoundingClientRect().height
-          : undefined,
-      })
-    : null;
+  const rowVirtualizer = useVirtualizer({
+    count: enableRowVirtualization ? renderRows.length : 0,
+    getScrollElement: () => scrollParentRef.current,
+    estimateSize: () => 56,
+    overscan: 6,
+    measureElement:
+      typeof window !== 'undefined'
+        ? (el: Element) => (el as HTMLElement).getBoundingClientRect().height
+        : undefined,
+  });
+
+  const virtualItemsLen = enableRowVirtualization
+    ? rowVirtualizer.getVirtualItems().length
+    : 0;
 
   React.useEffect(() => {
     if (!enableRowVirtualization) return;
@@ -176,7 +179,16 @@ export function Table<TData>({
     } catch {}
     target = Math.max(tableBodyHeight, Math.ceil(target));
     setContainerHeight(target);
-  }, [enableRowVirtualization, minVisibleRows, tableBodyHeight, sorting, globalFilter, pageSize, currentPage, rowVirtualizer?.getVirtualItems().length]);
+  }, [
+    enableRowVirtualization,
+    minVisibleRows,
+    tableBodyHeight,
+    sorting,
+    globalFilter,
+    pageSize,
+    currentPage,
+    virtualItemsLen,
+  ]);
 
   // Calculate dynamic container style
   const containerStyle = React.useMemo(() => {
