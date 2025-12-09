@@ -70,6 +70,8 @@ export async function updateStock(data: StockData) {
     const currentStock = await collection.findOne({
       brandName: data.brandName,
     });
+    
+    let currentSoldCount = 0;
     if (currentStock) {
       // Find the specific series being updated to capture changes
       const currentSeries = currentStock.seriesStock?.find(
@@ -77,6 +79,9 @@ export async function updateStock(data: StockData) {
       );
 
       if (currentSeries) {
+        // Save the current soldCount before updating
+        currentSoldCount = parseInt(currentSeries.soldCount as any) || 0;
+        
         // Calculate changes
         const oldQuantity = currentSeries.inStock || 0;
         const newQuantity = parseInt(data.inStock) || 0;
@@ -98,7 +103,7 @@ export async function updateStock(data: StockData) {
       }
     }
 
-    // Then update with new data
+    // Then update with new data, including the current soldCount
     const result = await executeOperation('stock', 'updateSeriesStock', {
       brandName: data.brandName,
       seriesStock: [
@@ -106,6 +111,7 @@ export async function updateStock(data: StockData) {
           series: data.series,
           productCost: data.productCost,
           inStock: data.inStock,
+          soldCount: currentSoldCount.toString(), // Include the current soldCount
           updatedDate: new Date(),
         },
       ],
