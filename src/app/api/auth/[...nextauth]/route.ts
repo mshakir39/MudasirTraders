@@ -1,7 +1,8 @@
-import { executeOperation } from '@/app/libs/executeOperation';
+import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { DefaultSession } from 'next-auth';
+import { MongoClient, Db } from 'mongodb';
 
 declare module 'next-auth' {
   interface Session {
@@ -33,15 +34,31 @@ const handler = NextAuth({
     async signIn({ user, account, profile }) {
       try {
         if (user.email && user.email.endsWith('@mudasirtraders.com')) {
-          // Store user in database
-          await executeOperation('users', 'insertOne', {
-            email: user.email,
-            name: user.name,
-            image: user.image,
-            provider: account?.provider,
-            providerId: account?.providerAccountId,
-            createdAt: new Date(),
-          });
+          // Store user in database directly with error handling
+          try {
+            const db = await connectToMongoDB();
+            if (db) {
+              const collection = db.collection('users');
+              
+              // Check if user already exists
+              const existingUser = await collection.findOne({ email: user.email });
+              
+              if (!existingUser) {
+                // Insert new user
+                await collection.insertOne({
+                  email: user.email,
+                  name: user.name,
+                  image: user.image,
+                  provider: account?.provider,
+                  providerId: account?.providerAccountId,
+                  createdAt: new Date(),
+                });
+              }
+            }
+          } catch (dbError) {
+            console.warn('Database operation failed, but allowing sign-in:', dbError);
+            // Continue with sign-in even if database fails
+          }
           return true;
         } else {
           // Return a specific error URL for unauthorized domains
@@ -70,7 +87,7 @@ const handler = NextAuth({
     },
 
     async session({ session, token }) {
-      // Pass user ID from token to session
+      // Pass user ID from token to session without database dependency
       if (session?.user && token) {
         session.user.id = (token.sub || token.userId || '') as string;
         session.user.email = token.email || undefined;
@@ -96,6 +113,19 @@ const handler = NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 
+  // Add fallback for session errors
+  logger: {
+    error: (code, metadata) => {
+      console.error('NextAuth error:', { code, metadata });
+    },
+    warn: (code) => {
+      console.warn('NextAuth warning:', code);
+    },
+    debug: (code, metadata) => {
+      console.debug('NextAuth debug:', { code, metadata });
+    },
+  },
+
   // Add debug for production troubleshooting
   debug: process.env.NODE_ENV === 'development',
 
@@ -112,6 +142,7 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       // This runs whenever a session is checked
+      console.log('Session checked for:', session.user?.email);
     },
   },
 });

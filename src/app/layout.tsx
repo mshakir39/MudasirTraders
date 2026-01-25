@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import SessionWrapper from '@/components/sessionWrapper';
 import LayoutWrapper from '@/components/LayoutWrapper';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import FaviconManager from '@/components/FaviconManager';
 import 'react-toastify/dist/ReactToastify.css';
 import 'rsuite-table/dist/css/rsuite-table.css';
@@ -53,7 +52,6 @@ export default function RootLayout({
         <SessionWrapper>
           <LayoutWrapper>{children}</LayoutWrapper>
         </SessionWrapper>
-        <SpeedInsights />
       </body>
     </html>
   );

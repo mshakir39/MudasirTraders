@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
@@ -20,7 +20,21 @@ interface LayoutWrapperProps {
 
 const LayoutWrapper: React.FC<LayoutWrapperProps> = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [hasAuthError, setHasAuthError] = useState(false);
   const pathname = usePathname();
+
+  // Handle NextAuth session errors gracefully
+  useEffect(() => {
+    const handleAuthError = (event: ErrorEvent) => {
+      if (event.message.includes('next-auth') || event.message.includes('session')) {
+        console.warn('Auth error detected, continuing without session:', event.message);
+        setHasAuthError(true);
+      }
+    };
+
+    window.addEventListener('error', handleAuthError);
+    return () => window.removeEventListener('error', handleAuthError);
+  }, []);
 
   // Memoize the callback to prevent unnecessary re-renders
   const handleCollapseChange = useCallback((collapsed: boolean) => {

@@ -56,10 +56,14 @@ const Modal: FunctionComponent<ModalProps> = ({
         <div className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
           {/* The actual dialog panel with responsive sizing */}
           <Dialog.Panel className={`${defaultPanelClass} ${dialogPanelClass || ''} w-full max-h-[90vh] overflow-y-auto`}>
+            {/* Always include DialogTitle for accessibility */}
+            <Dialog.Title className="sr-only">
+              {title || 'Modal'}
+            </Dialog.Title>
             {title && (
-              <Dialog.Title as="div" className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 backdrop-blur-sm bg-opacity-95">
+              <div className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 backdrop-blur-sm bg-opacity-95">
                 <h3 className="text-base sm:text-lg font-medium leading-5 sm:leading-6 text-gray-900">{title}</h3>
-              </Dialog.Title>
+              </div>
             )}
             <div className={`${parentClass || 'p-4 sm:p-6'}`}>{children}</div>
           </Dialog.Panel>

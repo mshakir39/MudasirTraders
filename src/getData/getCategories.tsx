@@ -1,30 +1,41 @@
 'use server';
-import { executeOperation } from '@/app/libs/executeOperation';
-import { ObjectId } from 'mongodb';
+import { fastGetCategories } from '@/app/libs/fastData';
+import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 
-export const getCategories = async () => {
+export async function getCategories() {
   try {
-    // Execute a find operation to retrieve data from the "categories" collection
-    const categories = await executeOperation('categories', 'findAll');
-    // Return the categories directly, ensuring array type
-    return Array.isArray(categories) ? categories : [];
+    const result = await fastGetCategories();
+    return result.success ? result.data : [];
   } catch (err: any) {
     // If an error occurs, return empty array instead of error message
     console.error('Error fetching categories:', err.message);
     return [];
   }
-};
+}
 
-export const getCategory = async (id: string) => {
+export async function getCategory(id: string) {
   try {
-    // Execute a findOne operation to retrieve a single document from the "categories" collection
-    const category = await executeOperation('categories', 'findOne', {
-      _id: new ObjectId(id),
-    });
-    // Return the category as a JSON response
-    return category as any;
+    const db = await connectToMongoDB();
+    if (!db) {
+      throw new Error('Failed to connect to database');
+    }
+    
+    const category = await db.collection('categories').findOne({ id });
+    if (category) {
+      const serializedDocument: Record<string, any> = {};
+      for (const key in category) {
+        if (key === '_id') {
+          serializedDocument['id'] = category[key].toString();
+        } else {
+          serializedDocument[key] = category[key];
+        }
+      }
+      return serializedDocument;
+    } else {
+      return null;
+    }
   } catch (err: any) {
-    // If an error occurs, return a JSON response with the error message
-    return { error: err.message };
+    console.error('Error fetching category:', err.message);
+    return null;
   }
-};
+}

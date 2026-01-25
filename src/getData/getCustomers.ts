@@ -1,5 +1,12 @@
-import { executeOperation } from '@/app/libs/executeOperation';
+'use server';
+import { fastGetCustomers } from '@/app/libs/fastData';
 
 export async function getCustomers() {
-  return await executeOperation('customers', 'findAll');
+  try {
+    const result = await fastGetCustomers();
+    return result.success ? result.data : [];
+  } catch (error) {
+    console.error('Error fetching customers:', error);
+    return [];
+  }
 }

@@ -1,10 +1,10 @@
 'use server';
-import { executeOperation } from '@/app/libs/executeOperation';
+import { fastGetBrands } from '@/app/libs/fastData';
 
 export async function getBrands() {
   try {
-    const brands = await executeOperation('brands', 'findAll');
-    return brands;
+    const result = await fastGetBrands();
+    return result.success ? result.data : [];
   } catch (error) {
     console.error('Error fetching brands:', error);
     return [];

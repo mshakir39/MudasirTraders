@@ -1,4 +1,4 @@
-import { connectToMongoDB } from './connectToMongoDB';
+import { connectToMongoDB, MONGODB_DB } from './connectToMongoDB';
 
 const REQUIRED_COLLECTIONS = [
   'brands',

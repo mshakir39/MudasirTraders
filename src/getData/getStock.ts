@@ -1,16 +1,15 @@
-import { executeOperation } from '@/app/libs/executeOperation';
+'use server';
+import { fastGetStock } from '@/app/libs/fastData';
 
-export const getAllStock = async () => {
+export async function getStock() {
   try {
-    // Execute a find operation to retrieve data from the "categories" collection
-    const stocks = await executeOperation('stock', 'findAll');
-    // Return the categories as a JSON response
-    return stocks as any;
-  } catch (err: any) {
-    // If an error occurs, return a JSON response with the error message
-    return [err.message];
+    const result = await fastGetStock();
+    return result.success ? result.data : [];
+  } catch (error) {
+    console.error('Error fetching stock:', error);
+    return [];
   }
-};
+}
 
 // export const getCategory = async (id: string) => {
 //   try {

@@ -1,5 +1,5 @@
 'use server';
-import { connectToMongoDB } from './connectToMongoDB';
+import { connectToMongoDB, MONGODB_DB } from './connectToMongoDB';
 
 // Database indexes for performance optimization
 export async function createDatabaseIndexes() {
