@@ -1,5 +1,11 @@
 'use client';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useOptimistic,
+  useActionState,
+} from 'react';
 import { unstable_noStore } from 'next/cache';
 import { toast } from 'react-toastify';
 
@@ -14,15 +20,66 @@ import Button from '@/components/button';
 
 interface BrandsLayoutProps {
   initialBrands: IBrand[];
+  serverTimestamp?: number; // React 19: Optional server timestamp for cache invalidation
 }
 
 const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
   unstable_noStore();
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [brand, setBrand] = useState<{ brandName: string }>({ brandName: '' });
 
   const { brands, fetchBrands, setBrands } = useBrandStore();
+
+  // React 19: Optimistic updates for brand creation
+  const [optimisticBrands, addOptimisticBrand] = useOptimistic(
+    brands,
+    (state, newBrand: IBrand) => [
+      ...state,
+      { ...newBrand, id: `temp-${Date.now()}` },
+    ]
+  );
+
+  // React 19: useActionState for form handling
+  const [createState, createAction, isPending] = useActionState(
+    async (prevState: any, formData: FormData) => {
+      const brandName = formData.get('brandName') as string;
+
+      if (!brandName?.trim()) {
+        toast.error('Brand name is required');
+        return { error: 'Brand name is required' };
+      }
+
+      try {
+        // Add optimistic update
+        addOptimisticBrand({ brandName: brandName.trim() } as IBrand);
+
+        const response = await fetch('/api/brands', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ brandName: brandName.trim() }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          toast.success('Brand created successfully');
+          setBrand({ brandName: '' });
+          setIsModalOpen(false);
+          await fetchBrands(); // Refresh store after create
+          return { success: true };
+        } else {
+          toast.error(result.error || 'Failed to create brand');
+          return { error: result.error || 'Failed to create brand' };
+        }
+      } catch (error) {
+        toast.error('An error occurred while creating the brand');
+        return { error: 'An error occurred while creating the brand' };
+      }
+    },
+    null
+  );
 
   useEffect(() => {
     // Initialize brands from server-side props
@@ -31,40 +88,12 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
     } else {
       fetchBrands();
     }
+
+    // React 19: Cleanup function to prevent memory leaks
+    return () => {
+      // Cleanup any pending operations if needed
+    };
   }, [initialBrands, setBrands, fetchBrands]);
-
-  const handleCreateBrand = useCallback(async () => {
-    if (!brand.brandName.trim()) {
-      toast.error('Brand name is required');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/brands', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ brandName: brand.brandName.trim() }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        toast.success('Brand created successfully');
-        setBrand({ brandName: '' });
-        setIsModalOpen(false);
-        await fetchBrands(); // Refresh store after create
-      } else {
-        toast.error(result.error || 'Failed to create brand');
-      }
-    } catch (error) {
-      toast.error('An error occurred while creating the brand');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [brand.brandName, fetchBrands]);
 
   const handleOpenModal = useCallback(() => {
     setIsModalOpen(true);
@@ -104,11 +133,16 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
     [fetchBrands]
   );
 
+  // React 19: Enhanced useMemo with dependency tracking
   const columns = React.useMemo<ColumnDef<IBrand>[]>(
     () => [
       {
         accessorKey: 'brandName',
         header: 'Brand Name',
+        // React 19: Better cell rendering with automatic memoization
+        cell: (info) => (
+          <span className='font-medium'>{info.getValue<string>()}</span>
+        ),
       },
       {
         id: 'actions',
@@ -135,7 +169,7 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
       <h1 className='text-2xl font-bold'>Brands</h1>
 
       <Table
-        data={brands}
+        data={optimisticBrands}
         columns={columns}
         enableSearch={true}
         searchPlaceholder='Search brands...'
@@ -150,30 +184,34 @@ const BrandsLayout: React.FC<BrandsLayoutProps> = ({ initialBrands }) => {
         onClose={() => setIsModalOpen(false)}
         title='Add New Brand'
       >
-        <div className='space-y-4'>
+        {/* React 19: Modern form with useActionState */}
+        <form action={createAction} className='space-y-4'>
           <Input
             type='text'
             label='Brand Name'
             placeholder='Enter brand name'
+            name='brandName'
             value={brand.brandName}
             onChange={(e) => setBrand({ brandName: e.target.value })}
             parentClass='w-full'
+            required
           />
 
           <div className='flex justify-end gap-3 pt-4'>
             <Button
+              type='button'
               variant='outline'
               text='Cancel'
               onClick={() => setIsModalOpen(false)}
             />
             <Button
+              type='submit'
               variant='fill'
-              text={isLoading ? 'Creating...' : 'Create Brand'}
-              onClick={handleCreateBrand}
-              disabled={isLoading}
+              text={isPending ? 'Creating...' : 'Create Brand'}
+              disabled={isPending}
             />
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );

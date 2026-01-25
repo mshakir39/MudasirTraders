@@ -1,16 +1,18 @@
-  'use client';
+'use client';
 import Link from 'next/link';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useOptimistic,
+  useMemo,
+  startTransition,
+} from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   FaCarBattery,
   FaFileInvoice,
   FaTags,
-  FaBox,
-  FaShoppingCart,
-  FaUsers,
-  FaChartBar,
-  FaList,
   FaShieldAlt,
 } from 'react-icons/fa';
 import { FaUserFriends } from 'react-icons/fa';
@@ -36,17 +38,10 @@ const Sidebar = ({
   className?: string;
   onCollapseChange?: (collapsed: boolean) => void;
 }) => {
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [storeData, setStoreData] = useState<any>();
-  const [storeDetail, setStoreDetail] = useState<any>();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   const path = usePathname();
   const router = useRouter();
 
-  // Get initials from store name
+  // Helper function to get initials
   const getInitials = (name: string) => {
     if (!name) return '';
     return name
@@ -55,6 +50,87 @@ const Sidebar = ({
       .join('')
       .toUpperCase();
   };
+
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [storeData, setStoreData] = useState<any>();
+  const [storeDetail, setStoreDetail] = useState<any>();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // React 19: Optimistic navigation state for instant UI feedback
+  const [optimisticPath, addOptimisticPath] = useOptimistic(
+    path,
+    (state, newPath: string) => newPath
+  );
+
+  // React 19: Memoized navigation items for better performance
+  const navigationItems = useMemo(
+    () => [
+      {
+        href: '/',
+        label: 'Dashboard',
+        icon: MdDashboard,
+        active: optimisticPath === '/',
+      },
+      {
+        href: '/brands',
+        label: 'Brands',
+        icon: FaTags,
+        active: optimisticPath === '/brands',
+      },
+      {
+        href: '/category',
+        label: 'Category',
+        icon: TbCategoryPlus,
+        active: optimisticPath === '/category',
+      },
+      {
+        href: '/stock',
+        label: 'Stock',
+        icon: FaCarBattery,
+        active: optimisticPath === '/stock',
+      },
+      {
+        href: '/invoices',
+        label: 'Invoices',
+        icon: FaFileInvoice,
+        active: optimisticPath === '/invoices',
+      },
+      {
+        href: '/sales',
+        label: 'Sales',
+        icon: FaFileInvoice,
+        active: optimisticPath === '/sales',
+      },
+      {
+        href: '/customers',
+        label: 'Customers',
+        icon: FaUserFriends,
+        active: optimisticPath === '/customers',
+      },
+      {
+        href: '/warranty-check',
+        label: 'Warranty Check',
+        icon: FaShieldAlt,
+        active: optimisticPath === '/warranty-check',
+      },
+    ],
+    [optimisticPath]
+  );
+
+  // React 19: Memoized store initials for better performance
+  const storeInitials = useMemo(() => {
+    const getInitials = (name: string) => {
+      if (!name) return '';
+      return name
+        .split(' ')
+        .map((word) => word[0])
+        .join('')
+        .toUpperCase();
+    };
+    return getInitials(storeDetail?.storeName || '');
+  }, [storeDetail?.storeName]);
 
   useEffect(() => {
     const fetchStoreDetail = async () => {
@@ -78,7 +154,7 @@ const Sidebar = ({
     setIsMobileMenuOpen(false);
   }, [path]);
 
-  // Prefetch commonly used routes to speed up first navigations
+  // React 19: Enhanced prefetching with better performance
   useEffect(() => {
     const routesToPrefetch = [
       '/',
@@ -91,6 +167,7 @@ const Sidebar = ({
       '/warranty-check',
     ];
 
+    // React 19: More efficient prefetching with requestIdleCallback
     const prefetchAll = () => {
       routesToPrefetch.forEach((r) => {
         try {
@@ -99,13 +176,32 @@ const Sidebar = ({
       });
     };
 
+    // React 19: Use requestIdleCallback for better performance
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(prefetchAll);
+      (window as any).requestIdleCallback(prefetchAll, { timeout: 2000 });
     } else {
       setTimeout(prefetchAll, 200);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // React 19: Optimized navigation handler with instant UI feedback
+  const handleNavigation = useCallback(
+    (href: string) => {
+      // React 19: Wrap optimistic update in startTransition to avoid warnings
+      startTransition(() => {
+        // Add optimistic update for instant UI feedback
+        addOptimisticPath(href);
+      });
+
+      // Close mobile menu if open
+      handleMobileLinkClick();
+
+      // Prefetch the route for faster navigation
+      router.prefetch(href);
+    },
+    [addOptimisticPath, router]
+  );
 
   // Handle clicks outside sidebar on mobile
   useEffect(() => {
@@ -130,16 +226,6 @@ const Sidebar = ({
       document.body.style.overflow = 'unset';
     };
   }, [isMobileMenuOpen]);
-
-  // Check if each item is active based on the path
-  const isActiveDashboard = path === '/';
-  const isActiveStock = path === '/stock';
-  const isActiveInvoices = path === '/invoices';
-  const isActiveBrands = path === '/brands';
-  const isActiveCategory = path === '/category';
-  const isActiveSales = path === '/sales';
-  const isActiveCustomers = path === '/customers';
-  const isActiveWarrantyCheck = path === '/warranty-check';
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -207,220 +293,42 @@ const Sidebar = ({
             className={`mb-8 hidden text-center font-semibold text-[#4287f5] transition-all duration-300 md:block
             ${isCollapsed ? 'text-base' : 'text-xl'}`}
           >
-            {isCollapsed
-              ? getInitials(storeDetail?.storeName || '')
-              : storeDetail?.storeName || ''}
+            {isCollapsed ? storeInitials : storeDetail?.storeName || ''}
           </span>
 
           {/* Navigation Links */}
           <div className='flex flex-1 flex-col space-y-2 overflow-y-auto'>
-            <Link
-              href='/'
-              onClick={handleMobileLinkClick}
-              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
-                ${
-                  isActiveDashboard
-                    ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
-                }`}
-            >
-              <MdDashboard
-                className={`h-6 w-6 flex-shrink-0 ${
-                  isActiveDashboard
-                    ? 'text-white'
-                    : 'text-gray-600 group-hover:text-white'
-                }`}
-              />
-              <span
-                className={`ml-3 font-medium transition-all duration-300 ${
-                  isCollapsed ? 'hidden' : 'block'
-                } md:${isCollapsed ? 'hidden' : 'block'}`}
-              >
-                Dashboard
-              </span>
-            </Link>
-
-            <Link
-              href='/brands'
-              onClick={handleMobileLinkClick}
-              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
-                ${
-                  isActiveBrands
-                    ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
-                }`}
-            >
-              <FaTags
-                className={`h-6 w-6 flex-shrink-0 ${
-                  isActiveBrands
-                    ? 'text-white'
-                    : 'text-gray-600 group-hover:text-white'
-                }`}
-              />
-              <span
-                className={`ml-3 font-medium transition-all duration-300 ${
-                  isCollapsed ? 'hidden' : 'block'
-                } md:${isCollapsed ? 'hidden' : 'block'}`}
-              >
-                Brands
-              </span>
-            </Link>
-
-            <Link
-              href='/category'
-              onClick={handleMobileLinkClick}
-              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
-                ${
-                  isActiveCategory
-                    ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
-                }`}
-            >
-              <TbCategoryPlus
-                className={`h-6 w-6 flex-shrink-0 ${
-                  isActiveCategory
-                    ? 'text-white'
-                    : 'text-gray-600 group-hover:text-white'
-                }`}
-              />
-              <span
-                className={`ml-3 font-medium transition-all duration-300 ${
-                  isCollapsed ? 'hidden' : 'block'
-                } md:${isCollapsed ? 'hidden' : 'block'}`}
-              >
-                Category
-              </span>
-            </Link>
-
-            <Link
-              href='/stock'
-              onClick={handleMobileLinkClick}
-              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
-                ${
-                  isActiveStock
-                    ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
-                }`}
-            >
-              <FaCarBattery
-                className={`h-6 w-6 flex-shrink-0 ${
-                  isActiveStock
-                    ? 'text-white'
-                    : 'text-gray-600 group-hover:text-white'
-                }`}
-              />
-              <span
-                className={`ml-3 font-medium transition-all duration-300 ${
-                  isCollapsed ? 'hidden' : 'block'
-                } md:${isCollapsed ? 'hidden' : 'block'}`}
-              >
-                Stock
-              </span>
-            </Link>
-
-            <Link
-              href='/invoices'
-              onClick={handleMobileLinkClick}
-              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
-                ${
-                  isActiveInvoices
-                    ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
-                }`}
-            >
-              <FaFileInvoice
-                className={`h-6 w-6 flex-shrink-0 ${
-                  isActiveInvoices
-                    ? 'text-white'
-                    : 'text-gray-600 group-hover:text-white'
-                }`}
-              />
-              <span
-                className={`ml-3 font-medium transition-all duration-300 ${
-                  isCollapsed ? 'hidden' : 'block'
-                } md:${isCollapsed ? 'hidden' : 'block'}`}
-              >
-                Invoices
-              </span>
-            </Link>
-
-            <Link
-              href='/sales'
-              onClick={handleMobileLinkClick}
-              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
-                ${
-                  isActiveSales
-                    ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
-                }`}
-            >
-              <FaFileInvoice
-                className={`h-6 w-6 flex-shrink-0 ${
-                  isActiveSales
-                    ? 'text-white'
-                    : 'text-gray-600 group-hover:text-white'
-                }`}
-              />
-              <span
-                className={`ml-3 font-medium transition-all duration-300 ${
-                  isCollapsed ? 'hidden' : 'block'
-                } md:${isCollapsed ? 'hidden' : 'block'}`}
-              >
-                Sales
-              </span>
-            </Link>
-
-            <Link
-              href='/customers'
-              onClick={handleMobileLinkClick}
-              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
-                ${
-                  isActiveCustomers
-                    ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
-                }`}
-            >
-              <FaUserFriends
-                className={`h-6 w-6 flex-shrink-0 ${
-                  isActiveCustomers
-                    ? 'text-white'
-                    : 'text-gray-600 group-hover:text-white'
-                }`}
-              />
-              <span
-                className={`ml-3 font-medium transition-all duration-300 ${
-                  isCollapsed ? 'hidden' : 'block'
-                } md:${isCollapsed ? 'hidden' : 'block'}`}
-              >
-                Customers
-              </span>
-            </Link>
-
-            <Link
-              href='/warranty-check'
-              onClick={handleMobileLinkClick}
-              className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
-                ${
-                  isActiveWarrantyCheck
-                    ? 'bg-[#4287f5] text-white'
-                    : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
-                }`}
-            >
-              <FaShieldAlt
-                className={`h-6 w-6 flex-shrink-0 ${
-                  isActiveWarrantyCheck
-                    ? 'text-white'
-                    : 'text-gray-600 group-hover:text-white'
-                }`}
-              />
-              <span
-                className={`ml-3 font-medium transition-all duration-300 ${
-                  isCollapsed ? 'hidden' : 'block'
-                } md:${isCollapsed ? 'hidden' : 'block'}`}
-              >
-                Warranty Check
-              </span>
-            </Link>
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => handleNavigation(item.href)}
+                  className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
+                    ${
+                      item.active
+                        ? 'bg-[#4287f5] text-white'
+                        : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
+                    }`}
+                >
+                  <Icon
+                    className={`h-6 w-6 flex-shrink-0 transition-colors duration-200 ${
+                      item.active
+                        ? 'text-white'
+                        : 'text-gray-600 group-hover:text-white'
+                    }`}
+                  />
+                  <span
+                    className={`ml-3 font-medium transition-all duration-300 ${
+                      isCollapsed ? 'hidden' : 'block'
+                    } md:${isCollapsed ? 'hidden' : 'block'}`}
+                  >
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </div>
 

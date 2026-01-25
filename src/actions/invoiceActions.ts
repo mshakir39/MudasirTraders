@@ -63,13 +63,14 @@ export async function deleteInvoice(id: string) {
 
 export async function getInvoices() {
   try {
+    // Use basic findAll and sort in JavaScript (compatible with executeOperation)
     const invoices = await executeOperation('invoices', 'findAll');
 
-    // Sort invoices by creation date (newest first)
+    // Sort invoices by creation date (newest first) - client-side sorting
     if (Array.isArray(invoices)) {
       invoices.sort((a: any, b: any) => {
-        const dateA = new Date(a.createdDate).getTime();
-        const dateB = new Date(b.createdDate).getTime();
+        const dateA = new Date(a.createdDate || a.createdAt).getTime();
+        const dateB = new Date(b.createdDate || b.createdAt).getTime();
         return dateB - dateA; // Descending order (newest first)
       });
     }

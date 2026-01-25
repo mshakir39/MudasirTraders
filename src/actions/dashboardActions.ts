@@ -149,7 +149,7 @@ export async function getInventoryByBrand() {
 }
 
 export async function unlockDashboard() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set('dashboard-unlocked', 'true', {
     path: '/',
     maxAge: 60 * 30, // 30 minutes
@@ -160,7 +160,7 @@ export async function unlockDashboard() {
 }
 
 export async function lockDashboard() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.delete('dashboard-unlocked');
   redirect('/dashboard-password');
 }

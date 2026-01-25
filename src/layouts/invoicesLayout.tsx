@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useOptimistic, useActionState } from 'react';
 import { toast } from 'react-toastify';
 import { POST, PATCH } from '@/utils/api';
 import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
@@ -44,6 +44,65 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
   } = useAccordionData(categories, stock);
   const { customers } = useCustomers();
 
+  // React 19: Optimistic updates for invoice operations
+  const [optimisticInvoices, addOptimisticInvoice] = useOptimistic(
+    invoices,
+    (state: any[], newInvoice: any) => {
+      if (newInvoice.action === 'create') {
+        return [newInvoice.data, ...state];
+      }
+      if (newInvoice.action === 'update') {
+        return state.map((invoice: any) =>
+          invoice.invoiceNo === newInvoice.invoiceNo
+            ? { ...invoice, ...newInvoice.data }
+            : invoice
+        );
+      }
+      if (newInvoice.action === 'delete') {
+        return state.filter(
+          (invoice: any) => invoice.invoiceNo !== newInvoice.invoiceNo
+        );
+      }
+      return state;
+    }
+  );
+
+  // React 19: useActionState for invoice creation
+  const [createInvoiceState, createInvoiceAction, isCreatePending] =
+    useActionState(async (prevState: any, formData: FormData) => {
+      try {
+        // Add optimistic update
+        const newInvoice = {
+          invoiceNo: `INV-${Date.now()}`,
+          createdAt: new Date(),
+          status: 'pending',
+          ...Object.fromEntries(formData.entries()),
+        };
+        addOptimisticInvoice({ action: 'create', data: newInvoice });
+
+        // Call existing create invoice logic
+        const response: any = await POST(
+          'api/invoice',
+          Object.fromEntries(formData.entries())
+        );
+
+        if (response?.message) {
+          toast.success(response?.message);
+          await revalidatePathCustom('/invoice');
+          return { success: true, data: response.data };
+        }
+        if (response?.error) {
+          toast.error(response?.error);
+          return { error: response?.error };
+        }
+
+        return { success: true };
+      } catch (error) {
+        toast.error('Failed to create invoice');
+        return { error: 'Failed to create invoice' };
+      }
+    }, null);
+
   const brandOptions = categories.map((category) => ({
     label: category.brandName || '',
     value: category.brandName || '',
@@ -67,6 +126,15 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
   const handleEditInvoice = async (data: any) => {
     try {
       setIsLoading(true);
+
+      // React 19: Add optimistic update
+      if (data.invoiceNo) {
+        addOptimisticInvoice({
+          action: 'update',
+          invoiceNo: data.invoiceNo,
+          data: data,
+        });
+      }
 
       // Check if this is a full invoice edit or just adding payment
       if (data.productDetail && data.productDetail.length > 0) {
@@ -130,7 +198,7 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
       </div>
 
       <InvoiceGrid
-        invoices={invoices}
+        invoices={optimisticInvoices}
         onCreateInvoice={handleCreateInvoice}
         onViewProducts={(data) => {
           setModalData(data);

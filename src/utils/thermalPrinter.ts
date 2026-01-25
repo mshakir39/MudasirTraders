@@ -1,5 +1,4 @@
 import { convertDate } from './convertTime';
-import { formatRupees } from './formatRupees';
 import { getAllSum } from './getTotalSum';
 import { removeParentheses } from './formatters';
 

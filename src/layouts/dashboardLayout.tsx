@@ -7,6 +7,8 @@ import React, {
   useRef,
   useCallback,
   useTransition,
+  useOptimistic,
+  useActionState,
 } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { ErrorMessage } from '@/components/ErrorMessage';
@@ -108,6 +110,42 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  // React 19: Optimistic state for dashboard stats
+  const [optimisticStats, addOptimisticStats] = useOptimistic(
+    initialStats || null,
+    (state: any, action: any) => {
+      if (action.type === 'update') {
+        return { ...state, ...action.data };
+      }
+      return state;
+    }
+  );
+
+  // React 19: useActionState for date range filtering
+  const [filterState, filterAction, isFilterPending] = useActionState(
+    async (prevState: any, formData: FormData) => {
+      const startDate = formData.get('startDate') as string;
+      const endDate = formData.get('endDate') as string;
+      
+      // Add optimistic update
+      addOptimisticStats({
+        type: 'update',
+        data: { isFiltering: true }
+      });
+      
+      // Simulate API call (replace with actual API call)
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return { 
+        success: true, 
+        startDate, 
+        endDate,
+        message: 'Dashboard data filtered successfully'
+      };
+    },
+    null
+  );
 
   const handleLockDashboard = () => {
     startTransition(() => {
@@ -239,7 +277,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
     if (initialLoadRef.current) return;
     initialLoadRef.current = true;
     // Background fetch on first mount; do not block UI if initialStats exist
-    fetchData(revenueDateRange, topProductsDateRange, salesTrendDateRange, false);
+    fetchData(
+      revenueDateRange,
+      topProductsDateRange,
+      salesTrendDateRange,
+      false
+    );
   }, [revenueDateRange, topProductsDateRange, salesTrendDateRange, fetchData]);
 
   const handleRevenueDateChange = useCallback(

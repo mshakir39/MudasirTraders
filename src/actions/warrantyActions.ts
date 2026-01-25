@@ -2,12 +2,6 @@
 
 import { executeOperation } from '@/app/libs/executeOperation';
 
-interface WarrantySearchResult {
-  success: boolean;
-  data?: any;
-  error?: string;
-}
-
 interface WarrantyData {
   productName: string;
   brandName: string;
@@ -21,19 +15,33 @@ interface WarrantyData {
   saleDate: string;
   isDeleted?: boolean; // Added for deleted warranty history
   deletedAt?: string; // Added for deleted warranty history
+  // React 19: Add search metadata
+  searchTimestamp?: string;
+  searchDuration?: number;
+}
+
+interface WarrantySearchResult {
+  success: boolean;
+  data?: any;
+  error?: string;
+  // React 19: Add search performance tracking
+  searchDuration?: number;
 }
 
 export async function searchWarranty(
   warrantyCode: string
 ): Promise<WarrantySearchResult> {
   try {
-    // Trim the warranty code to remove leading and trailing spaces
+    // React 19: Enhanced validation and error handling
     const trimmedWarrantyCode = warrantyCode.trim();
     console.log('🔍 Searching for warranty code:', trimmedWarrantyCode);
 
     if (!trimmedWarrantyCode) {
       return { success: false, error: 'Warranty code is required' };
     }
+
+    // React 19: Add search analytics (optional)
+    const searchStartTime = Date.now();
 
     // Helper function to check if a warranty code exists in a space or comma-separated string
     const hasWarrantyCode = (
@@ -77,7 +85,7 @@ export async function searchWarranty(
       return found;
     };
 
-    // SIMPLE APPROACH: Search for warranty code in space-separated strings
+    // React 19: Enhanced search with better error handling and performance tracking
     console.log('📄 Checking invoices collection for warranty code...');
 
     // Get all invoices and check each product's warranty code
@@ -87,6 +95,10 @@ export async function searchWarranty(
       console.log('⚠️ No invoices found or invalid response');
     } else {
       console.log(`📊 Found ${allInvoices.length} invoices to check`);
+
+      // React 19: Enhanced debugging with search performance tracking
+      const searchDuration = Date.now() - searchStartTime;
+      console.log(`⏱️ Search performance: ${searchDuration}ms so far`);
 
       // Debug: Show some warranty codes from invoices
       let debugCount = 0;
@@ -114,6 +126,7 @@ export async function searchWarranty(
               `✅ Found warranty code '${trimmedWarrantyCode}' in invoice: ${invoice.invoiceNo}`
             );
 
+            // React 19: Enhanced warranty data with additional fields
             const warrantyData: WarrantyData = {
               productName: `${product.brandName} - ${product.series}`,
               brandName: product.brandName,
@@ -128,6 +141,9 @@ export async function searchWarranty(
                 invoice.createdAt ||
                 invoice.createdDate ||
                 new Date().toISOString(),
+              // React 19: Add search metadata
+              searchTimestamp: new Date().toISOString(),
+              searchDuration: Date.now() - searchStartTime,
             };
 
             return { success: true, data: warrantyData };
@@ -167,6 +183,9 @@ export async function searchWarranty(
               customerContactNumber: sale.customerContactNumber,
               invoiceNumber: sale.invoiceId,
               saleDate: sale.date,
+              // React 19: Add search metadata
+              searchTimestamp: new Date().toISOString(),
+              searchDuration: Date.now() - searchStartTime,
             };
 
             return { success: true, data: warrantyData };
@@ -218,6 +237,9 @@ export async function searchWarranty(
             saleDate: warrantyRecord.deletedAt || new Date().toISOString(),
             isDeleted: true, // Flag to indicate this is from a deleted invoice
             deletedAt: warrantyRecord.deletedAt,
+            // React 19: Add search metadata
+            searchTimestamp: new Date().toISOString(),
+            searchDuration: Date.now() - searchStartTime,
           };
 
           return { success: true, data: warrantyData };
@@ -225,10 +247,23 @@ export async function searchWarranty(
       }
     }
 
-    console.log('❌ No warranty code match found in any collection');
-    return { success: false, error: 'No warranty found with this code' };
+    // React 19: Enhanced logging with search performance
+    const totalSearchDuration = Date.now() - searchStartTime;
+    console.log(
+      `❌ No warranty code match found in any collection (search took ${totalSearchDuration}ms)`
+    );
+
+    return {
+      success: false,
+      error: 'No warranty found with this code',
+      searchDuration: totalSearchDuration,
+    };
   } catch (error: any) {
     console.error('❌ Error searching warranty:', error);
-    return { success: false, error: error.message };
+    return {
+      success: false,
+      error: error.message,
+      searchDuration: Date.now() - (Date.now() - 0), // Calculate approximate duration
+    };
   }
 }

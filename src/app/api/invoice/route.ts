@@ -1,5 +1,4 @@
 'use server';
-import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 import { executeOperation } from '@/app/libs/executeOperation';
 import { getAllSum } from '@/utils/getTotalSum';
 import { ObjectId } from 'mongodb';
@@ -11,7 +10,9 @@ function escapeRegex(input: string) {
 }
 
 function normalizeText(s: string) {
-  return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 }
 
 // Build a regex that requires all tokens (split by space, '/', ',', '(', ')', '-') to appear in any order
@@ -621,7 +622,11 @@ export async function POST(req: NextRequest) {
     // Validate quantities before updating stock
     console.log('📦 Validating stock quantities...');
     for (const product of formData.productDetail) {
-      const seriesName = (product.batteryDetails?.name || product.series || '').trim();
+      const seriesName = (
+        product.batteryDetails?.name ||
+        product.series ||
+        ''
+      ).trim();
       const quantity = parseInt(product.quantity) || 0;
 
       if (quantity <= 0) {
@@ -659,8 +664,12 @@ export async function POST(req: NextRequest) {
         stockExists = await executeOperation('stock', 'findOne', fallbackQuery);
         if (stockExists) {
           try {
-            const foundBrand = String((stockExists as any)?.brandName || '').trim().toLowerCase();
-            const requestedBrand = String(product.brandName || '').trim().toLowerCase();
+            const foundBrand = String((stockExists as any)?.brandName || '')
+              .trim()
+              .toLowerCase();
+            const requestedBrand = String(product.brandName || '')
+              .trim()
+              .toLowerCase();
             if (requestedBrand && foundBrand && foundBrand !== requestedBrand) {
               console.warn(
                 `Brand mismatch: requested='${requestedBrand}' found='${foundBrand}' for series='${seriesName}'`
@@ -679,12 +688,19 @@ export async function POST(req: NextRequest) {
       const tokenPattern = new RegExp(buildTokenRegex(seriesName), 'i');
       const currentStock = stockData.seriesStock?.find((item: any) => {
         const s = String(item.series || '');
-        return normalizeText(s) === normalizeText(seriesName) || tokenPattern.test(s);
+        return (
+          normalizeText(s) === normalizeText(seriesName) || tokenPattern.test(s)
+        );
       });
       if (!currentStock) {
         try {
-          const available = (stockData.seriesStock || []).map((i: any) => i.series);
-          console.warn('Series not found; available series for matched brand:', available);
+          const available = (stockData.seriesStock || []).map(
+            (i: any) => i.series
+          );
+          console.warn(
+            'Series not found; available series for matched brand:',
+            available
+          );
         } catch {}
         throw new Error(`Series '${seriesName}' not found in stock data.`);
       }

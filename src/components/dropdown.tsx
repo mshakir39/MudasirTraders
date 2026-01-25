@@ -9,7 +9,7 @@ import React, {
 export interface DropdownOption {
   label: string;
   value: any;
-  icon?: JSX.Element;
+  icon?: ReactNode;
 }
 
 interface DropdownProps {

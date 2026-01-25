@@ -32,7 +32,11 @@ interface TableProps<TData> {
   onRowClick?: (row: TData) => void;
   emptyMessage?: string;
   extraGlobalSearchText?: (row: TData) => string;
-  customGlobalFilter?: (row: any, searchText: string, filterValue: string) => boolean;
+  customGlobalFilter?: (
+    row: any,
+    searchText: string,
+    filterValue: string
+  ) => boolean;
   enableRowVirtualization?: boolean;
   tableBodyHeight?: number;
   minVisibleRows?: number;
@@ -73,7 +77,7 @@ export function Table<TData>({
       ...columns,
       {
         id: '__global_search',
-        accessorFn: (row: any) => (extraGlobalSearchText?.(row) ?? ''),
+        accessorFn: (row: any) => extraGlobalSearchText?.(row) ?? '',
         header: '',
         cell: () => null,
       } as unknown as ColumnDef<TData>,
@@ -141,9 +145,9 @@ export function Table<TData>({
 
   const scrollParentRef = React.useRef<HTMLDivElement | null>(null);
   const tbodyRef = React.useRef<HTMLTableSectionElement | null>(null);
-  const [containerHeight, setContainerHeight] = React.useState<number | undefined>(
-    undefined
-  );
+  const [containerHeight, setContainerHeight] = React.useState<
+    number | undefined
+  >(undefined);
   const rowVirtualizer = useVirtualizer({
     count: enableRowVirtualization ? renderRows.length : 0,
     getScrollElement: () => scrollParentRef.current,
@@ -193,20 +197,26 @@ export function Table<TData>({
   // Calculate dynamic container style
   const containerStyle = React.useMemo(() => {
     if (!enableRowVirtualization) return undefined;
-    
+
     // If we have fewer rows than minVisibleRows, don't apply min-height
     if (renderRows.length <= minVisibleRows) {
       return {
         overflowY: 'auto' as const,
       };
     }
-    
+
     return {
       maxHeight: containerHeight ?? tableBodyHeight,
       minHeight: containerHeight ?? minVisibleRows * 56,
       overflowY: 'auto' as const,
     };
-  }, [enableRowVirtualization, renderRows.length, minVisibleRows, containerHeight, tableBodyHeight]);
+  }, [
+    enableRowVirtualization,
+    renderRows.length,
+    minVisibleRows,
+    containerHeight,
+    tableBodyHeight,
+  ]);
 
   return (
     <div className={`flex w-full flex-col ${tableParentClassName}`}>
@@ -257,7 +267,8 @@ export function Table<TData>({
         >
           <table className='w-full table-fixed'>
             {(() => {
-              const headerCount = table.getHeaderGroups()[0]?.headers.length || columns.length;
+              const headerCount =
+                table.getHeaderGroups()[0]?.headers.length || columns.length;
               const cols = Array.from({ length: headerCount });
               const pct = `${(100 / headerCount).toFixed(4)}%`;
               return (
@@ -277,7 +288,7 @@ export function Table<TData>({
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className='px-4 py-3 text-left text-sm font-medium text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis'
+                      className='overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-left text-sm font-medium text-gray-700'
                     >
                       {header.isPlaceholder ? null : (
                         <div
@@ -316,12 +327,17 @@ export function Table<TData>({
                     const virtualItems = rowVirtualizer.getVirtualItems();
                     const totalSize = rowVirtualizer.getTotalSize();
                     const top = virtualItems[0]?.start ?? 0;
-                    const bottom = totalSize - (virtualItems[virtualItems.length - 1]?.end ?? 0);
+                    const bottom =
+                      totalSize -
+                      (virtualItems[virtualItems.length - 1]?.end ?? 0);
                     return (
                       <>
                         {top > 0 && (
                           <tr aria-hidden>
-                            <td colSpan={columns.length} style={{ height: top }} />
+                            <td
+                              colSpan={columns.length}
+                              style={{ height: top }}
+                            />
                           </tr>
                         )}
                         {virtualItems.map((vi) => {
@@ -332,7 +348,9 @@ export function Table<TData>({
                               key={row.id}
                               onClick={() => onRowClick?.(row.original)}
                               className={`border-b border-gray-200 transition-colors ${
-                                vi.index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                                vi.index % 2 === 0
+                                  ? 'bg-white'
+                                  : 'bg-gray-50/50'
                               } ${
                                 onRowClick
                                   ? 'cursor-pointer hover:bg-blue-50'
@@ -340,7 +358,10 @@ export function Table<TData>({
                               }`}
                             >
                               {row.getVisibleCells().map((cell) => (
-                                <td key={cell.id} className='px-4 py-3 text-sm text-gray-900 whitespace-normal break-words'>
+                                <td
+                                  key={cell.id}
+                                  className='whitespace-normal break-words px-4 py-3 text-sm text-gray-900'
+                                >
                                   {flexRender(
                                     cell.column.columnDef.cell,
                                     cell.getContext()
@@ -352,7 +373,10 @@ export function Table<TData>({
                         })}
                         {bottom > 0 && (
                           <tr aria-hidden>
-                            <td colSpan={columns.length} style={{ height: bottom }} />
+                            <td
+                              colSpan={columns.length}
+                              style={{ height: bottom }}
+                            />
                           </tr>
                         )}
                       </>
@@ -371,7 +395,10 @@ export function Table<TData>({
                       }`}
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className='px-4 py-3 text-sm text-gray-900 whitespace-normal break-words'>
+                        <td
+                          key={cell.id}
+                          className='whitespace-normal break-words px-4 py-3 text-sm text-gray-900'
+                        >
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext()

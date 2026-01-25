@@ -70,7 +70,7 @@ export async function updateStock(data: StockData) {
     const currentStock = await collection.findOne({
       brandName: data.brandName,
     });
-    
+
     let currentSoldCount = 0;
     if (currentStock) {
       // Find the specific series being updated to capture changes
@@ -81,7 +81,7 @@ export async function updateStock(data: StockData) {
       if (currentSeries) {
         // Save the current soldCount before updating
         currentSoldCount = parseInt(currentSeries.soldCount as any) || 0;
-        
+
         // Calculate changes
         const oldQuantity = currentSeries.inStock || 0;
         const newQuantity = parseInt(data.inStock) || 0;

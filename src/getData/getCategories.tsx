@@ -6,11 +6,12 @@ export const getCategories = async () => {
   try {
     // Execute a find operation to retrieve data from the "categories" collection
     const categories = await executeOperation('categories', 'findAll');
-    // Return the categories as a JSON response
-    return categories as any;
+    // Return the categories directly, ensuring array type
+    return Array.isArray(categories) ? categories : [];
   } catch (err: any) {
-    // If an error occurs, return a JSON response with the error message
-    return [err.message];
+    // If an error occurs, return empty array instead of error message
+    console.error('Error fetching categories:', err.message);
+    return [];
   }
 };
 

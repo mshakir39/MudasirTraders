@@ -20,7 +20,8 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "noErrorTruncation": true
+    "noErrorTruncation": true,
+    "target": "ES2017"
   },
   "include": [
     "next-env.d.ts",

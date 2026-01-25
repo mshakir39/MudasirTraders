@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { IoCalendarOutline } from 'react-icons/io5';
 import { IoIosArrowUp, IoIosArrowDown } from 'react-icons/io';
 import { RiFilter2Fill } from 'react-icons/ri';
-import 'flatpickr/dist/themes/light.css';
 import Flatpickr from 'react-flatpickr';
+import 'flatpickr/dist/themes/light.css';
 
 interface DateRange {
   start: Date;

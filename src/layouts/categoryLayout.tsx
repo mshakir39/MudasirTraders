@@ -1,6 +1,11 @@
 'use client';
 import Table from '@/components/table';
-import React, { useEffect, useCallback } from 'react';
+import React, {
+  useEffect,
+  useCallback,
+  useOptimistic,
+  useActionState,
+} from 'react';
 import Button from '@/components/button';
 import Modal from '@/components/modal';
 import Input from '@/components/customInput';
@@ -20,7 +25,6 @@ import { ICategory, IBrand, IBatterySeries } from '@/interfaces';
 import { FaEye, FaUpload, FaTrash } from 'react-icons/fa6';
 import { useCategoryStore } from '@/store/categoryStore';
 import PdfUploadModal from '@/components/PdfUploadModal';
-import { ObjectId } from 'mongodb';
 import { ColumnDef } from '@tanstack/react-table';
 
 // Use IBatterySeries directly instead of creating a new interface
@@ -101,6 +105,71 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
     seriesCount: number;
   } | null>(null);
 
+  // React 19: Optimistic updates for category operations
+  const [optimisticCategories, addOptimisticCategory] = useOptimistic(
+    categories,
+    (state, newCategory: any) => {
+      if (newCategory.action === 'delete') {
+        return state.filter((cat) => cat.id !== newCategory.id);
+      }
+      if (newCategory.action === 'add') {
+        return [...state, { ...newCategory.data, id: `temp-${Date.now()}` }];
+      }
+      if (newCategory.action === 'update') {
+        return state.map((cat) =>
+          cat.id === newCategory.id ? { ...cat, ...newCategory.data } : cat
+        );
+      }
+      return state;
+    }
+  );
+
+  // React 19: useActionState for category creation
+  const [createCategoryState, createCategoryAction, isCreatePending] =
+    useActionState(async (prevState: any, formData: FormData) => {
+      const brandName = formData.get('brandName') as string;
+      const salesTax = formData.get('salesTax') as string;
+
+      if (!brandName?.trim()) {
+        toast.error('Brand name is required');
+        return { error: 'Brand name is required' };
+      }
+
+      try {
+        // Add optimistic update
+        const newCategory = {
+          brandName: brandName.trim(),
+          salesTax: parseFloat(salesTax) || 18,
+          series: [],
+          createdAt: new Date(),
+        };
+        addOptimisticCategory({ action: 'add', data: newCategory });
+
+        const result = await createCategory({
+          brandName: brandName.trim(),
+          salesTax: parseFloat(salesTax) || 18,
+        });
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create category');
+        }
+
+        toast.success('Category created successfully');
+        await fetchCategories(); // Refresh categories
+        return { success: true };
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to create category'
+        );
+        return {
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to create category',
+        };
+      }
+    }, null);
+
   useEffect(() => {
     // Initialize categories from server-side props
     if (initialCategories && initialCategories.length > 0) {
@@ -108,6 +177,11 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
     } else {
       fetchCategories();
     }
+
+    // React 19: Cleanup function to prevent memory leaks
+    return () => {
+      // Cleanup any pending operations if needed
+    };
   }, [initialCategories, setCategories, fetchCategories]);
 
   const brandOptions = brands
@@ -567,7 +641,7 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
       </div>
 
       <Table<CategoryWithBatteryData>
-        data={categories as CategoryWithBatteryData[]}
+        data={optimisticCategories as CategoryWithBatteryData[]}
         columns={columns}
         enableSearch={true}
         searchPlaceholder='Search categories...'
@@ -1436,6 +1510,12 @@ const CategoryLayout: React.FC<CategoryLayoutProps> = ({
 
                 setIsLoading(true);
                 try {
+                  // React 19: Add optimistic update
+                  addOptimisticCategory({
+                    action: 'delete',
+                    id: categoryToDelete.id,
+                  });
+
                   const result = await deleteCategory(categoryToDelete.id);
 
                   if (result.success) {

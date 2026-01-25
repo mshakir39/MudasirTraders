@@ -1,17 +1,30 @@
 'use client';
-import React, { useState, useMemo, useCallback } from 'react';
-import DateRangePicker from '@/components/CustomDateRangePicker';
-import SalesSummaryCards from '@/components/sales/SalesSummaryCards';
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useOptimistic,
+  useActionState,
+} from 'react';
 import SalesDataGrid from '@/components/sales/SalesDataGrid';
 import ProductsDetailModal from '@/components/sales/ProductDetailModal';
-import Dropdown from '@/components/dropdown';
+import { toast } from 'react-toastify';
 
 interface DateRange {
   start: Date;
   end: Date;
 }
 
-const SalesLayout = ({ sales }: { sales: any[] }) => {
+interface SalesLayoutProps {
+  sales: any[];
+  // React 19: Add server timestamp for cache invalidation
+  serverTimestamp?: number;
+}
+
+const SalesLayout: React.FC<SalesLayoutProps> = ({
+  sales,
+  serverTimestamp,
+}) => {
   // Modal state for products
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [selectedSaleProducts, setSelectedSaleProducts] = useState<any[]>([]);
@@ -32,11 +45,60 @@ const SalesLayout = ({ sales }: { sales: any[] }) => {
 
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
 
-  // Get unique customers for dropdown
+  // React 19: Optimistic updates for sales operations
+  const [optimisticSales, addOptimisticSale] = useOptimistic(
+    sales,
+    (state, newSale: any) => {
+      if (newSale.action === 'delete') {
+        return state.filter((sale) => sale.id !== newSale.id);
+      }
+      return [newSale, ...state];
+    }
+  );
+
+  // React 19: useActionState for filter operations
+  const [filterState, filterAction, isFilterPending] = useActionState(
+    async (prevState: any, formData: FormData) => {
+      const customer = formData.get('customer') as string;
+      const startDate = formData.get('startDate') as string;
+      const endDate = formData.get('endDate') as string;
+
+      try {
+        // Simulate API call for filtering
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        return {
+          customer: customer || '',
+          dateRange: {
+            start: startDate
+              ? new Date(startDate)
+              : getDefaultDateRange().start,
+            end: endDate ? new Date(endDate) : getDefaultDateRange().end,
+          },
+        };
+      } catch (error) {
+        toast.error('Failed to apply filters');
+        return prevState;
+      }
+    },
+    { customer: '', dateRange: getDefaultDateRange() }
+  );
+
+  // React 19: Sync with filter state when it changes
+  React.useEffect(() => {
+    if (filterState.customer !== selectedCustomer) {
+      setSelectedCustomer(filterState.customer);
+    }
+    if (filterState.dateRange) {
+      setDateRange(filterState.dateRange);
+    }
+  }, [filterState, selectedCustomer]);
+
+  // Get unique customers for dropdown - React 19: Enhanced with memoization
   const customerOptions = useMemo(() => {
     const uniqueCustomers = Array.from(
       new Set(
-        sales
+        optimisticSales // Use optimistic sales instead of original sales
           .map((sale) => sale.customerName)
           .filter(Boolean)
           .filter((name) => name.trim() !== '')
@@ -50,13 +112,13 @@ const SalesLayout = ({ sales }: { sales: any[] }) => {
         value: customer,
       })),
     ];
-  }, [sales]);
+  }, [optimisticSales]); // Dependency on optimistic sales
 
-  // Filter sales based on selected date range and customer
+  // Filter sales based on selected date range and customer - React 19: Use optimistic data
   const filteredSales = useMemo(() => {
-    if (!sales || sales.length === 0) return [];
+    if (!optimisticSales || optimisticSales.length === 0) return [];
 
-    return sales.filter((sale) => {
+    return optimisticSales.filter((sale) => {
       // Date filter
       const saleDate = new Date(sale.date);
       const dateMatch =
@@ -68,7 +130,7 @@ const SalesLayout = ({ sales }: { sales: any[] }) => {
 
       return dateMatch && customerMatch;
     });
-  }, [sales, dateRange, selectedCustomer]);
+  }, [optimisticSales, dateRange, selectedCustomer]);
 
   // Calculate summary statistics
   const salesSummary = useMemo(() => {
@@ -105,12 +167,46 @@ const SalesLayout = ({ sales }: { sales: any[] }) => {
     []
   );
 
-  // Handle viewing products
+  // Handle viewing products - React 19: Enhanced with error boundary
   const handleViewProducts = useCallback((sale: any) => {
-    setSelectedSaleProducts(sale.products || []);
-    setSelectedSaleInfo(sale);
-    setIsProductModalOpen(true);
+    try {
+      setSelectedSaleProducts(sale.products || []);
+      setSelectedSaleInfo(sale);
+      setIsProductModalOpen(true);
+    } catch (error) {
+      toast.error('Failed to load sale details');
+      console.error('Error viewing products:', error);
+    }
   }, []);
+
+  // React 19: Optimistic delete function
+  const handleDeleteSale = useCallback(
+    async (saleId: string) => {
+      if (!confirm('Are you sure you want to delete this sale?')) return;
+
+      try {
+        // Add optimistic update
+        addOptimisticSale({ id: saleId, action: 'delete' });
+
+        const response = await fetch('/api/sales', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: saleId }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete sale');
+        }
+
+        toast.success('Sale deleted successfully');
+      } catch (error) {
+        toast.error('Failed to delete sale');
+        // Refresh data to revert optimistic update
+        window.location.reload();
+      }
+    },
+    [addOptimisticSale]
+  );
 
   // Handle closing products modal
   const handleCloseProductsModal = useCallback(() => {

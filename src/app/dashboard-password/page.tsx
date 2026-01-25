@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useActionState, useOptimistic } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -8,52 +8,83 @@ import { FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 const DashboardPasswordPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  
+  // React 19: Optimistic state for password validation
+  const [optimisticAuth, addOptimisticAuth] = useOptimistic(
+    { isAuthenticated: false, error: null },
+    (state: any, action: any) => {
+      if (action.type === 'validate') {
+        return { isAuthenticated: action.isValid, error: action.error };
+      }
+      return state;
+    }
+  );
+  
+  // React 19: useActionState for form handling
+  const [authState, authenticateAction, isPending] = useActionState(
+    async (prevState: any, formData: FormData) => {
+      const password = formData.get('password') as string;
+      
+      if (!password?.trim()) {
+        return { error: 'Please enter the password' };
+      }
+      
+      // Add optimistic validation
+      addOptimisticAuth({ 
+        type: 'validate', 
+        isValid: false, 
+        error: null 
+      });
+      
+      try {
+        const expectedPassword = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'admin123';
+        
+        if (password === expectedPassword) {
+          // Set dashboard unlocked cookie
+          document.cookie = 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
+          
+          // Update optimistic state
+          addOptimisticAuth({ 
+            type: 'validate', 
+            isValid: true, 
+            error: null 
+          });
+          
+          toast.success('Dashboard unlocked successfully!');
+          
+          // Redirect after delay
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1000);
+          
+          return { success: true };
+        } else {
+          const error = 'Incorrect password. Please try again.';
+          addOptimisticAuth({ 
+            type: 'validate', 
+            isValid: false, 
+            error 
+          });
+          return { error };
+        }
+      } catch (error) {
+        const errorMessage = 'An error occurred. Please try again.';
+        addOptimisticAuth({ 
+          type: 'validate', 
+          isValid: false, 
+          error: errorMessage 
+        });
+        return { error: errorMessage };
+      }
+    },
+    null
+  );
 
   // Reset component state when mounting (useful when navigating from other routes)
   useEffect(() => {
-    setIsLoading(false);
     setPassword('');
   }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!password.trim()) {
-      toast.error('Please enter the password');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Use environment variable with fallback
-      const expectedPassword =
-        process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'admin123';
-
-      if (password === expectedPassword) {
-        // Set dashboard unlocked cookie
-        document.cookie =
-          'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax'; // 30 minutes
-        toast.success('Dashboard unlocked successfully!');
-
-        // Add a small delay to ensure the toast is visible before redirecting
-        setTimeout(() => {
-          setIsLoading(false);
-          window.location.href = '/';
-        }, 1000);
-      } else {
-        toast.error('Incorrect password. Please try again.');
-        setPassword('');
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error('Error unlocking dashboard:', error);
-      toast.error('An error occurred. Please try again.');
-      setIsLoading(false);
-    }
-  };
 
   const handleCancel = () => {
     router.push('/category'); // Redirect to categories page
@@ -75,7 +106,8 @@ const DashboardPasswordPage: React.FC = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className='space-y-6'>
+          {/* React 19: Modern form with useActionState */}
+          <form action={authenticateAction} className='space-y-6'>
             <div>
               <label
                 htmlFor='password'
@@ -86,18 +118,19 @@ const DashboardPasswordPage: React.FC = () => {
               <div className='relative'>
                 <input
                   id='password'
+                  name='password'
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className='w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
                   placeholder='Enter dashboard password'
-                  disabled={isLoading}
+                  disabled={isPending}
                 />
                 <button
                   type='button'
                   onClick={() => setShowPassword(!showPassword)}
                   className='absolute right-3 top-1/2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600'
-                  disabled={isLoading}
+                  disabled={isPending}
                 >
                   {showPassword ? (
                     <FaEyeSlash className='h-5 w-5' />
@@ -108,18 +141,32 @@ const DashboardPasswordPage: React.FC = () => {
               </div>
             </div>
 
+            {/* React 19: Show error message from action state */}
+            {authState?.error && (
+              <div className='rounded-md bg-red-50 p-3 text-sm text-red-700'>
+                {authState.error}
+              </div>
+            )}
+
+            {/* React 19: Show optimistic auth state */}
+            {optimisticAuth.isAuthenticated && (
+              <div className='rounded-md bg-green-50 p-3 text-sm text-green-700'>
+                Authentication successful! Redirecting...
+              </div>
+            )}
+
             <div className='flex gap-3'>
               <button
                 type='submit'
-                disabled={isLoading}
+                disabled={isPending}
                 className='flex-1 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
               >
-                {isLoading ? 'Unlocking...' : 'Unlock Dashboard'}
+                {isPending ? 'Unlocking...' : 'Unlock Dashboard'}
               </button>
               <button
                 type='button'
                 onClick={handleCancel}
-                disabled={isLoading}
+                disabled={isPending}
                 className='rounded-lg border border-gray-300 px-6 py-3 font-medium text-gray-600 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 Cancel

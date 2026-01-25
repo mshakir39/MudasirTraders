@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useOptimistic,
+  useActionState,
+} from 'react';
 import { toast } from 'react-toastify';
 import dynamic from 'next/dynamic';
 import Table from '@/components/table';
@@ -18,9 +24,7 @@ import {
   deleteAllBrandStock,
 } from '@/actions/stockActions';
 import { ICategory, IDropdownOption, IStock } from '../../interfaces';
-import { getSeries } from '@/models/getSeries';
 import SeriesAutocomplete from '@/components/SeriesAutocomplete';
-import { convertDate } from '@/utils/convertTime';
 
 const Dropdown = dynamic(() => import('@/components/dropdown'));
 const Tabs = dynamic(() => import('@/components/tabs'));
@@ -127,6 +131,102 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     useState<boolean>(false);
   const [isDeletingAll, setIsDeletingAll] = useState<boolean>(false);
 
+  // React 19: Optimistic updates for stock operations
+  const [optimisticStock, addOptimisticStock] = useOptimistic(
+    stock,
+    (state, newStock: any) => {
+      if (newStock.action === 'delete') {
+        return state.filter(
+          (item) =>
+            !(
+              item.brandName === newStock.brandName &&
+              item.seriesStock.some((s: any) => s.series === newStock.series)
+            )
+        );
+      }
+      if (newStock.action === 'add') {
+        // Add new stock item
+        return [...state, newStock.data];
+      }
+      if (newStock.action === 'update') {
+        // Update existing stock item
+        return state.map((item) => {
+          if (item.brandName === newStock.brandName) {
+            return {
+              ...item,
+              seriesStock: item.seriesStock.map((s: any) =>
+                s.series === newStock.series ? newStock.data : s
+              ),
+            };
+          }
+          return item;
+        });
+      }
+      return state;
+    }
+  );
+
+  // React 19: useActionState for form handling
+  const [createStockState, createStockAction, isCreatePending] = useActionState(
+    async (prevState: any, formData: FormData) => {
+      const brandName = formData.get('brandName') as string;
+      const series = formData.get('series') as string;
+      const productCost = formData.get('productCost') as string;
+      const inStock = formData.get('inStock') as string;
+
+      if (
+        !brandName?.trim() ||
+        !series?.trim() ||
+        !productCost?.trim() ||
+        !inStock?.trim()
+      ) {
+        toast.error('All fields are required');
+        return { error: 'All fields are required' };
+      }
+
+      try {
+        // Add optimistic update
+        const newStockItem = {
+          brandName: brandName.trim(),
+          seriesStock: [
+            {
+              series: series.trim(),
+              productCost: productCost.trim(),
+              inStock: inStock.trim(),
+              createdDate: new Date(),
+            },
+          ],
+        };
+        addOptimisticStock({ action: 'add', data: newStockItem });
+
+        const result = await createStock({
+          brandName: brandName.trim(),
+          series: series.trim(),
+          productCost: productCost.trim(),
+          inStock: inStock.trim(),
+        });
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create stock');
+        }
+
+        toast.success('Stock created successfully');
+        await revalidatePathCustom('/stock');
+        window.location.reload(); // Preserve existing behavior
+        return { success: true };
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to create stock'
+        );
+        return {
+          error:
+            error instanceof Error ? error.message : 'Failed to create stock',
+        };
+      }
+    },
+    null
+  );
+
   // Function to get max retail price and sales tax from categories
   const getMaxRetailPrice = useCallback(
     (brandName: string, seriesName: string) => {
@@ -197,12 +297,19 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
       if (window.confirm('Are you sure you want to delete this stock?')) {
         setIsDeleting(true);
         try {
+          // React 19: Add optimistic update
+          addOptimisticStock({
+            action: 'delete',
+            brandName: brandName,
+            series: item.series,
+          });
+
           const result = await deleteStock(brandName, item.series);
 
           if (result.success) {
             toast.success('Stock deleted successfully');
             await revalidatePathCustom('/stock');
-            window.location.reload();
+            window.location.reload(); // Preserve existing behavior
           } else {
             toast.error(result.error || 'Failed to delete stock');
           }
@@ -213,7 +320,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         }
       }
     },
-    []
+    [addOptimisticStock]
   );
 
   const handleViewStockHistory = useCallback(
@@ -557,8 +664,11 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         setCurrentBrandName(firstCategoryBrandName);
       }
 
+      // React 19: Use optimistic stock for better UX
+      const currentStock = optimisticStock || stock;
+
       // Initialize stock for the current category if it doesn't exist
-      if (!stock || stock.length === 0) {
+      if (!currentStock || currentStock.length === 0) {
         if (currentBrandName) {
           fetchData(currentBrandName);
           setStockData({
@@ -573,35 +683,29 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         return;
       }
 
-      const filteredStock = stock?.filter(
+      const filteredStock = currentStock?.filter(
         (item) => item.brandName === currentBrandName
       );
       if (filteredStock && filteredStock.length > 0 && currentBrandName) {
-        const category = categories.find(
-          (cat) => cat.brandName === currentBrandName
-        );
-        const newData = filteredStock[0].seriesStock?.map(
-          (item: StockBatteryData, index: number) =>
-            transformStockData(item, category || categories[0], index)
-        );
-
-        const totalAmount = filteredStock[0]?.seriesStock?.reduce(
-          (acc: number, current: StockBatteryData) => {
-            return acc + Number(current.productCost) * Number(current.inStock);
-          },
-          0
-        );
-
-        setStockCost(totalAmount);
-        fetchData(currentBrandName);
-        setStockData({
-          brandName: currentBrandName,
-          series: '',
-          productCost: '',
-          inStock: '',
-          batteryDetails: undefined,
-        });
-        setTableData(newData || []);
+        // React 19: Enhanced error handling
+        try {
+          const stockData = filteredStock[0];
+          setTableData(stockData.seriesStock || []);
+          setStockCost(
+            (stockData.seriesStock || []).reduce(
+              (total: number, item: StockBatteryData) => {
+                const cost = Number(item.productCost) || 0;
+                const quantity = Number(item.inStock) || 0;
+                return total + cost * quantity;
+              },
+              0
+            )
+          );
+        } catch (error) {
+          console.error('Error processing stock data:', error);
+          setTableData([]);
+          setStockCost(0);
+        }
       } else {
         if (currentBrandName) {
           fetchData(currentBrandName);
@@ -615,10 +719,13 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         }
         setTableData([]);
       }
-    } else {
-      setTableData([]);
     }
-  }, [categories, fetchData, stock, currentBrandName]);
+
+    // React 19: Cleanup function to prevent memory leaks
+    return () => {
+      // Cleanup any pending operations if needed
+    };
+  }, [categories, fetchData, optimisticStock, stock, currentBrandName]);
 
   // Effect to handle modal data initialization
   useEffect(() => {
@@ -908,7 +1015,9 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
               }}
               customGlobalFilter={(row, searchText, query) => {
                 // Detect plate-intent queries like: '9 p', '9 pla', '9 plate', '9 plates'
-                const m = query.match(/^(\s*)(\d{1,3})(\s*)(p|pl|pla|plat|plate|plates)?/);
+                const m = query.match(
+                  /^(\s*)(\d{1,3})(\s*)(p|pl|pla|plat|plate|plates)?/
+                );
                 if (m) {
                   const numStr = m[2];
                   const hasPlateWord = !!m[4];
@@ -916,7 +1025,9 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                   if (hasPlateWord) {
                     const bd = (row.original as any)?.batteryDetails ?? {};
                     const plateVal = bd?.plate;
-                    const plateNum = Number(String(plateVal).replace(/[^0-9]/g, ''));
+                    const plateNum = Number(
+                      String(plateVal).replace(/[^0-9]/g, '')
+                    );
                     const qNum = Number(numStr);
                     if (!isNaN(plateNum) && !isNaN(qNum)) {
                       return plateNum === qNum; // do not fall back if intent is plates

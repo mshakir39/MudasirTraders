@@ -14,42 +14,41 @@ function isCustomerWithName(val: unknown): val is { customerName: string } {
 
 export async function GET(
   request: Request,
-  { params }: { params: { customerId: string } }
+  { params }: { params: Promise<{ customerId: string }> }
 ) {
   try {
-    console.log('🔍 Fetching invoices for customer ID:', params.customerId);
+    // React 19/Next.js 15+: Await params before using
+    const { customerId } = await params;
+    console.log('🔍 Fetching invoices for customer ID:', customerId);
 
     // Validate if customerId is a valid ObjectId or number
-    let customerId: any;
+    let customerIdValue: any;
 
     // Check if it's a MongoDB ObjectId
-    if (
-      ObjectId.isValid(params.customerId) &&
-      params.customerId.length === 24
-    ) {
-      customerId = new ObjectId(params.customerId);
-      console.log('🆔 Using ObjectId format:', customerId);
+    if (ObjectId.isValid(customerId) && customerId.length === 24) {
+      customerIdValue = new ObjectId(customerId);
+      console.log('🆔 Using ObjectId format:', customerIdValue);
     } else {
       // Try to parse as number
-      const numericId = parseInt(params.customerId);
+      const numericId = parseInt(customerId);
       if (isNaN(numericId)) {
-        console.error('❌ Invalid customer ID format:', params.customerId);
+        console.error('❌ Invalid customer ID format:', customerId);
         return Response.json(
           { error: 'Invalid customer ID format' },
           { status: 400 }
         );
       }
-      customerId = numericId;
-      console.log('🔢 Using numeric ID:', customerId);
+      customerIdValue = numericId;
+      console.log('🔢 Using numeric ID:', customerIdValue);
     }
 
     // First, let's check if the customer exists using findOne
     const customer = await executeOperation('customers', 'findOne', {
-      $or: [{ _id: customerId }, { id: customerId }],
+      $or: [{ _id: customerIdValue }, { id: customerIdValue }],
     });
 
     if (!customer) {
-      console.log('❌ Customer not found with ID:', customerId);
+      console.log('❌ Customer not found with ID:', customerIdValue);
       return Response.json({ error: 'Customer not found' }, { status: 404 });
     }
 
@@ -91,9 +90,9 @@ export async function GET(
       ? allInvoices.filter((invoice: any) => {
           // Try multiple matching strategies
           return (
-            (invoice.customerId === customerId ||
-              invoice.customerId === params.customerId ||
-              invoice.customerId?.toString() === params.customerId ||
+            (invoice.customerId === customerIdValue ||
+              invoice.customerId === customerId ||
+              invoice.customerId?.toString() === customerId ||
               invoice.clientName ===
                 (isCustomerWithName(customer)
                   ? customer.customerName

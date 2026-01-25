@@ -8,6 +8,8 @@ const nextConfig = {
       },
     ],
   },
+  // React 19: Fix memory leak warnings
+  serverExternalPackages: ['mongodb'],
   // Ensure API routes are properly handled
   async headers() {
     return [
@@ -23,6 +25,18 @@ const nextConfig = {
         ],
       },
     ];
+  },
+  // React 19: Development server optimizations
+  webpack: (config, { dev }) => {
+    if (dev) {
+      // Fix memory leak warnings in development
+      config.watchOptions = {
+        ...config.watchOptions,
+        poll: 1000,
+        aggregateTimeout: 300,
+      };
+    }
+    return config;
   },
 };
 

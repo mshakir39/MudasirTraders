@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import './globals.css';
-import 'react-toastify/dist/ReactToastify.css';
-import 'rsuite-table/dist/css/rsuite-table.css';
 import SessionWrapper from '@/components/sessionWrapper';
 import LayoutWrapper from '@/components/LayoutWrapper';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import FaviconManager from '@/components/FaviconManager';
+import 'react-toastify/dist/ReactToastify.css';
+import 'rsuite-table/dist/css/rsuite-table.css';
+import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 

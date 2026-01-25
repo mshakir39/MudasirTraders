@@ -1,5 +1,4 @@
 import { executeOperation } from '@/app/libs/executeOperation';
-import { ObjectId } from 'mongodb';
 
 export const getAllStock = async () => {
   try {

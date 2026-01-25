@@ -1,33 +1,64 @@
-import React from 'react';
 import InvoiceLayout from '../../layouts/invoicesLayout';
 import { getCategories } from '@/getData/getCategories';
 import { getInvoices } from '@/actions/invoiceActions';
 import { getStock } from '@/actions/stockActions';
+import InvoiceErrorBoundary from '@/components/invoices/InvoiceErrorBoundary';
 
-export const dynamic = 'auto';
-export const revalidate = 60; // Cache for 1 minute
+export const dynamic = 'force-dynamic'; // React 19: Better for real-time invoice data
+export const revalidate = 0; // React 19: No caching for latest invoice information
 
-async function Invoices() {
-  const categories = await getCategories();
-  const invoicesResult = await getInvoices();
-  const stockResult = await getStock();
+// React 19: Enhanced server component with better error handling
+async function getInvoicesData() {
+  try {
+    const invoicesResult = await getInvoices();
 
-  const invoices =
-    invoicesResult.success && Array.isArray(invoicesResult.data)
-      ? invoicesResult.data
-      : [];
-  const stock =
-    stockResult.success && Array.isArray(stockResult.data)
-      ? stockResult.data
-      : [];
-
-  return (
-    <InvoiceLayout
-      categories={Array.isArray(categories) ? categories : []}
-      invoices={invoices}
-      stock={stock}
-    />
-  );
+    if (!invoicesResult.success) {
+      console.error('Failed to fetch invoices:', invoicesResult.error);
+      return null;
+    }
+    
+    return invoicesResult.data;
+  } catch (error) {
+    console.error('Error loading invoices data:', error);
+    return null;
+  }
 }
 
-export default Invoices;
+async function getCategoriesData() {
+  try {
+    const categoriesResult = await getCategories();
+    return Array.isArray(categoriesResult) ? categoriesResult : [];
+  } catch (error) {
+    console.error('Error loading categories:', error);
+    return [];
+  }
+}
+
+async function getStockData() {
+  try {
+    const stockResult = await getStock();
+    return Array.isArray(stockResult) ? stockResult : [];
+  } catch (error) {
+    console.error('Error loading stock:', error);
+    return [];
+  }
+}
+
+export default async function Invoices() {
+  // React 19: Parallel data fetching for better performance
+  const [invoices, categories, stock] = await Promise.all([
+    getInvoicesData(),
+    getCategoriesData(),
+    getStockData()
+  ]);
+
+  return (
+    <InvoiceErrorBoundary>
+      <InvoiceLayout
+        categories={categories}
+        invoices={invoices}
+        stock={stock}
+      />
+    </InvoiceErrorBoundary>
+  );
+}

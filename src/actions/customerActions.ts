@@ -32,11 +32,44 @@ export async function updateCustomer(id: string, data: Partial<CustomerData>) {
   }
 }
 
+export async function deleteCustomer(id: string) {
+  try {
+    if (!id) {
+      throw new Error('Customer ID is required');
+    }
+
+    const result = await executeOperation('customers', 'delete', {
+      documentId: id,
+    });
+
+    if (!result) {
+      throw new Error('Customer not found or already deleted');
+    }
+
+    return { success: true, data: result };
+  } catch (error: any) {
+    console.error('Error deleting customer:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function getCustomers() {
   try {
+    // React 19: Enhanced with client-side sorting for better compatibility
     const customers = await executeOperation('customers', 'findAll');
+
+    // Sort customers by creation date (newest first)
+    if (Array.isArray(customers)) {
+      customers.sort((a: any, b: any) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
+    }
+
     return { success: true, data: customers };
   } catch (error: any) {
+    console.error('Error fetching customers:', error);
     return { success: false, error: error.message };
   }
 }
