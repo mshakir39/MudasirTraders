@@ -7,6 +7,9 @@ const path = require('path');
 // Fix memory leak warnings by increasing event listener limits
 process.setMaxListeners(20);
 
+// Also set the environment variable
+process.env.NODE_MAX_LISTENERS = '20';
+
 // Handle cleanup properly
 process.on('SIGINT', () => {
   console.log('\n🛑 Shutting down development server...');

@@ -35,6 +35,13 @@ const nextConfig = {
         poll: 1000,
         aggregateTimeout: 300,
       };
+      
+      // Increase max listeners for development
+      config.target = 'node';
+      config.node = {
+        ...config.node,
+        __dirname: true,
+      };
     }
     return config;
   },

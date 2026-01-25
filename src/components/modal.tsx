@@ -1,6 +1,5 @@
-import React, { FunctionComponent, ReactNode, useState } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
+import React, { FunctionComponent, ReactNode } from 'react';
+import { Dialog } from '@headlessui/react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -10,14 +9,14 @@ interface ModalProps {
   title?: ReactNode;
   dialogPanelClass?: string;
   parentClass?: string;
-  preventBackdropClose?: boolean; // New prop to control backdrop closing
+  preventBackdropClose?: boolean;
   size?: 'large' | 'medium' | 'small';
 }
 
 const sizeClasses = {
-  small: 'max-w-sm',
-  medium: 'max-w-2xl',
-  large: 'max-w-6xl',
+  small: 'max-w-sm sm:max-w-md',
+  medium: 'max-w-2xl sm:max-w-3xl',
+  large: 'max-w-6xl sm:max-w-7xl',
 };
 
 const Modal: FunctionComponent<ModalProps> = ({
@@ -28,7 +27,7 @@ const Modal: FunctionComponent<ModalProps> = ({
   title = 'Modal Title' as ReactNode,
   dialogPanelClass,
   parentClass,
-  preventBackdropClose = false, // Default to allow backdrop close
+  preventBackdropClose = false,
   size = 'medium',
 }) => {
   const handleClose = () => {
@@ -44,88 +43,29 @@ const Modal: FunctionComponent<ModalProps> = ({
     }
   };
 
-  return (
-    <div className={`${parentClass}`}>
-      <Transition
-        appear
-        show={isOpen}
-        afterEnter={() => {
-          if (onOpen) {
-            onOpen();
-          }
-        }}
-        as={Fragment}
-      >
-        <Dialog
-          as='div'
-          className='relative z-50'
-          onClose={handleClose}
-          // Make the dialog static when preventBackdropClose is true
-          static={preventBackdropClose}
-        >
-          <Transition.Child
-            as={Fragment}
-            enter='ease-out duration-300'
-            enterFrom='opacity-0'
-            enterTo='opacity-100'
-            leave='ease-in duration-200'
-            leaveFrom='opacity-100'
-            leaveTo='opacity-0'
-          >
-            <div className='fixed inset-0 bg-black/25' />
-          </Transition.Child>
+  const defaultPanelClass = `transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all ${sizeClasses[size]}`;
 
-          <div className='fixed inset-0 overflow-y-auto'>
-            <div className='flex min-h-full items-center justify-center p-4 text-center'>
-              <Transition.Child
-                as={Fragment}
-                enter='ease-out duration-300'
-                enterFrom='opacity-0 scale-95'
-                enterTo='opacity-100 scale-100'
-                leave='ease-in duration-200'
-                leaveFrom='opacity-100 scale-100'
-                leaveTo='opacity-0 scale-95'
-              >
-                <Dialog.Panel
-                  className={`w-full ${sizeClasses[size]} transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all ${dialogPanelClass}`}
-                >
-                  <div className='flex items-center justify-between'>
-                    <Dialog.Title
-                      as='h3'
-                      className='text-lg font-bold leading-6 text-gray-900'
-                    >
-                      {title}
-                    </Dialog.Title>
-                    {/* Close button that always works */}
-                    <button
-                      type='button'
-                      className='text-gray-400 transition-colors hover:text-gray-600'
-                      onClick={handleForceClose}
-                    >
-                      <span className='sr-only'>Close</span>
-                      <svg
-                        className='h-6 w-6'
-                        fill='none'
-                        viewBox='0 0 24 24'
-                        stroke='currentColor'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth='2'
-                          d='M6 18L18 6M6 6l12 12'
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className='mt-2'>{children}</div>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
-    </div>
+  return (
+    <Dialog open={isOpen} onClose={preventBackdropClose ? () => {} : (onClose || (() => {}))} className="relative z-50">
+      {/* The backdrop, rendered as a fixed sibling to the panel container */}
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+
+      {/* Full-screen container to center the panel */}
+      <div className="fixed inset-0 overflow-y-auto">
+        {/* Container that centers the panel and handles responsive sizing */}
+        <div className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8">
+          {/* The actual dialog panel with responsive sizing */}
+          <Dialog.Panel className={`${defaultPanelClass} ${dialogPanelClass || ''} w-full max-h-[90vh] overflow-y-auto`}>
+            {title && (
+              <Dialog.Title as="div" className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 backdrop-blur-sm bg-opacity-95">
+                <h3 className="text-base sm:text-lg font-medium leading-5 sm:leading-6 text-gray-900">{title}</h3>
+              </Dialog.Title>
+            )}
+            <div className={`${parentClass || 'p-4 sm:p-6'}`}>{children}</div>
+          </Dialog.Panel>
+        </div>
+      </div>
+    </Dialog>
   );
 };
 
