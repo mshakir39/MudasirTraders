@@ -82,6 +82,7 @@ const nextConfig = {
 
   // Optimize bundle analyzer and experimental features
   experimental: {
+    caseSensitiveRoutes: false,
     optimizePackageImports: [
       'react',
       'react-dom',
