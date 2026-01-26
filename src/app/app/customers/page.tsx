@@ -32,7 +32,6 @@ export default async function CustomersPage() {
   const customers = await getCustomersData();
 
   return (
-    // React 19: Error boundary for better error handling
     <CustomersErrorBoundary>
       <CustomersLayout
         customers={customers}

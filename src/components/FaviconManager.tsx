@@ -15,8 +15,8 @@ function upsertIcon(rel: string, href: string, type?: string) {
 
 export default function FaviconManager() {
   useEffect(() => {
-    const lightHref = '/icon.svg?v=3';
-    const darkHref = '/icon-white.svg?v=3';
+    const lightHref = '/next.svg?v=3';
+    const darkHref = '/next.svg?v=3'; // Use same icon for both light and dark modes
 
     const apply = (isDark: boolean) => {
       const href = isDark ? darkHref : lightHref;

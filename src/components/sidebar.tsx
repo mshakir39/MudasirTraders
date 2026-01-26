@@ -16,6 +16,7 @@ import {
   FaShieldAlt,
 } from 'react-icons/fa';
 import { FaUserFriends } from 'react-icons/fa';
+import { FaCalendarAlt } from 'react-icons/fa';
 import { TbCategoryPlus } from 'react-icons/tb';
 import { IoMdSettings } from 'react-icons/io';
 import { IoLogOut } from 'react-icons/io5';
@@ -68,56 +69,76 @@ const Sidebar = ({
   const navigationItems = useMemo(
     () => [
       {
-        href: '/',
+        href: '/app',
         label: 'Dashboard',
         icon: MdDashboard,
-        active: optimisticPath === '/',
+        active: optimisticPath === '/app',
       },
       {
-        href: '/brands',
+        href: '/app/brands',
         label: 'Brands',
         icon: FaTags,
-        active: optimisticPath === '/brands',
+        active: optimisticPath === '/app/brands',
       },
       {
-        href: '/category',
+        href: '/app/category',
         label: 'Category',
         icon: TbCategoryPlus,
-        active: optimisticPath === '/category',
+        active: optimisticPath === '/app/category',
       },
       {
-        href: '/stock',
+        href: '/app/stock',
         label: 'Stock',
         icon: FaCarBattery,
-        active: optimisticPath === '/stock',
+        active: optimisticPath === '/app/stock',
       },
       {
-        href: '/invoices',
+        href: '/app/invoices',
         label: 'Invoices',
         icon: FaFileInvoice,
-        active: optimisticPath === '/invoices',
+        active: optimisticPath === '/app/invoices',
       },
       {
-        href: '/sales',
+        href: '/app/sales',
         label: 'Sales',
         icon: FaFileInvoice,
-        active: optimisticPath === '/sales',
+        active: optimisticPath === '/app/sales',
       },
       {
-        href: '/customers',
+        href: '/app/customers',
         label: 'Customers',
         icon: FaUserFriends,
-        active: optimisticPath === '/customers',
+        active: optimisticPath === '/app/customers',
       },
       {
-        href: '/warranty-check',
+        href: '/app/warranty-check',
         label: 'Warranty Check',
         icon: FaShieldAlt,
-        active: optimisticPath === '/warranty-check',
+        active: optimisticPath === '/app/warranty-check',
       },
+      // {
+      //   href: '/app/priceList',
+      //   label: 'Price List',
+      //   icon: FaTags,
+      //   active: optimisticPath === '/app/priceList',
+      // },
+      // {
+      //   href: '/app/scrapStock',
+      //   label: 'Scrap Stock',
+      //   icon: FaCarBattery,
+      //   active: optimisticPath === '/app/scrapStock',
+      // },
     ],
     [optimisticPath]
   );
+
+  // Meetups item to be rendered separately before Settings
+  const meetupsItem = {
+    href: '/app/meetups',
+    label: 'Meetups',
+    icon: FaCalendarAlt,
+    active: optimisticPath === '/app/meetups',
+  };
 
   // React 19: Memoized store initials for better performance
   const storeInitials = useMemo(() => {
@@ -334,6 +355,34 @@ const Sidebar = ({
 
         {/* Footer Actions */}
         <div className='mt-auto flex flex-col space-y-2'>
+          {/* Meetups Item */}
+          <Link
+            href={meetupsItem.href}
+            onClick={() => handleNavigation(meetupsItem.href)}
+            className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
+              ${
+                meetupsItem.active
+                  ? 'bg-[#4287f5] text-white'
+                  : 'text-gray-700 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
+              }`}
+          >
+            <meetupsItem.icon
+              className={`h-6 w-6 flex-shrink-0 transition-colors duration-200 ${
+                meetupsItem.active
+                  ? 'text-white'
+                  : 'text-gray-600 group-hover:text-white'
+              }`}
+            />
+            <span
+              className={`ml-3 font-medium transition-all duration-300 ${
+                isCollapsed ? 'hidden' : 'block'
+              } md:${isCollapsed ? 'hidden' : 'block'}`}
+            >
+              {meetupsItem.label}
+            </span>
+          </Link>
+
+          {/* Settings Button */}
           <button
             onClick={() => {
               setIsModalOpen(true);
@@ -353,8 +402,10 @@ const Sidebar = ({
 
           <button
             onClick={() => {
+              // Immediately hide sidebar by clearing state
               Cookies.remove('userId');
-              signOut({ callbackUrl: '/signIn' });
+              Cookies.remove('dashboard-unlocked');
+              signOut({ callbackUrl: '/signin' });
             }}
             className='sidebarItem flex touch-manipulation items-center rounded-lg p-3 text-gray-700 transition-all duration-200 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
           >
@@ -372,7 +423,7 @@ const Sidebar = ({
     </>
   );
 
-  if (path === '/signIn') {
+  if (path === '/app/signIn') {
     return null;
   }
 

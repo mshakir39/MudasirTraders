@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 const Sidebar = dynamic(() => import('@/components/sidebar'), {
@@ -20,32 +19,83 @@ interface LayoutWrapperProps {
 
 const LayoutWrapper: React.FC<LayoutWrapperProps> = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [hasAuthError, setHasAuthError] = useState(false);
-  const pathname = usePathname();
+  const [isDashboardUnlocked, setIsDashboardUnlocked] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Handle NextAuth session errors gracefully
   useEffect(() => {
-    const handleAuthError = (event: ErrorEvent) => {
-      if (event.message.includes('next-auth') || event.message.includes('session')) {
-        console.warn('Auth error detected, continuing without session:', event.message);
-        setHasAuthError(true);
-      }
+    setIsMounted(true);
+  }, []);
+
+  // Check if dashboard is unlocked via password
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    const checkDashboardUnlock = () => {
+      const unlockedCookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('dashboard-unlocked='));
+      
+      const hasCookie = !!unlockedCookie;
+      const cookieValue = hasCookie ? unlockedCookie.split('=')[1] : null;
+      
+      console.log('Dashboard unlock check:', {
+        cookie: document.cookie,
+        hasCookie,
+        cookieValue
+      });
+      
+      setIsDashboardUnlocked(hasCookie && cookieValue === 'true');
     };
 
-    window.addEventListener('error', handleAuthError);
-    return () => window.removeEventListener('error', handleAuthError);
-  }, []);
+    checkDashboardUnlock();
+    const interval = setInterval(checkDashboardUnlock, 500);
+    return () => clearInterval(interval);
+  }, [isMounted]);
 
   // Memoize the callback to prevent unnecessary re-renders
   const handleCollapseChange = useCallback((collapsed: boolean) => {
     setIsSidebarCollapsed(collapsed);
   }, []);
 
-  // Check if current page is sign-in page
-  const isSignInPage = pathname === '/signIn';
+  // Show sidebar if dashboard is unlocked OR if we're on /app (for testing)
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  const isSignInPage = currentPath === '/app/signIn';
+  const isDashboardPasswordPage = currentPath === '/app/dashboard-password';
+  const isAppPage = currentPath === '/app';
 
-  // If it's the sign-in page, render without sidebar layout
-  if (isSignInPage) {
+  // If it's the sign-in page or dashboard-password page, render without sidebar layout
+  if (isSignInPage || isDashboardPasswordPage) {
+    return (
+      <>
+        <ToastContainer />
+        {children}
+      </>
+    );
+  }
+
+  // Show sidebar if dashboard is unlocked
+  const shouldShowSidebar = isDashboardUnlocked && !isDashboardPasswordPage;
+
+  console.log('LayoutWrapper render:', {
+    isDashboardUnlocked,
+    shouldShowSidebar,
+    currentPath,
+    isMounted,
+    isAppPage,
+    isDashboardPasswordPage
+  });
+
+  // If it's the dashboard password page, render without sidebar and status indicators
+  if (isDashboardPasswordPage) {
+    return (
+      <>
+        <ToastContainer />
+        {children}
+      </>
+    );
+  }
+
+  if (!shouldShowSidebar) {
     return (
       <>
         <ToastContainer />
@@ -62,6 +112,19 @@ const LayoutWrapper: React.FC<LayoutWrapperProps> = ({ children }) => {
           isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
         }`}
       >
+        {/* User Status Indicator - More Visible */}
+        <div className="fixed top-4 right-4 z-50 bg-blue-600 text-white rounded-lg shadow-lg px-4 py-2 flex items-center gap-2 border-2 border-blue-700">
+          <div className={`w-3 h-3 rounded-full ${isDashboardUnlocked ? 'bg-green-400' : 'bg-red-400'} animate-pulse`}></div>
+          <span className="text-sm font-bold">
+            {isDashboardUnlocked ? '✓ LOGGED IN' : '✗ NOT LOGGED IN'}
+          </span>
+        </div>
+        
+        {/* Debug Info */}
+        <div className="fixed bottom-4 right-4 z-50 bg-black text-white rounded-lg shadow-lg px-3 py-2 text-xs">
+          Debug: {isDashboardUnlocked ? 'UNLOCKED' : 'LOCKED'} | Path: {currentPath}
+        </div>
+        
         <ToastContainer />
         {children}
       </main>

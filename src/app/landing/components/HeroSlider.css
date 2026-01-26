@@ -1,0 +1,57 @@
+/* Custom styles for HeroSlider pagination bullets */
+.swiper-pagination-bullet {
+  /* Large touch target (44x44px minimum) */
+  width: 44px !important;
+  height: 44px !important;
+  margin: 0 4px !important;
+  
+  /* Visually smaller appearance */
+  background: white !important;
+  opacity: 0.5 !important;
+  border-radius: 50% !important;
+  
+  /* Position the visual dot in the center */
+  position: relative !important;
+  transform: scale(0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.swiper-pagination-bullet:hover {
+  opacity: 0.7 !important;
+  transform: scale(0.4) !important;
+}
+
+.swiper-pagination-bullet.swiper-pagination-bullet-active {
+  opacity: 1 !important;
+  transform: scale(0.5) !important;
+}
+
+/* Ensure proper spacing between bullets */
+.swiper-pagination {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  bottom: 20px !important;
+}
+
+/* Focus styles for accessibility */
+.swiper-pagination-bullet:focus {
+  outline: 2px solid white !important;
+  outline-offset: 2px !important;
+  transform: scale(0.4) !important;
+}
+
+/* Screen reader only text for pagination */
+.swiper-pagination-bullet::before {
+  content: attr(aria-label) !important;
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}

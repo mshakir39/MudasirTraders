@@ -1,4 +1,4 @@
-import InvoiceLayout from '../../layouts/invoicesLayout';
+import InvoiceLayout from '@/layouts/invoicesLayout';
 import { getCategories } from '@/getData/getCategories';
 import { getInvoices } from '@/actions/invoiceActions';
 import { getStock } from '@/actions/stockActions';
@@ -37,7 +37,10 @@ async function getCategoriesData() {
 async function getStockData() {
   try {
     const stockResult = await getStock();
-    return Array.isArray(stockResult) ? stockResult : [];
+    console.log('Stock API result:', stockResult);
+    const stockData = stockResult.success && Array.isArray(stockResult.data) ? stockResult.data : [];
+    console.log('Processed stock data:', stockData);
+    return stockData;
   } catch (error) {
     console.error('Error loading stock:', error);
     return [];

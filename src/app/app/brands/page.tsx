@@ -1,7 +1,7 @@
 import { getBrands } from '@/actions/brandActions';
 import BrandsLayout from '@/layouts/brandsLayout';
 import BrandsErrorBoundary from '@/components/brands/BrandsErrorBoundary';
-import { IBrand } from '../../../interfaces';
+import { IBrand } from '@/interfaces';
 
 // React 19: Enhanced caching and revalidation
 export const dynamic = 'force-dynamic';
@@ -29,7 +29,6 @@ export default async function Brands() {
   const brands = await getBrandsData();
 
   return (
-    // React 19: Error boundary for better error handling
     <BrandsErrorBoundary>
       <BrandsLayout
         initialBrands={brands as IBrand[]}

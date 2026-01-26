@@ -44,6 +44,13 @@ const DashboardPasswordPage: React.FC = () => {
           // Set dashboard unlocked cookie
           document.cookie = 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
           
+          console.log('Password correct, cookie set:', {
+            password: '***',
+            expectedPassword: '***',
+            cookie: document.cookie,
+            timestamp: new Date().toISOString()
+          });
+          
           // Update optimistic state
           addOptimisticAuth({ 
             type: 'validate', 
@@ -55,12 +62,18 @@ const DashboardPasswordPage: React.FC = () => {
           
           // Redirect after delay
           setTimeout(() => {
-            window.location.href = '/';
+            console.log('Redirecting to /app...');
+            router.push('/app');
           }, 1000);
           
           return { success: true };
         } else {
           const error = 'Incorrect password. Please try again.';
+          console.log('Password incorrect:', {
+            provided: password ? '***' : 'empty',
+            expected: expectedPassword ? '***' : 'undefined',
+            match: password === expectedPassword
+          });
           addOptimisticAuth({ 
             type: 'validate', 
             isValid: false, 
@@ -70,6 +83,7 @@ const DashboardPasswordPage: React.FC = () => {
         }
       } catch (error) {
         const errorMessage = 'An error occurred. Please try again.';
+        console.error('Password validation error:', error);
         addOptimisticAuth({ 
           type: 'validate', 
           isValid: false, 
@@ -87,7 +101,7 @@ const DashboardPasswordPage: React.FC = () => {
   }, []);
 
   const handleCancel = () => {
-    router.push('/category'); // Redirect to categories page
+    router.push('/'); // Redirect to landing page
   };
 
   return (

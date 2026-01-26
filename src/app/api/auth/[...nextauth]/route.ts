@@ -104,7 +104,7 @@ const handler = NextAuth({
   },
 
   pages: {
-    signIn: '/auth/signin',
+    signIn: '/signin',
     error: '/auth/error',
   },
 
@@ -142,7 +142,7 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       // This runs whenever a session is checked
-      console.log('Session checked for:', session.user?.email);
+      console.log('Session checked:', session.user?.email);
     },
   },
 });

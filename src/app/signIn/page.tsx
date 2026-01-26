@@ -1,56 +1,52 @@
+'use client'; // <--- Add this line at the very top
+
 import GoogleSignIn from '@/components/googleSignIn';
-function page() {
+
+export default function Page() {
   return (
-    <div className='flex min-h-screen w-full flex-col items-center justify-center bg-white px-4 py-12'>
-      <div className='w-full space-y-8 text-center'>
-        <div className='space-y-4'>
-          <h1 className='text-2xl font-semibold leading-tight text-gray-900 sm:text-3xl md:text-4xl lg:text-5xl'>
-            WelCome to{' '}
-            <span className='text-[#5b4eea]'>Battery Inventory Manager</span>
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-white px-4 py-12">
+      <div className="w-full space-y-8 text-center">
+        <div className="space-y-4">
+          <h1 className="text-2xl font-semibold leading-tight text-gray-900 sm:text-3xl md:text-4xl lg:text-5xl">
+            Welcome to{' '}
+            <span className="text-[#5b4eea]">Mudasir Traders</span>
           </h1>
-          <p className='text-base text-gray-600 sm:text-lg md:text-xl lg:text-2xl'>
-            Continue SignIn to Access All features
+          <p className="text-base text-gray-600 sm:text-lg md:text-xl lg:text-2xl">
+            Sign in to access your Battery Inventory Management System
           </p>
         </div>
 
-        <div className='flex w-full justify-center py-4'>
+        <div className="flex w-full justify-center py-4">
           <GoogleSignIn />
         </div>
 
-        <div className='mt-8 space-y-2 text-sm text-gray-600 sm:text-base md:text-lg'>
-          <p>Don&apos;t have an account?</p>
+        <div className="mt-8 space-y-2 text-sm text-gray-600 sm:text-base md:text-lg">
+          <p>Mudasir Traders Employee Portal</p>
           <p>
-            Contact us at{' '}
+            If you forgot your account password, contact{' '}
             <a
-              href='mailto:owner@mudasirtraders.com'
-              className='text-blue-600 underline transition-colors duration-200 hover:text-blue-800'
+              href="mailto:mshakir39@gmail.com"
+              className="text-blue-600 underline transition-colors duration-200 hover:text-blue-800"
             >
-              owner@mudasirtraders.com
-            </a>{' '}
-            or
+              mshakir39@gmail.com
+            </a>
           </p>
+        </div>
+        
+        <div className="mt-12 text-xs text-gray-500">
           <p>
-            Call/Text{' '}
+            Made by{' '}
             <a
-              href='tel:+923349627745'
-              className='text-blue-600 underline transition-colors duration-200 hover:text-blue-800'
+              href="https://www.linkedin.com/in/muzamil-shakir"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 underline transition-colors duration-200"
             >
-              +923349627745
+              Muzamil Qureshi
             </a>
           </p>
         </div>
       </div>
-      {/* <div className="text-lg text-gray-800">
-      <h3>EnergyStation: Your one-stop POS solution for battery shops</h3>
-      <ul className="list-none m-0 p-0">
-        <li className="text-lg">Manage your inventory with ease</li>
-        <li className="text-lg">Create invoices in seconds</li>
-        <li className="text-lg">Streamline your business operations</li>
-      </ul>
-      <button className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">Sign up now and take control of your battery shop&apos;s growth!</button>
-    </div> */}
     </div>
   );
 }
-
-export default page;

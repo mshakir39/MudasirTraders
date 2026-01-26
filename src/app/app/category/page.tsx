@@ -1,7 +1,7 @@
-import CategoryLayout from '../../layouts/categoryLayout';
+import CategoryLayout from '@/layouts/categoryLayout';
 import { getCategories } from '@/getData/getCategories';
 import { getBrands } from '@/getData/getBrands';
-import { IBrand } from '../../../interfaces';
+import { IBrand } from '@/interfaces';
 import CategoryErrorBoundary from '@/components/category/CategoryErrorBoundary';
 
 export const dynamic = 'force-dynamic';

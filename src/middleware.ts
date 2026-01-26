@@ -1,42 +1,76 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const url = request.url;
 
+  const normalizedPathname = (pathname || '').toLowerCase();
+
+  // Redirect old /signIn to new /signin
+  if (pathname === '/signIn') {
+    return NextResponse.redirect(new URL('/signin', url));
+  }
+
   // Prevent redirect loops
   if (
-    pathname === '/dashboard-password' &&
-    request.headers.get('referer')?.includes('/dashboard-password')
+    pathname === '/app/dashboard-password' &&
+    request.headers.get('referer')?.includes('/app/dashboard-password')
   ) {
     return NextResponse.next();
   }
 
-  const authToken =
-    request.cookies.get('next-auth.session-token') ||
-    request.cookies.get('__Secure-next-auth.session-token');
   const dashboardUnlocked = request.cookies.get('dashboard-unlocked');
 
-  // Step 1: Handle Authentication
-  const isPublicPage =
-    pathname === '/signIn' || pathname === '/dashboard-password';
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const isAuthenticated = !!token;
 
-  if (!authToken && !isPublicPage) {
-    return NextResponse.redirect(new URL('/signIn', url));
+  const isAppRoute = normalizedPathname.startsWith('/app');
+  const isDashboardPasswordPage = normalizedPathname === '/app/dashboard-password';
+  const isSignInPage = normalizedPathname === '/signin';
+
+  console.log('Middleware debug:', {
+    pathname,
+    normalizedPathname,
+    isAuthenticated: !!token,
+    dashboardUnlocked: dashboardUnlocked?.value,
+    isAppRoute,
+    isDashboardPasswordPage,
+    isSignInPage
+  });
+
+  // /signIn should be accessible without authentication
+  if (isSignInPage) {
+    const response = NextResponse.next();
+    response.cookies.delete('dashboard-unlocked');
+    return response;
   }
 
-  if (authToken && pathname === '/signIn') {
-    return NextResponse.redirect(new URL('/category', url));
+  // /app/* requires NextAuth login first (use getToken to avoid stale-cookie issues)
+  if (isAppRoute && !isAuthenticated && !isSignInPage) {
+    const response = NextResponse.redirect(new URL('/signin', url));
+    response.cookies.delete('dashboard-unlocked');
+    return response;
   }
 
-  // Step 2: Handle Dashboard Access
-  if (pathname === '/' && !dashboardUnlocked) {
-    return NextResponse.redirect(new URL('/dashboard-password', url));
+  if (isAuthenticated && isSignInPage) {
+    return NextResponse.redirect(new URL('/app', url));
+  }
+
+  // Step 2: Handle Dashboard Access (but not for sign-in page or allowed routes)
+  // Allow access to meetups even when dashboard is locked
+  const allowedRoutes = ['/app/meetups', '/app/brands', '/app/category', '/app/customers', '/app/sales', '/app/stock', '/app/invoices', '/app/priceList', '/app/scrapStock', '/app/warranty-check'];
+  const isAllowedRoute = allowedRoutes.includes(normalizedPathname);
+  
+  // Only redirect to password page if dashboard is locked and it's not an allowed route or the password page itself
+  if (isAppRoute && !isDashboardPasswordPage && !dashboardUnlocked && !isSignInPage && !isAllowedRoute) {
+    console.log('Redirecting to dashboard password - not unlocked');
+    return NextResponse.redirect(new URL('/app/dashboard-password', url));
   }
 
   // Step 2.5: Check if coming back to dashboard from another page (auto-lock)
-  if (pathname === '/' && dashboardUnlocked) {
+  if (pathname === '/app' && dashboardUnlocked) {
     const referer = request.headers.get('referer');
 
     // Check if coming from a non-dashboard page
@@ -44,28 +78,40 @@ export function middleware(request: NextRequest) {
       try {
         const refererPath = new URL(referer).pathname;
         const isRefererDashboardPage =
-          refererPath === '/' || refererPath === '/dashboard-password';
+          refererPath === '/app' || refererPath === '/app/dashboard-password';
+
+        console.log('Middleware auto-lock check:', {
+          pathname,
+          referer,
+          refererPath,
+          isRefererDashboardPage,
+          dashboardUnlocked
+        });
 
         if (!isRefererDashboardPage) {
+          console.log('Auto-locking dashboard - coming from external page');
           const response = NextResponse.redirect(
-            new URL('/dashboard-password', url)
+            new URL('/app/dashboard-password', url)
           );
           response.cookies.delete('dashboard-unlocked');
           return response;
         }
       } catch (error) {
+        console.log('Middleware: Error parsing referer:', error);
         // If URL parsing fails, continue with normal flow
       }
+    } else {
+      console.log('Middleware: No referer found, allowing access');
     }
   }
 
   // Step 3: Handle Auto-Locking on Navigation
   const response = NextResponse.next();
   const isDashboardRelatedPage =
-    pathname === '/' || pathname === '/dashboard-password';
+    pathname.startsWith('/app');
 
   // Auto-lock: Delete the dashboard-unlocked cookie when navigating away from dashboard pages
-  // This ensures the dashboard is locked when user returns to "/"
+  // This ensures the dashboard is locked when user returns to "/app"
   if (!isDashboardRelatedPage && dashboardUnlocked) {
     response.cookies.delete('dashboard-unlocked');
   }
@@ -75,17 +121,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/',
+    '/app/:path*',
     '/signIn',
-    '/dashboard-password',
-    '/brands',
-    '/category',
-    '/customers',
-    '/invoices',
-    '/sales',
-    '/stock',
-    '/warranty-check',
-    '/priceList',
-    '/scrapStock',
   ],
 };

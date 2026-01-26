@@ -1,4 +1,4 @@
-import StockLayout from '../../layouts/stockLayout';
+import StockLayout from '@/layouts/stockLayout';
 import { getCategories } from '@/getData/getCategories';
 import { getStock } from '@/actions/stockActions';
 import StockErrorBoundary from '@/components/stock/StockErrorBoundary';

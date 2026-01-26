@@ -6,8 +6,13 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
     ],
-    formats: ['image/webp', 'image/avif'],
+    domains: ['res.cloudinary.com'],
+    // formats: ['image/webp', 'image/avif'], // Temporarily disabled
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
   
