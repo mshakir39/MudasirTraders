@@ -15,10 +15,10 @@ const nextConfig = {
     // formats: ['image/webp', 'image/avif'], // Temporarily disabled
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
-  
+
   // React 19: Fix memory leak warnings and exclude MongoDB from client
   serverExternalPackages: ['mongodb', 'bson'],
-  
+
   // Webpack optimizations for better performance
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
@@ -52,7 +52,7 @@ const nextConfig = {
         poll: 1000,
         aggregateTimeout: 300,
       };
-      
+
       // Increase max listeners for development
       config.target = 'node';
       config.node = {
@@ -79,7 +79,7 @@ const nextConfig = {
 
     return config;
   },
-  
+
   // Optimize bundle analyzer and experimental features
   experimental: {
     optimizePackageImports: [
@@ -132,17 +132,17 @@ const nextConfig = {
 
   // Optimize output (commented out for Vercel compatibility)
   // output: 'standalone',
-  
+
   // Vercel-specific optimizations
   trailingSlash: false,
   reactStrictMode: true,
-  
+
   // Compress responses
   compress: true,
-  
+
   // Power headers for caching
   poweredByHeader: false,
-  
+
   // Optimize CSS
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',

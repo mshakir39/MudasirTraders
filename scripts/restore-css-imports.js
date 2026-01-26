@@ -12,7 +12,7 @@ const colors = {
   blue: '\x1b[34m',
   magenta: '\x1b[35m',
   cyan: '\x1b[36m',
-  white: '\x1b[37m'
+  white: '\x1b[37m',
 };
 
 function log(message, color = colors.white) {
@@ -25,27 +25,21 @@ const essentialCSSImports = [
     file: 'src/app/layout.tsx',
     imports: [
       "import 'react-toastify/dist/ReactToastify.css';",
-      "import 'rsuite-table/dist/css/rsuite-table.css';"
-    ]
+      "import 'rsuite-table/dist/css/rsuite-table.css';",
+    ],
   },
   {
     file: 'src/app/globals.css',
-    imports: [
-      "@import './css/table.css';"
-    ]
+    imports: ["@import './css/table.css';"],
   },
   {
     file: 'src/components/CustomDateRangePicker.tsx',
-    imports: [
-      "import 'flatpickr/dist/themes/light.css';"
-    ]
+    imports: ["import 'flatpickr/dist/themes/light.css';"],
   },
   {
     file: 'src/components/WhatsAppShareButton.tsx',
-    imports: [
-      "import './WhatsAppShareButton.css';"
-    ]
-  }
+    imports: ["import './WhatsAppShareButton.css';"],
+  },
 ];
 
 // Function to check if import exists in file
@@ -62,29 +56,29 @@ function hasImport(filePath, importStatement) {
 function addMissingImport(filePath, importStatement) {
   try {
     const content = fs.readFileSync(filePath, 'utf8');
-    
+
     // Find the position after the last import statement
     const importRegex = /import\s+.*?from\s+['"][^'"]+['"];?/g;
     const imports = [];
     let match;
-    
+
     while ((match = importRegex.exec(content)) !== null) {
       imports.push(match[0]);
     }
-    
+
     if (imports.length > 0) {
       // Find the last import line
       const lastImport = imports[imports.length - 1];
       const lastImportIndex = content.lastIndexOf(lastImport);
       const endOfLastImport = content.indexOf(';', lastImportIndex) + 1;
-      
+
       // Insert the new import after the last one
-      const newContent = 
-        content.slice(0, endOfLastImport) + 
-        '\n' + 
-        importStatement + 
+      const newContent =
+        content.slice(0, endOfLastImport) +
+        '\n' +
+        importStatement +
         content.slice(endOfLastImport);
-      
+
       fs.writeFileSync(filePath, newContent, 'utf8');
       return true;
     } else {
@@ -102,19 +96,19 @@ function addMissingImport(filePath, importStatement) {
 // Main function
 function main() {
   log('🔧 Restoring essential CSS imports...', colors.cyan);
-  
+
   let totalRestored = 0;
   let filesModified = 0;
-  
+
   essentialCSSImports.forEach(({ file, imports }) => {
     const filePath = path.join(__dirname, '..', file);
-    
+
     if (!fs.existsSync(filePath)) {
       log(`⚠️  File not found: ${filePath}`, colors.yellow);
       return;
     }
-    
-    imports.forEach(importStatement => {
+
+    imports.forEach((importStatement) => {
       if (!hasImport(filePath, importStatement)) {
         log(`📝 Adding to ${file}: ${importStatement}`, colors.blue);
         if (addMissingImport(filePath, importStatement)) {
@@ -126,12 +120,12 @@ function main() {
       }
     });
   });
-  
+
   log('\n📊 Summary:', colors.cyan);
   log(`   Files checked: ${essentialCSSImports.length}`, colors.blue);
   log(`   Files modified: ${filesModified}`, colors.yellow);
   log(`   Imports restored: ${totalRestored}`, colors.green);
-  
+
   if (totalRestored > 0) {
     log('\n🎉 Successfully restored essential CSS imports!', colors.green);
     log('💡 Your app styling should now be working correctly', colors.blue);

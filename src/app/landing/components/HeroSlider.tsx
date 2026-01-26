@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay, EffectFade, A11y } from 'swiper/modules';
+import {
+  Navigation,
+  Pagination,
+  Autoplay,
+  EffectFade,
+  A11y,
+} from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -26,25 +32,29 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
   const [swiperInstance, setSwiperInstance] = useState<any>(null);
 
   return (
-    <div className="relative h-full w-full" role="region" aria-label="Hero slider showcasing battery products and services">
+    <div
+      className='relative h-full w-full'
+      role='region'
+      aria-label='Hero slider showcasing battery products and services'
+    >
       <Swiper
         modules={[Navigation, Pagination, Autoplay, EffectFade, A11y]}
         spaceBetween={0}
         slidesPerView={1}
         navigation={false}
-        pagination={{ 
+        pagination={{
           clickable: true,
           bulletElement: 'button',
           bulletClass: 'swiper-pagination-bullet',
-          bulletActiveClass: 'swiper-pagination-bullet-active'
+          bulletActiveClass: 'swiper-pagination-bullet-active',
         }}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         loop={true}
-        effect="fade"
+        effect='fade'
         fadeEffect={{ crossFade: true }}
         speed={1500}
         onSwiper={setSwiperInstance}
-        className="h-full w-full"
+        className='h-full w-full'
         a11y={{
           enabled: true,
           prevSlideMessage: 'Previous slide',
@@ -52,34 +62,34 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
           firstSlideMessage: 'This is the first slide',
           lastSlideMessage: 'This is the last slide',
           paginationBulletMessage: 'Go to slide {{index}}',
-          notificationClass: 'swiper-notification'
+          notificationClass: 'swiper-notification',
         }}
       >
         {slides.map((slide) => (
           <SwiperSlide key={slide.id}>
-            <div className="relative h-full w-full">
+            <div className='relative h-full w-full'>
               <Image
                 src={slide.image}
                 alt={slide.title}
                 fill
-                className="object-cover"
+                className='object-cover'
                 priority
-                sizes="100vw"
+                sizes='100vw'
               />
-              <div className="absolute inset-0 bg-black/35" />
+              <div className='absolute inset-0 bg-black/35' />
 
               {/* Content */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-4 sm:px-6 md:px-12 lg:px-20 w-full max-w-4xl text-center md:text-left">
-                <p className="text-white text-xs sm:text-sm md:text-base font-bold tracking-widest mb-4 sm:mb-6 uppercase">
+              <div className='absolute left-1/2 top-1/2 w-full max-w-4xl -translate-x-1/2 -translate-y-1/2 transform px-4 text-center sm:px-6 md:px-12 md:text-left lg:px-20'>
+                <p className='mb-4 text-xs font-bold uppercase tracking-widest text-white sm:mb-6 sm:text-sm md:text-base'>
                   FACTS IN NUMBERS
                 </p>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 sm:mb-6 leading-tight text-white">
+                <h1 className='mb-4 text-3xl font-black leading-tight text-white sm:mb-6 sm:text-4xl md:text-5xl lg:text-6xl'>
                   {slide.title}
                 </h1>
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-4 sm:mb-6 text-white">
+                <h2 className='mb-4 text-xl font-semibold text-white sm:mb-6 sm:text-2xl md:text-3xl'>
                   {slide.subtitle}
                 </h2>
-                <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white mb-6 sm:mb-8 leading-relaxed max-w-3xl mx-auto md:mx-0">
+                <p className='mx-auto mb-6 max-w-3xl text-sm leading-relaxed text-white sm:mb-8 sm:text-base md:mx-0 md:text-lg lg:text-xl'>
                   {slide.description}
                 </p>
               </div>
@@ -89,7 +99,11 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
       </Swiper>
 
       {/* Navigation Buttons */}
-      <div className="absolute right-2 lg:right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 sm:gap-4 z-20" role="group" aria-label="Slider navigation">
+      <div
+        className='absolute right-2 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-2 sm:gap-4 lg:right-4'
+        role='group'
+        aria-label='Slider navigation'
+      >
         <button
           onClick={() => swiperInstance?.slidePrev()}
           onKeyDown={(e) => {
@@ -98,14 +112,26 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
               swiperInstance?.slidePrev();
             }
           }}
-          className="w-10 h-10 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all border border-white/30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
-          aria-label="Previous slide"
-          title="Previous slide"
-          type="button"
+          className='flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-md transition-all hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent sm:h-14 sm:w-14'
+          aria-label='Previous slide'
+          title='Previous slide'
+          type='button'
         >
-          <span className="sr-only">Previous slide</span>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 sm:w-7 sm:h-7" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          <span className='sr-only'>Previous slide</span>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            fill='none'
+            viewBox='0 0 24 24'
+            strokeWidth={2.5}
+            stroke='currentColor'
+            className='h-5 w-5 sm:h-7 sm:w-7'
+            aria-hidden='true'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              d='M15.75 19.5L8.25 12l7.5-7.5'
+            />
           </svg>
         </button>
         <button
@@ -116,14 +142,26 @@ export default function HeroSlider({ slides }: HeroSliderProps) {
               swiperInstance?.slideNext();
             }
           }}
-          className="w-10 h-10 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all border border-white/30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
-          aria-label="Next slide"
-          title="Next slide"
-          type="button"
+          className='flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-md transition-all hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent sm:h-14 sm:w-14'
+          aria-label='Next slide'
+          title='Next slide'
+          type='button'
         >
-          <span className="sr-only">Next slide</span>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 sm:w-7 sm:h-7" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          <span className='sr-only'>Next slide</span>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            fill='none'
+            viewBox='0 0 24 24'
+            strokeWidth={2.5}
+            stroke='currentColor'
+            className='h-5 w-5 sm:h-7 sm:w-7'
+            aria-hidden='true'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              d='m8.25 4.5 7.5 7.5-7.5 7.5'
+            />
           </svg>
         </button>
       </div>

@@ -11,15 +11,15 @@ export default function DebugInfo() {
   useEffect(() => {
     const updateDebugInfo = () => {
       setCookies(document.cookie);
-      
+
       const unlockedCookie = document.cookie
         .split('; ')
-        .find(row => row.startsWith('dashboard-unlocked='));
-      
+        .find((row) => row.startsWith('dashboard-unlocked='));
+
       const hasCookie = !!unlockedCookie;
       const cookieValue = hasCookie ? unlockedCookie?.split('=')[1] : null;
       const isUnlocked = hasCookie && cookieValue === 'true';
-      
+
       setDebugInfo({
         sessionStatus: status,
         userEmail: session?.user?.email,
@@ -30,7 +30,7 @@ export default function DebugInfo() {
         cookieValue,
         isUnlocked,
         shouldShowSidebar: status === 'authenticated' && isUnlocked,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     };
 
@@ -40,29 +40,31 @@ export default function DebugInfo() {
   }, [status, session]);
 
   return (
-    <div className="fixed top-4 left-4 z-50 bg-black text-white p-4 rounded-lg text-xs max-w-sm overflow-auto max-h-96">
-      <h3 className="font-bold mb-2">Debug Info</h3>
-      <pre className="whitespace-pre-wrap">
+    <div className='fixed left-4 top-4 z-50 max-h-96 max-w-sm overflow-auto rounded-lg bg-black p-4 text-xs text-white'>
+      <h3 className='mb-2 font-bold'>Debug Info</h3>
+      <pre className='whitespace-pre-wrap'>
         {JSON.stringify(debugInfo, null, 2)}
       </pre>
-      
-      <div className="mt-4 space-y-2">
+
+      <div className='mt-4 space-y-2'>
         <button
           onClick={() => {
-            document.cookie = 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
+            document.cookie =
+              'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
             console.log('Manually set cookie');
           }}
-          className="bg-green-600 px-2 py-1 rounded text-xs"
+          className='rounded bg-green-600 px-2 py-1 text-xs'
         >
           Set Cookie Manually
         </button>
-        
+
         <button
           onClick={() => {
-            document.cookie = 'dashboard-unlocked=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+            document.cookie =
+              'dashboard-unlocked=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
             console.log('Manually cleared cookie');
           }}
-          className="bg-red-600 px-2 py-1 rounded text-xs ml-2"
+          className='ml-2 rounded bg-red-600 px-2 py-1 text-xs'
         >
           Clear Cookie
         </button>

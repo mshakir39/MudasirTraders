@@ -39,10 +39,12 @@ const handler = NextAuth({
             const db = await connectToMongoDB();
             if (db) {
               const collection = db.collection('users');
-              
+
               // Check if user already exists
-              const existingUser = await collection.findOne({ email: user.email });
-              
+              const existingUser = await collection.findOne({
+                email: user.email,
+              });
+
               if (!existingUser) {
                 // Insert new user
                 await collection.insertOne({
@@ -56,7 +58,10 @@ const handler = NextAuth({
               }
             }
           } catch (dbError) {
-            console.warn('Database operation failed, but allowing sign-in:', dbError);
+            console.warn(
+              'Database operation failed, but allowing sign-in:',
+              dbError
+            );
             // Continue with sign-in even if database fails
           }
           return true;

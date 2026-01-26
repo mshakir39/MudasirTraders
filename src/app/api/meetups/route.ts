@@ -15,7 +15,10 @@ export async function GET() {
     return NextResponse.json(meetupData);
   } catch (error) {
     console.error('Error fetching meetups:', error);
-    return NextResponse.json({ error: 'Failed to fetch meetups' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch meetups' },
+      { status: 500 }
+    );
   } finally {
     await client.close();
   }
@@ -24,7 +27,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     await client.connect();
     const database = client.db('mudasirTraders');
     const meetups = database.collection('meetups');
@@ -32,15 +35,21 @@ export async function POST(request: NextRequest) {
     const newMeetup = {
       ...body,
       createdAt: new Date(),
-      images: []
+      images: [],
     };
 
     const result = await meetups.insertOne(newMeetup);
 
-    return NextResponse.json({ ...newMeetup, _id: result.insertedId.toString() });
+    return NextResponse.json({
+      ...newMeetup,
+      _id: result.insertedId.toString(),
+    });
   } catch (error) {
     console.error('Error creating meetup:', error);
-    return NextResponse.json({ error: 'Failed to create meetup' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to create meetup' },
+      { status: 500 }
+    );
   } finally {
     await client.close();
   }

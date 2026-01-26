@@ -9,7 +9,10 @@ export async function POST(request: NextRequest) {
     const { imageIndex } = await request.json();
 
     if (typeof imageIndex !== 'number' || imageIndex < 0) {
-      return NextResponse.json({ error: 'Invalid image index' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid image index' },
+        { status: 400 }
+      );
     }
 
     // Find the most recent meetup and remove the image at the specified index
@@ -25,37 +28,47 @@ export async function POST(request: NextRequest) {
     }
 
     const images = latestMeetup.images || [];
-    
+
     if (imageIndex >= images.length) {
-      return NextResponse.json({ error: 'Image index out of range' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Image index out of range' },
+        { status: 400 }
+      );
     }
 
     // Remove the image at the specified index
-    const updatedImages = images.filter((_: any, index: number) => index !== imageIndex);
+    const updatedImages = images.filter(
+      (_: any, index: number) => index !== imageIndex
+    );
 
     // Update the meetup with the new images array
     const updateResult = await meetups.updateOne(
       { _id: latestMeetup._id },
-      { 
-        $set: { 
+      {
+        $set: {
           images: updatedImages,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       }
     );
 
     if (updateResult.matchedCount === 0) {
-      return NextResponse.json({ error: 'Failed to update meetup' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to update meetup' },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Image deleted successfully',
-      remainingImages: updatedImages.length
+      remainingImages: updatedImages.length,
     });
-
   } catch (error) {
     console.error('Error deleting image:', error);
-    return NextResponse.json({ error: 'Failed to delete image' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to delete image' },
+      { status: 500 }
+    );
   } finally {
     await client.close();
   }

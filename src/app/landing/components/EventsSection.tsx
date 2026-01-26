@@ -25,17 +25,19 @@ export default function EventsSection() {
 
   if (loading) {
     return (
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Latest Events & Gallery</h2>
+      <section className='bg-white py-20'>
+        <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
+          <div className='mb-16 text-center'>
+            <h2 className='mb-4 text-4xl font-bold text-gray-900'>
+              Latest Events & Gallery
+            </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className='grid grid-cols-1 gap-8 md:grid-cols-3'>
             {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div key={i} className='animate-pulse'>
+                <div className='mb-4 h-48 rounded-lg bg-gray-200'></div>
+                <div className='mb-2 h-4 w-3/4 rounded bg-gray-200'></div>
+                <div className='h-4 w-1/2 rounded bg-gray-200'></div>
               </div>
             ))}
           </div>
@@ -45,34 +47,41 @@ export default function EventsSection() {
   }
 
   return (
-    <section className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Latest Events & Gallery</h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+    <section className='bg-white py-20'>
+      <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
+        <div className='mb-16 text-center'>
+          <h2 className='mb-4 text-4xl font-bold text-gray-900'>
+            Latest Events & Gallery
+          </h2>
+          <p className='mx-auto max-w-2xl text-xl text-gray-600'>
             Check out our recent events and activities
           </p>
         </div>
-        
+
         {images.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
             {images.map((image, index) => (
-              <div key={index} className="relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow h-64">
+              <div
+                key={index}
+                className='relative h-64 overflow-hidden rounded-lg shadow-lg transition-shadow hover:shadow-xl'
+              >
                 <Image
                   src={image}
                   alt={`Event ${index + 1}`}
                   fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className='object-cover'
+                  sizes='(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw'
                 />
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">📸</div>
-            <p className="text-gray-600 text-lg">No images available yet</p>
-            <p className="text-gray-500 mt-2">Check back soon for our latest events!</p>
+          <div className='py-12 text-center'>
+            <div className='mb-4 text-6xl text-gray-400'>📸</div>
+            <p className='text-lg text-gray-600'>No images available yet</p>
+            <p className='mt-2 text-gray-500'>
+              Check back soon for our latest events!
+            </p>
           </div>
         )}
       </div>

@@ -19,7 +19,7 @@ export async function getCategory(id: string) {
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    
+
     const category = await db.collection('categories').findOne({ id });
     if (category) {
       const serializedDocument: Record<string, any> = {};

@@ -22,12 +22,13 @@ export async function fastGetCustomers() {
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    const customers = await db.collection('customers')
+    const customers = await db
+      .collection('customers')
       .find({})
       .sort({ createdAt: -1 })
       .limit(1000) // Limit to prevent large result sets
       .toArray();
-    
+
     return { success: true, data: serializeDocuments(customers) };
   } catch (error) {
     console.error('Fast getCustomers error:', error);
@@ -41,12 +42,13 @@ export async function fastGetStock() {
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    const stock = await db.collection('stock')
+    const stock = await db
+      .collection('stock')
       .find({})
       .sort({ createdAt: -1 })
       .limit(1000)
       .toArray();
-    
+
     return { success: true, data: serializeDocuments(stock) };
   } catch (error) {
     console.error('Fast getStock error:', error);
@@ -60,12 +62,13 @@ export async function fastGetInvoices() {
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    const invoices = await db.collection('invoices')
+    const invoices = await db
+      .collection('invoices')
       .find({})
       .sort({ createdAt: -1 })
       .limit(1000)
       .toArray();
-    
+
     return { success: true, data: serializeDocuments(invoices) };
   } catch (error) {
     console.error('Fast getInvoices error:', error);
@@ -79,12 +82,13 @@ export async function fastGetSales() {
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    const sales = await db.collection('sales')
+    const sales = await db
+      .collection('sales')
       .find({})
       .sort({ createdAt: -1 })
       .limit(1000)
       .toArray();
-    
+
     return { success: true, data: serializeDocuments(sales) };
   } catch (error) {
     console.error('Fast getSales error:', error);
@@ -98,12 +102,13 @@ export async function fastGetBrands() {
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    const brands = await db.collection('brands')
+    const brands = await db
+      .collection('brands')
       .find({})
       .sort({ name: 1 })
       .limit(100)
       .toArray();
-    
+
     return { success: true, data: serializeDocuments(brands) };
   } catch (error) {
     console.error('Fast getBrands error:', error);
@@ -117,12 +122,13 @@ export async function fastGetCategories() {
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    const categories = await db.collection('categories')
+    const categories = await db
+      .collection('categories')
       .find({})
       .sort({ name: 1 })
       .limit(100)
       .toArray();
-    
+
     return { success: true, data: serializeDocuments(categories) };
   } catch (error) {
     console.error('Fast getCategories error:', error);

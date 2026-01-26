@@ -32,15 +32,18 @@ export async function POST(request: NextRequest) {
     const { imageUrl } = await request.json();
 
     if (!imageUrl) {
-      return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Image URL is required' },
+        { status: 400 }
+      );
     }
 
     // Delete from MongoDB first
     const mongoClient = await clientPromise;
     const db = mongoClient.db();
-    
+
     const deleteResult = await db.collection('meetup_images').deleteOne({
-      url: imageUrl
+      url: imageUrl,
     });
 
     if (deleteResult.deletedCount === 0) {
@@ -51,33 +54,36 @@ export async function POST(request: NextRequest) {
 
     // Extract public_id from Cloudinary URL for actual deletion
     console.log('Original imageUrl:', imageUrl);
-    
+
     // Parse the URL to extract the public ID correctly
     // URL format: https://res.cloudinary.com/cloud_name/image/upload/version/folder1/folder2/filename.jpg
     const urlParts = imageUrl.split('/');
-    
+
     // Find the index of 'upload' in the URL
     const uploadIndex = urlParts.indexOf('upload');
     if (uploadIndex === -1 || uploadIndex + 1 >= urlParts.length) {
       console.error('Invalid Cloudinary URL format');
-      return NextResponse.json({ error: 'Invalid image URL format' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid image URL format' },
+        { status: 400 }
+      );
     }
-    
+
     // Extract everything after the version number (skip upload + version)
     const pathParts = urlParts.slice(uploadIndex + 2);
     const publicId = pathParts.join('/').replace(/\.[^/.]+$/, ''); // Remove file extension
-    
+
     console.log('Extracted publicId:', publicId);
 
     // Get Cloudinary credentials
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
     const apiSecret = process.env.CLOUDINARY_API_SECRET;
-    
-    console.log('Cloudinary credentials check:', { 
-      hasCloudName: !!cloudName, 
-      hasApiKey: !!apiKey, 
-      hasApiSecret: !!apiSecret 
+
+    console.log('Cloudinary credentials check:', {
+      hasCloudName: !!cloudName,
+      hasApiKey: !!apiKey,
+      hasApiSecret: !!apiSecret,
     });
 
     if (cloudName && apiKey && apiSecret) {
@@ -100,7 +106,7 @@ export async function POST(request: NextRequest) {
         url: `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,
         publicId,
         timestamp,
-        signature: signature.substring(0, 10) + '...'
+        signature: signature.substring(0, 10) + '...',
       });
 
       const cloudinaryResponse = await fetch(
@@ -113,13 +119,14 @@ export async function POST(request: NextRequest) {
 
       const cloudinaryResult = await cloudinaryResponse.json();
       console.log('Cloudinary API response:', cloudinaryResult);
-      
+
       if (cloudinaryResult.result === 'ok') {
         console.log('Deleted from Cloudinary:', publicId);
         return NextResponse.json({
           success: true,
-          message: 'Image deleted successfully from both MongoDB and Cloudinary',
-          publicId
+          message:
+            'Image deleted successfully from both MongoDB and Cloudinary',
+          publicId,
         });
       } else {
         console.error('Failed to delete from Cloudinary:', cloudinaryResult);
@@ -128,18 +135,20 @@ export async function POST(request: NextRequest) {
           success: true,
           message: 'Image deleted from MongoDB (Cloudinary deletion failed)',
           publicId,
-          cloudinaryError: cloudinaryResult
+          cloudinaryError: cloudinaryResult,
         });
       }
     } else {
-      console.log('Cloudinary credentials not found, only deleted from MongoDB');
+      console.log(
+        'Cloudinary credentials not found, only deleted from MongoDB'
+      );
       return NextResponse.json({
         success: true,
-        message: 'Image deleted from MongoDB only (Cloudinary credentials missing)',
-        publicId
+        message:
+          'Image deleted from MongoDB only (Cloudinary credentials missing)',
+        publicId,
       });
     }
-
   } catch (error) {
     console.error('Error deleting image:', error);
     return NextResponse.json(

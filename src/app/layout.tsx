@@ -11,92 +11,93 @@ import '../styles/scrollbar.css';
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 
 const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  "name": "Mudasir Traders",
-  "description": "Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries. Professional UPS systems, solar solutions, and expert installation services in Dera Ghazi Khan, Pakistan.",
-  "url": "https://mudasirtraders.com",
-  "telephone": "+92-334-9627745",
-  "email": "owner@mudasirtraders.com",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "General Bus Stand, near Badozai Market",
-    "addressLocality": "Dera Ghazi Khan",
-    "addressRegion": "Punjab",
-    "postalCode": "32200",
-    "addressCountry": "PK"
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  name: 'Mudasir Traders',
+  description:
+    'Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries. Professional UPS systems, solar solutions, and expert installation services in Dera Ghazi Khan, Pakistan.',
+  url: 'https://mudasirtraders.com',
+  telephone: '+92-334-9627745',
+  email: 'owner@mudasirtraders.com',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'General Bus Stand, near Badozai Market',
+    addressLocality: 'Dera Ghazi Khan',
+    addressRegion: 'Punjab',
+    postalCode: '32200',
+    addressCountry: 'PK',
   },
-  "geo": {
-    "@type": "GeoCoordinates",
-    "latitude": "30.0462",
-    "longitude": "70.6401"
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: '30.0462',
+    longitude: '70.6401',
   },
-  "openingHours": [
-    "Mo-Th 08:00-21:00",
-    "Fr 08:00-13:00", 
-    "Sa-Su 08:00-21:00"
+  openingHours: ['Mo-Th 08:00-21:00', 'Fr 08:00-13:00', 'Sa-Su 08:00-21:00'],
+  priceRange: '$$',
+  paymentAccepted: 'Cash, Credit Card',
+  currenciesAccepted: 'PKR',
+  image:
+    'https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png',
+  sameAs: [
+    'https://www.facebook.com/mudasirtraders',
+    'https://www.instagram.com/mudasirtraders',
   ],
-  "priceRange": "$$",
-  "paymentAccepted": "Cash, Credit Card",
-  "currenciesAccepted": "PKR",
-  "image": "https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png",
-  "sameAs": [
-    "https://www.facebook.com/mudasirtraders",
-    "https://www.instagram.com/mudasirtraders"
+  offers: [
+    {
+      '@type': 'Offer',
+      itemOffered: {
+        '@type': 'Product',
+        name: 'Osaka Batteries',
+        category: 'Automotive Batteries',
+      },
+    },
+    {
+      '@type': 'Offer',
+      itemOffered: {
+        '@type': 'Product',
+        name: 'AGS Batteries',
+        category: 'Automotive Batteries',
+      },
+    },
+    {
+      '@type': 'Offer',
+      itemOffered: {
+        '@type': 'Product',
+        name: 'Exide Batteries',
+        category: 'Automotive Batteries',
+      },
+    },
+    {
+      '@type': 'Offer',
+      itemOffered: {
+        '@type': 'Product',
+        name: 'Phoenix Batteries',
+        category: 'Automotive Batteries',
+      },
+    },
+    {
+      '@type': 'Offer',
+      itemOffered: {
+        '@type': 'Product',
+        name: 'Daewoo Batteries',
+        category: 'Automotive Batteries',
+      },
+    },
   ],
-  "offers": [
-    {
-      "@type": "Offer",
-      "itemOffered": {
-        "@type": "Product",
-        "name": "Osaka Batteries",
-        "category": "Automotive Batteries"
-      }
-    },
-    {
-      "@type": "Offer", 
-      "itemOffered": {
-        "@type": "Product",
-        "name": "AGS Batteries",
-        "category": "Automotive Batteries"
-      }
-    },
-    {
-      "@type": "Offer",
-      "itemOffered": {
-        "@type": "Product", 
-        "name": "Exide Batteries",
-        "category": "Automotive Batteries"
-      }
-    },
-    {
-      "@type": "Offer",
-      "itemOffered": {
-        "@type": "Product",
-        "name": "Phoenix Batteries", 
-        "category": "Automotive Batteries"
-      }
-    },
-    {
-      "@type": "Offer",
-      "itemOffered": {
-        "@type": "Product",
-        "name": "Daewoo Batteries",
-        "category": "Automotive Batteries"
-      }
-    }
-  ],
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "4.8",
-    "reviewCount": "150"
-  }
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: '4.8',
+    reviewCount: '150',
+  },
 };
 
 export const metadata: Metadata = {
-  title: 'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
-  description: 'Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries. Professional UPS systems, solar solutions, and expert installation services in Dera Ghazi Khan, Pakistan.',
-  keywords: 'batteries Dera Ghazi Khan, Osaka batteries, AGS batteries, Exide batteries, Phoenix batteries, Daewoo batteries, UPS systems, solar solutions, power solutions, battery installation, Pakistan',
+  title:
+    'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
+  description:
+    'Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries. Professional UPS systems, solar solutions, and expert installation services in Dera Ghazi Khan, Pakistan.',
+  keywords:
+    'batteries Dera Ghazi Khan, Osaka batteries, AGS batteries, Exide batteries, Phoenix batteries, Daewoo batteries, UPS systems, solar solutions, power solutions, battery installation, Pakistan',
   authors: [{ name: 'Mudasir Traders' }],
   creator: 'Mudasir Traders',
   publisher: 'Mudasir Traders',
@@ -106,23 +107,29 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Mudasir Traders - Premium Batteries & Power Solutions',
-    description: 'Authorized dealer of top battery brands with professional installation services in Dera Ghazi Khan',
+    description:
+      'Authorized dealer of top battery brands with professional installation services in Dera Ghazi Khan',
     url: 'https://mudasirtraders.com',
     siteName: 'Mudasir Traders',
     locale: 'en_PK',
     type: 'website',
-    images: [{
-      url: 'https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png',
-      width: 1200,
-      height: 630,
-      alt: 'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
-    }],
+    images: [
+      {
+        url: 'https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png',
+        width: 1200,
+        height: 630,
+        alt: 'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Mudasir Traders - Premium Batteries & Power Solutions',
-    description: 'Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries in Dera Ghazi Khan',
-    images: ['https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png'],
+    description:
+      'Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries in Dera Ghazi Khan',
+    images: [
+      'https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png',
+    ],
   },
   icons: {
     icon: '/next.svg',

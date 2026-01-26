@@ -144,33 +144,36 @@ const CustomersLayout: React.FC<CustomersLayoutProps> = ({
   }, []);
 
   // React 19: Handle customer deletion
-  const handleDeleteCustomer = useCallback(async (customer: any) => {
-    if (!confirm('Are you sure you want to delete this customer?')) {
-      return;
-    }
-
-    try {
-      // Add optimistic deletion
-      addOptimisticCustomer({
-        action: 'delete',
-        id: customer._id
-      });
-
-      const response = await fetch(`/api/customers/${customer._id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        toast.success('Customer deleted successfully');
-        await getCustomers();
-      } else {
-        throw new Error('Failed to delete customer');
+  const handleDeleteCustomer = useCallback(
+    async (customer: any) => {
+      if (!confirm('Are you sure you want to delete this customer?')) {
+        return;
       }
-    } catch (error) {
-      console.error('Error deleting customer:', error);
-      toast.error('Failed to delete customer');
-    }
-  }, [addOptimisticCustomer]);
+
+      try {
+        // Add optimistic deletion
+        addOptimisticCustomer({
+          action: 'delete',
+          id: customer._id,
+        });
+
+        const response = await fetch(`/api/customers/${customer._id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          toast.success('Customer deleted successfully');
+          await getCustomers();
+        } else {
+          throw new Error('Failed to delete customer');
+        }
+      } catch (error) {
+        console.error('Error deleting customer:', error);
+        toast.error('Failed to delete customer');
+      }
+    },
+    [addOptimisticCustomer]
+  );
 
   // React 19: Enhanced columns with actions and better cell rendering
   const columns = useMemo<ColumnDef<any>[]>(
@@ -313,7 +316,10 @@ const CustomersLayout: React.FC<CustomersLayoutProps> = ({
             name='customerName'
             value={form.customerName}
             onChange={(e) =>
-              setForm((prev: any) => ({ ...prev, customerName: e.target.value }))
+              setForm((prev: any) => ({
+                ...prev,
+                customerName: e.target.value,
+              }))
             }
             required
           />

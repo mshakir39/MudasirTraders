@@ -68,6 +68,7 @@ npm run format               # Format the code
 ## Technical Details
 
 The script uses:
+
 - **AST-like parsing** to understand import structures
 - **Regex-based detection** for identifying used identifiers
 - **File system operations** to read and write files

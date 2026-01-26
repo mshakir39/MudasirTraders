@@ -1,5 +1,11 @@
 'use client';
-import React, { useState, useEffect, useActionState, useOptimistic, startTransition } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useActionState,
+  useOptimistic,
+  startTransition,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -9,7 +15,7 @@ const DashboardPasswordPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  
+
   // React 19: Optimistic state for password validation
   const [optimisticAuth, addOptimisticAuth] = useOptimistic(
     { isAuthenticated: false, error: null },
@@ -20,56 +26,58 @@ const DashboardPasswordPage: React.FC = () => {
       return state;
     }
   );
-  
+
   // React 19: useActionState for form handling
   const [authState, authenticateAction, isPending] = useActionState(
     async (prevState: any, formData: FormData) => {
       const password = formData.get('password') as string;
-      
+
       if (!password?.trim()) {
         return { error: 'Please enter the password' };
       }
-      
+
       // Add optimistic validation
       startTransition(() => {
-        addOptimisticAuth({ 
-          type: 'validate', 
-          isValid: false, 
-          error: null 
+        addOptimisticAuth({
+          type: 'validate',
+          isValid: false,
+          error: null,
         });
       });
-      
+
       try {
-        const expectedPassword = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'admin123';
-        
+        const expectedPassword =
+          process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'admin123';
+
         if (password === expectedPassword) {
           // Set dashboard unlocked cookie
-          document.cookie = 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
-          
+          document.cookie =
+            'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
+
           // Update optimistic state
           startTransition(() => {
-            addOptimisticAuth({ 
-              type: 'validate', 
-              isValid: true, 
-              error: null 
+            addOptimisticAuth({
+              type: 'validate',
+              isValid: true,
+              error: null,
             });
           });
-          
+
           toast.success('Dashboard unlocked successfully!');
-          
+
           // Redirect after delay
           setTimeout(() => {
             router.push('/dashboard');
           }, 1000);
-          
+
           return { success: true };
         } else {
           const error = 'Incorrect password. Please try again.';
           startTransition(() => {
-            addOptimisticAuth({ 
-              type: 'validate', 
-              isValid: false, 
-              error 
+            addOptimisticAuth({
+              type: 'validate',
+              isValid: false,
+              error,
             });
           });
           return { error };
@@ -77,10 +85,10 @@ const DashboardPasswordPage: React.FC = () => {
       } catch (error) {
         const errorMessage = 'An error occurred. Please try again.';
         startTransition(() => {
-          addOptimisticAuth({ 
-            type: 'validate', 
-            isValid: false, 
-            error: errorMessage 
+          addOptimisticAuth({
+            type: 'validate',
+            isValid: false,
+            error: errorMessage,
           });
         });
         return { error: errorMessage };

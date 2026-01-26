@@ -123,13 +123,13 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
           let stockSeriesOptions: any[] = [];
           console.log('Processing brand:', fieldValue);
           console.log('Available stock:', stock);
-          
+
           if (stock && stock.length > 0) {
             const brandStock = stock.find(
               (stockItem) =>
                 stockItem.brandName && stockItem.brandName === fieldValue
             );
-            
+
             console.log('Found brand stock:', brandStock);
 
             if (
@@ -184,10 +184,14 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
               });
             }
           });
-          
+
           console.log('Category series options:', categorySeriesOptions);
           console.log('Final all series options:', allSeriesOptions);
-          console.log('Setting series options for accordion:', accordionIndex, allSeriesOptions);
+          console.log(
+            'Setting series options for accordion:',
+            accordionIndex,
+            allSeriesOptions
+          );
 
           // Use combined options (only series with stock > 0)
           const filteredSeriesOptions = allSeriesOptions;

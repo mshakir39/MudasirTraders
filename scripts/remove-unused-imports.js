@@ -178,11 +178,11 @@ function isImportUsed(importStatement, usedIdentifiers) {
   if (importStatement.includes('.css')) {
     return true;
   }
-  
+
   const parsed = parseImportStatement(importStatement);
   if (!parsed) return false;
-  
-  return parsed.importedNames.some(name => usedIdentifiers.has(name));
+
+  return parsed.importedNames.some((name) => usedIdentifiers.has(name));
 }
 
 // Function to remove unused imports from content

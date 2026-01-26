@@ -3,11 +3,11 @@ export const ROUTES = {
   // Public routes
   LANDING: '/',
   SIGNIN: '/signin',
-  
+
   // Dashboard routes
   DASHBOARD: '/dashboard',
   DASHBOARD_PASSWORD: '/dashboard/dashboard-password',
-  
+
   // Dashboard sub-routes
   BRANDS: '/dashboard/brands',
   CATEGORY: '/dashboard/category',
@@ -19,13 +19,13 @@ export const ROUTES = {
   WARRANTY_CHECK: '/dashboard/warranty-check',
   PRICE_LIST: '/dashboard/priceList',
   SCRAP_STOCK: '/dashboard/scrapStock',
-  
+
   // API routes
   API: {
     AUTH: '/api/auth',
     TEST_PERFORMANCE: '/api/test-performance',
   },
-  
+
   // Error routes
   AUTH_ERROR: '/auth/error',
 } as const;
@@ -45,12 +45,9 @@ export const ROUTE_GROUPS = {
     ROUTES.PRICE_LIST,
     ROUTES.SCRAP_STOCK,
   ],
-  
-  PUBLIC_ROUTES: [
-    ROUTES.LANDING,
-    ROUTES.SIGNIN,
-  ],
-  
+
+  PUBLIC_ROUTES: [ROUTES.LANDING, ROUTES.SIGNIN],
+
   ALLOWED_WHEN_LOCKED: [
     ROUTES.MEETUPS,
     ROUTES.BRANDS,
@@ -66,9 +63,7 @@ export const ROUTE_GROUPS = {
 } as const;
 
 // Computed route groups
-export const AUTHENTICATED_ROUTES = [
-  ...ROUTE_GROUPS.DASHBOARD_ROUTES,
-] as const;
+export const AUTHENTICATED_ROUTES = [...ROUTE_GROUPS.DASHBOARD_ROUTES] as const;
 
 // Helper functions
 export const isDashboardRoute = (path: string): boolean => {

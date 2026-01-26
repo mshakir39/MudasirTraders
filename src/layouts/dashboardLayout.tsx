@@ -127,21 +127,21 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
     async (prevState: any, formData: FormData) => {
       const startDate = formData.get('startDate') as string;
       const endDate = formData.get('endDate') as string;
-      
+
       // Add optimistic update
       addOptimisticStats({
         type: 'update',
-        data: { isFiltering: true }
+        data: { isFiltering: true },
       });
-      
+
       // Simulate API call (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      return { 
-        success: true, 
-        startDate, 
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      return {
+        success: true,
+        startDate,
         endDate,
-        message: 'Dashboard data filtered successfully'
+        message: 'Dashboard data filtered successfully',
       };
     },
     null

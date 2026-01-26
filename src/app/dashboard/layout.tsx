@@ -51,8 +51,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   const pathname = usePathname();
   // Remove the /dashboard prefix for the active link check
-  const cleanPathname = pathname?.startsWith(DASHBOARD_PREFIX) 
-    ? pathname.slice(DASHBOARD_PREFIX.length) || '/' 
+  const cleanPathname = pathname?.startsWith(DASHBOARD_PREFIX)
+    ? pathname.slice(DASHBOARD_PREFIX.length) || '/'
     : pathname;
   const normalizedPathname = (cleanPathname || '').toLowerCase();
 
@@ -61,8 +61,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const isExcludedPage = excludedPaths.includes(normalizedPathname);
 
   // Handler for updates coming from the AuthStatus component
-  const handleAuthStatusChange = ({ isSignedIn: signedIn, isDashboardUnlocked: unlocked }: AuthStatusData) => {
-
+  const handleAuthStatusChange = ({
+    isSignedIn: signedIn,
+    isDashboardUnlocked: unlocked,
+  }: AuthStatusData) => {
     setIsSignedIn(signedIn);
     setIsDashboardUnlocked(unlocked);
   };
@@ -70,7 +72,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // 1. Render simple layout for Login/Password pages
   if (isExcludedPage) {
     return (
-      <div className="min-h-screen w-full">
+      <div className='min-h-screen w-full'>
         <ToastContainer />
         {children}
       </div>
@@ -83,7 +85,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Prevent hydration mismatch by waiting for client mount
   if (!mounted) {
     return (
-      <div className="min-h-screen w-full">
+      <div className='min-h-screen w-full'>
         <ToastContainer />
         {children}
       </div>
@@ -91,15 +93,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen w-full">
+    <div className='min-h-screen w-full'>
       {/* AuthStatus checks the session/cookies and updates parent state */}
       <AuthStatus onStatusChange={handleAuthStatusChange} />
 
       {shouldShowSidebar ? (
         // Layout: Sidebar + Main Content
-        <div className="flex min-h-screen w-full">
+        <div className='flex min-h-screen w-full'>
           <Sidebar
-            onCollapseChange={(collapsed: boolean) => setIsSidebarCollapsed(collapsed)}
+            onCollapseChange={(collapsed: boolean) =>
+              setIsSidebarCollapsed(collapsed)
+            }
             basePath={DASHBOARD_PREFIX}
           />
           <main
@@ -113,7 +117,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </div>
       ) : (
         // Layout: Full width (e.g., if not unlocked or not signed in yet)
-        <div className="min-h-screen w-full">
+        <div className='min-h-screen w-full'>
           <ToastContainer />
           {children}
         </div>

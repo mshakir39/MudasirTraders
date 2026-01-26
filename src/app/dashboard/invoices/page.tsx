@@ -16,7 +16,7 @@ async function getInvoicesData() {
       console.error('Failed to fetch invoices:', invoicesResult.error);
       return null;
     }
-    
+
     return invoicesResult.data;
   } catch (error) {
     console.error('Error loading invoices data:', error);
@@ -38,7 +38,10 @@ async function getStockData() {
   try {
     const stockResult = await getStock();
     console.log('Stock API result:', stockResult);
-    const stockData = stockResult.success && Array.isArray(stockResult.data) ? stockResult.data : [];
+    const stockData =
+      stockResult.success && Array.isArray(stockResult.data)
+        ? stockResult.data
+        : [];
     console.log('Processed stock data:', stockData);
     return stockData;
   } catch (error) {
@@ -52,7 +55,7 @@ export default async function Invoices() {
   const [invoices, categories, stock] = await Promise.all([
     getInvoicesData(),
     getCategoriesData(),
-    getStockData()
+    getStockData(),
   ]);
 
   return (

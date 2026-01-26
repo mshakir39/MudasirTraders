@@ -1,16 +1,25 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { ROUTES, ROUTE_GROUPS, isDashboardRoute, isSignInRoute, isDashboardPasswordRoute, isAllowedWhenLocked } from '@/constants/routes';
+import {
+  ROUTES,
+  ROUTE_GROUPS,
+  isDashboardRoute,
+  isSignInRoute,
+  isDashboardPasswordRoute,
+  isAllowedWhenLocked,
+} from '@/constants/routes';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const url = request.url;
 
-  
   // Clean up only actual duplicate /dashboard segments (like /dashboard/dashboard/brands)
   // But don't touch /dashboard/dashboard-password as it's a valid route
-  const cleanPathname = pathname.replace(/\/dashboard\/dashboard\//g, '/dashboard/');
+  const cleanPathname = pathname.replace(
+    /\/dashboard\/dashboard\//g,
+    '/dashboard/'
+  );
   if (cleanPathname !== pathname) {
     return NextResponse.redirect(new URL(cleanPathname, url));
   }
@@ -18,11 +27,17 @@ export async function middleware(request: NextRequest) {
   const normalizedPathname = (pathname || '').toLowerCase();
 
   // Get authentication status
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
   const isAuthenticated = !!token;
 
   // Handle signin redirects (case-insensitive)
-  if (pathname.toLowerCase() === ROUTES.SIGNIN.slice(1) && pathname !== ROUTES.SIGNIN) {
+  if (
+    pathname.toLowerCase() === ROUTES.SIGNIN.slice(1) &&
+    pathname !== ROUTES.SIGNIN
+  ) {
     return NextResponse.redirect(new URL(ROUTES.SIGNIN, url));
   }
 
@@ -30,7 +45,7 @@ export async function middleware(request: NextRequest) {
   if (isDashboardRoute(normalizedPathname) && !isAuthenticated) {
     return NextResponse.redirect(new URL(ROUTES.SIGNIN, url));
   }
-  
+
   // Removed old /app route handling as we've removed the /app directory
   // All routes are now under /dashboard
 
@@ -39,7 +54,7 @@ export async function middleware(request: NextRequest) {
   const isAppRoute = isDashboardRoute(normalizedPathname);
   const isDashboardPasswordPage = isDashboardPasswordRoute(normalizedPathname);
   const isSignInPage = isSignInRoute(normalizedPathname);
-  
+
   // Removed redirect from /dashboard-password to prevent loop
   // The actual page is at /dashboard/dashboard-password
 
@@ -50,7 +65,7 @@ export async function middleware(request: NextRequest) {
     dashboardUnlocked: dashboardUnlocked?.value,
     isAppRoute,
     isDashboardPasswordPage,
-    isSignInPage
+    isSignInPage,
   });
 
   // /signin should be accessible without authentication
@@ -74,17 +89,26 @@ export async function middleware(request: NextRequest) {
   // Step 2: Handle Dashboard Access (but not for sign-in page or allowed routes)
   // Allow access to certain routes even when dashboard is locked
   const isAllowedRoute = isAllowedWhenLocked(normalizedPathname);
-  
+
   // Only redirect to password page if user is authenticated but dashboard is locked
   // and it's not an allowed route or the password page itself
-  if (isAppRoute && !isDashboardPasswordPage && isAuthenticated && !dashboardUnlocked && !isSignInPage && !isAllowedRoute) {
+  if (
+    isAppRoute &&
+    !isDashboardPasswordPage &&
+    isAuthenticated &&
+    !dashboardUnlocked &&
+    !isSignInPage &&
+    !isAllowedRoute
+  ) {
     // For the root dashboard (/dashboard), use empty redirect path
     // For other routes, extract the path after /dashboard
-    const redirectPath = pathname === '/dashboard' ? '' : 
-      pathname.startsWith('/dashboard/') ? 
-        pathname.replace(/^\/dashboard\//, '') : 
-        pathname;
-    
+    const redirectPath =
+      pathname === '/dashboard'
+        ? ''
+        : pathname.startsWith('/dashboard/')
+          ? pathname.replace(/^\/dashboard\//, '')
+          : pathname;
+
     const redirectUrl = `${ROUTES.DASHBOARD_PASSWORD}?redirect=${encodeURIComponent(redirectPath)}`;
     return NextResponse.redirect(new URL(redirectUrl, url));
   }
@@ -100,7 +124,6 @@ export async function middleware(request: NextRequest) {
         const isRefererDashboardPage =
           refererPath === ROUTES.DASHBOARD ||
           refererPath === ROUTES.DASHBOARD_PASSWORD;
-
 
         if (!isRefererDashboardPage) {
           const response = NextResponse.redirect(
@@ -118,7 +141,7 @@ export async function middleware(request: NextRequest) {
   // Step 3: Handle Auto-Locking on Navigation
   const response = NextResponse.next();
   const isDashboardRelatedPage =
-    isDashboardRoute(pathname) || 
+    isDashboardRoute(pathname) ||
     pathname === ROUTES.LANDING ||
     isDashboardPasswordPage;
 
@@ -132,8 +155,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/dashboard/:path*',
-    '/signin',
-  ],
+  matcher: ['/dashboard/:path*', '/signin'],
 };

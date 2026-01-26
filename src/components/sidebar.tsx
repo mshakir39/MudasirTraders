@@ -1,11 +1,6 @@
 'use client';
 import Link from 'next/link';
-import React, {
-  useCallback,
-  useEffect,
-  useState,
-  useMemo
-} from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ROUTES, NAVIGATION_ITEMS } from '@/constants/routes';
 import {
@@ -40,11 +35,12 @@ interface SidebarProps {
 const Sidebar = ({
   className,
   onCollapseChange,
-  basePath = ''
+  basePath = '',
 }: SidebarProps) => {
   const path = usePathname();
   // Remove the base path for active link highlighting
-  const cleanPath = basePath && path?.startsWith(basePath) ? path.slice(basePath.length) : path;
+  const cleanPath =
+    basePath && path?.startsWith(basePath) ? path.slice(basePath.length) : path;
   const router = useRouter();
 
   // Helper function to get initials
@@ -78,7 +74,8 @@ const Sidebar = ({
         href: ROUTES.DASHBOARD,
         label: 'Dashboard',
         icon: MdDashboard,
-        active: cleanPath === '/dashboard' || cleanPath === '/' || cleanPath === '',
+        active:
+          cleanPath === '/dashboard' || cleanPath === '/' || cleanPath === '',
       },
       {
         href: ROUTES.BRANDS,

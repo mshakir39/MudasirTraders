@@ -4,12 +4,12 @@
   width: 44px !important;
   height: 44px !important;
   margin: 0 4px !important;
-  
+
   /* Visually smaller appearance */
   background: white !important;
   opacity: 0.5 !important;
   border-radius: 50% !important;
-  
+
   /* Position the visual dot in the center */
   position: relative !important;
   transform: scale(0.3) !important;
