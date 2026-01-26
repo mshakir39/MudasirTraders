@@ -130,8 +130,12 @@ const nextConfig = {
     ];
   },
 
-  // Optimize output
-  output: 'standalone',
+  // Optimize output (commented out for Vercel compatibility)
+  // output: 'standalone',
+  
+  // Vercel-specific optimizations
+  trailingSlash: false,
+  reactStrictMode: true,
   
   // Compress responses
   compress: true,
