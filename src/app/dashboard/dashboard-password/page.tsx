@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useActionState, useOptimistic } from 'react';
+import React, { useState, useEffect, useActionState, useOptimistic, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -31,10 +31,12 @@ const DashboardPasswordPage: React.FC = () => {
       }
       
       // Add optimistic validation
-      addOptimisticAuth({ 
-        type: 'validate', 
-        isValid: false, 
-        error: null 
+      startTransition(() => {
+        addOptimisticAuth({ 
+          type: 'validate', 
+          isValid: false, 
+          error: null 
+        });
       });
       
       try {
@@ -44,50 +46,42 @@ const DashboardPasswordPage: React.FC = () => {
           // Set dashboard unlocked cookie
           document.cookie = 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
           
-          console.log('Password correct, cookie set:', {
-            password: '***',
-            expectedPassword: '***',
-            cookie: document.cookie,
-            timestamp: new Date().toISOString()
-          });
-          
           // Update optimistic state
-          addOptimisticAuth({ 
-            type: 'validate', 
-            isValid: true, 
-            error: null 
+          startTransition(() => {
+            addOptimisticAuth({ 
+              type: 'validate', 
+              isValid: true, 
+              error: null 
+            });
           });
           
           toast.success('Dashboard unlocked successfully!');
           
           // Redirect after delay
           setTimeout(() => {
-            console.log('Redirecting to /app...');
-            router.push('/app');
+            router.push('/dashboard');
           }, 1000);
           
           return { success: true };
         } else {
           const error = 'Incorrect password. Please try again.';
-          console.log('Password incorrect:', {
-            provided: password ? '***' : 'empty',
-            expected: expectedPassword ? '***' : 'undefined',
-            match: password === expectedPassword
-          });
-          addOptimisticAuth({ 
-            type: 'validate', 
-            isValid: false, 
-            error 
+          startTransition(() => {
+            addOptimisticAuth({ 
+              type: 'validate', 
+              isValid: false, 
+              error 
+            });
           });
           return { error };
         }
       } catch (error) {
         const errorMessage = 'An error occurred. Please try again.';
-        console.error('Password validation error:', error);
-        addOptimisticAuth({ 
-          type: 'validate', 
-          isValid: false, 
-          error: errorMessage 
+        startTransition(() => {
+          addOptimisticAuth({ 
+            type: 'validate', 
+            isValid: false, 
+            error: errorMessage 
+          });
         });
         return { error: errorMessage };
       }

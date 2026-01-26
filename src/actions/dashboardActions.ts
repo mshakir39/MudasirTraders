@@ -3,6 +3,7 @@ import { executeOperation } from '@/app/libs/executeOperation';
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { ROUTES } from '@/constants/routes';
 
 export async function getDashboardStats() {
   try {
@@ -162,5 +163,5 @@ export async function unlockDashboard() {
 export async function lockDashboard() {
   const cookieStore = await cookies();
   cookieStore.delete('dashboard-unlocked');
-  redirect('/dashboard-password');
+  redirect(ROUTES.DASHBOARD_PASSWORD);
 }

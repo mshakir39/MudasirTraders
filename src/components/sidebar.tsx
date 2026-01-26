@@ -4,11 +4,10 @@ import React, {
   useCallback,
   useEffect,
   useState,
-  useOptimistic,
-  useMemo,
-  startTransition,
+  useMemo
 } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { ROUTES, NAVIGATION_ITEMS } from '@/constants/routes';
 import {
   FaCarBattery,
   FaFileInvoice,
@@ -32,14 +31,20 @@ import { getStoreDetail } from '@/getData/getStoreDetail';
 import { signOut } from 'next-auth/react';
 import Cookies from 'js-cookie';
 
+interface SidebarProps {
+  className?: string;
+  onCollapseChange?: (collapsed: boolean) => void;
+  basePath?: string;
+}
+
 const Sidebar = ({
   className,
   onCollapseChange,
-}: {
-  className?: string;
-  onCollapseChange?: (collapsed: boolean) => void;
-}) => {
+  basePath = ''
+}: SidebarProps) => {
   const path = usePathname();
+  // Remove the base path for active link highlighting
+  const cleanPath = basePath && path?.startsWith(basePath) ? path.slice(basePath.length) : path;
   const router = useRouter();
 
   // Helper function to get initials
@@ -59,85 +64,86 @@ const Sidebar = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // React 19: Optimistic navigation state for instant UI feedback
-  const [optimisticPath, addOptimisticPath] = useOptimistic(
-    path,
-    (state, newPath: string) => newPath
-  );
+  // Handle mobile menu toggling
+  const handleMobileLinkClick = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
+
+  // Navigation state is now handled by Next.js Link components directly
 
   // React 19: Memoized navigation items for better performance
   const navigationItems = useMemo(
     () => [
       {
-        href: '/app',
+        href: ROUTES.DASHBOARD,
         label: 'Dashboard',
         icon: MdDashboard,
-        active: optimisticPath === '/app',
+        active: cleanPath === '/dashboard' || cleanPath === '/' || cleanPath === '',
       },
       {
-        href: '/app/brands',
+        href: ROUTES.BRANDS,
         label: 'Brands',
         icon: FaTags,
-        active: optimisticPath === '/app/brands',
+        active: cleanPath === '/brands' || cleanPath === '/brands/',
       },
       {
-        href: '/app/category',
+        href: ROUTES.CATEGORY,
         label: 'Category',
         icon: TbCategoryPlus,
-        active: optimisticPath === '/app/category',
+        active: cleanPath === '/category' || cleanPath === '/category/',
       },
       {
-        href: '/app/stock',
+        href: ROUTES.STOCK,
         label: 'Stock',
         icon: FaCarBattery,
-        active: optimisticPath === '/app/stock',
+        active: cleanPath === '/stock' || cleanPath === '/stock/',
       },
       {
-        href: '/app/invoices',
+        href: ROUTES.INVOICES,
         label: 'Invoices',
         icon: FaFileInvoice,
-        active: optimisticPath === '/app/invoices',
+        active: cleanPath === '/invoices' || cleanPath === '/invoices/',
       },
       {
-        href: '/app/sales',
+        href: ROUTES.SALES,
         label: 'Sales',
         icon: FaFileInvoice,
-        active: optimisticPath === '/app/sales',
+        active: cleanPath === '/sales' || cleanPath === '/sales/',
       },
       {
-        href: '/app/customers',
+        href: ROUTES.CUSTOMERS,
         label: 'Customers',
         icon: FaUserFriends,
-        active: optimisticPath === '/app/customers',
+        active: cleanPath === '/customers' || cleanPath === '/customers/',
       },
       {
-        href: '/app/warranty-check',
+        href: ROUTES.WARRANTY_CHECK,
         label: 'Warranty Check',
         icon: FaShieldAlt,
-        active: optimisticPath === '/app/warranty-check',
+        active: cleanPath === '/warranty-check',
       },
       // {
-      //   href: '/app/priceList',
+      //   href: '/dashboard/priceList',
       //   label: 'Price List',
       //   icon: FaTags,
-      //   active: optimisticPath === '/app/priceList',
+      //   active: optimisticPath === '/dashboard/priceList',
       // },
       // {
-      //   href: '/app/scrapStock',
+      //   href: '/dashboard/scrapStock',
       //   label: 'Scrap Stock',
       //   icon: FaCarBattery,
-      //   active: optimisticPath === '/app/scrapStock',
+      //   active: optimisticPath === '/dashboard/scrapStock',
       // },
     ],
-    [optimisticPath]
+    [cleanPath]
   );
 
   // Meetups item to be rendered separately before Settings
   const meetupsItem = {
-    href: '/app/meetups',
+    href: ROUTES.MEETUPS,
     label: 'Meetups',
     icon: FaCalendarAlt,
-    active: optimisticPath === '/app/meetups',
+    active: cleanPath === '/meetups',
   };
 
   // React 19: Memoized store initials for better performance
@@ -206,23 +212,7 @@ const Sidebar = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // React 19: Optimized navigation handler with instant UI feedback
-  const handleNavigation = useCallback(
-    (href: string) => {
-      // React 19: Wrap optimistic update in startTransition to avoid warnings
-      startTransition(() => {
-        // Add optimistic update for instant UI feedback
-        addOptimisticPath(href);
-      });
-
-      // Close mobile menu if open
-      handleMobileLinkClick();
-
-      // Prefetch the route for faster navigation
-      router.prefetch(href);
-    },
-    [addOptimisticPath, router]
-  );
+  // Navigation is now handled by Next.js Link components directly
 
   // Handle clicks outside sidebar on mobile
   useEffect(() => {
@@ -288,10 +278,6 @@ const Sidebar = ({
     []
   );
 
-  const handleMobileLinkClick = () => {
-    setIsMobileMenuOpen(false);
-  };
-
   const sidebarContent = (
     <>
       {/* Mobile Header with Close Button */}
@@ -324,8 +310,7 @@ const Sidebar = ({
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
-                  onClick={() => handleNavigation(item.href)}
+                  href={`${basePath}${item.href}`}
                   className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
                     ${
                       item.active
@@ -357,8 +342,7 @@ const Sidebar = ({
         <div className='mt-auto flex flex-col space-y-2'>
           {/* Meetups Item */}
           <Link
-            href={meetupsItem.href}
-            onClick={() => handleNavigation(meetupsItem.href)}
+            href={`${basePath}${meetupsItem.href}`}
             className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
               ${
                 meetupsItem.active
@@ -405,7 +389,7 @@ const Sidebar = ({
               // Immediately hide sidebar by clearing state
               Cookies.remove('userId');
               Cookies.remove('dashboard-unlocked');
-              signOut({ callbackUrl: '/signin' });
+              signOut({ callbackUrl: ROUTES.SIGNIN });
             }}
             className='sidebarItem flex touch-manipulation items-center rounded-lg p-3 text-gray-700 transition-all duration-200 hover:bg-[#4287f5] hover:text-white active:bg-[#3d79e6]'
           >
@@ -423,7 +407,7 @@ const Sidebar = ({
     </>
   );
 
-  if (path === '/app/signIn') {
+  if (path === ROUTES.SIGNIN) {
     return null;
   }
 

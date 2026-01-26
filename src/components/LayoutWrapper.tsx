@@ -2,6 +2,8 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { POST } from '@/utils/api';
+import { ROUTES } from '@/constants/routes';
 
 const Sidebar = dynamic(() => import('@/components/sidebar'), {
   ssr: false,
@@ -57,11 +59,11 @@ const LayoutWrapper: React.FC<LayoutWrapperProps> = ({ children }) => {
     setIsSidebarCollapsed(collapsed);
   }, []);
 
-  // Show sidebar if dashboard is unlocked OR if we're on /app (for testing)
+  // Show sidebar if dashboard is unlocked OR if we're on /dashboard (for testing)
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-  const isSignInPage = currentPath === '/app/signIn';
-  const isDashboardPasswordPage = currentPath === '/app/dashboard-password';
-  const isAppPage = currentPath === '/app';
+  const isSignInPage = currentPath === ROUTES.SIGNIN;
+  const isDashboardPasswordPage = currentPath === ROUTES.DASHBOARD_PASSWORD;
+  const isAppPage = currentPath === ROUTES.DASHBOARD;
 
   // If it's the sign-in page or dashboard-password page, render without sidebar layout
   if (isSignInPage || isDashboardPasswordPage) {

@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import 'leaflet/dist/leaflet.css';
 import 'rsuite-table/dist/css/rsuite-table.css';
 import './globals.css';
+import '../styles/scrollbar.css';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 

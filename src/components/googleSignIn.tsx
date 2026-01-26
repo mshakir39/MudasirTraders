@@ -4,7 +4,7 @@ import { signIn } from 'next-auth/react';
 function GoogleSignIn() {
   const handleSignIn = () => {
     signIn('google', {
-      callbackUrl: `/app`,
+      callbackUrl: `/dashboard`,
       prompt: 'select_account',
       hd: 'mudasirtraders.com',
     });

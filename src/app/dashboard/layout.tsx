@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { ROUTES } from '@/constants/routes';
+
+// Base path for the dashboard
+const DASHBOARD_PREFIX = '/dashboard';
 
 // Dynamically import components to avoid SSR issues with browser-only features
 // (e.g., LocalStorage, window objects, or heavy UI libraries)
@@ -46,10 +50,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }, []);
 
   const pathname = usePathname();
-  const normalizedPathname = (pathname || '').toLowerCase();
+  // Remove the /dashboard prefix for the active link check
+  const cleanPathname = pathname?.startsWith(DASHBOARD_PREFIX) 
+    ? pathname.slice(DASHBOARD_PREFIX.length) || '/' 
+    : pathname;
+  const normalizedPathname = (cleanPathname || '').toLowerCase();
 
   // Explicitly list pages where the sidebar/main layout should NOT appear
-  const excludedPaths = ['/app/signin'];
+  const excludedPaths = [ROUTES.SIGNIN.slice(1)]; // Remove leading slash for comparison
   const isExcludedPage = excludedPaths.includes(normalizedPathname);
 
   // Handler for updates coming from the AuthStatus component
@@ -72,15 +80,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // 2. Check if we should show the sidebar
   const shouldShowSidebar = isSignedIn; // Show sidebar for any authenticated user
 
-  console.log('App Layout - Sidebar Visibility:', {
-    pathname,
-    isExcludedPage,
-    isSignedIn,
-    isDashboardUnlocked,
-    shouldShowSidebar,
-    mounted
-  });
-
   // Prevent hydration mismatch by waiting for client mount
   if (!mounted) {
     return (
@@ -100,7 +99,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
         // Layout: Sidebar + Main Content
         <div className="flex min-h-screen w-full">
           <Sidebar
-            onCollapseChange={(collapsed) => setIsSidebarCollapsed(collapsed)}
+            onCollapseChange={(collapsed: boolean) => setIsSidebarCollapsed(collapsed)}
+            basePath={DASHBOARD_PREFIX}
           />
           <main
             className={`flex-1 overflow-x-hidden p-4 transition-all duration-300 ${
