@@ -97,6 +97,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       {/* AuthStatus checks the session/cookies and updates parent state */}
       <AuthStatus onStatusChange={handleAuthStatusChange} />
 
+
       {shouldShowSidebar ? (
         // Layout: Sidebar + Main Content
         <div className='flex min-h-screen w-full'>
