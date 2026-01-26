@@ -33,14 +33,6 @@ export async function middleware(request: NextRequest) {
   });
   const isAuthenticated = !!token;
 
-  // Handle signin redirects (case-insensitive)
-  if (
-    pathname.toLowerCase() === ROUTES.SIGNIN.slice(1) &&
-    pathname !== ROUTES.SIGNIN
-  ) {
-    return NextResponse.redirect(new URL(ROUTES.SIGNIN, url));
-  }
-
   // If user is trying to access /dashboard but not authenticated, redirect to signin
   if (isDashboardRoute(normalizedPathname) && !isAuthenticated) {
     return NextResponse.redirect(new URL(ROUTES.SIGNIN, url));
