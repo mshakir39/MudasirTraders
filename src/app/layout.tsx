@@ -2,94 +2,19 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import FaviconManager from '@/components/FaviconManager';
 import Providers from '@/components/Providers';
+import CookieConsent from '@/components/CookieConsent';
 import 'react-toastify/dist/ReactToastify.css';
 import 'leaflet/dist/leaflet.css';
 import 'rsuite-table/dist/css/rsuite-table.css';
 import './globals.css';
 import '../styles/scrollbar.css';
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' });
-
-const structuredData = {
-  '@context': 'https://schema.org',
-  '@type': 'LocalBusiness',
-  name: 'Mudasir Traders',
-  description:
-    'Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries. Professional UPS systems, solar solutions, and expert installation services in Dera Ghazi Khan, Pakistan.',
-  url: 'https://mudasirtraders.com',
-  telephone: '+92-334-9627745',
-  email: 'owner@mudasirtraders.com',
-  address: {
-    '@type': 'PostalAddress',
-    streetAddress: 'General Bus Stand, near Badozai Market',
-    addressLocality: 'Dera Ghazi Khan',
-    addressRegion: 'Punjab',
-    postalCode: '32200',
-    addressCountry: 'PK',
-  },
-  geo: {
-    '@type': 'GeoCoordinates',
-    latitude: '30.0462',
-    longitude: '70.6401',
-  },
-  openingHours: ['Mo-Th 08:00-21:00', 'Fr 08:00-13:00', 'Sa-Su 08:00-21:00'],
-  priceRange: '$$',
-  paymentAccepted: 'Cash, Credit Card',
-  currenciesAccepted: 'PKR',
-  image:
-    'https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png',
-  sameAs: [
-    'https://www.facebook.com/mudasirtraders',
-    'https://www.instagram.com/mudasirtraders',
-  ],
-  offers: [
-    {
-      '@type': 'Offer',
-      itemOffered: {
-        '@type': 'Product',
-        name: 'Osaka Batteries',
-        category: 'Automotive Batteries',
-      },
-    },
-    {
-      '@type': 'Offer',
-      itemOffered: {
-        '@type': 'Product',
-        name: 'AGS Batteries',
-        category: 'Automotive Batteries',
-      },
-    },
-    {
-      '@type': 'Offer',
-      itemOffered: {
-        '@type': 'Product',
-        name: 'Exide Batteries',
-        category: 'Automotive Batteries',
-      },
-    },
-    {
-      '@type': 'Offer',
-      itemOffered: {
-        '@type': 'Product',
-        name: 'Phoenix Batteries',
-        category: 'Automotive Batteries',
-      },
-    },
-    {
-      '@type': 'Offer',
-      itemOffered: {
-        '@type': 'Product',
-        name: 'Daewoo Batteries',
-        category: 'Automotive Batteries',
-      },
-    },
-  ],
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.8',
-    reviewCount: '150',
-  },
-};
+const inter = Inter({ 
+  subsets: ['latin'], 
+  display: 'swap',
+  fallback: ['system-ui', 'arial', 'sans-serif'],
+  preload: true,
+});
 
 export const metadata: Metadata = {
   title:
@@ -156,6 +81,7 @@ export default function RootLayout({
         <Providers>
           <FaviconManager />
           {children}
+          <CookieConsent />
         </Providers>
       </body>
     </html>
