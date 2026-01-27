@@ -13,6 +13,10 @@ import {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const url = request.url;
+  
+  if (pathname === '/signIn') {
+    return NextResponse.redirect(new URL('/signin', url));
+  }
 
   // Clean up only actual duplicate /dashboard segments (like /dashboard/dashboard/brands)
   // But don't touch /dashboard/dashboard-password as it's a valid route
@@ -147,5 +151,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/signin'],
+  matcher: ['/dashboard/:path*', '/signin', '/signIn'],
 };
