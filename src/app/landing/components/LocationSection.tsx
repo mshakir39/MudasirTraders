@@ -12,7 +12,7 @@ export default function LocationSection() {
   const directionsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
   
   return (
-    <section className='bg-gradient-to-br from-blue-50 to-purple-50 py-20'>
+    <section className='bg-gradient-to-br from-blue-50 to-purple-50 pt-20'>
       {/* Header Container */}
       <div className='mx-auto mb-12 max-w-7xl px-4 sm:px-6 lg:px-8'>
         <h2 className='mb-3 text-center text-4xl font-bold uppercase tracking-tight text-gray-900'>
