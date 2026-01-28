@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   title:
     'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
   description:
-    'Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries. Professional UPS systems, solar solutions, and expert installation services in Dera Ghazi Khan, Pakistan.',
+    'Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries for cars, UPS systems, and solar applications. Expert battery installation services in Dera Ghazi Khan, Pakistan.',
   keywords:
     'batteries Dera Ghazi Khan, Osaka batteries, AGS batteries, Exide batteries, Phoenix batteries, Daewoo batteries, UPS systems, solar solutions, power solutions, battery installation, Pakistan',
   authors: [{ name: 'Mudasir Traders' }],
@@ -75,8 +75,71 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Mudasir Traders",
+    "description": "Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries for cars, UPS systems, and solar applications. Expert battery installation services in Dera Ghazi Khan, Pakistan.",
+    "url": "https://mudasirtraders.com",
+    "telephone": "+92-334-9627745",
+    "email": "owner@mudasirtraders.com",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "General Bus Stand, near Badozai Market",
+      "addressLocality": "Dera Ghazi Khan",
+      "addressRegion": "Punjab",
+      "postalCode": "32200",
+      "addressCountry": "PK"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": "30.0472",
+      "longitude": "70.6401"
+    },
+    "openingHours": "Mo-Th 09:00-20:00, Fr-Sa 09:00-21:00, Su 10:00-18:00",
+    "priceRange": "$$",
+    "image": "https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png",
+    "sameAs": [
+      "https://mudasirtraders.com"
+    ],
+    "offers": [
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Product",
+          "name": "Car Batteries",
+          "description": "Premium quality car batteries from top brands"
+        }
+      },
+      {
+        "@type": "Offer", 
+        "itemOffered": {
+          "@type": "Product",
+          "name": "UPS Batteries",
+          "description": "Batteries for UPS systems for home and office"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Product", 
+          "name": "Solar Batteries",
+          "description": "Batteries for solar power systems and applications"
+        }
+      }
+    ]
+  };
+
   return (
     <html lang='en-PK' suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
+      </head>
       <body className={inter.className} suppressHydrationWarning>
         <Providers>
           <FaviconManager />
