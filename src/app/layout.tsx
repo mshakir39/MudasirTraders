@@ -12,7 +12,7 @@ const inter = Inter({
   subsets: ['latin'], 
   display: 'swap',
   fallback: ['system-ui', 'arial', 'sans-serif'],
-  preload: false,
+  preload: true,  // Change back to true for better UX
   variable: '--font-inter',
 });
 

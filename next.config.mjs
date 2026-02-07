@@ -21,10 +21,13 @@ const nextConfig = {
 
   // Webpack optimizations for better performance
   webpack: (config, { dev, isServer }) => {
-    // Simple fix: disable inline for all assets
+    // Disable all inline data URIs for fonts and assets
     config.module.rules.push({
       test: /\.(woff|woff2|eot|ttf|otf)$/,
       type: 'asset/resource',
+      generator: {
+        filename: 'static/fonts/[name].[hash][ext]',
+      },
     });
 
     if (!dev && !isServer) {
@@ -134,20 +137,6 @@ const nextConfig = {
           },
         ],
       },
-      // Cache font files with proper headers
-      {
-        source: '/static/fonts/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*',
-          },
-        ],
-      },
     ];
   },
 
@@ -169,8 +158,8 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
-  // Enable source maps for production debugging
-  productionBrowserSourceMaps: true,
+  // Disable source maps for production (fixes CSS parsing issues)
+  productionBrowserSourceMaps: false,
 };
 
 export default nextConfig;
