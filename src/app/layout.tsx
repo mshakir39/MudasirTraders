@@ -12,7 +12,8 @@ const inter = Inter({
   subsets: ['latin'], 
   display: 'swap',
   fallback: ['system-ui', 'arial', 'sans-serif'],
-  preload: true,
+  preload: false,
+  variable: '--font-inter',
 });
 
 export const metadata: Metadata = {

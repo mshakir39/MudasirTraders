@@ -21,13 +21,10 @@ const nextConfig = {
 
   // Webpack optimizations for better performance
   webpack: (config, { dev, isServer }) => {
-    // Fix font loading issues - prevent inline data URIs for fonts
+    // Simple fix: disable inline for all assets
     config.module.rules.push({
       test: /\.(woff|woff2|eot|ttf|otf)$/,
       type: 'asset/resource',
-      generator: {
-        filename: 'static/fonts/[name].[hash][ext]',
-      },
     });
 
     if (!dev && !isServer) {
