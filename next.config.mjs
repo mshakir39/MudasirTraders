@@ -158,8 +158,8 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
-  // Disable source maps for production (fixes CSS parsing issues)
-  productionBrowserSourceMaps: false,
+  // Enable source maps for production (helps with Lighthouse analysis)
+  productionBrowserSourceMaps: true,
 };
 
 export default nextConfig;
