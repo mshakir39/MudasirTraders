@@ -16,6 +16,8 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
+
+
 export const metadata: Metadata = {
   title:
     'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
