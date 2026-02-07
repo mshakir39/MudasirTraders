@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import FaviconManager from '@/components/FaviconManager';
 import Providers from '@/components/Providers';
 import CookieConsent from '@/components/CookieConsent';
 import 'react-toastify/dist/ReactToastify.css';
@@ -142,7 +141,6 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <Providers>
-          <FaviconManager />
           {children}
           <CookieConsent />
         </Providers>
