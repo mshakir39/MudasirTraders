@@ -21,6 +21,15 @@ const nextConfig = {
 
   // Webpack optimizations for better performance
   webpack: (config, { dev, isServer }) => {
+    // Fix font loading issues - prevent inline data URIs for fonts
+    config.module.rules.push({
+      test: /\.(woff|woff2|eot|ttf|otf)$/,
+      type: 'asset/resource',
+      generator: {
+        filename: 'static/fonts/[name].[hash][ext]',
+      },
+    });
+
     if (!dev && !isServer) {
       // Production optimizations for client-side only
       config.optimization = {
@@ -125,6 +134,20 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // Cache font files with proper headers
+      {
+        source: '/static/fonts/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
           },
         ],
       },
