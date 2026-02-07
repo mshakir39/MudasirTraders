@@ -22,34 +22,64 @@ const WhatsAppShareButton: React.FC<WhatsAppShareButtonProps> = ({
     ) || 0;
   const remainingAmount = invoiceData.remainingAmount || 0;
 
-  const message = `📋 *Invoice Details*
+  const message = `*INVOICE RECEIPT*
+================================
 
-🏢 *MUDASIR TRADERS-DG KHAN*
-📞 +923349627745, +923215392445
-📍 General Bus Stand, near Badozai Market, Dera Ghazi Khan
+*MUDASIR TRADERS-DG KHAN*
 
-📄 *Invoice #:* ${invoiceData.invoiceNo}
-👤 *Customer:* ${invoiceData.customerName}
-📞 *Contact:* ${invoiceData.customerContactNumber}
+Phone: +923349627745 | +923215392445
+Location: General Bus Stand, Badozai Market, Dera Ghazi Khan
 
-💰 *Total Amount:* Rs ${totalAmount}
-${remainingAmount > 0 ? `💳 *Remaining:* Rs ${remainingAmount}` : '✅ *Status:* Paid in Full'}
+--------------------------------
 
-📱 *Thank you for your business!*
-For any queries, contact us at +923349627745`;
+*INVOICE INFORMATION*
+
+Invoice No: *${invoiceData.invoiceNo}*
+Customer: *${invoiceData.customerName}*
+Contact: *${invoiceData.customerContactNumber}*
+
+--------------------------------
+
+*PAYMENT DETAILS*
+
+Total Amount: *Rs ${totalAmount.toLocaleString()}*
+${remainingAmount > 0 
+  ? `Payment Status: *PENDING*\nOutstanding: *Rs ${remainingAmount.toLocaleString()}*` 
+  : `Payment Status: *PAID IN FULL*`}
+
+--------------------------------
+
+*VIEW FULL INVOICE*
+
+${process.env.NEXT_PUBLIC_BASE_URL || 
+  (typeof window !== 'undefined' 
+    ? `${window.location.protocol}//${window.location.host}` 
+    : 'https://mudasirtraders.com')}/invoice/${invoiceData._id || invoiceData.id || 'unknown'}
+
+================================
+
+*Thank you for choosing us!*
+
+Questions? Call us at:
++923349627745
+
+================================`;
 
   const handleWhatsAppClick = async () => {
     try {
-      // Use the exact same download handler as the download button
+      // Debug: Log the invoice data structure
+      console.log('Invoice data for WhatsApp:', invoiceData);
+      console.log('Invoice ID:', invoiceData._id || invoiceData.id || 'No ID found');
+      
+      // Generate PDF and get it as base64 or blob
       const invoiceModal = document.querySelector(
         '[data-invoice-modal]'
       ) as HTMLElement;
 
       if (invoiceModal) {
-        // Use the same printHtmlAsPdf function as downloadHandler
-        await printHtmlAsPdf(invoiceModal);
-
-        // Open WhatsApp after PDF generation
+        // For now, we'll use the text-only approach since direct PDF sharing isn't possible
+        // You could implement cloud upload here if needed
+        
         if (invoiceData.customerContactNumber) {
           const cleanPhone = invoiceData.customerContactNumber.replace(
             /\D/g,
@@ -59,12 +89,12 @@ For any queries, contact us at +923349627745`;
             ? cleanPhone
             : `92${cleanPhone}`;
 
-          // Use wa.me format which opens WhatsApp desktop app
-          const whatsappUrl = `https://wa.me/${formattedPhone}`;
+          // Create WhatsApp message with text only
+          const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
           window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
         } else {
           // If no phone number, open WhatsApp without specific contact
-          const whatsappUrl = `https://wa.me/`;
+          const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
           window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
         }
       }
