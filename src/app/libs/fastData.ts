@@ -125,11 +125,45 @@ export async function fastGetCategories() {
     const categories = await db
       .collection('categories')
       .find({})
-      .sort({ name: 1 })
+      .sort({ brandName: 1 })
       .limit(100)
       .toArray();
 
-    return { success: true, data: serializeDocuments(categories) };
+    // Sort series within each category alphabetically by name
+    const sortedCategories = categories.map(category => {
+      if (category.series && Array.isArray(category.series)) {
+        category.series = [...category.series].sort((a: any, b: any) => 
+          a.name.localeCompare(b.name)
+        );
+      }
+      return category;
+    });
+
+    // Ensure proper serialization to plain objects
+    const serializedCategories = sortedCategories.map((category: any) => {
+      const serialized: any = {};
+      for (const key in category) {
+        if (key === '_id') {
+          serialized['id'] = category[key].toString();
+        } else if (key === 'series' && Array.isArray(category[key])) {
+          // Ensure series is properly serialized as plain objects
+          serialized[key] = category[key].map((item: any) => {
+            const seriesItem: any = {};
+            for (const itemKey in item) {
+              if (itemKey !== '_id') {
+                seriesItem[itemKey] = item[itemKey];
+              }
+            }
+            return seriesItem;
+          });
+        } else {
+          serialized[key] = category[key];
+        }
+      }
+      return serialized;
+    });
+
+    return { success: true, data: serializedCategories };
   } catch (error) {
     console.error('Fast getCategories error:', error);
     return { success: false, error: (error as Error).message };

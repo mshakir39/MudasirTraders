@@ -179,7 +179,6 @@ const PdfUploadModal: React.FC<PdfUploadModalProps> = ({
           'ah',
           'retailPrice',
           'salesTax',
-          'maxRetailPrice',
         ];
         for (const field of requiredFields) {
           if (!(field in product)) {

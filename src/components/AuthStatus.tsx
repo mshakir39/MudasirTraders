@@ -52,7 +52,7 @@ export default function AuthStatus({
         setLastNotifiedValues({ isSignedIn, isDashboardUnlocked: unlocked });
       }
     }
-  }, [status, isMounted, onStatusChange, lastNotifiedValues]);
+  }, [status, isMounted, onStatusChange, lastNotifiedValues, isDashboardUnlocked]);
 
   useEffect(() => {
     setIsMounted(true);
