@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'; // React 19: Better for real-time data
 export const revalidate = 0; // React 19: No caching for latest customer data
 
 export const metadata: Metadata = {
-  title: 'Customers | PowerHub',
+  title: 'Customers | Mudasir Traders',
   description: 'Manage your customers and their information',
 };
 

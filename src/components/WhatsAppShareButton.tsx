@@ -43,18 +43,22 @@ Contact: *${invoiceData.customerContactNumber}*
 *PAYMENT DETAILS*
 
 Total Amount: *Rs ${totalAmount.toLocaleString()}*
-${remainingAmount > 0 
-  ? `Payment Status: *PENDING*\nOutstanding: *Rs ${remainingAmount.toLocaleString()}*` 
-  : `Payment Status: *PAID IN FULL*`}
+${
+  remainingAmount > 0
+    ? `Payment Status: *PENDING*\nOutstanding: *Rs ${remainingAmount.toLocaleString()}*`
+    : `Payment Status: *PAID IN FULL*`
+}
 
 --------------------------------
 
 *VIEW FULL INVOICE*
 
-${process.env.NEXT_PUBLIC_BASE_URL || 
-  (typeof window !== 'undefined' 
-    ? `${window.location.protocol}//${window.location.host}` 
-    : 'https://mudasirtraders.com')}/invoice/${invoiceData._id || invoiceData.id || 'unknown'}
+${
+  process.env.NEXT_PUBLIC_BASE_URL ||
+  (typeof window !== 'undefined'
+    ? `${window.location.protocol}//${window.location.host}`
+    : 'https://mudasirtraders.com')
+}/invoice/${invoiceData._id || invoiceData.id || 'unknown'}
 
 ================================
 
@@ -69,8 +73,11 @@ Questions? Call us at:
     try {
       // Debug: Log the invoice data structure
       console.log('Invoice data for WhatsApp:', invoiceData);
-      console.log('Invoice ID:', invoiceData._id || invoiceData.id || 'No ID found');
-      
+      console.log(
+        'Invoice ID:',
+        invoiceData._id || invoiceData.id || 'No ID found'
+      );
+
       // Generate PDF and get it as base64 or blob
       const invoiceModal = document.querySelector(
         '[data-invoice-modal]'
@@ -79,7 +86,7 @@ Questions? Call us at:
       if (invoiceModal) {
         // For now, we'll use the text-only approach since direct PDF sharing isn't possible
         // You could implement cloud upload here if needed
-        
+
         if (invoiceData.customerContactNumber) {
           const cleanPhone = invoiceData.customerContactNumber.replace(
             /\D/g,

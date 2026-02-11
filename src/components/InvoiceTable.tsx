@@ -9,28 +9,45 @@ interface InvoiceTableProps<T> {
   footerData: any;
 }
 
-const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({ data, columns, footerData }) => {
+const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({
+  data,
+  columns,
+  footerData,
+}) => {
   // Add space to Amount in footerData
   const modifiedFooterData = {
     ...footerData,
-    'Amount': footerData['Amount'] ? footerData['Amount'].replace('Rs', 'Rs\u00A0') : footerData['Amount']
+    Amount: footerData['Amount']
+      ? footerData['Amount'].replace('Rs', 'Rs\u00A0')
+      : footerData['Amount'],
   };
 
   return (
-    <div className="w-full">
+    <div className='w-full'>
       {/* Mobile View - Card Layout */}
-      <div className="block lg:hidden">
+      <div className='block lg:hidden'>
         {data?.map((row, rowIndex) => (
-          <div key={rowIndex} className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center border-b pb-2">
-                <span className="font-bold text-gray-800">Item #{rowIndex + 1}</span>
-                <span className="font-bold text-gray-800">Rs {row.totalPrice}</span>
+          <div
+            key={rowIndex}
+            className='mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm'
+          >
+            <div className='space-y-3'>
+              <div className='flex items-center justify-between border-b pb-2'>
+                <span className='font-bold text-gray-800'>
+                  Item #{rowIndex + 1}
+                </span>
+                <span className='font-bold text-gray-800'>
+                  Rs {row.totalPrice}
+                </span>
               </div>
-              <div className="text-sm text-gray-700">
-                <div className="font-medium">{columns[1].renderCell(row, rowIndex)}</div>
-                <div className="text-gray-600">Qty: {row.quantity}</div>
-                <div className="text-gray-600">Price: Rs {row.productPrice}</div>
+              <div className='text-sm text-gray-700'>
+                <div className='font-medium'>
+                  {columns[1].renderCell(row, rowIndex)}
+                </div>
+                <div className='text-gray-600'>Qty: {row.quantity}</div>
+                <div className='text-gray-600'>
+                  Price: Rs {row.productPrice}
+                </div>
               </div>
             </div>
           </div>
@@ -38,12 +55,15 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({ data, columns, footerD
       </div>
 
       {/* Desktop View - Table Layout */}
-      <div className="hidden lg:block overflow-x-auto">
+      <div className='hidden overflow-x-auto lg:block'>
         <table className='w-full border-collapse'>
           <thead>
             <tr className='bg-[#021B3B] text-white'>
               {columns?.map((column, index) => (
-                <th key={index} className='p-3 md:p-4 text-sm md:text-base lg:text-lg font-bold text-left'>
+                <th
+                  key={index}
+                  className='p-3 text-left text-sm font-bold md:p-4 md:text-base lg:text-lg'
+                >
                   {column.label}
                 </th>
               ))}
@@ -51,9 +71,15 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({ data, columns, footerD
           </thead>
           <tbody>
             {data?.map((row, rowIndex) => (
-              <tr key={rowIndex} className='hover:bg-gray-50 border-b border-gray-100'>
+              <tr
+                key={rowIndex}
+                className='border-b border-gray-100 hover:bg-gray-50'
+              >
                 {columns?.map((column, index) => (
-                  <td key={index} className='p-3 md:p-4 text-sm md:text-base text-gray-700 text-left'>
+                  <td
+                    key={index}
+                    className='p-3 text-left text-sm text-gray-700 md:p-4 md:text-base'
+                  >
                     {column.renderCell(row, rowIndex)}
                   </td>
                 ))}
@@ -63,7 +89,10 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({ data, columns, footerD
           <tfoot>
             <tr className='bg-gray-100 font-bold'>
               {columns?.map((column, index) => (
-                <td key={index} className='p-3 md:p-4 text-sm md:text-base lg:text-lg font-bold text-left border-t-2 border-gray-300'>
+                <td
+                  key={index}
+                  className='border-t-2 border-gray-300 p-3 text-left text-sm font-bold md:p-4 md:text-base lg:text-lg'
+                >
                   {modifiedFooterData[column.label]}
                 </td>
               ))}

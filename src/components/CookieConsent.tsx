@@ -29,31 +29,33 @@ export default function CookieConsent() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4 z-50 shadow-lg">
-      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex-1">
-          <p className="text-sm">
-            <span className="font-semibold">Cookie Notice:</span> We use Google Maps for location services, which may use cookies. 
-            By continuing to use our site, you agree to our use of cookies for essential functionality.
+    <div className='fixed bottom-0 left-0 right-0 z-50 bg-gray-900 p-4 text-white shadow-lg'>
+      <div className='mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row'>
+        <div className='flex-1'>
+          <p className='text-sm'>
+            <span className='font-semibold'>Cookie Notice:</span> We use Google
+            Maps for location services, which may use cookies. By continuing to
+            use our site, you agree to our use of cookies for essential
+            functionality.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className='flex items-center gap-2'>
           <button
             onClick={declineCookies}
-            className="px-4 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded transition-colors"
+            className='rounded bg-gray-700 px-4 py-2 text-sm transition-colors hover:bg-gray-600'
           >
             Decline
           </button>
           <button
             onClick={acceptCookies}
-            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+            className='rounded bg-blue-600 px-4 py-2 text-sm transition-colors hover:bg-blue-700'
           >
             Accept
           </button>
           <button
             onClick={() => setShowConsent(false)}
-            className="p-2 hover:bg-gray-700 rounded transition-colors"
-            aria-label="Close cookie consent"
+            className='rounded p-2 transition-colors hover:bg-gray-700'
+            aria-label='Close cookie consent'
           >
             <X size={16} />
           </button>

@@ -504,88 +504,91 @@ export async function appendSeriesToCategory(
 
     // Get current series and merge with new ones (avoiding duplicates)
     const existingSeries = currentCategory?.series || [];
-    
+
     // Create a map of existing products by normalized name for easy lookup
     const existingProductsMap = new Map(
       existingSeries.map((product: IBatterySeries) => {
-        const normalized = product.name.trim()
-          .replace(/\s+/g, ' ')           // Multiple spaces to single space
-          .replace(/\s*-\s*/g, '-')         // Spaces around dash to single dash
-          .replace(/\s*\(\s*/g, '(')       // Spaces around opening parenthesis
-          .replace(/\s*\)\s*/g, ')')       // Spaces around closing parenthesis
-          .replace(/\s*\+\s*/g, '+')       // Spaces around plus sign
-          .replace(/\s*\/\s*/g, '/')       // Spaces around slash
-          .replace(/\s*\.\s*/g, '.')       // Spaces around dots
-          .replace(/\s*R\s*/g, 'R')       // Spaces around 'R'
-          .replace(/\s*L\s*/g, 'L')       // Spaces around 'L'
-          .replace(/\s*n\-s\s*/gi, 'n-s')  // Normalize "N-S" variations
-          .replace(/\(1200x12\)/gi, '')    // Remove (1200x12) suffix
-          .replace(/\(l\.e\.\)/gi, '')     // Remove (L.E.) suffix
-          .replace(/\(s\.e\)/gi, '')      // Remove (S.E) suffix
-          .replace(/^mf\s+/gi, '')         // Remove MF prefix for matching
-          .replace(/^ht\s+/gi, '')         // Remove HT prefix for matching
-          .replace(/\s*new\s*/gi, '')      // Remove NEW suffix for matching
+        const normalized = product.name
+          .trim()
+          .replace(/\s+/g, ' ') // Multiple spaces to single space
+          .replace(/\s*-\s*/g, '-') // Spaces around dash to single dash
+          .replace(/\s*\(\s*/g, '(') // Spaces around opening parenthesis
+          .replace(/\s*\)\s*/g, ')') // Spaces around closing parenthesis
+          .replace(/\s*\+\s*/g, '+') // Spaces around plus sign
+          .replace(/\s*\/\s*/g, '/') // Spaces around slash
+          .replace(/\s*\.\s*/g, '.') // Spaces around dots
+          .replace(/\s*R\s*/g, 'R') // Spaces around 'R'
+          .replace(/\s*L\s*/g, 'L') // Spaces around 'L'
+          .replace(/\s*n\-s\s*/gi, 'n-s') // Normalize "N-S" variations
+          .replace(/\(1200x12\)/gi, '') // Remove (1200x12) suffix
+          .replace(/\(l\.e\.\)/gi, '') // Remove (L.E.) suffix
+          .replace(/\(s\.e\)/gi, '') // Remove (S.E) suffix
+          .replace(/^mf\s+/gi, '') // Remove MF prefix for matching
+          .replace(/^ht\s+/gi, '') // Remove HT prefix for matching
+          .replace(/\s*new\s*/gi, '') // Remove NEW suffix for matching
           .replace(/\s*thin\/thick\s*/gi, '') // Remove Thin/Thick for matching
           .replace(/\s*thin\/thick\s*pole\s*/gi, '') // Remove Thin/Thick Pole for matching
-          .toLowerCase();                 // Case insensitive comparison
+          .toLowerCase(); // Case insensitive comparison
         return [normalized, product];
       })
     );
-    
+
     // Simple logging to avoid MongoDB serialization issues
     console.log('Existing count:', existingSeries.length);
     console.log('New count:', newSeries.length);
-    
+
     // Merge products: update existing ones, add new ones
     const mergedSeries = [...existingSeries]; // Start with existing
     let updateCount = 0;
     let addCount = 0;
-    
-    newSeries.forEach(newProduct => {
-      const normalized = newProduct.name.trim()
-        .replace(/\s+/g, ' ')           // Multiple spaces to single space
-        .replace(/\s*-\s*/g, '-')         // Spaces around dash to single dash
-        .replace(/\s*\(\s*/g, '(')       // Spaces around opening parenthesis
-        .replace(/\s*\)\s*/g, ')')       // Spaces around closing parenthesis
-        .replace(/\s*\+\s*/g, '+')       // Spaces around plus sign
-        .replace(/\s*\/\s*/g, '/')       // Spaces around slash
-        .replace(/\s*\.\s*/g, '.')       // Spaces around dots
-        .replace(/\s*R\s*/g, 'R')       // Spaces around 'R'
-        .replace(/\s*L\s*/g, 'L')       // Spaces around 'L'
-        .replace(/\s*n\-s\s*/gi, 'n-s')  // Normalize "N-S" variations
-        .replace(/\(1200x12\)/gi, '')    // Remove (1200x12) suffix
-        .replace(/\(l\.e\.\)/gi, '')     // Remove (L.E.) suffix
-        .replace(/\(s\.e\)/gi, '')      // Remove (S.E) suffix
-        .replace(/^mf\s+/gi, '')         // Remove MF prefix for matching
-        .replace(/^ht\s+/gi, '')         // Remove HT prefix for matching
-        .replace(/\s*new\s*/gi, '')      // Remove NEW suffix for matching
+
+    newSeries.forEach((newProduct) => {
+      const normalized = newProduct.name
+        .trim()
+        .replace(/\s+/g, ' ') // Multiple spaces to single space
+        .replace(/\s*-\s*/g, '-') // Spaces around dash to single dash
+        .replace(/\s*\(\s*/g, '(') // Spaces around opening parenthesis
+        .replace(/\s*\)\s*/g, ')') // Spaces around closing parenthesis
+        .replace(/\s*\+\s*/g, '+') // Spaces around plus sign
+        .replace(/\s*\/\s*/g, '/') // Spaces around slash
+        .replace(/\s*\.\s*/g, '.') // Spaces around dots
+        .replace(/\s*R\s*/g, 'R') // Spaces around 'R'
+        .replace(/\s*L\s*/g, 'L') // Spaces around 'L'
+        .replace(/\s*n\-s\s*/gi, 'n-s') // Normalize "N-S" variations
+        .replace(/\(1200x12\)/gi, '') // Remove (1200x12) suffix
+        .replace(/\(l\.e\.\)/gi, '') // Remove (L.E.) suffix
+        .replace(/\(s\.e\)/gi, '') // Remove (S.E) suffix
+        .replace(/^mf\s+/gi, '') // Remove MF prefix for matching
+        .replace(/^ht\s+/gi, '') // Remove HT prefix for matching
+        .replace(/\s*new\s*/gi, '') // Remove NEW suffix for matching
         .replace(/\s*thin\/thick\s*/gi, '') // Remove Thin/Thick for matching
         .replace(/\s*thin\/thick\s*pole\s*/gi, '') // Remove Thin/Thick Pole for matching
-        .toLowerCase();                 // Case insensitive comparison
-        
+        .toLowerCase(); // Case insensitive comparison
+
       if (existingProductsMap.has(normalized)) {
         // Update existing product
-        const index = mergedSeries.findIndex(p => {
-          const pNormalized = p.name.trim()
-            .replace(/\s+/g, ' ')           // Multiple spaces to single space
-            .replace(/\s*-\s*/g, '-')         // Spaces around dash to single dash
-            .replace(/\s*\(\s*/g, '(')       // Spaces around opening parenthesis
-            .replace(/\s*\)\s*/g, ')')       // Spaces around closing parenthesis
-            .replace(/\s*\+\s*/g, '+')       // Spaces around plus sign
-            .replace(/\s*\/\s*/g, '/')       // Spaces around slash
-            .replace(/\s*\.\s*/g, '.')       // Spaces around dots
-            .replace(/\s*R\s*/g, 'R')       // Spaces around 'R'
-            .replace(/\s*L\s*/g, 'L')       // Spaces around 'L'
-            .replace(/\s*n\-s\s*/gi, 'n-s')  // Normalize "N-S" variations
-            .replace(/\(1200x12\)/gi, '')    // Remove (1200x12) suffix
-            .replace(/\(l\.e\.\)/gi, '')     // Remove (L.E.) suffix
-            .replace(/\(s\.e\)/gi, '')      // Remove (S.E) suffix
-            .replace(/^mf\s+/gi, '')         // Remove MF prefix for matching
-            .replace(/^ht\s+/gi, '')         // Remove HT prefix for matching
-            .replace(/\s*new\s*/gi, '')      // Remove NEW suffix for matching
+        const index = mergedSeries.findIndex((p) => {
+          const pNormalized = p.name
+            .trim()
+            .replace(/\s+/g, ' ') // Multiple spaces to single space
+            .replace(/\s*-\s*/g, '-') // Spaces around dash to single dash
+            .replace(/\s*\(\s*/g, '(') // Spaces around opening parenthesis
+            .replace(/\s*\)\s*/g, ')') // Spaces around closing parenthesis
+            .replace(/\s*\+\s*/g, '+') // Spaces around plus sign
+            .replace(/\s*\/\s*/g, '/') // Spaces around slash
+            .replace(/\s*\.\s*/g, '.') // Spaces around dots
+            .replace(/\s*R\s*/g, 'R') // Spaces around 'R'
+            .replace(/\s*L\s*/g, 'L') // Spaces around 'L'
+            .replace(/\s*n\-s\s*/gi, 'n-s') // Normalize "N-S" variations
+            .replace(/\(1200x12\)/gi, '') // Remove (1200x12) suffix
+            .replace(/\(l\.e\.\)/gi, '') // Remove (L.E.) suffix
+            .replace(/\(s\.e\)/gi, '') // Remove (S.E) suffix
+            .replace(/^mf\s+/gi, '') // Remove MF prefix for matching
+            .replace(/^ht\s+/gi, '') // Remove HT prefix for matching
+            .replace(/\s*new\s*/gi, '') // Remove NEW suffix for matching
             .replace(/\s*thin\/thick\s*/gi, '') // Remove Thin/Thick for matching
             .replace(/\s*thin\/thick\s*pole\s*/gi, '') // Remove Thin/Thick Pole for matching
-            .toLowerCase();                 // Case insensitive comparison
+            .toLowerCase(); // Case insensitive comparison
           return pNormalized === normalized;
         });
         if (index !== -1) {
@@ -605,21 +608,24 @@ export async function appendSeriesToCategory(
     // Update category with merged series and return the updated document
     const updateResult = await collection.updateOne(
       { _id: new ObjectId(categoryId) },
-      { 
+      {
         $set: {
           series: mergedSeries,
           updatedAt: new Date(),
-        }
+        },
       }
     );
 
     // Get the updated category to return
     const updatedCategory = await collection.findOne({
-      _id: new ObjectId(categoryId)
+      _id: new ObjectId(categoryId),
     });
 
     console.log('MongoDB update result:', updateResult);
-    console.log('Updated category series count:', updatedCategory?.series?.length);
+    console.log(
+      'Updated category series count:',
+      updatedCategory?.series?.length
+    );
 
     return { success: true, data: updatedCategory as unknown as ICategory };
   } catch (error) {

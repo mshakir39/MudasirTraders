@@ -47,7 +47,6 @@ export default function MeetupSection() {
 
   // If no images are returned from API, you can hide the section or show a message
   if (meetups.length === 0) return null;
-
   return (
     <div className='w-full bg-gray-50'>
       <section className='py-24'>
@@ -96,15 +95,32 @@ export default function MeetupSection() {
                   <div className='group mt-12 overflow-hidden rounded-2xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl'>
                     {/* Image */}
                     <div
-                      className='relative h-64 cursor-pointer overflow-hidden'
+                      className='relative h-80 w-full cursor-pointer overflow-hidden'
                       onClick={() => setSelectedImage(meetup.url)}
                     >
                       <Image
                         src={meetup.url}
                         alt={meetup.title || 'Community Meetup'}
-                        fill
-                        className='object-cover transition-transform duration-300 group-hover:scale-105'
-                        sizes='(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw'
+                        fill={true}
+                        sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+                        className={`transition-transform duration-300 group-hover:scale-105 ${
+                          meetup.position === 'contain'
+                            ? 'object-contain'
+                            : 'object-cover'
+                        }`}
+                        style={{
+                          objectPosition:
+                            meetup.position && meetup.position !== 'contain'
+                              ? meetup.position === 'custom' &&
+                                meetup.customPosition
+                                ? `${meetup.customPosition.x}% ${meetup.customPosition.y}%`
+                                : meetup.position === 'top'
+                                  ? 'center top'
+                                  : meetup.position === 'bottom'
+                                    ? 'center bottom'
+                                    : 'center'
+                              : 'center',
+                        }}
                       />
                       <div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent'></div>
 
@@ -151,10 +167,13 @@ export default function MeetupSection() {
           onClick={() => setSelectedImage(null)}
         >
           <div className='relative max-h-full max-w-6xl'>
-            <img
+            <Image
               src={selectedImage}
               alt='Meetup Image Preview'
+              width={1200}
+              height={800}
               className='max-h-[90vh] max-w-full rounded-lg object-contain'
+              style={{ objectFit: 'contain' }}
             />
             <button
               onClick={() => setSelectedImage(null)}

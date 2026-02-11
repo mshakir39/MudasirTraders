@@ -123,32 +123,32 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
 
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
-       {
-      accessorKey: 'invoiceNo',
-      header: 'Invoice #',
-      // Add explicit string conversion
-      cell: ({ row }) => String(row.original.invoiceNo || ''),
-    },
-    {
-      accessorKey: 'customerName',
-      header: 'Customer Name',
-      cell: ({ row }) => String(row.original.customerName || ''),
-    },
-    {
-      accessorKey: 'customerContactNumber',
-      header: 'Contact #',
-      cell: ({ row }) => String(row.original.customerContactNumber || ''),
-    },
-    {
-      accessorKey: 'paymentMethod',
-      header: 'Payment Method',
-      cell: ({ row }) => String(row.original.paymentMethod || ''),
-    },
-    {
-      accessorKey: 'batteriesCountAndWeight',
-      header: 'Batteries Count and Weight',
-      cell: ({ row }) => String(row.original.batteriesCountAndWeight || ''),
-    },
+      {
+        accessorKey: 'invoiceNo',
+        header: 'Invoice #',
+        // Add explicit string conversion
+        cell: ({ row }) => String(row.original.invoiceNo || ''),
+      },
+      {
+        accessorKey: 'customerName',
+        header: 'Customer Name',
+        cell: ({ row }) => String(row.original.customerName || ''),
+      },
+      {
+        accessorKey: 'customerContactNumber',
+        header: 'Contact #',
+        cell: ({ row }) => String(row.original.customerContactNumber || ''),
+      },
+      {
+        accessorKey: 'paymentMethod',
+        header: 'Payment Method',
+        cell: ({ row }) => String(row.original.paymentMethod || ''),
+      },
+      {
+        accessorKey: 'batteriesCountAndWeight',
+        header: 'Batteries Count and Weight',
+        cell: ({ row }) => String(row.original.batteriesCountAndWeight || ''),
+      },
       {
         accessorKey: 'createdDate',
         header: 'Created Date',
@@ -296,41 +296,44 @@ const InvoiceGrid: React.FC<InvoiceGridProps> = ({
   return (
     <>
       <Table
-  data={invoices}
-  columns={columns}
-  enableSearch={true}
-  searchPlaceholder='Search invoices...'
-  enablePagination={true}
-  pageSize={10}
-  enableRowVirtualization={true}
-  tableBodyHeight={600}
-  buttonTitle={showCreateButton ? 'Create Invoice' : undefined}
-  buttonOnClick={showCreateButton ? onCreateInvoice : undefined}
-  showButton={showCreateButton}
-  // Add this prop to handle search properly
-  extraGlobalSearchText={(row: any) => {
-    const searchableFields = [
-      row.invoiceNo,
-      row.customerName,
-      row.customerContactNumber,
-      row.paymentMethod,
-      row.batteriesCountAndWeight,
-      row.batteriesRate,
-      row.remainingAmount,
-      // Convert date to searchable format
-      row.createdDate ? convertDate(row.createdDate).dateTime : '',
-      // Convert products array to searchable text
-      row.products?.map((p: any) => 
-        `${p.name || ''} ${p.category || ''} ${p.brand || ''}`
-      ).join(' ') || '',
-    ];
-    
-    return searchableFields
-      .filter(Boolean)
-      .map(field => String(field || ''))
-      .join(' ');
-  }}
-/>
+        data={invoices}
+        columns={columns}
+        enableSearch={true}
+        searchPlaceholder='Search invoices...'
+        enablePagination={true}
+        pageSize={10}
+        enableRowVirtualization={true}
+        tableBodyHeight={600}
+        buttonTitle={showCreateButton ? 'Create Invoice' : undefined}
+        buttonOnClick={showCreateButton ? onCreateInvoice : undefined}
+        showButton={showCreateButton}
+        // Add this prop to handle search properly
+        extraGlobalSearchText={(row: any) => {
+          const searchableFields = [
+            row.invoiceNo,
+            row.customerName,
+            row.customerContactNumber,
+            row.paymentMethod,
+            row.batteriesCountAndWeight,
+            row.batteriesRate,
+            row.remainingAmount,
+            // Convert date to searchable format
+            row.createdDate ? convertDate(row.createdDate).dateTime : '',
+            // Convert products array to searchable text
+            row.products
+              ?.map(
+                (p: any) =>
+                  `${p.name || ''} ${p.category || ''} ${p.brand || ''}`
+              )
+              .join(' ') || '',
+          ];
+
+          return searchableFields
+            .filter(Boolean)
+            .map((field) => String(field || ''))
+            .join(' ');
+        }}
+      />
       <Modal
         isOpen={deleteModal.isOpen}
         onClose={handleDeleteCancel}

@@ -61,7 +61,7 @@ const BatteryList: React.FC<BatteryListProps> = ({
       <div className='mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
         {/* Search Input - Full width on mobile, half on desktop */}
         <div className='w-full sm:w-1/2 lg:w-3/5'>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
+          <label className='mb-1 block text-sm font-medium text-gray-700'>
             Search batteries
           </label>
           <input
@@ -161,8 +161,8 @@ const BatteryList: React.FC<BatteryListProps> = ({
                   No batteries found
                 </h3>
                 <p className='text-sm text-gray-500'>
-                  No batteries match your search criteria. Try adjusting
-                  your search terms.
+                  No batteries match your search criteria. Try adjusting your
+                  search terms.
                 </p>
               </div>
             </div>
@@ -206,9 +206,7 @@ const BatteryItem: React.FC<BatteryItemProps> = ({
         {/* Header Row */}
         <div className='mb-3 flex items-start justify-between'>
           <div className='flex-1'>
-            <h3 className='font-semibold text-gray-900'>
-              {item.name}
-            </h3>
+            <h3 className='font-semibold text-gray-900'>{item.name}</h3>
             <div className='mt-1 flex flex-wrap gap-2 text-sm text-gray-600'>
               <span>Plate: {item.plate}</span>
               <span>•</span>
@@ -277,14 +275,8 @@ const BatteryItem: React.FC<BatteryItemProps> = ({
             {editingBattery === item.name ? (
               <input
                 type='number'
-                value={
-                  editingPrice[item.name] ??
-                  item.retailPrice ??
-                  ''
-                }
-                onChange={(e) =>
-                  onPriceChange(item.name, e.target.value)
-                }
+                value={editingPrice[item.name] ?? item.retailPrice ?? ''}
+                onChange={(e) => onPriceChange(item.name, e.target.value)}
                 className='w-full rounded border p-2 text-base focus:border-blue-500 focus:outline-none'
                 placeholder='Enter price'
               />
@@ -299,26 +291,21 @@ const BatteryItem: React.FC<BatteryItemProps> = ({
           <div className='grid grid-cols-2 gap-3'>
             <div className='rounded-lg bg-gray-50 p-3'>
               <span className='text-xs text-gray-500'>
-                Sales Tax (
-                {item.salesTax ?? detailData?.salesTax ?? 18}%)
+                Sales Tax ({item.salesTax ?? detailData?.salesTax ?? 18}%)
               </span>
               <p className='font-medium text-gray-900'>
                 Rs{' '}
                 {item.retailPrice
                   ? Math.round(
                       (item.retailPrice *
-                        (item.salesTax ??
-                          detailData?.salesTax ??
-                          18)) /
+                        (item.salesTax ?? detailData?.salesTax ?? 18)) /
                         100
                     )
                   : 'N/A'}
               </p>
             </div>
             <div className='rounded-lg bg-gray-50 p-3'>
-              <span className='text-xs text-gray-500'>
-                Max Retail Price
-              </span>
+              <span className='text-xs text-gray-500'>Max Retail Price</span>
               <p className='font-medium text-gray-900'>
                 Rs {item.maxRetailPrice || 'N/A'}
               </p>
@@ -332,15 +319,11 @@ const BatteryItem: React.FC<BatteryItemProps> = ({
         <div className='grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-8'>
           <div>
             <span className='text-sm text-gray-500'>Name</span>
-            <p className='break-words font-medium text-gray-900'>
-              {item.name}
-            </p>
+            <p className='break-words font-medium text-gray-900'>{item.name}</p>
           </div>
           <div>
             <span className='text-sm text-gray-500'>Plate</span>
-            <p className='font-medium text-gray-900'>
-              {item.plate}
-            </p>
+            <p className='font-medium text-gray-900'>{item.plate}</p>
           </div>
           <div>
             <span className='text-sm text-gray-500'>AH</span>
@@ -348,9 +331,7 @@ const BatteryItem: React.FC<BatteryItemProps> = ({
           </div>
           <div className='col-span-2 md:col-span-1 lg:col-span-1'>
             <div className='mb-1 flex items-center justify-between'>
-              <span className='text-sm text-gray-500'>
-                Retail Price
-              </span>
+              <span className='text-sm text-gray-500'>Retail Price</span>
               {editingBattery !== item.name ? (
                 <button
                   onClick={() => {
@@ -389,14 +370,8 @@ const BatteryItem: React.FC<BatteryItemProps> = ({
             {editingBattery === item.name ? (
               <input
                 type='number'
-                value={
-                  editingPrice[item.name] ??
-                  item.retailPrice ??
-                  ''
-                }
-                onChange={(e) =>
-                  onPriceChange(item.name, e.target.value)
-                }
+                value={editingPrice[item.name] ?? item.retailPrice ?? ''}
+                onChange={(e) => onPriceChange(item.name, e.target.value)}
                 className='w-full rounded border p-1 text-sm focus:border-blue-500 focus:outline-none'
                 placeholder='Enter price'
               />
@@ -409,8 +384,7 @@ const BatteryItem: React.FC<BatteryItemProps> = ({
           <div>
             <div className='flex items-center justify-between'>
               <span className='text-sm text-gray-500'>
-                Sales Tax (
-                {item.salesTax ?? detailData?.salesTax ?? 18}%)
+                Sales Tax ({item.salesTax ?? detailData?.salesTax ?? 18}%)
               </span>
             </div>
             <p className='font-medium text-gray-900'>
@@ -418,18 +392,14 @@ const BatteryItem: React.FC<BatteryItemProps> = ({
               {item.retailPrice
                 ? Math.round(
                     (item.retailPrice *
-                      (item.salesTax ??
-                        detailData?.salesTax ??
-                        18)) /
+                      (item.salesTax ?? detailData?.salesTax ?? 18)) /
                       100
                   )
                 : 'N/A'}
             </p>
           </div>
           <div>
-            <span className='text-sm text-gray-500'>
-              Max Retail Price
-            </span>
+            <span className='text-sm text-gray-500'>Max Retail Price</span>
             <p className='font-medium text-gray-900'>
               Rs {item.maxRetailPrice || 'N/A'}
             </p>
@@ -437,9 +407,7 @@ const BatteryItem: React.FC<BatteryItemProps> = ({
           {item.type && (
             <div>
               <span className='text-sm text-gray-500'>Type</span>
-              <p className='font-medium text-gray-900'>
-                {item.type}
-              </p>
+              <p className='font-medium text-gray-900'>{item.type}</p>
             </div>
           )}
           {/* Delete Button - Desktop */}

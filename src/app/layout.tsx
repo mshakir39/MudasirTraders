@@ -8,15 +8,13 @@ import 'rsuite-table/dist/css/rsuite-table.css';
 import './globals.css';
 import '../styles/scrollbar.css';
 
-const inter = Inter({ 
-  subsets: ['latin'], 
+const inter = Inter({
+  subsets: ['latin'],
   display: 'swap',
   fallback: ['system-ui', 'arial', 'sans-serif'],
-  preload: true,  // Change back to true for better UX
+  preload: true, // Change back to true for better UX
   variable: '--font-inter',
 });
-
-
 
 export const metadata: Metadata = {
   title:
@@ -59,8 +57,14 @@ export const metadata: Metadata = {
     ],
   },
   icons: {
-    icon: { url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.15"/></filter></defs><rect x="0" y="0" width="48" height="48" rx="12" fill="%232563EB" filter="url(%23shadow)"/><path d="M26 12L18 26H24L22 36L30 22H24L26 12Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/></svg>', type: 'image/svg+xml' },
-    shortcut: { url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.15"/></filter></defs><rect x="0" y="0" width="48" height="48" rx="12" fill="%232563EB" filter="url(%23shadow)"/><path d="M26 12L18 26H24L22 36L30 22H24L26 12Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/></svg>', type: 'image/svg+xml' },
+    icon: {
+      url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.15"/></filter></defs><rect x="0" y="0" width="48" height="48" rx="12" fill="%232563EB" filter="url(%23shadow)"/><path d="M26 12L18 26H24L22 36L30 22H24L26 12Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/></svg>',
+      type: 'image/svg+xml',
+    },
+    shortcut: {
+      url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.15"/></filter></defs><rect x="0" y="0" width="48" height="48" rx="12" fill="%232563EB" filter="url(%23shadow)"/><path d="M26 12L18 26H24L22 36L30 22H24L26 12Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/></svg>',
+      type: 'image/svg+xml',
+    },
     apple: [
       { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
@@ -78,65 +82,65 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "Mudasir Traders",
-    "description": "Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries for cars, UPS systems, and solar applications. Expert battery installation services in Dera Ghazi Khan, Pakistan.",
-    "url": "https://mudasirtraders.com",
-    "telephone": "+92-334-9627745",
-    "email": "owner@mudasirtraders.com",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "General Bus Stand, near Badozai Market",
-      "addressLocality": "Dera Ghazi Khan",
-      "addressRegion": "Punjab",
-      "postalCode": "32200",
-      "addressCountry": "PK"
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'Mudasir Traders',
+    description:
+      'Authorized dealer of Osaka, AGS, Exide, Phoenix & Daewoo batteries for cars, UPS systems, and solar applications. Expert battery installation services in Dera Ghazi Khan, Pakistan.',
+    url: 'https://mudasirtraders.com',
+    telephone: '+92-334-9627745',
+    email: 'owner@mudasirtraders.com',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'General Bus Stand, near Badozai Market',
+      addressLocality: 'Dera Ghazi Khan',
+      addressRegion: 'Punjab',
+      postalCode: '32200',
+      addressCountry: 'PK',
     },
-    "geo": {
-      "@type": "GeoCoordinates",
-      "latitude": "30.0472",
-      "longitude": "70.6401"
+    geo: {
+      '@type': 'GeoCoordinates',
+      latitude: '30.0472',
+      longitude: '70.6401',
     },
-    "openingHours": "Mo-Th 09:00-20:00, Fr-Sa 09:00-21:00, Su 10:00-18:00",
-    "priceRange": "$$",
-    "image": "https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png",
-    "sameAs": [
-      "https://mudasirtraders.com"
+    openingHours: 'Mo-Th 09:00-20:00, Fr-Sa 09:00-21:00, Su 10:00-18:00',
+    priceRange: '$$',
+    image:
+      'https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png',
+    sameAs: ['https://mudasirtraders.com'],
+    offers: [
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Product',
+          name: 'Car Batteries',
+          description: 'Premium quality car batteries from top brands',
+        },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Product',
+          name: 'UPS Batteries',
+          description: 'Batteries for UPS systems for home and office',
+        },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Product',
+          name: 'Solar Batteries',
+          description: 'Batteries for solar power systems and applications',
+        },
+      },
     ],
-    "offers": [
-      {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Product",
-          "name": "Car Batteries",
-          "description": "Premium quality car batteries from top brands"
-        }
-      },
-      {
-        "@type": "Offer", 
-        "itemOffered": {
-          "@type": "Product",
-          "name": "UPS Batteries",
-          "description": "Batteries for UPS systems for home and office"
-        }
-      },
-      {
-        "@type": "Offer",
-        "itemOffered": {
-          "@type": "Product", 
-          "name": "Solar Batteries",
-          "description": "Batteries for solar power systems and applications"
-        }
-      }
-    ]
   };
 
   return (
     <html lang='en-PK' suppressHydrationWarning>
       <head>
         <script
-          type="application/ld+json"
+          type='application/ld+json'
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(structuredData),
           }}

@@ -153,6 +153,58 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { imageUrl, position, customPosition } = body;
+
+    if (!imageUrl) {
+      return NextResponse.json(
+        { error: 'Image URL is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get MongoDB connection
+    const client = await clientPromise;
+    const db = client.db();
+
+    // Update the image position in MongoDB
+    const updateData: any = { position };
+    if (customPosition) {
+      updateData.customPosition = customPosition;
+    }
+
+    const result = await db.collection('meetup_images').updateOne(
+      { url: imageUrl },
+      {
+        $set: {
+          ...updateData,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Image position updated successfully',
+    });
+  } catch (error) {
+    console.error('Update error:', error);
+    return NextResponse.json(
+      {
+        error: 'Failed to update image position',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET() {
   try {
     const client = await clientPromise;

@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { id } = await params;
     console.log('Fetching invoice with ID:', id);
-    
+
     // Convert string ID to ObjectId for MongoDB query
     let query;
     try {
@@ -18,11 +18,11 @@ export async function GET(
       // If it's not a valid ObjectId, try as string ID
       query = { id: id };
     }
-    
+
     const result = await executeOperation('invoices', 'findOne', query);
-    
+
     console.log('Database result:', result);
-    
+
     if (!result) {
       return NextResponse.json(
         { error: 'Invoice not found', query },
@@ -32,7 +32,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error: any) {
     console.error('Error fetching invoice:', error);

@@ -3,6 +3,12 @@ import { getCategories } from '@/getData/getCategories';
 import { getInvoices } from '@/actions/invoiceActions';
 import { getStock } from '@/actions/stockActions';
 import InvoiceErrorBoundary from '@/components/invoices/InvoiceErrorBoundary';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Invoices | Mudasir Traders',
+  description: 'Manage your invoices and billing records',
+};
 
 export const dynamic = 'force-dynamic'; // React 19: Better for real-time invoice data
 export const revalidate = 0; // React 19: No caching for latest invoice information

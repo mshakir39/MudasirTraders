@@ -24,7 +24,7 @@ const columns = [
         ? `${item.brandName} - ${details.name} (${details.plate}, ${details.ah}AH${details.type ? `, ${details.type}` : ''})`
         : `${item.brandName} - ${item.series}`;
       return (
-        <span className="break-words block max-w-[260px]">
+        <span className='block max-w-[260px] break-words'>
           {removeParentheses(name)}
         </span>
       );
@@ -79,9 +79,9 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
     if (!result.success) notFound();
   } catch {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white p-6 rounded shadow text-center">
-          <h1 className="text-xl font-bold text-red-600">Error</h1>
+      <div className='flex min-h-screen items-center justify-center bg-gray-50'>
+        <div className='rounded bg-white p-6 text-center shadow'>
+          <h1 className='text-xl font-bold text-red-600'>Error</h1>
           <p>Failed to load invoice</p>
         </div>
       </div>
@@ -97,23 +97,22 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50  px-2">
-      <div className="max-w-5xl h-screen mx-auto bg-white shadow-lg rounded-lg print:shadow-none print:bg-white">
-        <div className="p-4 sm:p-6">
-
+    <div className='min-h-screen bg-gray-50  px-2'>
+      <div className='mx-auto h-screen max-w-5xl rounded-lg bg-white shadow-lg print:bg-white print:shadow-none'>
+        <div className='p-4 sm:p-6'>
           {/* Header */}
-          <div className="text-2xl sm:text-4xl font-bold uppercase mb-2">
+          <div className='mb-2 text-2xl font-bold uppercase sm:text-4xl'>
             Invoice
           </div>
-          <div className="text-right font-bold mb-4">
+          <div className='mb-4 text-right font-bold'>
             No: Inv-{invoice?.invoiceNo}
           </div>
 
           {/* From / To */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
             <div>
-              <div className="font-bold">Invoice From:</div>
-              <p className="text-gray-600 text-sm">
+              <div className='font-bold'>Invoice From:</div>
+              <p className='text-sm text-gray-600'>
                 MUDASIR TRADERS-DG KHAN <br />
                 +923349627745, +923215392445 <br />
                 General Bus Stand, near Badozai Market <br />
@@ -121,9 +120,9 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
               </p>
             </div>
 
-            <div className="sm:text-right">
-              <div className="font-bold">Invoice To:</div>
-              <p className="text-gray-600 text-sm">
+            <div className='sm:text-right'>
+              <div className='font-bold'>Invoice To:</div>
+              <p className='text-sm text-gray-600'>
                 {removeParentheses(invoice?.customerName)} <br />
                 {invoice?.customerContactNumber} <br />
                 {invoice?.customerAddress}
@@ -132,15 +131,15 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
           </div>
 
           {/* Date */}
-          <div className="mt-4 text-sm">
-            <span className="font-bold">Date:</span>{' '}
+          <div className='mt-4 text-sm'>
+            <span className='font-bold'>Date:</span>{' '}
             {invoice?.createdDate
               ? convertDate(invoice.createdDate).dateTime
               : ''}
           </div>
 
           {/* Table */}
-          <div className="mt-6 overflow-x-auto">
+          <div className='mt-6 overflow-x-auto'>
             <InvoiceTable
               data={invoice?.products}
               columns={columns}
@@ -149,18 +148,17 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
           </div>
 
           {/* Bottom Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-
+          <div className='mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2'>
             {/* Left */}
-            <div className="text-sm space-y-2">
+            <div className='space-y-2 text-sm'>
               <div>
                 <b>Amount in Words:</b>{' '}
-                {formatRupees(getAllSum(invoice?.products, 'totalPrice'))} Rupees Only
+                {formatRupees(getAllSum(invoice?.products, 'totalPrice'))}{' '}
+                Rupees Only
               </div>
 
               <div>
-                <b>Payment Method:</b>{' '}
-                {invoice?.paymentMethod?.join(' + ')}
+                <b>Payment Method:</b> {invoice?.paymentMethod?.join(' + ')}
               </div>
 
               {invoice?.products?.map((p: any, i: number) => (
@@ -172,21 +170,23 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
             </div>
 
             {/* Right Totals */}
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between bg-[#021B3B] text-white p-3">
+            <div className='space-y-2 text-sm'>
+              <div className='flex justify-between bg-[#021B3B] p-3 text-white'>
                 <span>SubTotal</span>
                 <span>Rs {getAllSum(invoice?.products, 'totalPrice')}</span>
               </div>
 
               {Number(invoice?.batteriesRate) > 0 && (
-                <div className="flex justify-between p-3">
-                  <span>{invoice?.batteriesCountAndWeight || 'Old Battery'}</span>
+                <div className='flex justify-between p-3'>
+                  <span>
+                    {invoice?.batteriesCountAndWeight || 'Old Battery'}
+                  </span>
                   <span>- Rs {invoice?.batteriesRate}</span>
                 </div>
               )}
 
               {Number(invoice?.receivedAmount) > 0 && (
-                <div className="flex justify-between p-3">
+                <div className='flex justify-between p-3'>
                   <span>Received</span>
                   <span>- Rs {invoice?.receivedAmount}</span>
                 </div>
@@ -195,18 +195,16 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
               {invoice?.additionalPayment?.map((p: any, i: number) => {
                 const { dateTime } = convertDate(p.addedDate);
                 return (
-                  <div key={i} className="flex justify-between p-3">
+                  <div key={i} className='flex justify-between p-3'>
                     <span>Received ({dateTime})</span>
                     <span>- Rs {p.amount}</span>
                   </div>
                 );
               })}
 
-              <div className="flex justify-between bg-[#021B3B] text-white p-3 mt-2">
+              <div className='mt-2 flex justify-between bg-[#021B3B] p-3 text-white'>
                 <span>
-                  {invoice?.remainingAmount === 0
-                    ? 'Total'
-                    : 'Remaining'}
+                  {invoice?.remainingAmount === 0 ? 'Total' : 'Remaining'}
                 </span>
                 <span>
                   {invoice?.remainingAmount === 0
@@ -218,11 +216,10 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
           </div>
 
           <div
-            className={`text-center mt-12 text-4xl sm:text-6xl ${dancingScript.className}`}
+            className={`mt-12 text-center text-4xl sm:text-6xl ${dancingScript.className}`}
           >
             Thank You!
           </div>
-
         </div>
       </div>
     </div>

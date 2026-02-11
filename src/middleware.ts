@@ -13,7 +13,7 @@ import {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const url = request.url;
-  
+
   if (pathname === '/signIn') {
     return NextResponse.redirect(new URL('/signin', url));
   }

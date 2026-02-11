@@ -34,8 +34,10 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
           if (series.length === 0) return 'No series';
 
           // Sort series alphabetically by name before displaying
-          const sortedSeries = [...series].sort((a, b) => a.name.localeCompare(b.name));
-          
+          const sortedSeries = [...series].sort((a, b) =>
+            a.name.localeCompare(b.name)
+          );
+
           // Show first 3 series, then indicate how many more
           const displaySeries = sortedSeries.slice(0, 3).map((s) => s.name);
           const remainingCount = sortedSeries.length - 3;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Modal from '@/components/modal';
 import { toast } from 'react-toastify';
@@ -15,20 +15,164 @@ interface Meetup {
   createdAt: string;
 }
 
+interface ImageWithPosition {
+  url: string;
+  position: string;
+  customPosition?: { x: number; y: number };
+}
+
 export default function MeetupsPage() {
   const [mounted, setMounted] = useState(false);
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<ImageWithPosition[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<
+    { url: string; position: string }[]
+  >([]);
+  const [positioningMode, setPositioningMode] = useState<number | null>(null);
+  const [imagePositions, setImagePositions] = useState<{
+    [key: number]: { x: number; y: number };
+  }>({});
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handlePositionChange = (index: number, position: string) => {
+    const updatedPreviews = [...imagePreviews];
+    updatedPreviews[index].position = position;
+    setImagePreviews(updatedPreviews);
+  };
+
+  const getObjectFitClass = (position: string) => {
+    if (position === 'contain') return 'object-contain';
+    if (position === 'top') return 'object-cover object-top';
+    if (position === 'bottom') return 'object-cover object-bottom';
+    return 'object-cover';
+  };
+
+  const startPositioning = (index: number) => {
+    console.log('Starting positioning mode for image', index);
+    setPositioningMode(index);
+    // Initialize position if not set
+    if (!imagePositions[index]) {
+      setImagePositions((prev) => ({
+        ...prev,
+        [index]: { x: 50, y: 50 },
+      }));
+    }
+  };
+
+  const savePosition = async (index: number) => {
+    const position = imagePositions[index] || { x: 50, y: 50 };
+
+    try {
+      const response = await fetch('/api/meetups/upload', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageUrl: images[index].url,
+          position: 'custom',
+          customPosition: position,
+        }),
+      });
+
+      if (response.ok) {
+        // Update local state with new position
+        const updatedImages = [...images];
+        updatedImages[index] = {
+          ...updatedImages[index],
+          position: 'custom',
+          customPosition: position,
+        };
+        setImages(updatedImages);
+
+        // Update imagePositions to persist the saved position
+        setImagePositions((prev) => ({
+          ...prev,
+          [index]: position,
+        }));
+
+        setPositioningMode(null);
+        toast.success('Image position saved successfully!');
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to save position:', errorData);
+        toast.error('Failed to save image position');
+      }
+    } catch (error) {
+      console.error('Error saving position:', error);
+      toast.error('An error occurred while saving the position');
+    }
+  };
+
+  const cancelPositioning = () => {
+    setPositioningMode(null);
+    setIsDragging(false);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent, index: number) => {
+    if (positioningMode !== index) return;
+
+    // Prevent any default behavior
+    e.preventDefault();
+    e.stopPropagation();
+
+    setIsDragging(true);
+
+    // Immediately update position on click
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setImagePositions((prev) => ({
+      ...prev,
+      [index]: {
+        x: Math.max(0, Math.min(100, x)),
+        y: Math.max(0, Math.min(100, y)),
+      },
+    }));
+  };
+
+  const handleMouseMove = (e: React.MouseEvent, index: number) => {
+    if (positioningMode !== index || !isDragging) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setImagePositions((prev) => ({
+      ...prev,
+      [index]: {
+        x: Math.max(0, Math.min(100, x)),
+        y: Math.max(0, Math.min(100, y)),
+      },
+    }));
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   useEffect(() => {
     setMounted(true);
     fetchImages();
+
+    // Add global mouse up handler to ensure dragging stops even if mouse leaves window
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
   }, []);
 
   const fetchImages = async () => {
@@ -40,9 +184,13 @@ export default function MeetupsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        // Extract URLs from the MongoDB documents
-        const imageUrls = data.map((img: any) => img.url);
-        setImages(imageUrls);
+        // Map the API response to include position data and custom positions
+        const imageData: ImageWithPosition[] = data.map((img: any) => ({
+          url: img.url,
+          position: img.position || 'center',
+          customPosition: img.customPosition,
+        }));
+        setImages(imageData);
       } else {
         console.error('Failed to fetch images from MongoDB');
         setImages([]);
@@ -60,7 +208,10 @@ export default function MeetupsPage() {
       const filesArray = Array.from(e.target.files);
       setSelectedFiles(filesArray);
 
-      const previews = filesArray.map((file) => URL.createObjectURL(file));
+      const previews = filesArray.map((file) => ({
+        url: URL.createObjectURL(file),
+        position: 'center', // Default position
+      }));
       setImagePreviews(previews);
     }
   };
@@ -75,8 +226,14 @@ export default function MeetupsPage() {
 
     try {
       const formData = new FormData();
-      selectedFiles.forEach((file) => {
+
+      // Add files and their positions to formData
+      selectedFiles.forEach((file, index) => {
         formData.append('images', file);
+        formData.append(
+          'positions',
+          imagePreviews[index]?.position || 'center'
+        );
       });
 
       const response = await fetch('/api/meetups/upload', {
@@ -98,11 +255,11 @@ export default function MeetupsPage() {
       } else {
         const errorData = await response.json();
         console.error('Upload failed:', errorData.error);
-        toast.error('Failed to upload images. Please try again.');
+        toast.error(errorData.error || 'Failed to upload images');
       }
     } catch (error) {
       console.error('Error uploading images:', error);
-      toast.error('Error uploading images. Please check your connection.');
+      toast.error('An error occurred while uploading images');
     } finally {
       setUploading(false);
     }
@@ -305,10 +462,12 @@ export default function MeetupsPage() {
                       key={index}
                       className='group relative overflow-hidden rounded-lg shadow-md'
                     >
-                      <img
-                        src={preview}
+                      <Image
+                        src={preview.url}
                         alt={`Preview ${index + 1}`}
-                        className='h-32 w-full object-cover'
+                        width={400}
+                        height={128}
+                        className={`h-32 w-full ${getObjectFitClass(preview.position)}`}
                       />
                       <div className='absolute right-2 top-2 z-10 opacity-0 transition-opacity group-hover:opacity-100'>
                         <button
@@ -322,11 +481,11 @@ export default function MeetupsPage() {
                             setImagePreviews(newPreviews);
                             setSelectedFiles(newFiles);
                           }}
-                          className='flex items-center justify-center rounded-full bg-red-500 p-1.5 text-white shadow-lg hover:bg-red-600'
+                          className='rounded-full bg-red-500 p-2 text-white shadow-lg transition-opacity hover:bg-red-600'
                           title='Remove image'
                         >
                           <svg
-                            className='h-3 w-3'
+                            className='h-4 w-4'
                             fill='none'
                             stroke='currentColor'
                             viewBox='0 0 24 24'
@@ -339,6 +498,22 @@ export default function MeetupsPage() {
                             />
                           </svg>
                         </button>
+                      </div>
+                      <div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent'></div>
+                      <div className='absolute bottom-2 right-2 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
+                        <select
+                          value={preview.position}
+                          onChange={(e) =>
+                            handlePositionChange(index, e.target.value)
+                          }
+                          className='rounded bg-black bg-opacity-75 px-2 py-1 text-xs text-white shadow-md'
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <option value='center'>Center</option>
+                          <option value='top'>Top</option>
+                          <option value='bottom'>Bottom</option>
+                          <option value='contain'>Contain</option>
+                        </select>
                       </div>
                       <div className='absolute bottom-2 left-2 rounded bg-black bg-opacity-50 px-2 py-1 text-xs text-white'>
                         {selectedFiles[index]?.name}
@@ -373,34 +548,174 @@ export default function MeetupsPage() {
             <h3 className='mb-6 text-center text-2xl font-bold text-gray-900'>
               Uploaded Images ({images.length})
             </h3>
-            <div className='grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4'>
+            <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {images.map((image, index) => (
-                <div key={index} className='group relative'>
-                  <img
-                    src={image}
-                    alt={`Meetup image ${index + 1}`}
-                    className='h-48 w-full rounded-lg object-cover shadow-md'
-                  />
-                  <div className='absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-0 transition-opacity group-hover:bg-opacity-40'>
-                    <button
-                      onClick={() => handleDeleteImage(image)}
-                      className='rounded-full bg-red-500 p-3 text-white opacity-0 shadow-lg transition-opacity hover:bg-red-600 group-hover:opacity-100'
-                      title='Delete image'
-                    >
-                      <svg
-                        className='h-5 w-5'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                        />
-                      </svg>
-                    </button>
+                <div
+                  key={index}
+                  className='group overflow-hidden rounded-2xl bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl'
+                >
+                  <div
+                    className={`relative h-80 w-full overflow-hidden ${
+                      positioningMode === index
+                        ? isDragging
+                          ? 'cursor-grabbing'
+                          : 'cursor-grab'
+                        : 'cursor-default'
+                    }`}
+                    onMouseDown={(e) => handleMouseDown(e, index)}
+                    onMouseMove={(e) => handleMouseMove(e, index)}
+                    onMouseUp={handleMouseUp}
+                  >
+                    <Image
+                      src={image.url}
+                      alt={`Meetup image ${index + 1}`}
+                      width={400}
+                      height={320}
+                      className={`h-80 w-full object-cover transition-all duration-300 ${
+                        positioningMode === index
+                          ? 'select-none'
+                          : 'group-hover:scale-105'
+                      }`}
+                      style={{
+                        objectPosition:
+                          positioningMode === index && imagePositions[index]
+                            ? `${imagePositions[index].x}% ${imagePositions[index].y}%`
+                            : image.position === 'custom' &&
+                                image.customPosition
+                              ? `${image.customPosition.x}% ${image.customPosition.y}%`
+                              : image.position === 'center'
+                                ? 'center'
+                                : image.position === 'top'
+                                  ? 'center top'
+                                  : image.position === 'bottom'
+                                    ? 'center bottom'
+                                    : image.position === 'contain'
+                                      ? 'center'
+                                      : 'center',
+                      }}
+                      draggable={false}
+                    />
+
+                    {/* Debug info */}
+                    {positioningMode === index && (
+                      <div className='pointer-events-none absolute left-2 top-2 rounded bg-black bg-opacity-75 px-2 py-1 text-xs text-white'>
+                        Pos:{' '}
+                        {imagePositions[index]
+                          ? `${Math.round(imagePositions[index].x)}, ${Math.round(imagePositions[index].y)}`
+                          : 'none'}
+                      </div>
+                    )}
+
+                    <div className='pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent'></div>
+
+                    {/* Positioning Mode Controls */}
+                    {positioningMode === index ? (
+                      <div className='pointer-events-none absolute inset-0 flex items-center justify-center bg-black bg-opacity-30'>
+                        <div className='pointer-events-auto flex gap-4'>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              savePosition(index);
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            className='rounded-full bg-green-500 p-3 text-white shadow-lg hover:bg-green-600'
+                            title='Save position'
+                          >
+                            <svg
+                              className='h-5 w-5'
+                              fill='none'
+                              stroke='currentColor'
+                              viewBox='0 0 24 24'
+                            >
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth={2}
+                                d='M5 13l4 4L19 7'
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cancelPositioning();
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            className='rounded-full bg-red-500 p-3 text-white shadow-lg hover:bg-red-600'
+                            title='Cancel positioning'
+                          >
+                            <svg
+                              className='h-5 w-5'
+                              fill='none'
+                              stroke='currentColor'
+                              viewBox='0 0 24 24'
+                            >
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth={2}
+                                d='M6 18L18 6M6 6l12 12'
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Position Adjustment Button */}
+                        <div className='pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startPositioning(index);
+                            }}
+                            className='pointer-events-auto rounded-full bg-blue-500 p-3 text-white shadow-lg hover:bg-blue-600'
+                            title='Adjust image position'
+                          >
+                            <svg
+                              className='h-5 w-5'
+                              fill='none'
+                              stroke='currentColor'
+                              viewBox='0 0 24 24'
+                            >
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth={2}
+                                d='M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4'
+                              />
+                            </svg>
+                          </button>
+                        </div>
+
+                        {/* Delete Button */}
+                        <div className='absolute right-2 top-2 z-10 opacity-0 transition-opacity duration-300 group-hover:opacity-100'>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setImageToDelete(image.url);
+                              setDeleteModalOpen(true);
+                            }}
+                            className='rounded-full bg-red-500 p-2 text-white shadow-lg hover:bg-red-600'
+                            title='Delete image'
+                          >
+                            <svg
+                              className='h-4 w-4'
+                              fill='none'
+                              stroke='currentColor'
+                              viewBox='0 0 24 24'
+                            >
+                              <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth={2}
+                                d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -465,10 +780,13 @@ export default function MeetupsPage() {
 
           {imageToDelete && (
             <div className='mb-6'>
-              <img
+              <Image
                 src={imageToDelete}
                 alt='Image to delete'
-                className='h-32 w-full rounded-lg object-cover'
+                width={400}
+                height={300}
+                className='h-32 w-full rounded-lg object-contain'
+                style={{ objectFit: 'contain' }}
               />
             </div>
           )}

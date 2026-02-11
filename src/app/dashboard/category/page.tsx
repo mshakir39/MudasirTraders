@@ -3,6 +3,12 @@ import { getCategories } from '@/getData/getCategories';
 import { getBrands } from '@/getData/getBrands';
 import { IBrand } from '@/interfaces';
 import CategoryErrorBoundary from '@/components/category/CategoryErrorBoundary';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Categories | Mudasir Traders',
+  description: 'Manage your product categories and organization',
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

@@ -130,9 +130,9 @@ export async function fastGetCategories() {
       .toArray();
 
     // Sort series within each category alphabetically by name
-    const sortedCategories = categories.map(category => {
+    const sortedCategories = categories.map((category) => {
       if (category.series && Array.isArray(category.series)) {
-        category.series = [...category.series].sort((a: any, b: any) => 
+        category.series = [...category.series].sort((a: any, b: any) =>
           a.name.localeCompare(b.name)
         );
       }

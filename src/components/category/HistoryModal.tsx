@@ -162,86 +162,63 @@ const HistoryDetailView: React.FC<HistoryDetailViewProps> = ({
 
       {/* Render the same battery list view but with historical data */}
       <div className='grid grid-cols-1 gap-3 sm:gap-4'>
-        {selectedHistoryEntry.series.map(
-          (item: BatteryData, index: number) => (
-            <div
-              key={index}
-              className='rounded-lg bg-white p-3 shadow sm:p-4'
-            >
-              <div className='grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7'>
-                <div>
-                  <span className='text-sm text-gray-500'>
-                    Name
-                  </span>
-                  <p className='break-words font-medium text-gray-900'>
-                    {item.name}
-                  </p>
-                </div>
-                <div>
-                  <span className='text-sm text-gray-500'>
-                    Plate
-                  </span>
-                  <p className='font-medium text-gray-900'>
-                    {item.plate}
-                  </p>
-                </div>
-                <div>
-                  <span className='text-sm text-gray-500'>AH</span>
-                  <p className='font-medium text-gray-900'>
-                    {item.ah}
-                  </p>
-                </div>
-                <div>
-                  <span className='text-sm text-gray-500'>
-                    Retail Price
-                  </span>
-                  <p className='font-medium text-gray-900'>
-                    Rs {item.retailPrice || 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <span className='text-sm text-gray-500'>
-                    Sales Tax (
-                    {item.salesTax ??
-                      selectedHistoryEntry.salesTax ??
-                      18}
-                    %)
-                  </span>
-                  <p className='font-medium text-gray-900'>
-                    Rs{' '}
-                    {item.retailPrice
-                      ? Math.round(
-                          (item.retailPrice *
-                            (item.salesTax ??
-                              selectedHistoryEntry.salesTax ??
-                              18)) /
-                            100
-                        )
-                      : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <span className='text-sm text-gray-500'>
-                    Max Retail Price
-                  </span>
-                  <p className='font-medium text-gray-900'>
-                    Rs {item.maxRetailPrice || 'N/A'}
-                  </p>
-                </div>
-                {item.type && (
-                  <div>
-                    <span className='text-sm text-gray-500'>
-                      Type
-                    </span>
-                    <p className='font-medium text-gray-900'>
-                      {item.type}
-                    </p>
-                  </div>
-                )}
+        {selectedHistoryEntry.series.map((item: BatteryData, index: number) => (
+          <div key={index} className='rounded-lg bg-white p-3 shadow sm:p-4'>
+            <div className='grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7'>
+              <div>
+                <span className='text-sm text-gray-500'>Name</span>
+                <p className='break-words font-medium text-gray-900'>
+                  {item.name}
+                </p>
               </div>
+              <div>
+                <span className='text-sm text-gray-500'>Plate</span>
+                <p className='font-medium text-gray-900'>{item.plate}</p>
+              </div>
+              <div>
+                <span className='text-sm text-gray-500'>AH</span>
+                <p className='font-medium text-gray-900'>{item.ah}</p>
+              </div>
+              <div>
+                <span className='text-sm text-gray-500'>Retail Price</span>
+                <p className='font-medium text-gray-900'>
+                  Rs {item.retailPrice || 'N/A'}
+                </p>
+              </div>
+              <div>
+                <span className='text-sm text-gray-500'>
+                  Sales Tax (
+                  {item.salesTax ?? selectedHistoryEntry.salesTax ?? 18}
+                  %)
+                </span>
+                <p className='font-medium text-gray-900'>
+                  Rs{' '}
+                  {item.retailPrice
+                    ? Math.round(
+                        (item.retailPrice *
+                          (item.salesTax ??
+                            selectedHistoryEntry.salesTax ??
+                            18)) /
+                          100
+                      )
+                    : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <span className='text-sm text-gray-500'>Max Retail Price</span>
+                <p className='font-medium text-gray-900'>
+                  Rs {item.maxRetailPrice || 'N/A'}
+                </p>
+              </div>
+              {item.type && (
+                <div>
+                  <span className='text-sm text-gray-500'>Type</span>
+                  <p className='font-medium text-gray-900'>{item.type}</p>
+                </div>
+              )}
             </div>
-          )
-        )}
+          </div>
+        ))}
       </div>
     </div>
   );

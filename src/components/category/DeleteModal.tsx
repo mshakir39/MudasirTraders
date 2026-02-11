@@ -48,7 +48,9 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
             <FaTrash className='h-8 w-8 text-red-600' />
           </div>
           <h3 className='mb-2 text-lg font-medium text-gray-900'>
-            {isTonic ? 'Delete Battery Tonic (Distilled Water)' : 'Delete Battery Item'}
+            {isTonic
+              ? 'Delete Battery Tonic (Distilled Water)'
+              : 'Delete Battery Item'}
           </h3>
           <p className='text-sm text-gray-500'>
             {isTonic
@@ -181,8 +183,7 @@ export const DeleteCategoryModal: React.FC<DeleteCategoryModalProps> = ({
                   <strong>Category:</strong> {categoryToDelete.brandName}
                 </p>
                 <p>
-                  <strong>Total Series:</strong>{' '}
-                  {categoryToDelete.seriesCount}
+                  <strong>Total Series:</strong> {categoryToDelete.seriesCount}
                 </p>
                 <p className='mt-2 text-xs'>
                   This will delete all battery series associated with this

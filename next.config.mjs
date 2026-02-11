@@ -10,8 +10,19 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'maps.google.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'maps.gstatic.com',
+      },
     ],
-    domains: ['res.cloudinary.com'],
     // formats: ['image/webp', 'image/avif'], // Temporarily disabled
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
@@ -103,9 +114,59 @@ const nextConfig = {
     scrollRestoration: true,
   },
 
-  // Ensure API routes are properly handled
+  // Headers with security improvements
   async headers() {
     return [
+      // Security headers for all routes
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'Content-Security-Policy',
+            // Based on official Google Maps CSP documentation
+            value: `
+              default-src 'self';
+              script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.googleapis.com https://*.gstatic.com *.google.com https://*.ggpht.com *.googleusercontent.com blob:;
+              style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+              img-src 'self' data: https: blob: https://*.googleapis.com https://*.gstatic.com *.google.com *.googleusercontent.com https://lh3.googleusercontent.com https://res.cloudinary.com;
+              font-src 'self' data: https://fonts.gstatic.com;
+              connect-src 'self' https://*.googleapis.com *.google.com https://*.gstatic.com data: blob: https://lh3.googleusercontent.com https://res.cloudinary.com;
+              frame-src *.google.com;
+              worker-src blob:;
+              frame-ancestors 'none';
+              base-uri 'self';
+              form-action 'self';
+            `
+              .replace(/\s{2,}/g, ' ')
+              .trim(),
+          },
+        ],
+      },
+      // API routes CORS
       {
         source: '/api/:path*',
         headers: [

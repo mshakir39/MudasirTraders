@@ -28,7 +28,9 @@ import { CategoryWithBatteryData, BatteryData } from '@/types/category';
 import CategoryTable from '@/components/category/CategoryTable';
 import BatteryList from '@/components/category/BatteryList';
 import HistoryModal from '@/components/category/HistoryModal';
-import DeleteModal, { DeleteCategoryModal } from '@/components/category/DeleteModal';
+import DeleteModal, {
+  DeleteCategoryModal,
+} from '@/components/category/DeleteModal';
 
 interface CategoryLayoutProps {
   initialCategories: CategoryWithBatteryData[];
@@ -41,28 +43,40 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
 }) => {
   unstable_noStore();
   const { categories, fetchCategories, setCategories } = useCategoryStore();
-  
+
   // State management
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const [detailData, setDetailData] = React.useState<CategoryWithBatteryData>();
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [searchQuery, setSearchQuery] = React.useState<string>('');
-  const [editingBattery, setEditingBattery] = React.useState<string | null>(null);
-  const [editingPrice, setEditingPrice] = React.useState<{ [key: string]: number }>({});
-  const [isEditingGlobalSalesTax, setIsEditingGlobalSalesTax] = React.useState<boolean>(false);
+  const [editingBattery, setEditingBattery] = React.useState<string | null>(
+    null
+  );
+  const [editingPrice, setEditingPrice] = React.useState<{
+    [key: string]: number;
+  }>({});
+  const [isEditingGlobalSalesTax, setIsEditingGlobalSalesTax] =
+    React.useState<boolean>(false);
   const [globalSalesTax, setGlobalSalesTax] = React.useState<string>('18');
   const [isPdfModalOpen, setIsPdfModalOpen] = React.useState<boolean>(false);
   const [brands, setBrands] = React.useState<IBrand[]>(initialBrands);
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = React.useState<boolean>(false);
-  const [historyData, setHistoryData] = React.useState<CategoryWithBatteryData[]>([]);
-  const [selectedHistoryEntry, setSelectedHistoryEntry] = React.useState<CategoryWithBatteryData | null>(null);
-  const [isLoadingHistory, setIsLoadingHistory] = React.useState<boolean>(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState<boolean>(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] =
+    React.useState<boolean>(false);
+  const [historyData, setHistoryData] = React.useState<
+    CategoryWithBatteryData[]
+  >([]);
+  const [selectedHistoryEntry, setSelectedHistoryEntry] =
+    React.useState<CategoryWithBatteryData | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] =
+    React.useState<boolean>(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] =
+    React.useState<boolean>(false);
   const [deleteItem, setDeleteItem] = React.useState<{
     batteryName: string;
     brandName: string;
   } | null>(null);
-  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] = React.useState<boolean>(false);
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] =
+    React.useState<boolean>(false);
   const [categoryToDelete, setCategoryToDelete] = React.useState<{
     id: string;
     brandName: string;
@@ -138,7 +152,7 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
   useEffect(() => {
     // Log categories for debugging
     console.log('Current categories:', categories);
-    
+
     // Initialize categories from server-side props
     if (initialCategories && initialCategories.length > 0) {
       setCategories(initialCategories as ICategory[]);
@@ -153,14 +167,16 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
   }, [categories, initialCategories, setCategories, fetchCategories]);
 
   // Memoized values
-  const brandOptions = React.useMemo(() =>
-    brands
-      .filter((brand) => brand.id) // Filter out brands without IDs
-      .map((brand) => ({
-        label: brand.brandName,
-        value: brand.id as string, // We know id exists because of the filter
-      }))
-  , [brands]);
+  const brandOptions = React.useMemo(
+    () =>
+      brands
+        .filter((brand) => brand.id) // Filter out brands without IDs
+        .map((brand) => ({
+          label: brand.brandName,
+          value: brand.id as string, // We know id exists because of the filter
+        })),
+    [brands]
+  );
 
   // Event handlers
   const handleViewHistory = useCallback(
@@ -220,170 +236,185 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
     [setHistoryData, setIsHistoryModalOpen, setIsLoadingHistory]
   );
 
-  const handleViewCategory = useCallback((category: CategoryWithBatteryData) => {
-    setIsModalOpen(true);
-    setDetailData(category);
-    setGlobalSalesTax(category.salesTax.toString());
-  }, []);
+  const handleViewCategory = useCallback(
+    (category: CategoryWithBatteryData) => {
+      setIsModalOpen(true);
+      setDetailData(category);
+      setGlobalSalesTax(category.salesTax.toString());
+    },
+    []
+  );
 
-  const handleDeleteCategory = useCallback((category: CategoryWithBatteryData) => {
-    setCategoryToDelete({
-      id: category.id!,
-      brandName: category.brandName,
-      seriesCount: category.series.length,
-    });
-    setIsDeleteCategoryModalOpen(true);
-  }, []);
-
-  const handlePdfUploadSuccess = useCallback(async (data: {
-    brandName: string;
-    series: any[];
-    salesTax: string;
-    batteryType: 'battery' | 'tonic';
-  }) => {
-    try {
-      setIsLoading(true);
-
-      // Handle Battery Tonic data - use selected brand
-      let finalBrandName = data.brandName;
-      let finalSeries = data.series;
-      let finalSalesTax = Number(data.salesTax);
-
-      if (data.batteryType === 'tonic') {
-        // Handle "Other" brand option for Battery Tonic
-        if (data.brandName === 'other') {
-          finalBrandName = 'Other';
-        }
-        finalSalesTax = 0; // Battery Tonic doesn't have sales tax
-
-        // Ensure all series have batteryType set for Battery Tonic
-        finalSeries = data.series.map((series: any) => ({
-          ...series,
-          batteryType: 'tonic',
-          name: series.name || 'Battery Tonic',
-        }));
-      }
-
-      // Check if category already exists for the final brand
-      const existingCategory = categories.find(
-        (cat) => cat.brandName === finalBrandName
-      );
-
-      const categoryData: Omit<ICategory, 'id'> = {
-        brandName: finalBrandName,
-        series: finalSeries,
-        salesTax: finalSalesTax,
-      };
-
-      if (existingCategory && existingCategory.id) {
-        // Append new series to existing category instead of replacing
-        console.log('Before append:', {
-          existingCount: existingCategory.series?.length || 0,
-          newCount: finalSeries.length,
-          existingProducts: existingCategory.series?.map(s => s.name)
-        });
-        
-        const result = await appendSeriesToCategory(
-          existingCategory.id,
-          finalSeries
-        );
-
-        if (!result.success) {
-          throw new Error(
-            result.error || 'Failed to append series to category'
-          );
-        }
-
-        console.log('After append:', {
-          resultCount: result.data?.series?.length || 0,
-          resultProducts: result.data?.series?.map((s: any) => s.name)
-        });
-
-        const originalCount = existingCategory.series?.length || 0;
-        const newCount = result.data?.series?.length || 0;
-        const productsAdded = newCount - originalCount;
-        const productsUpdated = finalSeries.length - productsAdded;
-        
-        toast.success(
-          `Updated ${finalBrandName} category: ${productsAdded} new products added, ${productsUpdated} products updated` 
-        );
-      } else if (!existingCategory) {
-        // Create new category
-        const result = await createCategory(categoryData);
-
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to create category');
-        }
-
-        toast.success(
-          `Created new category for ${finalBrandName} with ${finalSeries.length} series` 
-        );
-      } else {
-        throw new Error('Category is missing an id');
-      }
-
-      // Call revalidatePath and wait for it to complete
-      await revalidatePathCustom('/category');
-      await fetchCategories(); // Refresh the categories list
-      setIsLoading(false);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save category from PDF'
-      );
-      setIsLoading(false);
-    }
-  }, [categories, fetchCategories]);
-
-  const handlePriceChange = useCallback((batteryName: string, value: string) => {
-    setEditingPrice((prev) => ({
-      ...prev,
-      [batteryName]: Number(value) || 0,
-    }));
-  }, []);
-
-  const handleSavePrice = useCallback(async (batteryName: string) => {
-    try {
-      setIsLoading(true);
-      const updatedSeries = detailData?.series.map((item) =>
-        item.name === batteryName
-          ? { ...item, retailPrice: editingPrice[batteryName] }
-          : item
-      );
-
-      if (!detailData || !updatedSeries) return;
-
-      const result = await patchCategory(detailData.id!, {
-        brandName: detailData.brandName,
-        series: updatedSeries,
+  const handleDeleteCategory = useCallback(
+    (category: CategoryWithBatteryData) => {
+      setCategoryToDelete({
+        id: category.id!,
+        brandName: category.brandName,
+        seriesCount: category.series.length,
       });
+      setIsDeleteCategoryModalOpen(true);
+    },
+    []
+  );
 
-      if (!result.success) {
-        throw new Error(result.error);
+  const handlePdfUploadSuccess = useCallback(
+    async (data: {
+      brandName: string;
+      series: any[];
+      salesTax: string;
+      batteryType: 'battery' | 'tonic';
+    }) => {
+      try {
+        setIsLoading(true);
+
+        // Handle Battery Tonic data - use selected brand
+        let finalBrandName = data.brandName;
+        let finalSeries = data.series;
+        let finalSalesTax = Number(data.salesTax);
+
+        if (data.batteryType === 'tonic') {
+          // Handle "Other" brand option for Battery Tonic
+          if (data.brandName === 'other') {
+            finalBrandName = 'Other';
+          }
+          finalSalesTax = 0; // Battery Tonic doesn't have sales tax
+
+          // Ensure all series have batteryType set for Battery Tonic
+          finalSeries = data.series.map((series: any) => ({
+            ...series,
+            batteryType: 'tonic',
+            name: series.name || 'Battery Tonic',
+          }));
+        }
+
+        // Check if category already exists for the final brand
+        const existingCategory = categories.find(
+          (cat) => cat.brandName === finalBrandName
+        );
+
+        const categoryData: Omit<ICategory, 'id'> = {
+          brandName: finalBrandName,
+          series: finalSeries,
+          salesTax: finalSalesTax,
+        };
+
+        if (existingCategory && existingCategory.id) {
+          // Append new series to existing category instead of replacing
+          console.log('Before append:', {
+            existingCount: existingCategory.series?.length || 0,
+            newCount: finalSeries.length,
+            existingProducts: existingCategory.series?.map((s) => s.name),
+          });
+
+          const result = await appendSeriesToCategory(
+            existingCategory.id,
+            finalSeries
+          );
+
+          if (!result.success) {
+            throw new Error(
+              result.error || 'Failed to append series to category'
+            );
+          }
+
+          console.log('After append:', {
+            resultCount: result.data?.series?.length || 0,
+            resultProducts: result.data?.series?.map((s: any) => s.name),
+          });
+
+          const originalCount = existingCategory.series?.length || 0;
+          const newCount = result.data?.series?.length || 0;
+          const productsAdded = newCount - originalCount;
+          const productsUpdated = finalSeries.length - productsAdded;
+
+          toast.success(
+            `Updated ${finalBrandName} category: ${productsAdded} new products added, ${productsUpdated} products updated`
+          );
+        } else if (!existingCategory) {
+          // Create new category
+          const result = await createCategory(categoryData);
+
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to create category');
+          }
+
+          toast.success(
+            `Created new category for ${finalBrandName} with ${finalSeries.length} series`
+          );
+        } else {
+          throw new Error('Category is missing an id');
+        }
+
+        // Call revalidatePath and wait for it to complete
+        await revalidatePathCustom('/category');
+        await fetchCategories(); // Refresh the categories list
+        setIsLoading(false);
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to save category from PDF'
+        );
+        setIsLoading(false);
       }
+    },
+    [categories, fetchCategories]
+  );
 
-      setDetailData((prev) =>
-        prev
-          ? {
-              ...prev,
-              series: updatedSeries,
-            }
-          : undefined
-      );
+  const handlePriceChange = useCallback(
+    (batteryName: string, value: string) => {
+      setEditingPrice((prev) => ({
+        ...prev,
+        [batteryName]: Number(value) || 0,
+      }));
+    },
+    []
+  );
 
-      toast.success('Price updated successfully');
-      setEditingBattery(null);
-      setEditingPrice({});
-      await revalidatePathCustom('/category');
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to update price'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [detailData, editingPrice]);
+  const handleSavePrice = useCallback(
+    async (batteryName: string) => {
+      try {
+        setIsLoading(true);
+        const updatedSeries = detailData?.series.map((item) =>
+          item.name === batteryName
+            ? { ...item, retailPrice: editingPrice[batteryName] }
+            : item
+        );
+
+        if (!detailData || !updatedSeries) return;
+
+        const result = await patchCategory(detailData.id!, {
+          brandName: detailData.brandName,
+          series: updatedSeries,
+        });
+
+        if (!result.success) {
+          throw new Error(result.error);
+        }
+
+        setDetailData((prev) =>
+          prev
+            ? {
+                ...prev,
+                series: updatedSeries,
+              }
+            : undefined
+        );
+
+        toast.success('Price updated successfully');
+        setEditingBattery(null);
+        setEditingPrice({});
+        await revalidatePathCustom('/category');
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to update price'
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [detailData, editingPrice]
+  );
 
   const handleSaveGlobalSalesTax = useCallback(async () => {
     try {
@@ -433,31 +464,34 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
     }
   }, [detailData, globalSalesTax]);
 
-  const handleDeleteBattery = useCallback((batteryName: string) => {
-    if (!detailData) return;
+  const handleDeleteBattery = useCallback(
+    (batteryName: string) => {
+      if (!detailData) return;
 
-    // Check if this is the last item before opening modal
-    if (detailData.series.length === 1) {
-      // Check if item is a battery tonic
-      const itemToDelete = detailData.series.find(
-        (item) => item.name === batteryName
-      );
-      const isTonic =
-        itemToDelete?.batteryType === 'tonic' ||
-        batteryName?.toLowerCase().includes('tonic');
-      const itemType = isTonic ? 'battery tonic' : 'battery';
-      toast.error(
-        `Cannot delete the last ${itemType} item. Delete the entire category instead.` 
-      );
-      return;
-    }
+      // Check if this is the last item before opening modal
+      if (detailData.series.length === 1) {
+        // Check if item is a battery tonic
+        const itemToDelete = detailData.series.find(
+          (item) => item.name === batteryName
+        );
+        const isTonic =
+          itemToDelete?.batteryType === 'tonic' ||
+          batteryName?.toLowerCase().includes('tonic');
+        const itemType = isTonic ? 'battery tonic' : 'battery';
+        toast.error(
+          `Cannot delete the last ${itemType} item. Delete the entire category instead.`
+        );
+        return;
+      }
 
-    setDeleteItem({
-      batteryName,
-      brandName: detailData.brandName,
-    });
-    setIsDeleteModalOpen(true);
-  }, [detailData]);
+      setDeleteItem({
+        batteryName,
+        brandName: detailData.brandName,
+      });
+      setIsDeleteModalOpen(true);
+    },
+    [detailData]
+  );
 
   const confirmDeleteBattery = useCallback(async () => {
     if (!deleteItem || !detailData) return;
@@ -481,7 +515,7 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
       if (updatedSeries.length === 0) {
         const itemType = isTonic ? 'battery tonic' : 'battery';
         toast.error(
-          `Cannot delete the last ${itemType} item. Delete the entire category instead.` 
+          `Cannot delete the last ${itemType} item. Delete the entire category instead.`
         );
         setIsLoading(false);
         return;
@@ -522,27 +556,30 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
     }
   }, [deleteItem, detailData, fetchCategories]);
 
-  const handleRevertHistory = useCallback(async (entry: CategoryWithBatteryData) => {
-    try {
-      // Get the original history entry ID from the database
-      const historyEntryId = (entry as any)._id || entry.id;
-      if (!historyEntryId) {
-        throw new Error('History entry ID not found');
-      }
+  const handleRevertHistory = useCallback(
+    async (entry: CategoryWithBatteryData) => {
+      try {
+        // Get the original history entry ID from the database
+        const historyEntryId = (entry as any)._id || entry.id;
+        if (!historyEntryId) {
+          throw new Error('History entry ID not found');
+        }
 
-      const result = await revertCategoryToHistory(entry.id!, historyEntryId);
-      if (result.success) {
-        toast.success('Phoenix reverted successfully!');
-        // Refresh the categories and history
-        fetchCategories();
-        handleViewHistory(entry.id!);
-      } else {
-        toast.error(result.error || 'Failed to revert');
+        const result = await revertCategoryToHistory(entry.id!, historyEntryId);
+        if (result.success) {
+          toast.success('Phoenix reverted successfully!');
+          // Refresh the categories and history
+          fetchCategories();
+          handleViewHistory(entry.id!);
+        } else {
+          toast.error(result.error || 'Failed to revert');
+        }
+      } catch (error) {
+        toast.error('Failed to revert Phoenix');
       }
-    } catch (error) {
-      toast.error('Failed to revert Phoenix');
-    }
-  }, [fetchCategories, handleViewHistory]);
+    },
+    [fetchCategories, handleViewHistory]
+  );
 
   const confirmDeleteCategory = useCallback(async () => {
     if (!categoryToDelete) return;
@@ -559,7 +596,7 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
 
       if (result.success) {
         toast.success(
-          `Successfully deleted ${categoryToDelete.brandName} category` 
+          `Successfully deleted ${categoryToDelete.brandName} category`
         );
         await revalidatePathCustom('/category');
         await fetchCategories();
@@ -639,7 +676,9 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
                       </svg>
                       <span className='font-medium'>
                         {detailData.series.length}{' '}
-                        {detailData.series.length === 1 ? 'Product' : 'Products'}
+                        {detailData.series.length === 1
+                          ? 'Product'
+                          : 'Products'}
                       </span>
                     </div>
                     {searchQuery && (

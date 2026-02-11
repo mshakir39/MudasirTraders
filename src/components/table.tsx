@@ -90,54 +90,54 @@ export function Table<TData>({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-   globalFilterFn: (row, _columnId, filterValue) => {
-  try {
-    let searchText = '';
-    
-    // Only try to get __global_search if extraGlobalSearchText was provided
-    if (extraGlobalSearchText) {
+    globalFilterFn: (row, _columnId, filterValue) => {
       try {
-        const hidden = row.getValue('__global_search');
-        if (hidden != null) {
-          searchText = String(hidden).toLowerCase();
+        let searchText = '';
+
+        // Only try to get __global_search if extraGlobalSearchText was provided
+        if (extraGlobalSearchText) {
+          try {
+            const hidden = row.getValue('__global_search');
+            if (hidden != null) {
+              searchText = String(hidden).toLowerCase();
+            }
+          } catch {
+            // Column doesn't exist, fall through to fallback
+          }
         }
-      } catch {
-        // Column doesn't exist, fall through to fallback
+
+        // If we didn't get text from __global_search, build from visible cells
+        if (!searchText) {
+          searchText = row
+            .getAllCells()
+            .filter((c: any) => c.column.id !== '__global_search') // Skip the hidden column
+            .map((c: any) => {
+              const value = c.getValue?.();
+              // Skip null, undefined, objects, and arrays
+              if (value == null || typeof value === 'object') return '';
+              return String(value);
+            })
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+        }
+
+        const query = String(filterValue ?? '').toLowerCase();
+
+        if (customGlobalFilter) {
+          try {
+            return customGlobalFilter(row, searchText, query);
+          } catch {
+            // fallback to default behavior
+          }
+        }
+
+        return searchText.includes(query);
+      } catch (error) {
+        console.error('Search filter error:', error);
+        return true; // Show the row if there's an error
       }
-    }
-    
-    // If we didn't get text from __global_search, build from visible cells
-    if (!searchText) {
-      searchText = row
-        .getAllCells()
-        .filter((c: any) => c.column.id !== '__global_search') // Skip the hidden column
-        .map((c: any) => {
-          const value = c.getValue?.();
-          // Skip null, undefined, objects, and arrays
-          if (value == null || typeof value === 'object') return '';
-          return String(value);
-        })
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-    }
-    
-    const query = String(filterValue ?? '').toLowerCase();
-    
-    if (customGlobalFilter) {
-      try {
-        return customGlobalFilter(row, searchText, query);
-      } catch {
-        // fallback to default behavior
-      }
-    }
-    
-    return searchText.includes(query);
-  } catch (error) {
-    console.error('Search filter error:', error);
-    return true; // Show the row if there's an error
-  }
-},
+    },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     state: {

@@ -2,6 +2,12 @@ import { getBrands } from '@/actions/brandActions';
 import BrandsLayout from '@/layouts/brandsLayout';
 import BrandsErrorBoundary from '@/components/brands/BrandsErrorBoundary';
 import { IBrand } from '@/interfaces';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Brands | Mudasir Traders',
+  description: 'Manage your product brands and inventory',
+};
 
 // React 19: Enhanced caching and revalidation
 export const dynamic = 'force-dynamic';
