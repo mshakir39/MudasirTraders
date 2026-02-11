@@ -37,7 +37,7 @@ export default function Home() {
       image:
         'https://res.cloudinary.com/divdl3sad/image/upload/v1769437289/Gemini_Generated_Image_djh63edjh63edjh6_gntnqv.png',
       title: 'Premium Brands',
-      subtitle: 'Osaka, AGS, Exide & More',
+      subtitle: 'Osaka, Fujika, AGS, Exide & More',
       description:
         'Stocking only the most reliable battery brands with manufacturer warranty. All batteries tested for quality and performance before sale.',
     },

@@ -44,6 +44,13 @@ export default function BrandsSection({
       description: 'International standard batteries for automotive excellence',
       features: ['International', 'Auto Excellence', 'Reliable'],
     },
+     {
+      name: 'Fujika',
+      logo: '🔧',
+      description:
+        "Advanced dry battery technology known for extra backup power and exceptional long life",
+      features: ['Advanced Dry Tech', 'Extra Backup', 'Long Life'],
+    },
   ];
 
   return (
