@@ -32,7 +32,6 @@ class ThermalPrinter {
     // Write the HTML content with thermal printer styling
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html>
       <head>
         <title>Invoice ${data.invoiceNo}</title>
         <style>
@@ -59,6 +58,18 @@ class ThermalPrinter {
               margin: 0;
               padding: 5px;
             }
+            .company-name {
+              font-size: 16px;
+              font-weight: 900;
+              text-align: center;
+              margin: 5px 0;
+            }
+            .contact-info {
+              font-size: 11px;
+              font-weight: 700;
+              text-align: center;
+              margin: 2px 0;
+            }
           }
           body {
             font-family: 'Courier New', monospace;
@@ -75,6 +86,18 @@ class ThermalPrinter {
             word-wrap: normal;
             overflow-wrap: normal;
           }
+          .company-name {
+            font-size: 16px;
+            font-weight: 900;
+            text-align: center;
+            margin: 5px 0;
+          }
+          .contact-info {
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            margin: 2px 0;
+          }
         </style>
       </head>
       <body>
@@ -82,7 +105,7 @@ class ThermalPrinter {
 ${receiptContent}
         </div>
       </body>
-      </html>
+    </html>
     `);
 
     printWindow.document.close();
@@ -128,16 +151,19 @@ ${receiptContent}
     let content = '';
 
     // Header
-    content += centerText('INVOICE');
-    content += centerText(`INV-${data.invoiceNo}`);
+    content += `<div style="text-align: center; font-size: 14px; font-weight: 900; margin-bottom: 5px;">INVOICE</div>`;
+    content += `<div style="text-align: center; font-size: 13px; font-weight: 700; margin-bottom: 5px;">INV-${data.invoiceNo}</div>`;
     content += line('=');
 
-    // Company info
-    content += centerText('MUDASIR TRADERS-DG KHAN');
-    content += centerText('+923349627745, +923215392445');
-    content += centerText('General Bus Stand, near Badozai Market');
-    content += centerText('Dera Ghazi Khan');
-    content += centerText('Owner@mudasirtraders.com');
+    // Company info - Use HTML div for larger font with logo
+    content += `<div class="company-name" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3Cfilter id='shadow' x='-50%25' y='-50%25' width='200%25' height='200%25'%3E%3CfeDropShadow dx='0' dy='2' stdDeviation='4' floodOpacity='0.15'/%3E%3C/filter%3E%3C/defs%3E%3Crect x='0' y='0' width='48' height='48' rx='12' fill='%232563EB' filter='url(%23shadow)'/%3E%3Cpath d='M26 12L18 26H24L22 36L30 22H24L26 12Z' fill='white' stroke='white' stroke-width='0.5' stroke-linejoin='round'/%3E%3C/svg%3E" alt="Mudasir Traders Logo" style="width: 20px; height: 20px;">
+      <span>MUDASIR TRADERS</span>
+    </div>\n`;
+    content += `<div class="contact-info">+923349627745, +923215392445</div>`;
+    content += `<div class="contact-info">General Bus Stand, near Badozai Market</div>`;
+    content += `<div class="contact-info">Dera Ghazi Khan</div>`;
+    content += `<div class="contact-info">Owner@mudasirtraders.com</div>`;
     content += line('-');
 
     // Customer info
