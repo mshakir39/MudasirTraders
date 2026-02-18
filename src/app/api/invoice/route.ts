@@ -108,7 +108,10 @@ export async function POST(req: NextRequest) {
 
       // 🔒 VALIDATION: Ensure invoice number is valid
       if (isNaN(nextNumber) || nextNumber <= 0) {
-        throw new Error(`Invalid invoice number generated: ${nextNumber}`);
+        return NextResponse.json({
+          error: `Invalid invoice number generated: ${nextNumber}`,
+          showToast: true
+        }, { status: 400 });
       }
 
       nextInvoiceNumber = nextNumber.toString().padStart(8, '0'); // Ensure exactly 8 digits
@@ -118,9 +121,10 @@ export async function POST(req: NextRequest) {
 
     // 🔒 VALIDATION: Ensure invoice number format is correct
     if (!/^\d{8}$/.test(nextInvoiceNumber)) {
-      throw new Error(
-        `Invalid invoice number format: ${nextInvoiceNumber}. Expected 8 digits.`
-      );
+      return NextResponse.json({
+        error: `Invalid invoice number format: ${nextInvoiceNumber}. Expected 8 digits.`,
+        showToast: true
+      }, { status: 400 });
     }
 
     // Create an invoice document
@@ -147,24 +151,27 @@ export async function POST(req: NextRequest) {
           !product.productPrice ||
           !product.quantity
         ) {
-          throw new Error(
-            `Product is missing required fields: ${JSON.stringify(product)}`
-          );
+          return NextResponse.json({
+            error: `Product is missing required fields: ${JSON.stringify(product)}`,
+            showToast: true
+          }, { status: 400 });
         }
 
         const productPrice = parseFloat(product.productPrice);
         const quantity = parseInt(product.quantity);
 
         if (isNaN(productPrice) || productPrice <= 0) {
-          throw new Error(
-            `Invalid product price for ${product.brandName} - ${product.series}: ${product.productPrice}`
-          );
+          return NextResponse.json({
+            error: `Invalid product price for ${product.brandName} - ${product.series}: ${product.productPrice}`,
+            showToast: true
+          }, { status: 400 });
         }
 
         if (isNaN(quantity) || quantity <= 0) {
-          throw new Error(
-            `Invalid quantity for ${product.brandName} - ${product.series}: ${product.quantity}`
-          );
+          return NextResponse.json({
+            error: `Invalid quantity for ${product.brandName} - ${product.series}: ${quantity}`,
+            showToast: true
+          }, { status: 400 });
         }
 
         const totalPrice = productPrice * quantity;
@@ -190,30 +197,34 @@ export async function POST(req: NextRequest) {
           product.warrentyDuration
         ) {
           const startDate = new Date(actualWarrantyStartDate);
-          if (!isNaN(startDate.getTime())) {
-            // 🔒 VALIDATION: Ensure warranty start date is not in the future
-            const warrantyStartDateNow = new Date();
-            if (startDate > warrantyStartDateNow) {
-              throw new Error(
-                `Warranty start date for ${product.brandName} - ${product.series} cannot be in the future: ${actualWarrantyStartDate}`
-              );
-            }
-            const endDate = new Date(startDate);
-            endDate.setMonth(
-              endDate.getMonth() + parseInt(product.warrentyDuration.toString())
+          if (isNaN(startDate.getTime())) {
+            return NextResponse.json(
+              {
+                error: `Warranty start date for ${product.brandName} - ${product.series} cannot be in the future: ${actualWarrantyStartDate}`,
+                showToast: true
+              },
+              { status: 400 }
             );
-            warrantyEndDate = endDate.toISOString().split('T')[0];
-
-            // 🔒 VALIDATION: Ensure warranty end date is valid
-            const calculatedEndDate = new Date(warrantyEndDate);
-            if (isNaN(calculatedEndDate.getTime())) {
-              throw new Error(
-                `Invalid warranty end date calculated for ${product.brandName} - ${product.series}: ${warrantyEndDate}`
-              );
-            }
-
-            // Note: Allow warranty end date to be in the past to support backdated invoices
           }
+          const endDate = new Date(startDate);
+          endDate.setMonth(
+            endDate.getMonth() + parseInt(product.warrentyDuration.toString())
+          );
+          warrantyEndDate = endDate.toISOString().split('T')[0];
+
+          // 🔒 VALIDATION: Ensure warranty end date is valid
+          const calculatedEndDate = new Date(warrantyEndDate);
+          if (isNaN(calculatedEndDate.getTime())) {
+            return NextResponse.json(
+              {
+                error: `Invalid warranty end date calculated for ${product.brandName} - ${product.series}: ${warrantyEndDate}`,
+                showToast: true
+              },
+              { status: 400 }
+            );
+          }
+
+          // Note: Allow warranty end date to be in the past to support backdated invoices
         }
 
         // Auto-set warranty start date to custom date if enabled
@@ -262,33 +273,36 @@ export async function POST(req: NextRequest) {
     // 🔒 VALIDATION: Ensure custom date is valid when provided
     if (formData.useCustomDate === true || formData.useCustomDate === 'true') {
       if (!formData.customDate) {
-        throw new Error(
-          'Custom date is required when useCustomDate is enabled'
-        );
+        return NextResponse.json({
+          error: 'Custom date is required when useCustomDate is enabled',
+          showToast: true
+        }, { status: 400 });
       }
 
       const customDate = new Date(formData.customDate);
       if (isNaN(customDate.getTime())) {
-        throw new Error(`Invalid custom date: ${formData.customDate}`);
+        return NextResponse.json({ error: `Invalid custom date: ${formData.customDate}`, showToast: true }, { status: 400 });
       }
 
       // Ensure custom date is not in the future
       const customDateNow = new Date();
       if (customDate > customDateNow) {
-        throw new Error(
-          `Custom date cannot be in the future: ${formData.customDate}`
-        );
+        return NextResponse.json({
+          error: `Custom date cannot be in the future: ${formData.customDate}`,
+          showToast: true
+        }, { status: 400 });
       }
     }
 
-    // Calculate remaining amount
-    const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
+// Calculate remaining amount
+const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
 
     // 🔒 VALIDATION: Ensure totalProductAmount is always a valid number
     if (isNaN(totalProductAmount) || totalProductAmount < 0) {
-      throw new Error(
-        `Invalid total product amount: ${totalProductAmount}. Must be a positive number.`
-      );
+      return NextResponse.json({
+        error: `Invalid total product amount: ${totalProductAmount}. Must be a positive number.`,
+        showToast: true
+      }, { status: 400 });
     }
 
     // 🔒 VALIDATION: Ensure receivedAmount is always a valid number
@@ -300,9 +314,10 @@ export async function POST(req: NextRequest) {
     ) {
       const parsedAmount = parseFloat(formData.receivedAmount);
       if (isNaN(parsedAmount) || parsedAmount < 0) {
-        throw new Error(
-          `Invalid received amount: ${formData.receivedAmount}. Must be a positive number.`
-        );
+        return NextResponse.json({
+          error: `Invalid received amount: ${formData.receivedAmount}. Must be a positive number.`,
+          showToast: true
+        }, { status: 400 });
       }
       receivedAmount = parsedAmount;
     }
@@ -325,9 +340,10 @@ export async function POST(req: NextRequest) {
     ) {
       const parsedRate = parseFloat(formData.batteriesRate);
       if (isNaN(parsedRate) || parsedRate < 0) {
-        throw new Error(
-          `Invalid battery rate: ${formData.batteriesRate}. Must be a positive number.`
-        );
+        return NextResponse.json({
+          error: `Invalid battery rate: ${formData.batteriesRate}. Must be a positive number.`,
+          showToast: true
+        }, { status: 400 });
       }
       batteriesRate = parsedRate;
     }
@@ -347,29 +363,45 @@ export async function POST(req: NextRequest) {
 
     // 🔒 VALIDATION: Ensure remainingAmount is a valid number
     if (isNaN(invoice.remainingAmount)) {
-      throw new Error(
-        `Invalid remaining amount calculation. Total: ${totalProductAmount}, Received: ${receivedAmount}, Batteries: ${batteriesRate}`
+      return NextResponse.json(
+        {
+          error: `Invalid remaining amount calculation. Total: ${totalProductAmount}, Received: ${receivedAmount}, Batteries: ${batteriesRate}`,
+          showToast: true
+        },
+        { status: 400 }
       );
     }
 
     // 🔒 VALIDATION: Ensure received amount doesn't exceed total amount
     if (receivedAmount > totalProductAmount) {
-      throw new Error(
-        `Received amount (${receivedAmount}) cannot exceed total product amount (${totalProductAmount})`
+      return NextResponse.json(
+        {
+          error: `Received amount (${receivedAmount}) cannot exceed total product amount (${totalProductAmount})`,
+          showToast: true
+        },
+        { status: 400 }
       );
     }
 
     // 🔒 VALIDATION: Ensure batteries rate doesn't exceed total amount
     if (batteriesRate > totalProductAmount) {
-      throw new Error(
-        `Batteries rate (${batteriesRate}) cannot exceed total product amount (${totalProductAmount})`
+      return NextResponse.json(
+        {
+          error: `Batteries rate (${batteriesRate}) cannot exceed total product amount (${totalProductAmount})`,
+          showToast: true
+        },
+        { status: 400 }
       );
     }
 
     // 🔒 VALIDATION: Ensure combined received amount and batteries rate don't exceed total
     if (receivedAmount + batteriesRate > totalProductAmount) {
-      throw new Error(
-        `Combined received amount (${receivedAmount}) and batteries rate (${batteriesRate}) cannot exceed total product amount (${totalProductAmount})`
+      return NextResponse.json(
+        {
+          error: `The received amount (${receivedAmount}) plus battery rate (${batteriesRate}) cannot be more than the total product cost (${totalProductAmount})`,
+          showToast: true
+        },
+        { status: 400 }
       );
     }
 
@@ -392,8 +424,12 @@ export async function POST(req: NextRequest) {
       if (product.warrentyCode && product.warrentyCode.trim() !== '') {
         const warrantyCode = product.warrentyCode.trim();
         if (warrantyCode.length < 3) {
-          throw new Error(
-            `Warranty code for ${product.brandName} - ${product.series} must be at least 3 characters long`
+          return NextResponse.json(
+            {
+              error: `Warranty code for ${product.brandName} - ${product.series} must be at least 3 characters long`,
+              showToast: true
+            },
+            { status: 400 }
           );
         }
 
@@ -402,8 +438,12 @@ export async function POST(req: NextRequest) {
           !product.warrentyStartDate ||
           product.warrentyStartDate.trim() === ''
         ) {
-          throw new Error(
-            `Warranty start date is required for ${product.brandName} - ${product.series} when warranty code is provided`
+          return NextResponse.json(
+            {
+              error: `Warranty start date is required for ${product.brandName} - ${product.series} when warranty code is provided`,
+              showToast: true
+            },
+            { status: 400 }
           );
         }
 
@@ -412,8 +452,12 @@ export async function POST(req: NextRequest) {
           !product.warrentyDuration ||
           product.warrentyDuration.toString().trim() === ''
         ) {
-          throw new Error(
-            `Warranty duration is required for ${product.brandName} - ${product.series} when warranty code is provided`
+          return NextResponse.json(
+            {
+              error: `Warranty duration is required for ${product.brandName} - ${product.series} when warranty code is provided`,
+              showToast: true
+            },
+            { status: 400 }
           );
         }
 

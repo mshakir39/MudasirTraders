@@ -34,9 +34,9 @@ const columns = [
       return removeParentheses(name);
     },
   },
-  { label: 'Quantity', renderCell: (item: any) => item.quantity },
-  { label: 'Price/Item', renderCell: (item: any) => 'Rs ' + item.productPrice },
-  { label: 'Amount', renderCell: (item: any) => 'Rs ' + item.totalPrice },
+  { label: 'Qty', renderCell: (item: any) => item.quantity },
+  { label: 'Price', renderCell: (item: any) => 'Rs ' + item.productPrice },
+  { label: 'Total', renderCell: (item: any) => 'Rs ' + item.totalPrice },
 ];
 
 const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
@@ -58,27 +58,25 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   });
   const downloadRef = useRef(null);
 
+  // FIX: Changed footer structure to match table columns properly
   const footerData = {
-    ID: 'Total',
-    Quantity: getAllSum(data?.products, 'quantity'),
-    Amount: 'Rs ' + getAllSum(data?.products, 'totalPrice'),
+    ID: '',  // Empty for ID column
+    Name: 'Total',  // "Total" label in Name column
+    Qty: getAllSum(data?.products, 'quantity'),  // Total quantity
+    Price: '',  // Empty for Price column
+    Total: 'Rs ' + getAllSum(data?.products, 'totalPrice'),  // Total amount
   };
 
   const downloadHandler = () => {
     if (downloadRef.current) {
       printHtmlAsPdf(downloadRef.current);
-    } else {
     }
   };
 
   const printHandler = async () => {
-    if (!data) {
-      return;
-    }
+    if (!data) return;
     setShowPrinterInstructions(true);
   };
-
-  // WhatsApp handler is now handled by the WhatsAppShareButton component
 
   const handlePrintConfirm = async () => {
     try {
@@ -95,14 +93,10 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
 
   const handleModalOpen = () => {
     const tfoot = document.querySelector('tfoot') as HTMLTableSectionElement;
-    const lastTwoTds = Array.from(tfoot.rows[0].cells).slice(
-      -2
-    ) as HTMLTableCellElement[];
-
-    let Widths = lastTwoTds.map((td) => `${td.offsetWidth}`) as string[];
-    setTdWidths(Widths);
-    if (Widths && Widths.length > 0) {
-    } else {
+    if (tfoot && tfoot.rows.length > 0) {
+      const lastTwoTds = Array.from(tfoot.rows[0].cells).slice(-2) as HTMLTableCellElement[];
+      let Widths = lastTwoTds.map((td) => `${td.offsetWidth}`) as string[];
+      setTdWidths(Widths);
     }
   };
 
@@ -114,233 +108,144 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      dialogPanelClass='w-[794px]'
-      parentClass={''}
+      dialogPanelClass='w-full max-w-[95vw] md:max-w-[794px] mx-auto'
+      parentClass={'p-2 md:p-4'}
       onClose={handleModalClose}
       onOpen={handleModalOpen}
       title=''
       size='large'
     >
       <div
-        className='relative flex h-full w-full flex-col'
+        className='relative flex h-full w-full flex-col bg-white p-4 md:p-8'
         ref={downloadRef}
         data-invoice-modal
       >
-        <div className='thermal-print-title text-[40px] font-bold uppercase text-black'>
-          Invoice
+        {/* Header Section - FIXED RESPONSIVE SIZING */}
+        <div className='flex flex-row justify-between items-center mb-4 md:mb-6'>
+          <div className='text-2xl md:text-3xl lg:text-[40px] font-bold uppercase text-black'>
+            Invoice
+          </div>
+          <div className='print-hide flex flex-row items-center gap-2 md:gap-3 rounded-lg border border-gray-200 bg-white p-2 shadow-sm'>
+            <FaDownload
+              className='cursor-pointer text-xl md:text-2xl text-[#021B3B] hover:text-[#0056b3]'
+              onClick={downloadHandler}
+            />
+            <BsPrinter
+              className='cursor-pointer text-xl md:text-2xl text-[#021B3B] hover:text-[#0056b3]'
+              onClick={printHandler}
+            />
+            <WhatsAppShareButton invoiceData={data} size={24} className='cursor-pointer' />
+          </div>
         </div>
-        <div className='print-hide absolute right-0 top-0 z-10 flex flex-row items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-lg'>
-          <FaDownload
-            className='cursor-pointer text-2xl text-[#021B3B] transition-colors hover:text-[#0056b3]'
-            onClick={downloadHandler}
-            title='Download PDF'
-          />
-          <BsPrinter
-            className='cursor-pointer text-2xl text-[#021B3B] transition-colors hover:text-[#0056b3]'
-            onClick={printHandler}
-            title='Print to Thermal Printer'
-          />
-          <WhatsAppShareButton
-            invoiceData={data}
-            size={32}
-            className='cursor-pointer'
-          />
-        </div>
-        <div className='text-end text-lg font-bold uppercase text-black'>
+
+        {/* Invoice Number - FIXED RESPONSIVE SIZING */}
+        <div className='text-right text-sm md:text-base lg:text-lg font-bold uppercase text-black mb-3 md:mb-4'>
           <span>No:Inv-{data?.invoiceNo}</span>
         </div>
 
-        <div className='mt-12 flex'>
-          <div className='flex w-[50%] flex-col'>
-            <span className='text-xl font-bold text-black'>Invoice From:</span>
-            <span className='text-base text-[#6B6B6B]'>
-              MUDASIR TRADERS-DG KHAN
-            </span>
-            <span className='text-base text-[#6B6B6B]'>
-              +923349627745, +923215392445
-            </span>
-            <span className='text-base text-[#6B6B6B]'>
-              General Bus Stand, near Badozai Market, Dera Ghazi Khan
-            </span>
-            <span className='text-base text-[#6B6B6B]'>
-              Owner@mudasirtraders.com
-            </span>
+        {/* FROM and TO - FIXED RESPONSIVE SIZING */}
+        <div className='flex flex-row w-full gap-3 md:gap-4 border-y border-gray-100 py-3 md:py-4'>
+          <div className='flex flex-1 flex-col'>
+            <span className='text-base md:text-lg lg:text-xl font-bold text-black mb-1'>Invoice From:</span>
+            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B] font-semibold uppercase'>Mudasir Traders-DG Khan</span>
+            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B]'>+923349627745</span>
+            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B] leading-tight'>Gen. Bus Stand, Dera Ghazi Khan</span>
           </div>
-          <div className='flex w-[50%] flex-col text-right'>
-            <span className='text-xl font-bold text-black'>Invoice To:</span>
-            <span className='text-base text-[#6B6B6B]'>
+          
+          <div className='w-[1px] bg-gray-200'></div>
+
+          <div className='flex flex-1 flex-col text-right'>
+            <span className='text-base md:text-lg lg:text-xl font-bold text-black mb-1'>Invoice To:</span>
+            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B] font-semibold uppercase truncate'>
               {removeParentheses(data?.customerName)}
             </span>
-            <span className='text-base text-[#6B6B6B]'>
-              {data?.customerContactNumber}
-            </span>
-            <span className='text-base text-[#6B6B6B]'>
-              {data?.customerAddress}
+            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B]'>{data?.customerContactNumber}</span>
+            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B] leading-tight truncate'>
+              {data?.customerAddress || 'N/A'}
             </span>
           </div>
         </div>
 
-        <div className='mt-6 flex items-center'>
-          <span className='text-base font-bold text-black'>Date & Time :</span>
-          <span className='text-base text-[#6B6B6B]'>
+        {/* Date and Time - FIXED RESPONSIVE SIZING */}
+        <div className='mt-3 md:mt-4 flex items-center gap-2'>
+          <span className='text-sm md:text-base font-bold text-black'>Date & Time :</span>
+          <span className='text-sm md:text-base text-[#6B6B6B]'>
             {data?.createdDate ? convertDate(data.createdDate).dateTime : ''}
           </span>
         </div>
 
-        <div className='mt-12'>
-          <BasicTable
-            data={data?.products}
-            columns={columns}
-            footerData={footerData}
-          />
+        {/* Responsive Table Wrapper */}
+        <div className='mt-6 md:mt-8 overflow-x-auto overflow-y-hidden'>
+          <div className='min-w-[500px]'>
+            <BasicTable data={data?.products} columns={columns} footerData={footerData} />
+          </div>
+        </div>
 
-          <div className='flex w-full'>
-            <div className='mt-4 flex w-[56%] flex-col'>
-              <div className='flex'>
-                <span className='mr-2 font-bold text-[#6B6B6B]'>
-                  Invoice Amount In Words:{' '}
-                </span>
-                <span className='w-96'>
-                  {formatRupees(getAllSum(data?.products, 'totalPrice')) +
-                    ' Rupees Only'}
-                </span>
-              </div>
+        {/* Bottom Details Section - FIXED RESPONSIVE SIZING */}
+        <div className='mt-6 md:mt-8 flex flex-col lg:flex-row w-full gap-4 md:gap-6'>
+          <div className='flex w-full lg:w-[55%] flex-col space-y-3 md:space-y-4'>
+            {/* In Words - FIXED RESPONSIVE SIZING */}
+            <div className='text-xs md:text-sm'>
+              <span className='font-bold text-[#6B6B6B]'>In Words: </span>
+              <span className='italic'>{formatRupees(getAllSum(data?.products, 'totalPrice'))} Rupees Only</span>
+            </div>
 
-              <div className='mt-6 flex'>
-                <span className='mr-2 font-bold text-[#6B6B6B]'>
-                  Payment Method:
-                </span>
-                <span className='w-96'>{data?.paymentMethod?.join(' + ')}</span>
-              </div>
+            {/* Payment - FIXED RESPONSIVE SIZING */}
+            <div className='text-xs md:text-sm'>
+              <span className='font-bold text-[#6B6B6B]'>Payment: </span>
+              <span>{data?.paymentMethod?.join(' + ')}</span>
+            </div>
 
+            {/* Warranty - FIXED RESPONSIVE SIZING */}
+            <div className='space-y-1'>
               {data?.products?.map((product: any, idx: number) => (
-                <div key={idx} className='mt-1 flex items-center'>
-                  <span className='mr-2 font-bold text-[#6B6B6B]'>
-                    Warranty Code (
-                    {product.series || product.batteryDetails?.name}):
-                  </span>
-                  <span>{product.warrentyCode}</span>
+                <div key={idx} className='text-xs md:text-sm flex flex-wrap'>
+                  <span className='font-bold text-[#6B6B6B] mr-1'>Warranty ({product.series || 'Item'}):</span>
+                  <span className='break-all'>{product.warrentyCode}</span>
                 </div>
               ))}
             </div>
+          </div>
 
-            <div className='flex w-[44%] flex-col'>
-              <div className='width-transition flex h-[60.5px] w-full items-center justify-end bg-[#021B3B] text-lg text-white'>
-                <div
-                  style={{ width: tdWidths[0] ? tdWidths[0] + 'px' : '100px' }}
-                  className='width-transition p-[16px] font-bold'
-                >
-                  SubTotal
-                </div>
-                <div
-                  style={{ width: tdWidths[1] ? tdWidths[1] + 'px' : '150px' }}
-                  className='width-transition p-[16px] font-bold'
-                >
-                  {'Rs ' + getAllSum(data?.products, 'totalPrice')}
-                </div>
+          {/* Pricing Column - FIXED RESPONSIVE SIZING */}
+          <div className='flex w-full lg:w-[45%] flex-col border border-gray-100'>
+            <div className='flex justify-between items-center bg-[#021B3B] text-white p-2 md:p-3'>
+              <span className='font-bold text-sm md:text-base lg:text-lg'>SubTotal</span>
+              <span className='font-bold text-sm md:text-base lg:text-lg'>Rs {getAllSum(data?.products, 'totalPrice')}</span>
+            </div>
+
+            {(Number(data?.batteriesRate) || 0) > 0 && (
+              <div className='flex justify-between items-center p-2 md:p-3 border-b border-gray-50 text-black'>
+                <span className='font-bold text-xs md:text-sm text-gray-500 uppercase'>
+                  {data?.batteriesCountAndWeight || 'Old Battery'}
+                </span>
+                <span className='font-bold text-xs md:text-sm'>- Rs {data?.batteriesRate}</span>
               </div>
+            )}
 
-              {(Number(data?.batteriesRate) || 0) > 0 && (
-                <div className='width-transition flex h-[60.5px] w-full items-center justify-end bg-transparent text-lg text-black'>
-                  <div
-                    style={{
-                      width: tdWidths[0] ? tdWidths[0] + 'px' : '100px',
-                    }}
-                    className='width-transition p-[16px] font-bold'
-                  >
-                    {data?.batteriesCountAndWeight &&
-                    data?.batteriesCountAndWeight !== '-'
-                      ? data.batteriesCountAndWeight
-                      : 'Old Battery'}
-                  </div>
-                  <div
-                    style={{
-                      width: tdWidths[1] ? tdWidths[1] + 'px' : '150px',
-                    }}
-                    className='width-transition relative p-[5.4px] font-bold'
-                  >
-                    <span>-</span> {' Rs ' + Number(data?.batteriesRate)}
-                  </div>
-                </div>
-              )}
-
-              {Number(data?.receivedAmount) > 0 && (
-                <div className='width-transition flex h-[60.5px] w-full items-center justify-end bg-transparent text-lg text-black'>
-                  <div
-                    style={{
-                      width: tdWidths[0] ? tdWidths[0] + 'px' : '100px',
-                    }}
-                    className='width-transition p-[16px] font-bold'
-                  >
-                    Received:
-                  </div>
-                  <div
-                    style={{
-                      width: tdWidths[1] ? tdWidths[1] + 'px' : '150px',
-                    }}
-                    className='width-transition relative p-[5.4px] font-bold'
-                  >
-                    <span>-</span> {' Rs ' + Number(data?.receivedAmount)}
-                  </div>
-                </div>
-              )}
-
-              {data?.additionalPayment?.map((paymentData: any, index: any) => {
-                const { dateTime } = convertDate(paymentData?.addedDate);
-                return (
-                  <div
-                    key={index}
-                    className='width-transition flex h-[60.5px] w-full items-center justify-end bg-transparent text-lg text-black'
-                  >
-                    <div
-                      style={{
-                        width: tdWidths[0] ? tdWidths[0] + 'px' : '100px',
-                      }}
-                      className='width-transition p-[16px] font-bold'
-                    >
-                      Received: {dateTime}
-                      {paymentData?.paymentMethod && (
-                        <div className='mt-1 text-xs text-gray-600'>
-                          ({paymentData.paymentMethod.join(' + ')})
-                        </div>
-                      )}
-                    </div>
-                    <div
-                      style={{
-                        width: tdWidths[1] ? tdWidths[1] + 'px' : '150px',
-                      }}
-                      className='width-transition relative p-[5.4px] font-bold'
-                    >
-                      <span>-</span> {' Rs ' + paymentData?.amount}
-                    </div>
-                  </div>
-                );
-              })}
-
-              <div className='width-transition flex h-[60.5px] w-full items-center justify-end bg-[#021B3B] text-lg text-white'>
-                <div
-                  style={{ width: tdWidths[0] ? tdWidths[0] + 'px' : '100px' }}
-                  className='width-transition p-[16px] font-bold'
-                >
-                  {data?.remainingAmount === 0 ? 'Total' : 'Total Remaining'}
-                </div>
-                <div
-                  style={{ width: tdWidths[1] ? tdWidths[1] + 'px' : '150px' }}
-                  className='width-transition relative p-[16px] font-bold'
-                >
-                  {data?.remainingAmount === 0
-                    ? 'Paid'
-                    : `Rs ${data?.remainingAmount}`}
-                </div>
+            {Number(data?.receivedAmount) > 0 && (
+              <div className='flex justify-between items-center p-2 md:p-3 border-b border-gray-50 text-black'>
+                <span className='font-bold text-xs md:text-sm text-gray-500'>Received:</span>
+                <span className='font-bold text-xs md:text-sm'>- Rs {data?.receivedAmount}</span>
               </div>
+            )}
 
-              <span
-                className={`my-36 flex justify-center text-6xl ${dancingScript?.className}`}
-              >
-                Thank You !
+            <div className='flex justify-between items-center bg-[#021B3B] text-white p-2 md:p-3'>
+              <span className='font-bold text-sm md:text-base lg:text-lg'>
+                {data?.remainingAmount === 0 ? 'Total' : 'Balance Due'}
+              </span>
+              <span className='font-bold text-sm md:text-base lg:text-lg'>
+                {data?.remainingAmount === 0 ? 'PAID' : `Rs ${data?.remainingAmount}`}
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Thank You - FIXED RESPONSIVE SIZING */}
+        <div className='mt-8 md:mt-12 mb-3 md:mb-4 flex justify-center'>
+          <span className={`text-3xl md:text-4xl lg:text-6xl text-center ${dancingScript?.className}`}>
+            Thank You !
+          </span>
         </div>
       </div>
 

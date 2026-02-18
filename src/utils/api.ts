@@ -18,13 +18,14 @@ export const GET = async (
       cache, // Include cache option
       ...restParams,
     });
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
+
+    const result = await response.json();
+
+    // Return the result regardless of status, let caller handle errors
+    return result;
   } catch (error) {
     console.error('Error fetching data:', error);
-    return null;
+    return { error: 'Network error occurred' };
   }
 };
 
@@ -33,7 +34,7 @@ export const POST = async <T>(
   data: T,
   cache: RequestCache = 'default', // Default cache setting
   ...restParams: RequestInit[]
-): Promise<Response> => {
+): Promise<any> => {
   try {
     const response = await fetch(`/${url}`, {
       method: 'POST',
@@ -43,13 +44,13 @@ export const POST = async <T>(
       ...restParams,
     });
 
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
+    const result = await response.json();
+
+    // Return the result regardless of status, let caller handle errors
+    return result;
   } catch (error) {
     console.error('Error posting data:', error);
-    throw error; // Re-throw the error to be caught by the caller
+    return { error: 'Network error occurred' };
   }
 };
 
@@ -67,13 +68,14 @@ export const PUT = async <T>(
       cache, // Include cache option
       ...restParams,
     });
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
+
+    const result = await response.json();
+
+    // Return the result regardless of status, let caller handle errors
+    return result;
   } catch (error) {
     console.error('Error updating data:', error);
-    return null;
+    return { error: 'Network error occurred' };
   }
 };
 
@@ -94,12 +96,13 @@ export const PATCH = async <T>(
       cache,
       ...restParams,
     });
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
+
+    const result = await response.json();
+
+    // Return the result regardless of status, let caller handle errors
+    return result;
   } catch (error) {
     console.error('Error patching data:', error);
-    return null;
+    return { error: 'Network error occurred' };
   }
 };
