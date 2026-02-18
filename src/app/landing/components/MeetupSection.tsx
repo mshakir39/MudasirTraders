@@ -72,6 +72,7 @@ export default function MeetupSection() {
               modules={[Navigation, Pagination, Autoplay]}
               spaceBetween={30}
               slidesPerView={1}
+              speed={2500}
               autoplay={{
                 delay: 5000,
                 disableOnInteraction: false,
