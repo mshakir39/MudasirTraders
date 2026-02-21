@@ -28,6 +28,7 @@ interface TableProps<TData> {
   secondaryButtonTitle?: string;
   showSecondaryButton?: boolean;
   stockCost?: number;
+  defaultShowStockCost?: boolean;
   pageSize?: number;
   onRowClick?: (row: TData) => void;
   emptyMessage?: string;
@@ -42,21 +43,22 @@ interface TableProps<TData> {
   minVisibleRows?: number;
 }
 
-export function Table<TData>({
+export const Table = <TData extends Record<string, any>>({
   data,
   columns,
-  enableSearch = true,
-  enablePagination = false,
-  searchPlaceholder = 'Search...',
-  searchParentClassName,
   tableParentClassName,
+  searchParentClassName,
+  enableSearch,
+  enablePagination,
+  searchPlaceholder,
+  showButton,
+  buttonTitle,
   buttonOnClick,
-  buttonTitle = 'Create',
-  showButton = true,
+  showSecondaryButton,
+  secondaryButtonTitle,
   secondaryButtonOnClick,
-  secondaryButtonTitle = 'Secondary',
-  showSecondaryButton = false,
   stockCost,
+  defaultShowStockCost = false,
   pageSize: initialPageSize = 10,
   onRowClick,
   emptyMessage = 'No data found',
@@ -65,11 +67,16 @@ export function Table<TData>({
   enableRowVirtualization = false,
   tableBodyHeight = 600,
   minVisibleRows = 10,
-}: TableProps<TData>) {
+}: TableProps<TData>) => {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(initialPageSize);
+  const [containerHeight, setContainerHeight] = React.useState<
+    number | undefined
+  >(undefined);
+  // ✅ Internal state — no more prop dependency or DOM events
+  const [showStockCost, setShowStockCost] = React.useState(defaultShowStockCost);
 
   const augmentedColumns = React.useMemo<ColumnDef<TData>[]>(() => {
     if (!extraGlobalSearchText) return columns;
@@ -94,7 +101,6 @@ export function Table<TData>({
       try {
         let searchText = '';
 
-        // Only try to get __global_search if extraGlobalSearchText was provided
         if (extraGlobalSearchText) {
           try {
             const hidden = row.getValue('__global_search');
@@ -106,14 +112,12 @@ export function Table<TData>({
           }
         }
 
-        // If we didn't get text from __global_search, build from visible cells
         if (!searchText) {
           searchText = row
             .getAllCells()
-            .filter((c: any) => c.column.id !== '__global_search') // Skip the hidden column
+            .filter((c: any) => c.column.id !== '__global_search')
             .map((c: any) => {
               const value = c.getValue?.();
-              // Skip null, undefined, objects, and arrays
               if (value == null || typeof value === 'object') return '';
               return String(value);
             })
@@ -135,7 +139,7 @@ export function Table<TData>({
         return searchText.includes(query);
       } catch (error) {
         console.error('Search filter error:', error);
-        return true; // Show the row if there's an error
+        return true;
       }
     },
     onSortingChange: setSorting,
@@ -147,7 +151,6 @@ export function Table<TData>({
     },
   });
 
-  const filteredRows = table.getFilteredRowModel().rows;
   const sortedRows = table.getSortedRowModel().rows;
   const totalPages = Math.ceil(sortedRows.length / pageSize);
   const paginatedRows = React.useMemo(() => {
@@ -176,9 +179,7 @@ export function Table<TData>({
 
   const scrollParentRef = React.useRef<HTMLDivElement | null>(null);
   const tbodyRef = React.useRef<HTMLTableSectionElement | null>(null);
-  const [containerHeight, setContainerHeight] = React.useState<
-    number | undefined
-  >(undefined);
+
   const rowVirtualizer = useVirtualizer({
     count: enableRowVirtualization ? renderRows.length : 0,
     getScrollElement: () => scrollParentRef.current,
@@ -225,11 +226,9 @@ export function Table<TData>({
     virtualItemsLen,
   ]);
 
-  // Calculate dynamic container style
   const containerStyle = React.useMemo(() => {
     if (!enableRowVirtualization) return undefined;
 
-    // If we have fewer rows than minVisibleRows, don't apply min-height
     if (renderRows.length <= minVisibleRows) {
       return {
         overflowY: 'auto' as const,
@@ -265,14 +264,21 @@ export function Table<TData>({
           )}
           <div className='flex items-center gap-4'>
             {stockCost !== undefined && stockCost > 0 && (
-              <span className='whitespace-nowrap font-bold'>
-                Total Stock Cost: {Math.round(stockCost).toLocaleString()}
-              </span>
+              <button
+                onClick={() => setShowStockCost((prev) => !prev)}
+                className='whitespace-nowrap font-bold text-gray-500 hover:text-gray-700 transition-colors'
+                title={showStockCost ? 'Hide Stock Cost' : 'Show Stock Cost'}
+              >
+                Total Stock Cost:{' '}
+                {showStockCost
+                  ? Math.round(stockCost).toLocaleString()
+                  : '•••••••'}
+              </button>
             )}
             {showSecondaryButton && secondaryButtonOnClick && (
               <Button
                 variant='outline'
-                text={secondaryButtonTitle}
+                text={secondaryButtonTitle || ''}
                 onClick={secondaryButtonOnClick}
                 style={{ borderColor: '#dc2626', color: '#dc2626' }}
                 className='hover:bg-red-50'
@@ -281,7 +287,7 @@ export function Table<TData>({
             {showButton && buttonOnClick && (
               <Button
                 variant='fill'
-                text={buttonTitle}
+                text={buttonTitle || ''}
                 onClick={buttonOnClick}
               />
             )}
@@ -440,6 +446,13 @@ export function Table<TData>({
                   ))}
             </tbody>
           </table>
+
+          {/* Empty State */}
+          {renderRows.length === 0 && (
+            <div className='py-12 text-center text-sm text-gray-500'>
+              {emptyMessage}
+            </div>
+          )}
         </div>
       </div>
 
@@ -474,7 +487,7 @@ export function Table<TData>({
             </button>
             <div className='flex items-center gap-1'>
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNumber;
+                let pageNumber: number;
                 if (totalPages <= 5) {
                   pageNumber = i;
                 } else if (currentPage < 3) {
@@ -518,6 +531,6 @@ export function Table<TData>({
       )}
     </div>
   );
-}
+};
 
 export default Table;

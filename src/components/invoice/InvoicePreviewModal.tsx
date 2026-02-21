@@ -58,13 +58,12 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   });
   const downloadRef = useRef(null);
 
-  // FIX: Changed footer structure to match table columns properly
   const footerData = {
-    ID: '',  // Empty for ID column
-    Name: 'Total',  // "Total" label in Name column
-    Qty: getAllSum(data?.products, 'quantity'),  // Total quantity
-    Price: '',  // Empty for Price column
-    Total: 'Rs ' + getAllSum(data?.products, 'totalPrice'),  // Total amount
+    ID: '',
+    Name: 'Total',
+    Qty: getAllSum(data?.products, 'quantity'),
+    Price: '',
+    Total: 'Rs ' + getAllSum(data?.products, 'totalPrice'),
   };
 
   const downloadHandler = () => {
@@ -80,6 +79,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
 
   const handlePrintConfirm = async () => {
     try {
+      console.log("for print", data);
       await printWithThermalPrinter(data);
     } catch (error: any) {
       setErrorModal({
@@ -105,6 +105,8 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
     setTdWidths([]);
   };
 
+  console.log("data", data);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -120,7 +122,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
         ref={downloadRef}
         data-invoice-modal
       >
-        {/* Header Section - FIXED RESPONSIVE SIZING */}
+        {/* Header Section */}
         <div className='flex flex-row justify-between items-center mb-4 md:mb-6'>
           <div className='text-2xl md:text-3xl lg:text-[40px] font-bold uppercase text-black'>
             Invoice
@@ -138,12 +140,12 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
           </div>
         </div>
 
-        {/* Invoice Number - FIXED RESPONSIVE SIZING */}
+        {/* Invoice Number */}
         <div className='text-right text-sm md:text-base lg:text-lg font-bold uppercase text-black mb-3 md:mb-4'>
           <span>No:Inv-{data?.invoiceNo}</span>
         </div>
 
-        {/* FROM and TO - FIXED RESPONSIVE SIZING */}
+        {/* FROM and TO */}
         <div className='flex flex-row w-full gap-3 md:gap-4 border-y border-gray-100 py-3 md:py-4'>
           <div className='flex flex-1 flex-col'>
             <span className='text-base md:text-lg lg:text-xl font-bold text-black mb-1'>Invoice From:</span>
@@ -151,7 +153,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
             <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B]'>+923349627745</span>
             <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B] leading-tight'>Gen. Bus Stand, Dera Ghazi Khan</span>
           </div>
-          
+
           <div className='w-[1px] bg-gray-200'></div>
 
           <div className='flex flex-1 flex-col text-right'>
@@ -166,7 +168,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
           </div>
         </div>
 
-        {/* Date and Time - FIXED RESPONSIVE SIZING */}
+        {/* Date and Time */}
         <div className='mt-3 md:mt-4 flex items-center gap-2'>
           <span className='text-sm md:text-base font-bold text-black'>Date & Time :</span>
           <span className='text-sm md:text-base text-[#6B6B6B]'>
@@ -174,29 +176,29 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
           </span>
         </div>
 
-        {/* Responsive Table Wrapper */}
+        {/* Table */}
         <div className='mt-6 md:mt-8 overflow-x-auto overflow-y-hidden'>
           <div className='min-w-[500px]'>
             <BasicTable data={data?.products} columns={columns} footerData={footerData} />
           </div>
         </div>
 
-        {/* Bottom Details Section - FIXED RESPONSIVE SIZING */}
+        {/* Bottom Details Section */}
         <div className='mt-6 md:mt-8 flex flex-col lg:flex-row w-full gap-4 md:gap-6'>
           <div className='flex w-full lg:w-[55%] flex-col space-y-3 md:space-y-4'>
-            {/* In Words - FIXED RESPONSIVE SIZING */}
+            {/* In Words */}
             <div className='text-xs md:text-sm'>
               <span className='font-bold text-[#6B6B6B]'>In Words: </span>
               <span className='italic'>{formatRupees(getAllSum(data?.products, 'totalPrice'))} Rupees Only</span>
             </div>
 
-            {/* Payment - FIXED RESPONSIVE SIZING */}
+            {/* Payment */}
             <div className='text-xs md:text-sm'>
               <span className='font-bold text-[#6B6B6B]'>Payment: </span>
               <span>{data?.paymentMethod?.join(' + ')}</span>
             </div>
 
-            {/* Warranty - FIXED RESPONSIVE SIZING */}
+            {/* Warranty */}
             <div className='space-y-1'>
               {data?.products?.map((product: any, idx: number) => (
                 <div key={idx} className='text-xs md:text-sm flex flex-wrap'>
@@ -207,7 +209,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
             </div>
           </div>
 
-          {/* Pricing Column - FIXED RESPONSIVE SIZING */}
+          {/* Pricing Column */}
           <div className='flex w-full lg:w-[45%] flex-col border border-gray-100'>
             <div className='flex justify-between items-center bg-[#021B3B] text-white p-2 md:p-3'>
               <span className='font-bold text-sm md:text-base lg:text-lg'>SubTotal</span>
@@ -230,6 +232,23 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
               </div>
             )}
 
+            {/* Additional Payments */}
+            {data?.additionalPayment && data?.additionalPayment.length > 0 ? (
+              <div className='mt-2 p-3 bg-gray-50'>
+                {data?.additionalPayment?.map((payment: any, idx: number) => (
+                  <div key={idx} className='flex justify-between items-center py-1 border-b border-gray-200 last:border-b-0'>
+                    {/* ✅ FIXED: use convertDate() to show full date + time */}
+                    <span className='font-bold text-xs md:text-sm text-gray-500'>
+                      {payment?.addedDate ? convertDate(payment.addedDate).dateTime : ''}
+                    </span>
+                    <span className='font-bold text-xs md:text-sm'>- Rs {payment?.amount}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className='mt-2 p-3 bg-gray-50 rounded-lg border'></div>
+            )}
+
             <div className='flex justify-between items-center bg-[#021B3B] text-white p-2 md:p-3'>
               <span className='font-bold text-sm md:text-base lg:text-lg'>
                 {data?.remainingAmount === 0 ? 'Total' : 'Balance Due'}
@@ -241,7 +260,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
           </div>
         </div>
 
-        {/* Thank You - FIXED RESPONSIVE SIZING */}
+        {/* Thank You */}
         <div className='mt-8 md:mt-12 mb-3 md:mb-4 flex justify-center'>
           <span className={`text-3xl md:text-4xl lg:text-6xl text-center ${dancingScript?.className}`}>
             Thank You !
