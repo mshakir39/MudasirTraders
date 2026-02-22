@@ -209,7 +209,7 @@ const CustomerReviews: React.FC<CustomerReviewsProps> = ({
                   }}
                   title={review.text}
                 >
-                  "{review.text}"
+                  &ldquo;{review.text}&rdquo;
                 </p>
               </div>
 
