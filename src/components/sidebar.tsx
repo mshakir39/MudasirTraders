@@ -9,8 +9,8 @@ import {
   FaTags,
   FaShieldAlt,
 } from 'react-icons/fa';
-import { FaUserFriends } from 'react-icons/fa';
-import { FaCalendarAlt } from 'react-icons/fa';
+import { FaHandshake, FaUserFriends } from 'react-icons/fa';
+import { FaCalendarAlt, FaStar } from 'react-icons/fa';
 import { TbCategoryPlus } from 'react-icons/tb';
 import { IoMdSettings } from 'react-icons/io';
 import { IoLogOut } from 'react-icons/io5';
@@ -59,6 +59,7 @@ const Sidebar = ({
   const [storeDetail, setStoreDetail] = useState<any>();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [pendingReviewsCount, setPendingReviewsCount] = useState<number>(0);
 
   // Handle mobile menu toggling
   const handleMobileLinkClick = useCallback(() => {
@@ -67,73 +68,70 @@ const Sidebar = ({
 
   // Navigation state is now handled by Next.js Link components directly
 
-  // React 19: Memoized navigation items for better performance
-  const navigationItems = useMemo(
-    () => [
-      {
-        href: ROUTES.DASHBOARD,
-        label: 'Dashboard',
-        icon: MdDashboard,
-        active:
-          cleanPath === '/dashboard' || cleanPath === '/' || cleanPath === '',
-      },
-      {
-        href: ROUTES.BRANDS,
-        label: 'Brands',
-        icon: FaTags,
-        active: cleanPath === '/brands' || cleanPath === '/brands/',
-      },
-      {
-        href: ROUTES.CATEGORY,
-        label: 'Category',
-        icon: TbCategoryPlus,
-        active: cleanPath === '/category' || cleanPath === '/category/',
-      },
-      {
-        href: ROUTES.STOCK,
-        label: 'Stock',
-        icon: FaCarBattery,
-        active: cleanPath === '/stock' || cleanPath === '/stock/',
-      },
-      {
-        href: ROUTES.INVOICES,
-        label: 'Invoices',
-        icon: FaFileInvoice,
-        active: cleanPath === '/invoices' || cleanPath === '/invoices/',
-      },
-      {
-        href: ROUTES.SALES,
-        label: 'Sales',
-        icon: FaFileInvoice,
-        active: cleanPath === '/sales' || cleanPath === '/sales/',
-      },
-      {
-        href: ROUTES.CUSTOMERS,
-        label: 'Customers',
-        icon: FaUserFriends,
-        active: cleanPath === '/customers' || cleanPath === '/customers/',
-      },
-      {
-        href: ROUTES.WARRANTY_CHECK,
-        label: 'Warranty Check',
-        icon: FaShieldAlt,
-        active: cleanPath === '/warranty-check',
-      },
-      // {
-      //   href: '/dashboard/priceList',
-      //   label: 'Price List',
-      //   icon: FaTags,
-      //   active: optimisticPath === '/dashboard/priceList',
-      // },
-      // {
-      //   href: '/dashboard/scrapStock',
-      //   label: 'Scrap Stock',
-      //   icon: FaCarBattery,
-      //   active: optimisticPath === '/dashboard/scrapStock',
-      // },
-    ],
-    [cleanPath]
-  );
+  // Navigation items array
+  const navigationItems = [
+    {
+      href: ROUTES.DASHBOARD,
+      label: 'Dashboard',
+      icon: MdDashboard,
+      active:
+        cleanPath === '/dashboard' || cleanPath === '/' || cleanPath === '',
+    },
+    {
+      href: ROUTES.BRANDS,
+      label: 'Brands',
+      icon: FaTags,
+      active: cleanPath === '/brands' || cleanPath === '/brands/',
+    },
+    {
+      href: ROUTES.CATEGORY,
+      label: 'Category',
+      icon: TbCategoryPlus,
+      active: cleanPath === '/category' || cleanPath === '/category/',
+    },
+    {
+      href: ROUTES.STOCK,
+      label: 'Stock',
+      icon: FaCarBattery,
+      active: cleanPath === '/stock' || cleanPath === '/stock/',
+    },
+    {
+      href: ROUTES.INVOICES,
+      label: 'Invoices',
+      icon: FaFileInvoice,
+      active: cleanPath === '/invoices' || cleanPath === '/invoices/',
+    },
+    {
+      href: ROUTES.SALES,
+      label: 'Sales',
+      icon: FaFileInvoice,
+      active: cleanPath === '/sales' || cleanPath === '/sales/',
+    },
+    {
+      href: ROUTES.CUSTOMERS,
+      label: 'Customers',
+      icon: FaUserFriends,
+      active: cleanPath === '/customers' || cleanPath === '/customers/',
+    },
+    {
+      href: ROUTES.REVIEWS,
+      label: 'Reviews',
+      icon: FaStar,
+      active: cleanPath === '/reviews' || cleanPath === '/reviews/',
+    },
+    {
+      href: ROUTES.WARRANTY_CHECK,
+      label: 'Warranty Check',
+      icon: FaShieldAlt,
+      active: cleanPath === '/warranty-check',
+    },
+    {
+      href: ROUTES.DEALERS,
+      label: 'Dealers',
+      icon: FaHandshake,
+      active: cleanPath === '/dealers' || cleanPath === '/dealers/',
+    },
+  ];
 
   // Meetups item to be rendered separately before Settings
   const meetupsItem = {
@@ -170,7 +168,33 @@ const Sidebar = ({
       }
     };
 
+    const fetchPendingReviewsCount = async () => {
+      try {
+        const response = await fetch('/api/reviews?admin=true');
+        if (response.ok) {
+          const data = await response.json();
+          const pendingCount = data.reviews.filter((review: any) => review.approved !== true).length;
+          setPendingReviewsCount(pendingCount);
+        }
+      } catch (error) {
+        console.error('Error fetching pending reviews count:', error);
+      }
+    };
+
     fetchStoreDetail();
+    fetchPendingReviewsCount();
+
+    // Listen for review updates to refresh the notification dot
+    const handleReviewsUpdate = () => {
+      fetchPendingReviewsCount();
+    };
+
+    window.addEventListener('reviewsUpdated', handleReviewsUpdate);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('reviewsUpdated', handleReviewsUpdate);
+    };
   }, []); // Empty dependency array - only run once on mount
 
   // Close mobile menu when route changes
@@ -301,14 +325,28 @@ const Sidebar = ({
           </span>
 
           {/* Navigation Links */}
-          <div className='flex flex-1 flex-col space-y-2 overflow-y-auto'>
+          <div className='flex flex-1 flex-col space-y-2'>
             {navigationItems.map((item) => {
               const Icon = item.icon;
+              const isReviewsItem = item.href === ROUTES.REVIEWS;
+              const hasPendingReviews = isReviewsItem && pendingReviewsCount > 0;
+
+              // Debug logging for Reviews item
+              if (isReviewsItem) {
+                console.log('Reviews item rendering:', {
+                  href: item.href,
+                  label: item.label,
+                  active: item.active,
+                  hasPendingReviews,
+                  pendingReviewsCount
+                });
+              }
+
               return (
                 <Link
                   key={item.href}
-                  href={`${basePath}${item.href}`}
-                  className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
+                  href={item.href}
+                  className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200 relative
                     ${
                       item.active
                         ? 'bg-[#4287f5] text-white'
@@ -329,6 +367,11 @@ const Sidebar = ({
                   >
                     {item.label}
                   </span>
+
+                  {/* Blue notification dot for pending reviews */}
+                  {hasPendingReviews && (
+                    <div className="absolute -top-1 -right-1 h-3 w-3 bg-blue-500 rounded-full border-2 border-white animate-pulse"></div>
+                  )}
                 </Link>
               );
             })}

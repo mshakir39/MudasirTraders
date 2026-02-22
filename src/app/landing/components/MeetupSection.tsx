@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import { Navigation, Autoplay } from 'swiper/modules';
 import Image from 'next/image';
 import 'swiper/css';
 import 'swiper/css/navigation';
-import 'swiper/css/pagination';
 
 export default function MeetupSection() {
   // Store the full objects from the API instead of just strings
@@ -69,21 +68,13 @@ export default function MeetupSection() {
           {/* Meetup Swiper */}
           <div className='relative'>
             <Swiper
-              modules={[Navigation, Pagination, Autoplay]}
+              modules={[Navigation, Autoplay]}
               spaceBetween={30}
               slidesPerView={1}
               speed={2500}
               autoplay={{
                 delay: 5000,
                 disableOnInteraction: false,
-              }}
-              pagination={{
-                clickable: true,
-                dynamicBullets: true,
-              }}
-              navigation={{
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
               }}
               breakpoints={{
                 640: { slidesPerView: 2 },

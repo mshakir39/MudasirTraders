@@ -8,6 +8,7 @@ import BrandsSection from './landing/components/BrandsSection';
 import LocationSection from './landing/components/LocationSection';
 import MeetupSection from './landing/components/MeetupSection';
 import HeroSlider from './landing/components/HeroSlider';
+import CustomerReviews from './landing/components/CustomerReviews';
 
 export default function Home() {
   // Shared state for the selected brand
@@ -78,6 +79,10 @@ export default function Home() {
           selectedBrand={selectedBrand}
           setSelectedBrand={setSelectedBrand}
         />
+      </section>
+
+      <section aria-label='Customer Reviews Section'>
+        <CustomerReviews />
       </section>
 
       <section aria-label='Community Meetups'>

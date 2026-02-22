@@ -17,8 +17,11 @@ export const ROUTES = {
   STOCK: '/dashboard/stock',
   MEETUPS: '/dashboard/meetups',
   WARRANTY_CHECK: '/dashboard/warranty-check',
+  DEALER_BILLS: '/dashboard/dealer-bills',
+  DEALERS: '/dashboard/dealers',
   PRICE_LIST: '/dashboard/priceList',
   SCRAP_STOCK: '/dashboard/scrapStock',
+  REVIEWS: '/dashboard/reviews',
 
   // API routes
   API: {
@@ -42,8 +45,11 @@ export const ROUTE_GROUPS = {
     ROUTES.STOCK,
     ROUTES.MEETUPS,
     ROUTES.WARRANTY_CHECK,
+    ROUTES.DEALER_BILLS,
+    ROUTES.DEALERS,
     ROUTES.PRICE_LIST,
     ROUTES.SCRAP_STOCK,
+    ROUTES.REVIEWS,
   ],
 
   PUBLIC_ROUTES: [ROUTES.LANDING, ROUTES.SIGNIN],
@@ -56,9 +62,12 @@ export const ROUTE_GROUPS = {
     ROUTES.SALES,
     ROUTES.STOCK,
     ROUTES.INVOICES,
+    ROUTES.DEALER_BILLS,
+    ROUTES.DEALERS,
     ROUTES.PRICE_LIST,
     ROUTES.SCRAP_STOCK,
     ROUTES.WARRANTY_CHECK,
+    ROUTES.REVIEWS,
   ],
 } as const;
 
@@ -122,6 +131,11 @@ export const NAVIGATION_ITEMS = [
     href: ROUTES.CUSTOMERS,
     label: 'Customers',
     icon: 'FaUserFriends',
+  },
+  {
+    href: ROUTES.REVIEWS,
+    label: 'Reviews',
+    icon: 'FaStar',
   },
   {
     href: ROUTES.WARRANTY_CHECK,
