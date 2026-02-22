@@ -14,7 +14,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import Modal from '@/components/modal';
 import Input from '@/components/customInput';
 import Button from '@/components/button';
-import { FaEdit, FaHistory, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaHistory, FaTrash, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
 import {
   createStock,
@@ -130,6 +130,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] =
     useState<boolean>(false);
   const [isDeletingAll, setIsDeletingAll] = useState<boolean>(false);
+  const [showStockCost, setShowStockCost] = useState<boolean>(false);
 
   // React 19: Optimistic updates for stock operations
   const [optimisticStock, addOptimisticStock] = useOptimistic(
@@ -352,7 +353,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     },
     []
   );
-
+console.log("tableData",tableData);
   const columns = React.useMemo<ColumnDef<StockBatteryData>[]>(
     () => [
       {
@@ -364,13 +365,21 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
             <div>
               <div>{batteryDetails.name}</div>
               <div className='text-xs text-gray-500'>
-                {batteryDetails.plate} plates, {batteryDetails.ah}AH
+                {batteryDetails.ah}AH
                 {batteryDetails.type && `, ${batteryDetails.type}`}
               </div>
             </div>
           ) : (
             row.original.series
           );
+        },
+      },
+      {
+        id: 'plates',
+        header: 'Plates',
+        cell: ({ row }) => {
+          const batteryDetails = row.original.batteryDetails;
+          return batteryDetails?.plate || 'N/A';
         },
       },
       {
@@ -690,7 +699,11 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
         // React 19: Enhanced error handling
         try {
           const stockData = filteredStock[0];
-          setTableData(stockData.seriesStock || []);
+          const category = categories.find((c) => c.brandName === currentBrandName);
+          const transformedData = (stockData.seriesStock || []).map((item: StockBatteryData, index: number) => {
+            return category ? transformStockData(item, category, index) : item;
+          });
+          setTableData(transformedData);
           setStockCost(
             (stockData.seriesStock || []).reduce(
               (total: number, item: StockBatteryData) => {
@@ -766,7 +779,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   };
 
   return (
-    <div className='min-h-screen bg-gray-50 pt-14 sm:bg-white sm:pt-0'>
+    <div className='min-h-screen  pt-14  sm:pt-0'>
       {/* Mobile Header */}
       <div className='fixed left-0 right-0 top-0 z-10 h-14 bg-white px-4 py-2 shadow-sm sm:hidden'>
         <div className='flex h-full items-center justify-between'>
@@ -828,23 +841,6 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           </div>
         </div>
 
-        {/* Stock Summary Card - Mobile */}
-        <div className='mb-4 rounded-lg bg-white p-4 shadow-sm sm:hidden'>
-          <div className='flex items-center justify-between'>
-            <div>
-              <p className='text-sm text-gray-500'>Total Stock Cost</p>
-              <p className='text-lg font-semibold text-gray-900'>
-                PKR {stockCost?.toLocaleString()}
-              </p>
-            </div>
-            <div className='text-right'>
-              <p className='text-sm text-gray-500'>Items</p>
-              <p className='text-lg font-semibold text-gray-900'>
-                {tableData?.length || 0}
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Data Grid Section - Mobile Optimized */}
         <div className='rounded-lg bg-white shadow-sm sm:rounded-none sm:bg-transparent sm:shadow-none'>
@@ -1547,10 +1543,19 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
                   <p>
                     <strong>Total Items:</strong> {tableData.length}
                   </p>
+                  {showStockCost && (
                   <p>
                     <strong>Total Cost:</strong> PKR{' '}
                     {stockCost?.toLocaleString()}
                   </p>
+                )}
+                <button
+                  onClick={() => setShowStockCost(!showStockCost)}
+                  className='ml-2 p-1 text-gray-500 hover:text-gray-700 transition-colors'
+                  title={showStockCost ? 'Hide Stock Cost' : 'Show Stock Cost'}
+                >
+                  {showStockCost ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                </button>
                 </div>
               </div>
             </div>

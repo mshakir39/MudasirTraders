@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png',
+        url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.15"/></filter></defs><rect x="0" y="0" width="48" height="48" rx="12" fill="%232563EB" filter="url(%23shadow)"/><path d="M26 12L18 26H24L22 36L30 22H24L26 12Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/></svg>',
         width: 1200,
         height: 630,
         alt: 'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
       'Authorized dealer of Osaka, AGS, Exide, Fujika, Phoenix & Daewoo batteries for cars, UPS systems, and solar applications. Expert battery installation services in Dera Ghazi Khan. Featuring Fujika advanced dry battery technology with extra backup power and exceptional long life.',
     images: [
       {
-        url: 'https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png',
+        url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.15"/></filter></defs><rect x="0" y="0" width="48" height="48" rx="12" fill="%232563EB" filter="url(%23shadow)"/><path d="M26 12L18 26H24L22 36L30 22H24L26 12Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/></svg>',
         width: 1200,
         height: 630,
         alt: 'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
@@ -115,7 +115,7 @@ export default function RootLayout({
     openingHours: 'Mo-Th 09:00-20:00, Fr-Sa 09:00-21:00, Su 10:00-18:00',
     priceRange: '$$',
     image:
-      'https://res.cloudinary.com/divdl3sad/image/upload/v1769437584/Gemini_Generated_Image_oz2asxoz2asxoz2a_hzeyaj.png',
+      'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.15"/></filter></defs><rect x="0" y="0" width="48" height="48" rx="12" fill="%232563EB" filter="url(%23shadow)"/><path d="M26 12L18 26H24L22 36L30 22H24L26 12Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/></svg>',
     sameAs: ['https://mudasirtraders.com'],
     offers: [
       {
