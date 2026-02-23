@@ -136,14 +136,11 @@ export async function middleware(request: NextRequest) {
 
   // Step 3: Handle Auto-Locking on Navigation
   const response = NextResponse.next();
-  const isDashboardRelatedPage =
-    isDashboardRoute(pathname) ||
-    pathname === ROUTES.LANDING ||
-    isDashboardPasswordPage;
+  const isDashboardPage = isDashboardRoute(pathname) || isDashboardPasswordPage;
 
   // Auto-lock: Delete the dashboard-unlocked cookie when navigating away from dashboard pages
-  // This ensures the dashboard is locked when user navigates away
-  if (!isDashboardRelatedPage && dashboardUnlocked?.value === 'true') {
+  // More aggressive: remove on any navigation that's not to dashboard pages
+  if (!isDashboardPage && dashboardUnlocked?.value === 'true') {
     response.cookies.delete('dashboard-unlocked');
   }
 

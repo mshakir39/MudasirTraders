@@ -52,11 +52,11 @@ const DashboardPasswordPage: React.FC = () => {
         if (password === expectedPassword) {
           console.log('Dashboard password correct, setting cookie...');
 
-          // Set dashboard unlocked cookie (simple approach)
+          // Set dashboard unlocked cookie (session-only)
           const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
           const cookieValue = isHttps
-            ? 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=None; Secure'
-            : 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
+            ? 'dashboard-unlocked=true; path=/; SameSite=None; Secure'
+            : 'dashboard-unlocked=true; path=/; SameSite=Lax';
 
           document.cookie = cookieValue;
           console.log('Cookie set:', cookieValue);
