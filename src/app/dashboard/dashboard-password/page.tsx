@@ -65,21 +65,23 @@ const DashboardPasswordPage: React.FC = () => {
 
             document.cookie = cookieOptions;
 
-            // Verify cookie was set
-            const cookies = document.cookie;
-            console.log('All cookies after setting:', cookies);
+            // Small delay before verifying cookie (production environments may need time)
+            setTimeout(() => {
+              const cookies = document.cookie;
+              console.log('All cookies after setting (with delay):', cookies);
 
-            const hasCookie = cookies.includes('dashboard-unlocked=true');
-            console.log('Cookie successfully set:', hasCookie);
+              const hasCookie = cookies.includes('dashboard-unlocked=true');
+              console.log('Cookie successfully set:', hasCookie);
 
-            if (!hasCookie) {
-              console.error('Cookie setting failed! Cookie not found in document.cookie');
-              // Try alternative method
-              console.log('Attempting alternative cookie setting...');
-              const alternativeCookie = 'dashboard-unlocked=true; path=/; max-age=1800';
-              document.cookie = alternativeCookie;
-              console.log('Alternative cookie set, all cookies now:', document.cookie);
-            }
+              if (!hasCookie) {
+                console.error('Cookie setting failed! Cookie not found in document.cookie after delay');
+                // Try alternative method
+                console.log('Attempting alternative cookie setting...');
+                const alternativeCookie = 'dashboard-unlocked=true; path=/; max-age=1800';
+                document.cookie = alternativeCookie;
+                console.log('Alternative cookie set, all cookies now:', document.cookie);
+              }
+            }, 100);
 
           } catch (error) {
             console.error('Error setting cookie:', error);
