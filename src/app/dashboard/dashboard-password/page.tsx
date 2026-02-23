@@ -52,40 +52,14 @@ const DashboardPasswordPage: React.FC = () => {
         if (password === expectedPassword) {
           console.log('Dashboard password correct, setting cookie...');
 
-          try {
-            // Set dashboard unlocked cookie (production-compatible)
-            const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-            const cookieOptions = isHttps
-              ? 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=None; Secure'
-              : 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
+          // Set dashboard unlocked cookie (simple approach)
+          const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+          const cookieValue = isHttps
+            ? 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=None; Secure'
+            : 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
 
-            console.log('Setting cookie with options:', cookieOptions);
-            console.log('Is HTTPS:', isHttps);
-            console.log('Current protocol:', typeof window !== 'undefined' ? window.location.protocol : 'unknown');
-
-            document.cookie = cookieOptions;
-
-            // Small delay before verifying cookie (production environments may need time)
-            setTimeout(() => {
-              const cookies = document.cookie;
-              console.log('All cookies after setting (with delay):', cookies);
-
-              const hasCookie = cookies.includes('dashboard-unlocked=true');
-              console.log('Cookie successfully set:', hasCookie);
-
-              if (!hasCookie) {
-                console.error('Cookie setting failed! Cookie not found in document.cookie after delay');
-                // Try alternative method
-                console.log('Attempting alternative cookie setting...');
-                const alternativeCookie = 'dashboard-unlocked=true; path=/; max-age=1800';
-                document.cookie = alternativeCookie;
-                console.log('Alternative cookie set, all cookies now:', document.cookie);
-              }
-            }, 100);
-
-          } catch (error) {
-            console.error('Error setting cookie:', error);
-          }
+          document.cookie = cookieValue;
+          console.log('Cookie set:', cookieValue);
 
           // Update optimistic state
           startTransition(() => {
