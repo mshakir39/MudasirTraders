@@ -50,9 +50,13 @@ const DashboardPasswordPage: React.FC = () => {
           process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'admin123';
 
         if (password === expectedPassword) {
+          console.log('Dashboard password correct, setting cookie...');
+
           // Set dashboard unlocked cookie
           document.cookie =
             'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
+
+          console.log('Cookie set, current cookies:', document.cookie);
 
           // Update optimistic state
           startTransition(() => {
@@ -65,10 +69,10 @@ const DashboardPasswordPage: React.FC = () => {
 
           toast.success('Dashboard unlocked successfully!');
 
-          // Redirect after delay
-          setTimeout(() => {
-            router.push('/dashboard');
-          }, 1000);
+          console.log('Redirecting to /dashboard...');
+
+          // Redirect immediately after setting cookie
+          router.push('/dashboard');
 
           return { success: true };
         } else {
@@ -107,7 +111,7 @@ const DashboardPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gray-50 px-4'>
+    <div className='flex min-h-screen items-center justify-center px-4'>
       <div className='w-full max-w-md'>
         <div className='rounded-lg bg-white p-8 shadow-lg'>
           <div className='mb-8 text-center'>
