@@ -52,11 +52,38 @@ const DashboardPasswordPage: React.FC = () => {
         if (password === expectedPassword) {
           console.log('Dashboard password correct, setting cookie...');
 
-          // Set dashboard unlocked cookie
-          document.cookie =
-            'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
+          try {
+            // Set dashboard unlocked cookie (production-compatible)
+            const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+            const cookieOptions = isHttps
+              ? 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=None; Secure'
+              : 'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
 
-          console.log('Cookie set, current cookies:', document.cookie);
+            console.log('Setting cookie with options:', cookieOptions);
+            console.log('Is HTTPS:', isHttps);
+            console.log('Current protocol:', typeof window !== 'undefined' ? window.location.protocol : 'unknown');
+
+            document.cookie = cookieOptions;
+
+            // Verify cookie was set
+            const cookies = document.cookie;
+            console.log('All cookies after setting:', cookies);
+
+            const hasCookie = cookies.includes('dashboard-unlocked=true');
+            console.log('Cookie successfully set:', hasCookie);
+
+            if (!hasCookie) {
+              console.error('Cookie setting failed! Cookie not found in document.cookie');
+              // Try alternative method
+              console.log('Attempting alternative cookie setting...');
+              const alternativeCookie = 'dashboard-unlocked=true; path=/; max-age=1800';
+              document.cookie = alternativeCookie;
+              console.log('Alternative cookie set, all cookies now:', document.cookie);
+            }
+
+          } catch (error) {
+            console.error('Error setting cookie:', error);
+          }
 
           // Update optimistic state
           startTransition(() => {
