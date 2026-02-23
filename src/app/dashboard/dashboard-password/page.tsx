@@ -61,6 +61,12 @@ const DashboardPasswordPage: React.FC = () => {
           document.cookie = cookieValue;
           console.log('Cookie set:', cookieValue);
 
+          // Verify cookie was set immediately
+          const cookiesAfter = document.cookie;
+          console.log('Cookies immediately after setting:', cookiesAfter);
+          const hasCookie = cookiesAfter.includes('dashboard-unlocked=true');
+          console.log('Cookie verification result:', hasCookie);
+
           // Update optimistic state
           startTransition(() => {
             addOptimisticAuth({
