@@ -92,7 +92,7 @@ export async function middleware(request: NextRequest) {
     isAppRoute &&
     !isDashboardPasswordPage &&
     isAuthenticated &&
-    !dashboardUnlocked &&
+    (!dashboardUnlocked || dashboardUnlocked.value !== 'true') &&
     !isSignInPage &&
     !isAllowedRoute
   ) {
@@ -110,7 +110,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Step 2.5: Check if coming back to dashboard from another page (auto-lock)
-  if (pathname === ROUTES.DASHBOARD && dashboardUnlocked) {
+  if (pathname === ROUTES.DASHBOARD && dashboardUnlocked?.value === 'true') {
     const referer = request.headers.get('referer');
 
     // Check if coming from a non-dashboard page
@@ -143,7 +143,7 @@ export async function middleware(request: NextRequest) {
 
   // Auto-lock: Delete the dashboard-unlocked cookie when navigating away from dashboard pages
   // This ensures the dashboard is locked when user navigates away
-  if (!isDashboardRelatedPage && dashboardUnlocked) {
+  if (!isDashboardRelatedPage && dashboardUnlocked?.value === 'true') {
     response.cookies.delete('dashboard-unlocked');
   }
 

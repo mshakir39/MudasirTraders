@@ -73,7 +73,7 @@ const DashboardPasswordPage: React.FC = () => {
           setTimeout(() => {
             console.log('Redirecting to /dashboard...');
             router.push('/dashboard');
-          }, 100);
+          }, 1500);
 
           return { success: true };
         } else {
