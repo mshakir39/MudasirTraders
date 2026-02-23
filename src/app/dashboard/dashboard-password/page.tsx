@@ -69,10 +69,11 @@ const DashboardPasswordPage: React.FC = () => {
 
           toast.success('Dashboard unlocked successfully!');
 
-          console.log('Redirecting to /dashboard...');
-
-          // Redirect immediately after setting cookie
-          router.push('/dashboard');
+          // Small delay to ensure cookie is set before redirect (needed for production)
+          setTimeout(() => {
+            console.log('Redirecting to /dashboard...');
+            router.push('/dashboard');
+          }, 100);
 
           return { success: true };
         } else {
