@@ -1,13 +1,13 @@
 import { executeOperation } from '@/app/libs/executeOperation';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {
     const customers = await executeOperation('customers', 'findAll');
-    return Response.json(customers);
+    return NextResponse.json(customers);
   } catch (error: any) {
     console.error('Error fetching customers:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: error.message || 'Failed to fetch customers' },
       { status: 500 }
     );
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     // Validate required fields
     if (!customerName || !phoneNumber) {
-      return Response.json(
+      return NextResponse.json(
         { error: 'Customer name and phone number are required' },
         { status: 400 }
       );
@@ -40,14 +40,14 @@ export async function POST(req: NextRequest) {
       customerData
     );
 
-    return Response.json({
+    return NextResponse.json({
       success: true,
       message: 'Customer added successfully',
       data: result,
     });
   } catch (error: any) {
     console.error('Error creating customer:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: error.message || 'Failed to create customer' },
       { status: 500 }
     );

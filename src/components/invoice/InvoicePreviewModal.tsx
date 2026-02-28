@@ -79,7 +79,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
 
   const handlePrintConfirm = async () => {
     try {
-      console.log("for print", data);
+      console.log('for print', data);
       await printWithThermalPrinter(data);
     } catch (error: any) {
       setErrorModal({
@@ -94,7 +94,9 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   const handleModalOpen = () => {
     const tfoot = document.querySelector('tfoot') as HTMLTableSectionElement;
     if (tfoot && tfoot.rows.length > 0) {
-      const lastTwoTds = Array.from(tfoot.rows[0].cells).slice(-2) as HTMLTableCellElement[];
+      const lastTwoTds = Array.from(tfoot.rows[0].cells).slice(
+        -2
+      ) as HTMLTableCellElement[];
       let Widths = lastTwoTds.map((td) => `${td.offsetWidth}`) as string[];
       setTdWidths(Widths);
     }
@@ -105,7 +107,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
     setTdWidths([]);
   };
 
-  console.log("data", data);
+  console.log('data', data);
 
   return (
     <Modal
@@ -123,73 +125,98 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
         data-invoice-modal
       >
         {/* Header Section */}
-        <div className='flex flex-row justify-between items-center mb-4 md:mb-6'>
-          <div className='text-2xl md:text-3xl lg:text-[40px] font-bold uppercase text-black'>
+        <div className='mb-4 flex flex-row items-center justify-between md:mb-6'>
+          <div className='text-2xl font-bold uppercase text-black md:text-3xl lg:text-[40px]'>
             Invoice
           </div>
-          <div className='print-hide flex flex-row items-center gap-2 md:gap-3 rounded-lg border border-gray-200 bg-white p-2 shadow-sm'>
+          <div className='print-hide flex flex-row items-center gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-sm md:gap-3'>
             <FaDownload
-              className='cursor-pointer text-xl md:text-2xl text-[#021B3B] hover:text-[#0056b3]'
+              className='cursor-pointer text-xl text-[#021B3B] hover:text-[#0056b3] md:text-2xl'
               onClick={downloadHandler}
             />
             <BsPrinter
-              className='cursor-pointer text-xl md:text-2xl text-[#021B3B] hover:text-[#0056b3]'
+              className='cursor-pointer text-xl text-[#021B3B] hover:text-[#0056b3] md:text-2xl'
               onClick={printHandler}
             />
-            <WhatsAppShareButton invoiceData={data} size={24} className='cursor-pointer' />
+            <WhatsAppShareButton
+              invoiceData={data}
+              size={24}
+              className='cursor-pointer'
+            />
           </div>
         </div>
 
         {/* Invoice Number */}
-        <div className='text-right text-sm md:text-base lg:text-lg font-bold uppercase text-black mb-3 md:mb-4'>
+        <div className='mb-3 text-right text-sm font-bold uppercase text-black md:mb-4 md:text-base lg:text-lg'>
           <span>No:Inv-{data?.invoiceNo}</span>
         </div>
 
         {/* FROM and TO */}
-        <div className='flex flex-row w-full gap-3 md:gap-4 border-y border-gray-100 py-3 md:py-4'>
+        <div className='flex w-full flex-row gap-3 border-y border-gray-100 py-3 md:gap-4 md:py-4'>
           <div className='flex flex-1 flex-col'>
-            <span className='text-base md:text-lg lg:text-xl font-bold text-black mb-1'>Invoice From:</span>
-            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B] font-semibold uppercase'>Mudasir Traders-DG Khan</span>
-            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B]'>+923349627745</span>
-            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B] leading-tight'>Gen. Bus Stand, Dera Ghazi Khan</span>
+            <span className='mb-1 text-base font-bold text-black md:text-lg lg:text-xl'>
+              Invoice From:
+            </span>
+            <span className='text-xs font-semibold uppercase text-[#6B6B6B] md:text-sm lg:text-base'>
+              Mudasir Traders-DG Khan
+            </span>
+            <span className='text-xs text-[#6B6B6B] md:text-sm lg:text-base'>
+              +923349627745
+            </span>
+            <span className='text-xs leading-tight text-[#6B6B6B] md:text-sm lg:text-base'>
+              Gen. Bus Stand, Dera Ghazi Khan
+            </span>
           </div>
 
           <div className='w-[1px] bg-gray-200'></div>
 
           <div className='flex flex-1 flex-col text-right'>
-            <span className='text-base md:text-lg lg:text-xl font-bold text-black mb-1'>Invoice To:</span>
-            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B] font-semibold uppercase truncate'>
+            <span className='mb-1 text-base font-bold text-black md:text-lg lg:text-xl'>
+              Invoice To:
+            </span>
+            <span className='truncate text-xs font-semibold uppercase text-[#6B6B6B] md:text-sm lg:text-base'>
               {removeParentheses(data?.customerName)}
             </span>
-            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B]'>{data?.customerContactNumber}</span>
-            <span className='text-xs md:text-sm lg:text-base text-[#6B6B6B] leading-tight truncate'>
+            <span className='text-xs text-[#6B6B6B] md:text-sm lg:text-base'>
+              {data?.customerContactNumber}
+            </span>
+            <span className='truncate text-xs leading-tight text-[#6B6B6B] md:text-sm lg:text-base'>
               {data?.customerAddress || 'N/A'}
             </span>
           </div>
         </div>
 
         {/* Date and Time */}
-        <div className='mt-3 md:mt-4 flex items-center gap-2'>
-          <span className='text-sm md:text-base font-bold text-black'>Date & Time :</span>
-          <span className='text-sm md:text-base text-[#6B6B6B]'>
+        <div className='mt-3 flex items-center gap-2 md:mt-4'>
+          <span className='text-sm font-bold text-black md:text-base'>
+            Date & Time :
+          </span>
+          <span className='text-sm text-[#6B6B6B] md:text-base'>
             {data?.createdDate ? convertDate(data.createdDate).dateTime : ''}
           </span>
         </div>
 
         {/* Table */}
-        <div className='mt-6 md:mt-8 overflow-x-auto overflow-y-hidden'>
+        <div className='mt-6 overflow-x-auto overflow-y-hidden md:mt-8'>
           <div className='min-w-[500px]'>
-            <BasicTable data={data?.products} columns={columns} footerData={footerData} />
+            <BasicTable
+              data={data?.products}
+              columns={columns}
+              footerData={footerData}
+            />
           </div>
         </div>
 
         {/* Bottom Details Section */}
-        <div className='mt-6 md:mt-8 flex flex-col lg:flex-row w-full gap-4 md:gap-6'>
-          <div className='flex w-full lg:w-[55%] flex-col space-y-3 md:space-y-4'>
+        <div className='mt-6 flex w-full flex-col gap-4 md:mt-8 md:gap-6 lg:flex-row'>
+          <div className='flex w-full flex-col space-y-3 md:space-y-4 lg:w-[55%]'>
             {/* In Words */}
             <div className='text-xs md:text-sm'>
               <span className='font-bold text-[#6B6B6B]'>In Words: </span>
-              <span className='italic'>{formatRupees(getAllSum(data?.products, 'totalPrice'))} Rupees Only</span>
+              <span className='italic'>
+                {formatRupees(getAllSum(data?.products, 'totalPrice'))} Rupees
+                Only
+              </span>
             </div>
 
             {/* Payment */}
@@ -198,71 +225,98 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
               <span>{data?.paymentMethod?.join(' + ')}</span>
             </div>
 
-            {/* Warranty */}
-            <div className='space-y-1'>
-              {data?.products?.map((product: any, idx: number) => (
-                <div key={idx} className='text-xs md:text-sm flex flex-wrap'>
-                  <span className='font-bold text-[#6B6B6B] mr-1'>Warranty ({product.series || 'Item'}):</span>
-                  <span className='break-all'>{product.warrentyCode}</span>
-                </div>
-              ))}
-            </div>
+            {/* Warranty - Hidden only for charging services */}
+            {!data?.products?.some(
+              (product: any) => product.isChargingService
+            ) && (
+              <div className='space-y-1'>
+                {data?.products?.map((product: any, idx: number) => (
+                  <div key={idx} className='flex flex-wrap text-xs md:text-sm'>
+                    <span className='mr-1 font-bold text-[#6B6B6B]'>
+                      Warranty ({product.series || 'Item'}):
+                    </span>
+                    <span className='break-all'>{product.warrentyCode}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Pricing Column */}
-          <div className='flex w-full lg:w-[45%] flex-col border border-gray-100'>
-            <div className='flex justify-between items-center bg-[#021B3B] text-white p-2 md:p-3'>
-              <span className='font-bold text-sm md:text-base lg:text-lg'>SubTotal</span>
-              <span className='font-bold text-sm md:text-base lg:text-lg'>Rs {getAllSum(data?.products, 'totalPrice')}</span>
+          <div className='flex w-full flex-col border border-gray-100 lg:w-[45%]'>
+            <div className='flex items-center justify-between bg-[#021B3B] p-2 text-white md:p-3'>
+              <span className='text-sm font-bold md:text-base lg:text-lg'>
+                SubTotal
+              </span>
+              <span className='text-sm font-bold md:text-base lg:text-lg'>
+                Rs {getAllSum(data?.products, 'totalPrice')}
+              </span>
             </div>
 
             {(Number(data?.batteriesRate) || 0) > 0 && (
-              <div className='flex justify-between items-center p-2 md:p-3 border-b border-gray-50 text-black'>
-                <span className='font-bold text-xs md:text-sm text-gray-500 uppercase'>
+              <div className='flex items-center justify-between border-b border-gray-50 p-2 text-black md:p-3'>
+                <span className='text-xs font-bold uppercase text-gray-500 md:text-sm'>
                   {data?.batteriesCountAndWeight || 'Old Battery'}
                 </span>
-                <span className='font-bold text-xs md:text-sm'>- Rs {data?.batteriesRate}</span>
+                <span className='text-xs font-bold md:text-sm'>
+                  - Rs {data?.batteriesRate}
+                </span>
               </div>
             )}
 
             {Number(data?.receivedAmount) > 0 && (
-              <div className='flex justify-between items-center p-2 md:p-3 border-b border-gray-50 text-black'>
-                <span className='font-bold text-xs md:text-sm text-gray-500'>Received:</span>
-                <span className='font-bold text-xs md:text-sm'>- Rs {data?.receivedAmount}</span>
+              <div className='flex items-center justify-between border-b border-gray-50 p-2 text-black md:p-3'>
+                <span className='text-xs font-bold text-gray-500 md:text-sm'>
+                  Received:
+                </span>
+                <span className='text-xs font-bold md:text-sm'>
+                  - Rs {data?.receivedAmount}
+                </span>
               </div>
             )}
 
             {/* Additional Payments */}
             {data?.additionalPayment && data?.additionalPayment.length > 0 ? (
-              <div className='mt-2 p-3 bg-gray-50'>
+              <div className='mt-2 bg-gray-50 p-3'>
                 {data?.additionalPayment?.map((payment: any, idx: number) => (
-                  <div key={idx} className='flex justify-between items-center py-1 border-b border-gray-200 last:border-b-0'>
+                  <div
+                    key={idx}
+                    className='flex items-center justify-between border-b border-gray-200 py-1 last:border-b-0'
+                  >
                     {/* ✅ FIXED: use convertDate() to show full date + time */}
-                    <span className='font-bold text-xs md:text-sm text-gray-500'>
-                      {payment?.addedDate ? convertDate(payment.addedDate).dateTime : ''}
+                    <span className='text-xs font-bold text-gray-500 md:text-sm'>
+                      {payment?.addedDate
+                        ? convertDate(payment.addedDate).dateTime
+                        : ''}
                     </span>
-                    <span className='font-bold text-xs md:text-sm'>- Rs {payment?.amount}</span>
+                    <span className='text-xs font-bold md:text-sm'>
+                      - Rs {payment?.amount}
+                    </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className='mt-2 p-3 bg-gray-50 rounded-lg border'></div>
+              <div className='mt-2 rounded-lg border bg-gray-50 p-3'></div>
             )}
 
-            <div className='flex justify-between items-center bg-[#021B3B] text-white p-2 md:p-3'>
-              <span className='font-bold text-sm md:text-base lg:text-lg'>
+            <div className='flex items-center justify-between bg-[#021B3B] p-2 text-white md:p-3'>
+              <span className='text-sm font-bold md:text-base lg:text-lg'>
                 {data?.remainingAmount === 0 ? 'Total' : 'Balance Due'}
               </span>
-              <span className='font-bold text-sm md:text-base lg:text-lg'>
-                {data?.remainingAmount === 0 ? 'PAID' : `Rs ${data?.remainingAmount}`}
+              <span className='text-sm font-bold md:text-base lg:text-lg'>
+                {data?.remainingAmount === 0
+                  ? 'PAID'
+                  : `Rs ${data?.remainingAmount}`}
               </span>
             </div>
           </div>
         </div>
 
         {/* Thank You */}
-        <div className='mt-8 md:mt-12 mb-3 md:mb-4 flex justify-center'>
-          <span className={`text-3xl md:text-4xl lg:text-6xl text-center ${dancingScript?.className}`}>
+        <div className='mb-3 mt-8 flex justify-center md:mb-4 md:mt-12'>
+          <span
+            className={`text-center text-3xl md:text-4xl lg:text-6xl ${dancingScript?.className}`}
+          >
             Thank You !
           </span>
         </div>

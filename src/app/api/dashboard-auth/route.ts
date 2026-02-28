@@ -17,13 +17,10 @@ export async function POST(request: NextRequest) {
     if (password === DASHBOARD_PASSWORD) {
       return NextResponse.json({
         success: true,
-        message: 'Dashboard access granted'
+        message: 'Dashboard access granted',
       });
     } else {
-      return NextResponse.json(
-        { error: 'Invalid password' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
   } catch (error) {
     console.error('Dashboard auth error:', error);

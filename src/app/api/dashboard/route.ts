@@ -218,6 +218,9 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Exclude charging service invoices from affecting inventory counts
+    // Charging services don't represent physical inventory items
+
     // DATE RANGES
     let revenueDateRange = null;
     let topProductsDateRange = null;

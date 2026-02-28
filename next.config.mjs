@@ -102,6 +102,7 @@ const nextConfig = {
 
   // Optimize bundle analyzer and experimental features
   experimental: {
+    turbo: false,
     caseSensitiveRoutes: false,
     optimizePackageImports: [
       'react',

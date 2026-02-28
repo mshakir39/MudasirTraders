@@ -187,8 +187,10 @@ const InvoicesLayout: React.FC<InvoiceLayoutProps> = ({
       resetAccordionData();
     } catch (error: any) {
       setIsLoading(false);
-      console.log("errorerror",error);
-      toast.error(error?.message || 'An error occurred while creating the invoice');
+      console.log('errorerror', error);
+      toast.error(
+        error?.message || 'An error occurred while creating the invoice'
+      );
     }
   };
 

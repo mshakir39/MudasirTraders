@@ -31,7 +31,8 @@ export const metadata: Metadata = {
     canonical: 'https://mudasirtraders.com/',
   },
   openGraph: {
-    title: 'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
+    title:
+      'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
     description:
       'Authorized dealer of Osaka, AGS, Exide, Fujika, Phoenix & Daewoo batteries for cars, UPS systems, and solar applications. Expert battery installation services in Dera Ghazi Khan. Featuring Fujika advanced dry battery technology with extra backup power and exceptional long life.',
     url: 'https://mudasirtraders.com/',
@@ -49,7 +50,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
+    title:
+      'Mudasir Traders - Premium Batteries & Power Solutions in Dera Ghazi Khan',
     description:
       'Authorized dealer of Osaka, AGS, Exide, Fujika, Phoenix & Daewoo batteries for cars, UPS systems, and solar applications. Expert battery installation services in Dera Ghazi Khan. Featuring Fujika advanced dry battery technology with extra backup power and exceptional long life.',
     images: [

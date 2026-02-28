@@ -68,6 +68,8 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
         // Quick payment addition - minimal data needed
         setEditInvoiceData({
           customerName: data.customerName || '',
+          isPaymentOnly: true,
+          remainingAmount: Number(data.remainingAmount) || 0,
           customerAddress: '',
           customerContactNumber: '',
           customerType: 'WalkIn Customer',

@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
+import { revalidatePathCustom } from '@/actions/revalidatePathCustom';
+import Input from '@/components/customInput';
+import ProductSection from './ProductSection';
+import ChargingServiceSection from './ChargingServiceSection';
+import PaymentSection from './PaymentSection';
 import { cloneDeep } from 'lodash';
 import CustomerSection from './CustomerSection';
-import ProductSection from './ProductSection';
-import PaymentSection from './PaymentSection';
-
 import Modal from '@/components/modal';
 import Button from '@/components/button';
-import Input from '@/components/customInput';
 import { normalizeStockData } from '@/utils/stockUtils';
 
 interface CreateInvoiceModalProps {
@@ -165,31 +167,54 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       }
     }
 
-    // Check if any products have been added
-    const hasProducts = Object.values(accordionData).some(
-      (item: any) =>
-        item.brandName || item.series || item.productPrice || item.quantity
-    );
+    // Validate products based on invoice type
+    if (invoiceData?.isChargingService) {
+      if (
+        !invoiceData?.chargingServices ||
+        invoiceData?.chargingServices?.length === 0
+      ) {
+        toast.error('Please add at least one charging service');
+        return false;
+      }
 
-    if (hasProducts) {
-      const accordionKeys = Object.keys(accordionData);
-      for (const key of accordionKeys) {
-        const item = accordionData[parseInt(key)];
-        if (!item.brandName) {
-          toast.error(`Please select brand for Row ${key}`);
+      // Validate each charging service
+      for (const service of invoiceData?.chargingServices) {
+        if (!service.description || service.description.trim() === '') {
+          toast.error('Please enter battery name for all charging services');
           return false;
         }
-        if (!item.series) {
-          toast.error(`Please select series for Row ${key}`);
+        if (!service.total || isNaN(parseFloat(service.total))) {
+          toast.error('Please enter valid amount for all charging services');
           return false;
         }
-        if (!item.productPrice || Number(item.productPrice) <= 0) {
-          toast.error(`Please enter valid product price for Row ${key}`);
-          return false;
-        }
-        if (!item.quantity || Number(item.quantity) <= 0) {
-          toast.error(`Please enter valid quantity for Row ${key}`);
-          return false;
+      }
+    } else {
+      // Check if any products have been added
+      const hasProducts = Object.values(accordionData).some(
+        (item: any) =>
+          item.brandName || item.series || item.productPrice || item.quantity
+      );
+
+      if (hasProducts) {
+        const accordionKeys = Object.keys(accordionData);
+        for (const key of accordionKeys) {
+          const item = accordionData[parseInt(key)];
+          if (!item.brandName) {
+            toast.error(`Please select brand for Row ${key}`);
+            return false;
+          }
+          if (!item.series) {
+            toast.error(`Please select series for Row ${key}`);
+            return false;
+          }
+          if (!item.productPrice || Number(item.productPrice) <= 0) {
+            toast.error(`Please enter valid product price for Row ${key}`);
+            return false;
+          }
+          if (!item.quantity || Number(item.quantity) <= 0) {
+            toast.error(`Please enter valid quantity for Row ${key}`);
+            return false;
+          }
         }
       }
     }
@@ -254,7 +279,47 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
       formData.customerId = null;
     }
 
-    formData.productDetail = transformData(accordionData);
+    // Handle product data based on invoice type
+    if (invoiceData?.isChargingService) {
+      // For charging services, create multiple product entries with all required fields
+      formData.productDetail =
+        invoiceData?.chargingServices?.map((service: any) => ({
+          brandName: 'Charging Service',
+          series: service.description || 'Battery Charging',
+          productPrice: parseFloat(String(service.total)) || 0, // Use total as price since quantity is always 1
+          quantity: '1',
+          totalPrice: parseFloat(String(service.total)) || 0,
+          productName: service.description,
+          isChargingService: true,
+          // Add all required fields that the API expects
+          batteryType: 'Charging',
+          model: service.description || 'Unknown',
+          capacity: 'N/A',
+          voltage: 'N/A',
+          warranty: 'N/A',
+        })) || [];
+    } else {
+      formData.productDetail = accordionData
+        ? Object.values(accordionData).map((item: any) => ({
+            brandName: item.brandName,
+            series: item.series,
+            productPrice: parseFloat(String(item.productPrice)) || 0,
+            quantity: String(item.quantity || 1),
+            totalPrice: parseFloat(
+              String((item.productPrice || 0) * (item.quantity || 1))
+            ),
+            productName: `${item.brandName} ${item.series}`,
+            isChargingService: false,
+            // Add all required fields for regular products
+            batteryType: item.batteryType || 'Unknown',
+            model: item.model || 'Unknown',
+            capacity: item.capacity || 'Unknown',
+            voltage: item.voltage || 'Unknown',
+            warranty: item.warranty || 'N/A',
+          }))
+        : [];
+    }
+
     const clonedFormData = cloneDeep(formData);
     onSubmit(clonedFormData);
   };
@@ -359,15 +424,122 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             )}
           </div>
 
-          <ProductSection
-            accordionData={accordionData}
-            categories={categories}
-            brandOptions={brandOptions}
-            expandedAccordionIndex={expandedAccordionIndex}
-            onAccordionClick={handleAccordionClick}
-            accordionMethods={accordionMethods}
-            stock={normalizedStock}
-          />
+          <div className='mb-4'>
+            <div className='mb-2 flex items-center justify-between'>
+              <label className='text-sm font-medium text-gray-700'>
+                Invoice for Battery Charging
+              </label>
+              <label className='relative inline-flex cursor-pointer items-center'>
+                <input
+                  type='checkbox'
+                  className='peer sr-only'
+                  checked={invoiceData?.isChargingService || false}
+                  onChange={(e) => {
+                    const newValue = e.target.checked;
+                    setInvoiceData((prev: any) => {
+                      const updatedData = {
+                        ...prev,
+                        isChargingService: newValue,
+                        productName: newValue ? prev.productName : '',
+                      };
+
+                      // Auto-create first service when enabling charging mode
+                      if (
+                        newValue &&
+                        (!prev.chargingServices ||
+                          prev.chargingServices.length === 0)
+                      ) {
+                        updatedData.chargingServices = [
+                          {
+                            id: Date.now().toString(),
+                            description: '',
+                            quantity: 1,
+                            price: 0,
+                            total: 0,
+                          },
+                        ];
+                      }
+
+                      return updatedData;
+                    });
+                  }}
+                />
+                <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300"></div>
+              </label>
+            </div>
+
+            {invoiceData?.isChargingService ? (
+              <ChargingServiceSection
+                chargingServices={invoiceData?.chargingServices || []}
+                expandedAccordionIndex={expandedAccordionIndex}
+                onAccordionClick={handleAccordionClick}
+                onServiceChange={(index: number, field: string, value: any) => {
+                  const updatedServices = [
+                    ...(invoiceData?.chargingServices || []),
+                  ];
+                  updatedServices[index] = {
+                    ...updatedServices[index],
+                    [field]: value,
+                  };
+
+                  // Auto-calculate total when quantity or price changes
+                  if (field === 'quantity' || field === 'price') {
+                    updatedServices[index].total =
+                      (updatedServices[index].quantity || 1) *
+                      (updatedServices[index].price || 0);
+                  }
+
+                  setInvoiceData((prev: any) => ({
+                    ...prev,
+                    chargingServices: updatedServices,
+                  }));
+                }}
+                onServiceRemove={(index: number) => {
+                  const updatedServices = (
+                    invoiceData?.chargingServices || []
+                  ).filter((_: any, i: number) => i !== index);
+                  setInvoiceData((prev: any) => ({
+                    ...prev,
+                    chargingServices: updatedServices,
+                  }));
+                }}
+                onServiceAdd={() => {
+                  const newService = {
+                    id: Date.now().toString(),
+                    description: '',
+                    quantity: 1,
+                    price: 0,
+                    total: 0,
+                  };
+                  setInvoiceData((prev: any) => ({
+                    ...prev,
+                    chargingServices: [
+                      ...(prev.chargingServices || []),
+                      newService,
+                    ],
+                  }));
+                }}
+              />
+            ) : (
+              <div className='rounded-lg bg-gray-50 p-3'>
+                <p className='text-sm text-gray-600'>
+                  Regular battery invoice with product details.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {!invoiceData?.isChargingService && (
+            <ProductSection
+              accordionData={accordionData}
+              categories={categories}
+              brandOptions={brandOptions}
+              expandedAccordionIndex={expandedAccordionIndex}
+              onAccordionClick={handleAccordionClick}
+              accordionMethods={accordionMethods}
+              stock={normalizedStock}
+            />
+          )}
 
           <PaymentSection
             invoiceData={invoiceData}

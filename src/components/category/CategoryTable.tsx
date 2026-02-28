@@ -65,7 +65,7 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
         cell: ({ row }) => {
           const updatedAt = row.original.updatedAt;
           if (!updatedAt) return 'Never';
-          
+
           // Format the date
           const date = new Date(updatedAt);
           const formattedDate = date.toLocaleDateString('en-US', {
@@ -73,14 +73,10 @@ const CategoryTable: React.FC<CategoryTableProps> = ({
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
           });
-          
-          return (
-            <div className='text-sm text-gray-600'>
-              {formattedDate}
-            </div>
-          );
+
+          return <div className='text-sm text-gray-600'>{formattedDate}</div>;
         },
       },
       {

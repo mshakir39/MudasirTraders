@@ -39,12 +39,28 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
       return invoiceData.remainingAmount;
     }
 
+    // For charging service mode, calculate total from charging services
+    if (invoiceData?.isChargingService) {
+      return (invoiceData?.chargingServices || []).reduce(
+        (total: number, service: any) => {
+          return total + (parseFloat(String(service.total)) || 0);
+        },
+        0
+      );
+    }
+
     return Object.values(accordionData).reduce((total: number, row: any) => {
       const price = parseFloat(String(row.productPrice)) || 0;
       const quantity = parseInt(String(row.quantity)) || 0;
       return total + price * quantity;
     }, 0);
-  }, [accordionData, invoiceData?.isPaymentOnly, invoiceData?.remainingAmount]);
+  }, [
+    accordionData,
+    invoiceData?.isPaymentOnly,
+    invoiceData?.remainingAmount,
+    invoiceData?.isChargingService,
+    invoiceData?.chargingServices,
+  ]);
 
   const handleCheckboxChange = useCallback(
     (values: string[]) => {
@@ -130,6 +146,14 @@ const PaymentSection: React.FC<PaymentSectionProps> = ({
             <FaPlus className='text-xs' />
           </button>
         </div>
+
+        {invoiceData?.isPaymentOnly && (
+          <div className='mb-2'>
+            <span className='text-sm font-medium text-gray-600'>
+              Remaining Amount: Rs {totalAmount.toFixed(2)}
+            </span>
+          </div>
+        )}
 
         {currentPaymentMethods.includes('Pay Later') && (
           <div className='mb-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3'>

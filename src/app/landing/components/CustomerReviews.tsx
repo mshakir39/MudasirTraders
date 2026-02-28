@@ -9,7 +9,6 @@ import 'swiper/css/navigation';
 import 'swiper/css/autoplay';
 import ReviewForm from './ReviewForm';
 
-
 interface CustomerReview {
   id?: string;
   author_name: string;
@@ -83,7 +82,7 @@ const CustomerReviews: React.FC<CustomerReviewsProps> = ({
       <FaStar
         key={i}
         className={`h-4 w-4 ${
-          i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+          i < rating ? 'fill-current text-yellow-400' : 'text-gray-300'
         }`}
       />
     ));
@@ -91,22 +90,23 @@ const CustomerReviews: React.FC<CustomerReviewsProps> = ({
 
   if (loading) {
     return (
-      <section className='py-16 bg-gray-50'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='text-center mb-12'>
-            <h2 className='text-3xl font-bold text-gray-900 mb-4'>
+      <section className='bg-gray-50 py-16'>
+        <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
+          <div className='mb-12 text-center'>
+            <h2 className='mb-4 text-3xl font-bold text-gray-900'>
               What Our Customers Say
             </h2>
-            <p className='text-lg text-gray-600'>
-              Loading customer reviews...
-            </p>
+            <p className='text-lg text-gray-600'>Loading customer reviews...</p>
           </div>
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
+          <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3'>
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className='bg-white p-6 rounded-lg shadow-md animate-pulse'>
-                <div className='h-4 bg-gray-200 rounded w-3/4 mb-4'></div>
-                <div className='h-4 bg-gray-200 rounded w-1/2 mb-4'></div>
-                <div className='h-16 bg-gray-200 rounded mb-4'></div>
+              <div
+                key={i}
+                className='animate-pulse rounded-lg bg-white p-6 shadow-md'
+              >
+                <div className='mb-4 h-4 w-3/4 rounded bg-gray-200'></div>
+                <div className='mb-4 h-4 w-1/2 rounded bg-gray-200'></div>
+                <div className='mb-4 h-16 rounded bg-gray-200'></div>
               </div>
             ))}
           </div>
@@ -117,10 +117,10 @@ const CustomerReviews: React.FC<CustomerReviewsProps> = ({
 
   if (error && reviews.length === 0) {
     return (
-      <section className='py-16 bg-gray-50'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='text-center mb-12'>
-            <h2 className='text-3xl font-bold text-gray-900 mb-4'>
+      <section className='bg-gray-50 py-16'>
+        <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
+          <div className='mb-12 text-center'>
+            <h2 className='mb-4 text-3xl font-bold text-gray-900'>
               What Our Customers Say
             </h2>
             <p className='text-lg text-gray-600'>
@@ -132,25 +132,26 @@ const CustomerReviews: React.FC<CustomerReviewsProps> = ({
     );
   }
 
-  const averageRating = reviews.length > 0
-    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-    : 0;
+  const averageRating =
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
 
   return (
-    <section className='py-16 bg-gray-50' id='reviews-section'>
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+    <section className='bg-gray-50 py-16' id='reviews-section'>
+      <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         {/* Header */}
-        <div className='text-center mb-12'>
-          <h2 className='text-3xl font-bold text-gray-900 mb-4'>
+        <div className='mb-12 text-center'>
+          <h2 className='mb-4 text-3xl font-bold text-gray-900'>
             What Our Customers Say
           </h2>
-          <p className='text-lg text-gray-600 mb-6'>
+          <p className='mb-6 text-lg text-gray-600'>
             Real reviews from our satisfied customers
           </p>
 
           {reviews.length > 0 && (
-            <div className='inline-flex items-center bg-white px-6 py-3 rounded-lg shadow-sm'>
-              <div className='flex items-center mr-4'>
+            <div className='inline-flex items-center rounded-lg bg-white px-6 py-3 shadow-sm'>
+              <div className='mr-4 flex items-center'>
                 {renderStars(Math.round(averageRating))}
               </div>
               <div className='text-left'>
@@ -158,7 +159,8 @@ const CustomerReviews: React.FC<CustomerReviewsProps> = ({
                   {averageRating.toFixed(1)}
                 </div>
                 <div className='text-sm text-gray-600'>
-                  Based on {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+                  Based on {reviews.length} review
+                  {reviews.length !== 1 ? 's' : ''}
                 </div>
               </div>
             </div>
@@ -168,8 +170,7 @@ const CustomerReviews: React.FC<CustomerReviewsProps> = ({
         {/* Reviews Swiper */}
         {reviews.length > 0 ? (
           <>
-       
-       <Swiper
+            <Swiper
               modules={[Navigation, Autoplay]}
               spaceBetween={30}
               slidesPerView={1}
@@ -187,63 +188,63 @@ const CustomerReviews: React.FC<CustomerReviewsProps> = ({
               }}
               className='reviews-swiper'
             >
-        {reviews.map((review, index) => (
-          <SwiperSlide key={review.id || index}>
-            <div className='bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 h-full'>
-              <FaQuoteLeft className='h-8 w-8 text-blue-500 mb-4 opacity-50' />
+              {reviews.map((review, index) => (
+                <SwiperSlide key={review.id || index}>
+                  <div className='h-full rounded-lg bg-white p-6 shadow-md transition-shadow duration-300 hover:shadow-lg'>
+                    <FaQuoteLeft className='mb-4 h-8 w-8 text-blue-500 opacity-50' />
 
-              <div className='flex items-center mb-4'>
-                {renderStars(review.rating)}
-                <span className='ml-2 text-sm text-gray-600'>
-                  {review.rating}/5
-                </span>
-              </div>
-
-              <div className='relative group'>
-                <p
-                  className='text-gray-700 mb-4 leading-relaxed overflow-hidden'
-                  style={{
-                    display: '-webkit-box',
-                    WebkitLineClamp: 4,
-                    WebkitBoxOrient: 'vertical'
-                  }}
-                  title={review.text}
-                >
-                  &ldquo;{review.text}&rdquo;
-                </p>
-              </div>
-
-              <div className='flex items-center justify-between'>
-                <div className='flex items-center'>
-                  <div className='w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3'>
-                    <span className='text-white font-semibold text-sm'>
-                      {review.author_name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <div className='font-semibold text-gray-900'>
-                      {review.author_name}
+                    <div className='mb-4 flex items-center'>
+                      {renderStars(review.rating)}
+                      <span className='ml-2 text-sm text-gray-600'>
+                        {review.rating}/5
+                      </span>
                     </div>
-                    <div className='text-sm text-gray-500'>
-                      {new Date(review.createdAt).toLocaleDateString()}
+
+                    <div className='group relative'>
+                      <p
+                        className='mb-4 overflow-hidden leading-relaxed text-gray-700'
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 4,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                        title={review.text}
+                      >
+                        &ldquo;{review.text}&rdquo;
+                      </p>
+                    </div>
+
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center'>
+                        <div className='mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-500'>
+                          <span className='text-sm font-semibold text-white'>
+                            {review.author_name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <div className='font-semibold text-gray-900'>
+                            {review.author_name}
+                          </div>
+                          <div className='text-sm text-gray-500'>
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </>
         ) : (
-          <div className='text-center py-12'>
+          <div className='py-12 text-center'>
             <div className='mb-4'>
-              <FaQuoteLeft className='h-16 w-16 text-gray-300 mx-auto' />
+              <FaQuoteLeft className='mx-auto h-16 w-16 text-gray-300' />
             </div>
-            <h3 className='text-xl font-medium text-gray-900 mb-2'>
+            <h3 className='mb-2 text-xl font-medium text-gray-900'>
               No reviews yet
             </h3>
-            <p className='text-gray-600 mb-6'>
+            <p className='mb-6 text-gray-600'>
               Be the first to share your experience with us!
             </p>
           </div>
@@ -251,10 +252,10 @@ const CustomerReviews: React.FC<CustomerReviewsProps> = ({
 
         {/* Add Review Button */}
         {showAddReviewButton && (
-          <div className='text-center mt-12'>
+          <div className='mt-12 text-center'>
             <button
               onClick={() => setShowReviewForm(true)}
-              className='inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200'
+              className='inline-flex items-center rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors duration-200 hover:bg-blue-700'
             >
               <FaPlus className='mr-2 h-4 w-4' />
               Write a Review

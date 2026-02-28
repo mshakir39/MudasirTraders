@@ -303,16 +303,26 @@ export async function executeOperation(
               }
             );
           } else {
-            const id = new ObjectId(document.documentId);
+            const rawId = document.documentId || document._id || document.id;
+            if (!rawId) {
+              throw new Error('Missing document identifier for updateOne');
+            }
+            const id = new ObjectId(rawId);
+            // Extract only the fields to update, excluding id fields
+            const { documentId, _id, id: _plainId, ...updateFields } = document;
             const update = {
               $set: {
-                ...document,
+                ...updateFields,
                 addedDate: new Date(),
               },
             };
-            return await db
+            console.log('Updating document with ID:', id.toString());
+            console.log('Update payload:', update);
+            const result = await db
               .collection(collectionName)
               .updateOne({ _id: id }, update);
+            console.log('Update result:', result);
+            return result;
           }
 
         case 'delete':
@@ -364,7 +374,7 @@ export async function executeOperation(
             const serializedDocument: Record<string, any> = {};
             for (const key in doc) {
               if (key === '_id') {
-                serializedDocument['documentId'] = doc[key].toString();
+                serializedDocument['id'] = doc[key].toString();
               } else {
                 serializedDocument[key] = doc[key];
               }

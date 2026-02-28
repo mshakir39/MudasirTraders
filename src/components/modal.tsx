@@ -11,6 +11,7 @@ interface ModalProps {
   parentClass?: string;
   preventBackdropClose?: boolean;
   size?: 'large' | 'medium' | 'small';
+  dynamicHeight?: boolean;
 }
 
 const sizeClasses = {
@@ -29,6 +30,7 @@ const Modal: FunctionComponent<ModalProps> = ({
   parentClass,
   preventBackdropClose = false,
   size = 'medium',
+  dynamicHeight = false,
 }) => {
   const handleClose = () => {
     if (onClose && !preventBackdropClose) {
@@ -45,6 +47,8 @@ const Modal: FunctionComponent<ModalProps> = ({
 
   const defaultPanelClass = `transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all ${sizeClasses[size]}`;
 
+  const heightClass = dynamicHeight ? '' : 'max-h-[90vh]';
+
   return (
     <Dialog
       open={isOpen}
@@ -60,7 +64,7 @@ const Modal: FunctionComponent<ModalProps> = ({
         <div className='flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8'>
           {/* The actual dialog panel with responsive sizing */}
           <Dialog.Panel
-            className={`${defaultPanelClass} ${dialogPanelClass || ''} max-h-[90vh] w-full overflow-y-auto`}
+            className={`${defaultPanelClass} ${dialogPanelClass || ''} ${heightClass} w-full ${dynamicHeight ? 'overflow-y-auto' : 'overflow-y-auto'}`}
           >
             {/* Always include DialogTitle for accessibility */}
             <Dialog.Title className='sr-only'>{title || 'Modal'}</Dialog.Title>

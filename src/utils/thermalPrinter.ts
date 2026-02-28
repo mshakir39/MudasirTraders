@@ -291,17 +291,19 @@ ${receiptContent}
     content += line('-');
     content += `${wrapText(`Payment: ${data.paymentMethod.join(' + ')}`)}\n`;
 
-    // Warranty codes
-    content += 'Warranty Codes:\n';
-    data.products.forEach((p: any) => {
-      const productName = p.series || p.batteryDetails?.name || '';
-      const warrantyCode = p.warrentyCode || '';
+    // Warranty codes - Hidden only for charging services
+    if (!data.products.some((p: any) => p.isChargingService)) {
+      content += 'Warranty Codes:\n';
+      data.products.forEach((p: any) => {
+        const productName = p.series || p.batteryDetails?.name || '';
+        const warrantyCode = p.warrentyCode || '';
 
-      if (warrantyCode) {
-        const warrantyLine = `(${productName}): ${warrantyCode}`;
-        content += `${wrapText(warrantyLine)}\n`;
-      }
-    });
+        if (warrantyCode) {
+          const warrantyLine = `(${productName}): ${warrantyCode}`;
+          content += `${wrapText(warrantyLine)}\n`;
+        }
+      });
+    }
 
     // Footer
     content += '\n\n';

@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaStar, FaCheck, FaTimes, FaEye, FaTrash, FaPlus } from 'react-icons/fa';
+import {
+  FaStar,
+  FaCheck,
+  FaTimes,
+  FaEye,
+  FaTrash,
+  FaPlus,
+} from 'react-icons/fa';
 import { toast } from 'react-toastify';
 
 interface CustomerReview {
@@ -104,13 +111,13 @@ export default function ReviewsManagement() {
       <FaStar
         key={i}
         className={`h-4 w-4 ${
-          i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+          i < rating ? 'fill-current text-yellow-400' : 'text-gray-300'
         }`}
       />
     ));
   };
 
-  const filteredReviews = reviews.filter(review => {
+  const filteredReviews = reviews.filter((review) => {
     switch (filter) {
       case 'approved':
         return review.approved === true;
@@ -123,25 +130,29 @@ export default function ReviewsManagement() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className='flex h-64 items-center justify-center'>
+        <div className='h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600'></div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Reviews Management</h1>
-        <p className="text-gray-600">Manage customer reviews and testimonials</p>
+    <div className='p-6'>
+      <div className='mb-8'>
+        <h1 className='mb-2 text-3xl font-bold text-gray-900'>
+          Reviews Management
+        </h1>
+        <p className='text-gray-600'>
+          Manage customer reviews and testimonials
+        </p>
       </div>
 
       {/* Filter Tabs */}
-      <div className="mb-6">
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+      <div className='mb-6'>
+        <div className='flex w-fit space-x-1 rounded-lg bg-gray-100 p-1'>
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               filter === 'all'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
@@ -151,76 +162,86 @@ export default function ReviewsManagement() {
           </button>
           <button
             onClick={() => setFilter('pending')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               filter === 'pending'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Pending ({reviews.filter(r => r.approved !== true).length})
+            Pending ({reviews.filter((r) => r.approved !== true).length})
           </button>
           <button
             onClick={() => setFilter('approved')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               filter === 'approved'
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Approved ({reviews.filter(r => r.approved === true).length})
+            Approved ({reviews.filter((r) => r.approved === true).length})
           </button>
         </div>
       </div>
 
       {/* Reviews List */}
-      <div className="space-y-4">
+      <div className='space-y-4'>
         {filteredReviews.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <FaStar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-900 mb-2">
-              {filter === 'pending' ? 'No pending reviews' : filter === 'approved' ? 'No approved reviews' : 'No reviews yet'}
+          <div className='rounded-lg bg-gray-50 py-12 text-center'>
+            <FaStar className='mx-auto mb-4 h-16 w-16 text-gray-300' />
+            <h3 className='mb-2 text-xl font-medium text-gray-900'>
+              {filter === 'pending'
+                ? 'No pending reviews'
+                : filter === 'approved'
+                  ? 'No approved reviews'
+                  : 'No reviews yet'}
             </h3>
-            <p className="text-gray-600">
-              {filter === 'pending' ? 'All reviews have been processed.' : filter === 'approved' ? 'No reviews have been approved yet.' : 'Customer reviews will appear here.'}
+            <p className='text-gray-600'>
+              {filter === 'pending'
+                ? 'All reviews have been processed.'
+                : filter === 'approved'
+                  ? 'No reviews have been approved yet.'
+                  : 'Customer reviews will appear here.'}
             </p>
           </div>
         ) : (
           filteredReviews.map((review) => (
             <div
               key={review.id}
-              className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+              className='rounded-lg border border-gray-200 bg-white p-6 transition-shadow hover:shadow-md'
             >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">
+              <div className='mb-4 flex items-start justify-between'>
+                <div className='flex-1'>
+                  <div className='mb-2 flex items-center space-x-3'>
+                    <div className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-500'>
+                      <span className='text-sm font-semibold text-white'>
                         {review.author_name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{review.author_name}</h3>
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center space-x-1">
+                      <h3 className='font-semibold text-gray-900'>
+                        {review.author_name}
+                      </h3>
+                      <div className='flex items-center space-x-2'>
+                        <div className='flex items-center space-x-1'>
                           {renderStars(review.rating)}
                         </div>
-                        <span className="text-sm text-gray-500">
+                        <span className='text-sm text-gray-500'>
                           {new Date(review.createdAt).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <p className="text-gray-700 leading-relaxed">{review.text}</p>
+                  <p className='leading-relaxed text-gray-700'>{review.text}</p>
                 </div>
 
-                <div className="flex items-center space-x-2 ml-4">
+                <div className='ml-4 flex items-center space-x-2'>
                   {review.approved === true ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <FaCheck className="h-3 w-3 mr-1" />
+                    <span className='inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800'>
+                      <FaCheck className='mr-1 h-3 w-3' />
                       Approved
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <span className='inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800'>
                       Pending
                     </span>
                   )}
@@ -229,21 +250,21 @@ export default function ReviewsManagement() {
 
               {/* Action Buttons */}
               {review.approved !== true && (
-                <div className="flex items-center space-x-3 pt-4 border-t border-gray-100">
+                <div className='flex items-center space-x-3 border-t border-gray-100 pt-4'>
                   <button
                     onClick={() => handleApprove(review.id)}
                     disabled={actionLoading === review.id}
-                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className='inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50'
                   >
-                    <FaCheck className="h-4 w-4 mr-2" />
+                    <FaCheck className='mr-2 h-4 w-4' />
                     {actionLoading === review.id ? 'Approving...' : 'Approve'}
                   </button>
                   <button
                     onClick={() => handleReject(review.id)}
                     disabled={actionLoading === review.id}
-                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className='inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50'
                   >
-                    <FaTimes className="h-4 w-4 mr-2" />
+                    <FaTimes className='mr-2 h-4 w-4' />
                     {actionLoading === review.id ? 'Rejecting...' : 'Reject'}
                   </button>
                 </div>

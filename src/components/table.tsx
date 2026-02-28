@@ -76,7 +76,8 @@ export const Table = <TData extends Record<string, any>>({
     number | undefined
   >(undefined);
   // ✅ Internal state — no more prop dependency or DOM events
-  const [showStockCost, setShowStockCost] = React.useState(defaultShowStockCost);
+  const [showStockCost, setShowStockCost] =
+    React.useState(defaultShowStockCost);
 
   const augmentedColumns = React.useMemo<ColumnDef<TData>[]>(() => {
     if (!extraGlobalSearchText) return columns;
@@ -266,7 +267,7 @@ export const Table = <TData extends Record<string, any>>({
             {stockCost !== undefined && stockCost > 0 && (
               <button
                 onClick={() => setShowStockCost((prev) => !prev)}
-                className='whitespace-nowrap font-bold text-gray-500 hover:text-gray-700 transition-colors'
+                className='whitespace-nowrap font-bold text-gray-500 transition-colors hover:text-gray-700'
                 title={showStockCost ? 'Hide Stock Cost' : 'Show Stock Cost'}
               >
                 Total Stock Cost:{' '}

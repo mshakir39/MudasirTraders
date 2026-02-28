@@ -85,10 +85,12 @@ export async function POST(request: NextRequest) {
     if (action && reviewId) {
       // Handle review management (approve/reject)
       if (action === 'approve') {
-        const result = await db.collection('customer_reviews').updateOne(
-          { _id: new ObjectId(reviewId) },
-          { $set: { approved: true } }
-        );
+        const result = await db
+          .collection('customer_reviews')
+          .updateOne(
+            { _id: new ObjectId(reviewId) },
+            { $set: { approved: true } }
+          );
 
         if (result.modifiedCount === 0) {
           return NextResponse.json(
@@ -102,9 +104,9 @@ export async function POST(request: NextRequest) {
           message: 'Review approved successfully',
         });
       } else if (action === 'reject') {
-        const result = await db.collection('customer_reviews').deleteOne(
-          { _id: new ObjectId(reviewId) }
-        );
+        const result = await db
+          .collection('customer_reviews')
+          .deleteOne({ _id: new ObjectId(reviewId) });
 
         if (result.deletedCount === 0) {
           return NextResponse.json(
@@ -128,7 +130,11 @@ export async function POST(request: NextRequest) {
     // Handle review creation (original logic)
     const { author_name, rating, text } = body;
 
-    if (!author_name || typeof author_name !== 'string' || author_name.trim().length === 0) {
+    if (
+      !author_name ||
+      typeof author_name !== 'string' ||
+      author_name.trim().length === 0
+    ) {
       return NextResponse.json(
         { error: 'Author name is required', success: false },
         { status: 400 }
@@ -144,7 +150,10 @@ export async function POST(request: NextRequest) {
 
     if (!text || typeof text !== 'string' || text.trim().length < 10) {
       return NextResponse.json(
-        { error: 'Review text must be at least 10 characters long', success: false },
+        {
+          error: 'Review text must be at least 10 characters long',
+          success: false,
+        },
         { status: 400 }
       );
     }
@@ -155,7 +164,10 @@ export async function POST(request: NextRequest) {
 
     if (upperCaseRatio > 0.8 || hasRepeatedChars) {
       return NextResponse.json(
-        { error: 'Review appears to be spam. Please write a genuine review.', success: false },
+        {
+          error: 'Review appears to be spam. Please write a genuine review.',
+          success: false,
+        },
         { status: 400 }
       );
     }
@@ -167,12 +179,17 @@ export async function POST(request: NextRequest) {
       text: text.trim(),
       createdAt: new Date(),
       approved: false, // Require admin approval before showing on landing page
-      ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      ip_address:
+        request.headers.get('x-forwarded-for') ||
+        request.headers.get('x-real-ip') ||
+        'unknown',
       user_agent: request.headers.get('user-agent') || 'unknown',
     };
 
     // Insert the review
-    const result = await db.collection('customer_reviews').insertOne(reviewDocument);
+    const result = await db
+      .collection('customer_reviews')
+      .insertOne(reviewDocument);
 
     console.log('Review saved:', {
       id: result.insertedId.toString(),

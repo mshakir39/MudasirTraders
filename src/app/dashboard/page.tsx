@@ -204,5 +204,5 @@ export default function DashboardPage() {
     );
   }
 
-  return <DashboardLayout initialStats={stats} />;
+  return <DashboardLayout initialStats={stats} sales={[]} />;
 }

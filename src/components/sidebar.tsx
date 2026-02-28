@@ -32,6 +32,13 @@ interface SidebarProps {
   basePath?: string;
 }
 
+interface NavigationItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<any>;
+  active: boolean;
+}
+
 const Sidebar = ({
   className,
   onCollapseChange,
@@ -42,16 +49,6 @@ const Sidebar = ({
   const cleanPath =
     basePath && path?.startsWith(basePath) ? path.slice(basePath.length) : path;
   const router = useRouter();
-
-  // Helper function to get initials
-  const getInitials = (name: string) => {
-    if (!name) return '';
-    return name
-      .split(' ')
-      .map((word) => word[0])
-      .join('')
-      .toUpperCase();
-  };
 
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -173,7 +170,9 @@ const Sidebar = ({
         const response = await fetch('/api/reviews?admin=true');
         if (response.ok) {
           const data = await response.json();
-          const pendingCount = data.reviews.filter((review: any) => review.approved !== true).length;
+          const pendingCount = data.reviews.filter(
+            (review: any) => review.approved !== true
+          ).length;
           setPendingReviewsCount(pendingCount);
         }
       } catch (error) {
@@ -326,27 +325,17 @@ const Sidebar = ({
 
           {/* Navigation Links */}
           <div className='flex flex-1 flex-col space-y-2'>
-            {navigationItems.map((item) => {
+            {navigationItems.map((item: NavigationItem) => {
               const Icon = item.icon;
               const isReviewsItem = item.href === ROUTES.REVIEWS;
-              const hasPendingReviews = isReviewsItem && pendingReviewsCount > 0;
-
-              // Debug logging for Reviews item
-              if (isReviewsItem) {
-                console.log('Reviews item rendering:', {
-                  href: item.href,
-                  label: item.label,
-                  active: item.active,
-                  hasPendingReviews,
-                  pendingReviewsCount
-                });
-              }
+              const hasPendingReviews =
+                isReviewsItem && pendingReviewsCount > 0;
 
               return (
                 <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200 relative
+                  key={item.href || item.label}
+                  href={item.href || '#'}
+                  className={`sidebarItem relative flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
                     ${
                       item.active
                         ? 'bg-[#4287f5] text-white'
@@ -370,7 +359,7 @@ const Sidebar = ({
 
                   {/* Blue notification dot for pending reviews */}
                   {hasPendingReviews && (
-                    <div className="absolute -top-1 -right-1 h-3 w-3 bg-blue-500 rounded-full border-2 border-white animate-pulse"></div>
+                    <div className='absolute -right-1 -top-1 h-3 w-3 animate-pulse rounded-full border-2 border-white bg-blue-500'></div>
                   )}
                 </Link>
               );
@@ -382,7 +371,7 @@ const Sidebar = ({
         <div className='mt-auto flex flex-col space-y-2'>
           {/* Meetups Item */}
           <Link
-            href={`${basePath}${meetupsItem.href}`}
+            href={`${basePath || ''}${meetupsItem.href || '#'}`}
             className={`sidebarItem flex touch-manipulation items-center rounded-lg p-3 transition-all duration-200
               ${
                 meetupsItem.active

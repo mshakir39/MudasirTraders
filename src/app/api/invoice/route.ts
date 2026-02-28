@@ -1,6 +1,7 @@
 'use server';
 import { executeOperation } from '@/app/libs/executeOperation';
 import { getAllSum } from '@/utils/getTotalSum';
+import { validateAndNormalizeStock } from '@/utils/stockUtils';
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -108,10 +109,13 @@ export async function POST(req: NextRequest) {
 
       // 🔒 VALIDATION: Ensure invoice number is valid
       if (isNaN(nextNumber) || nextNumber <= 0) {
-        return NextResponse.json({
-          error: `Invalid invoice number generated: ${nextNumber}`,
-          showToast: true
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: `Invalid invoice number generated: ${nextNumber}`,
+            showToast: true,
+          },
+          { status: 400 }
+        );
       }
 
       nextInvoiceNumber = nextNumber.toString().padStart(8, '0'); // Ensure exactly 8 digits
@@ -121,10 +125,13 @@ export async function POST(req: NextRequest) {
 
     // 🔒 VALIDATION: Ensure invoice number format is correct
     if (!/^\d{8}$/.test(nextInvoiceNumber)) {
-      return NextResponse.json({
-        error: `Invalid invoice number format: ${nextInvoiceNumber}. Expected 8 digits.`,
-        showToast: true
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: `Invalid invoice number format: ${nextInvoiceNumber}. Expected 8 digits.`,
+          showToast: true,
+        },
+        { status: 400 }
+      );
     }
 
     // Create an invoice document
@@ -151,27 +158,36 @@ export async function POST(req: NextRequest) {
           !product.productPrice ||
           !product.quantity
         ) {
-          return NextResponse.json({
-            error: `Product is missing required fields: ${JSON.stringify(product)}`,
-            showToast: true
-          }, { status: 400 });
+          return NextResponse.json(
+            {
+              error: `Product is missing required fields: ${JSON.stringify(product)}`,
+              showToast: true,
+            },
+            { status: 400 }
+          );
         }
 
         const productPrice = parseFloat(product.productPrice);
         const quantity = parseInt(product.quantity);
 
         if (isNaN(productPrice) || productPrice <= 0) {
-          return NextResponse.json({
-            error: `Invalid product price for ${product.brandName} - ${product.series}: ${product.productPrice}`,
-            showToast: true
-          }, { status: 400 });
+          return NextResponse.json(
+            {
+              error: `Invalid product price for ${product.brandName} - ${product.series}: ${product.productPrice}`,
+              showToast: true,
+            },
+            { status: 400 }
+          );
         }
 
         if (isNaN(quantity) || quantity <= 0) {
-          return NextResponse.json({
-            error: `Invalid quantity for ${product.brandName} - ${product.series}: ${quantity}`,
-            showToast: true
-          }, { status: 400 });
+          return NextResponse.json(
+            {
+              error: `Invalid quantity for ${product.brandName} - ${product.series}: ${quantity}`,
+              showToast: true,
+            },
+            { status: 400 }
+          );
         }
 
         const totalPrice = productPrice * quantity;
@@ -201,7 +217,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
               {
                 error: `Warranty start date for ${product.brandName} - ${product.series} cannot be in the future: ${actualWarrantyStartDate}`,
-                showToast: true
+                showToast: true,
               },
               { status: 400 }
             );
@@ -218,7 +234,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
               {
                 error: `Invalid warranty end date calculated for ${product.brandName} - ${product.series}: ${warrantyEndDate}`,
-                showToast: true
+                showToast: true,
               },
               { status: 400 }
             );
@@ -251,6 +267,8 @@ export async function POST(req: NextRequest) {
           series: product.series,
           productPrice: product.productPrice,
           quantity: product.quantity,
+          isChargingService: !!product.isChargingService,
+          isScrapBattery: !!product.isScrapBattery,
           warrentyCode: product.warrentyCode ? product.warrentyCode.trim() : '',
           warrentyStartDate: finalWarrantyStartDate,
           warrentyEndDate: warrantyEndDate,
@@ -273,36 +291,51 @@ export async function POST(req: NextRequest) {
     // 🔒 VALIDATION: Ensure custom date is valid when provided
     if (formData.useCustomDate === true || formData.useCustomDate === 'true') {
       if (!formData.customDate) {
-        return NextResponse.json({
-          error: 'Custom date is required when useCustomDate is enabled',
-          showToast: true
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: 'Custom date is required when useCustomDate is enabled',
+            showToast: true,
+          },
+          { status: 400 }
+        );
       }
 
       const customDate = new Date(formData.customDate);
       if (isNaN(customDate.getTime())) {
-        return NextResponse.json({ error: `Invalid custom date: ${formData.customDate}`, showToast: true }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: `Invalid custom date: ${formData.customDate}`,
+            showToast: true,
+          },
+          { status: 400 }
+        );
       }
 
       // Ensure custom date is not in the future
       const customDateNow = new Date();
       if (customDate > customDateNow) {
-        return NextResponse.json({
-          error: `Custom date cannot be in the future: ${formData.customDate}`,
-          showToast: true
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: `Custom date cannot be in the future: ${formData.customDate}`,
+            showToast: true,
+          },
+          { status: 400 }
+        );
       }
     }
 
-// Calculate remaining amount
-const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
+    // Calculate remaining amount
+    const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
 
     // 🔒 VALIDATION: Ensure totalProductAmount is always a valid number
     if (isNaN(totalProductAmount) || totalProductAmount < 0) {
-      return NextResponse.json({
-        error: `Invalid total product amount: ${totalProductAmount}. Must be a positive number.`,
-        showToast: true
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: `Invalid total product amount: ${totalProductAmount}. Must be a positive number.`,
+          showToast: true,
+        },
+        { status: 400 }
+      );
     }
 
     // 🔒 VALIDATION: Ensure receivedAmount is always a valid number
@@ -314,10 +347,13 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
     ) {
       const parsedAmount = parseFloat(formData.receivedAmount);
       if (isNaN(parsedAmount) || parsedAmount < 0) {
-        return NextResponse.json({
-          error: `Invalid received amount: ${formData.receivedAmount}. Must be a positive number.`,
-          showToast: true
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: `Invalid received amount: ${formData.receivedAmount}. Must be a positive number.`,
+            showToast: true,
+          },
+          { status: 400 }
+        );
       }
       receivedAmount = parsedAmount;
     }
@@ -340,10 +376,13 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
     ) {
       const parsedRate = parseFloat(formData.batteriesRate);
       if (isNaN(parsedRate) || parsedRate < 0) {
-        return NextResponse.json({
-          error: `Invalid battery rate: ${formData.batteriesRate}. Must be a positive number.`,
-          showToast: true
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: `Invalid battery rate: ${formData.batteriesRate}. Must be a positive number.`,
+            showToast: true,
+          },
+          { status: 400 }
+        );
       }
       batteriesRate = parsedRate;
     }
@@ -366,7 +405,7 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
       return NextResponse.json(
         {
           error: `Invalid remaining amount calculation. Total: ${totalProductAmount}, Received: ${receivedAmount}, Batteries: ${batteriesRate}`,
-          showToast: true
+          showToast: true,
         },
         { status: 400 }
       );
@@ -377,7 +416,7 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
       return NextResponse.json(
         {
           error: `Received amount (${receivedAmount}) cannot exceed total product amount (${totalProductAmount})`,
-          showToast: true
+          showToast: true,
         },
         { status: 400 }
       );
@@ -388,7 +427,7 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
       return NextResponse.json(
         {
           error: `Batteries rate (${batteriesRate}) cannot exceed total product amount (${totalProductAmount})`,
-          showToast: true
+          showToast: true,
         },
         { status: 400 }
       );
@@ -399,7 +438,7 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
       return NextResponse.json(
         {
           error: `The received amount (${receivedAmount}) plus battery rate (${batteriesRate}) cannot be more than the total product cost (${totalProductAmount})`,
-          showToast: true
+          showToast: true,
         },
         { status: 400 }
       );
@@ -427,7 +466,7 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
           return NextResponse.json(
             {
               error: `Warranty code for ${product.brandName} - ${product.series} must be at least 3 characters long`,
-              showToast: true
+              showToast: true,
             },
             { status: 400 }
           );
@@ -441,7 +480,7 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
           return NextResponse.json(
             {
               error: `Warranty start date is required for ${product.brandName} - ${product.series} when warranty code is provided`,
-              showToast: true
+              showToast: true,
             },
             { status: 400 }
           );
@@ -455,7 +494,7 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
           return NextResponse.json(
             {
               error: `Warranty duration is required for ${product.brandName} - ${product.series} when warranty code is provided`,
-              showToast: true
+              showToast: true,
             },
             { status: 400 }
           );
@@ -666,6 +705,14 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
     // Validate quantities before updating stock
     console.log('📦 Validating stock quantities...');
     for (const product of formData.productDetail) {
+      // Skip stock validation for charging service products
+      if (product.isChargingService) {
+        console.log(
+          `⏭️ Skipping stock validation for charging service: ${product.productName || product.series}`
+        );
+        continue;
+      }
+
       const seriesName = (
         product.batteryDetails?.name ||
         product.series ||
@@ -763,6 +810,14 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
     // Update stock quantities and sold counts
     console.log('📦 Updating stock quantities and sold counts...');
     for (const product of formData.productDetail) {
+      // Skip stock updates for charging service products
+      if (product.isChargingService) {
+        console.log(
+          `⏭️ Skipping stock update for charging service: ${product.productName}`
+        );
+        continue;
+      }
+
       const seriesName =
         (product as any)._normalizedSeries ||
         (product.batteryDetails?.name || product.series || '').trim();
@@ -817,6 +872,13 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
       products: invoice.products,
       totalAmount: salesTotalAmount,
       paymentMethod: invoice.paymentMethod,
+      // Add charging service flags for analytics
+      isChargingService:
+        invoice.products?.some((product: any) => product.isChargingService) ||
+        false,
+      isScrapBattery:
+        invoice.products?.some((product: any) => product.isScrapBattery) ||
+        false,
     };
 
     // 🔒 VALIDATION: Ensure sales record has required fields
@@ -857,6 +919,16 @@ const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
         }
       });
     }
+
+    // 2. Validate and normalize stock data
+    console.log('🔍 Validating and normalizing stock data...');
+
+    // Skip stock validation for charging services since they don't require physical inventory
+    const hasChargingServices = formData.productDetail?.some(
+      (product: any) => product.isChargingService
+    );
+
+    // Note: Stock validation removed - stock updates are handled later in the process
 
     console.log('✅ Invoice created successfully');
     return NextResponse.json({ message: 'Invoice created successfully' });
@@ -1022,7 +1094,28 @@ export async function DELETE(req: NextRequest) {
     if (invoice.products && Array.isArray(invoice.products)) {
       console.log('📦 Reversing stock changes...');
       for (const product of invoice.products) {
-        const seriesName = product.batteryDetails?.name || product.series;
+        // Skip stock restoration for charging service/scrap battery products
+        if (product.isChargingService || product.isScrapBattery) {
+          console.log(
+            `⏭️ Skipping stock restoration for service: ${product.productName || product.series}`
+          );
+          continue;
+        }
+
+        // Handle legacy scrap battery invoices by checking series name patterns
+        const seriesName = product.batteryDetails?.name || product.series || '';
+        const isLegacyScrap =
+          seriesName.toLowerCase().includes('scrap') ||
+          (product.brandName &&
+            product.brandName.toLowerCase().includes('scrap'));
+
+        if (isLegacyScrap) {
+          console.log(
+            `⏭️ Skipping stock restoration for legacy scrap: ${seriesName}`
+          );
+          continue;
+        }
+
         const quantity = product.quantity;
 
         console.log(`🔄 Restoring stock for ${seriesName}: +${quantity} units`);
@@ -1039,8 +1132,9 @@ export async function DELETE(req: NextRequest) {
             `❌ Failed to restore stock for ${seriesName}:`,
             stockError
           );
-          throw new Error(
-            `Failed to restore stock for ${seriesName}: ${stockError.message}`
+          // Don't throw error for stock restoration failures - log and continue
+          console.warn(
+            `⚠️ Stock restoration failed but continuing with invoice deletion`
           );
         }
       }

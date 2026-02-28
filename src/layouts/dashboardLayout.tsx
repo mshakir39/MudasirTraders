@@ -10,12 +10,15 @@ import React, {
   useOptimistic,
   useActionState,
 } from 'react';
+import { usePathname } from 'next/navigation';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { AlertsBanner } from '@/components/AlertsBanner';
 import { DateRangeControls } from '@/components/dashboard/DateRangeControls';
 import { StatsGrid } from '@/components/dashboard/StatsGrid';
+import Link from 'next/link';
+import { MdElectricalServices, MdDashboard } from 'react-icons/md';
 // Local prop types to satisfy dynamic() generics
 interface TopSellingProductsProps {
   products: Array<{
@@ -105,9 +108,16 @@ interface StreamlinedDashboardStats {
 
 interface DashboardLayoutProps {
   initialStats: any;
+  sales: any[];
+  serverTimestamp?: number;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+  initialStats,
+  sales,
+  serverTimestamp,
+}) => {
+  const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -325,6 +335,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ initialStats }) => {
       <DashboardHeader onLock={handleLockDashboard} />
 
       <AlertsBanner alerts={stats.alerts} />
+
+      {/* Quick Analytics Section */}
+      <div className='mb-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm'>
+        <h3 className='mb-4 text-lg font-semibold text-gray-900'>
+          Quick Analytics
+        </h3>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <Link
+            href='/dashboard/charging-analytics'
+            className={`flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-3 transition-colors ${
+              pathname === '/dashboard/charging-analytics'
+                ? 'bg-purple-100 text-purple-800'
+                : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+            }`}
+          >
+            <MdElectricalServices className='h-5 w-5' />
+            <span className='font-medium'>Charging Analytics</span>
+          </Link>
+          <Link
+            href='/dashboard'
+            className={`flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-3 transition-colors ${
+              pathname === '/dashboard'
+                ? 'bg-blue-100 text-blue-800'
+                : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+            }`}
+          >
+            <MdDashboard className='h-5 w-5' />
+            <span className='font-medium'>Main Dashboard</span>
+          </Link>
+        </div>
+      </div>
 
       <DateRangeControls
         revenueDateRange={revenueDateRange}
