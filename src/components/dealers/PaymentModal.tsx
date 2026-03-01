@@ -29,13 +29,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [formData, setFormData] = useState({
     billId: '',
     amount: '',
-    paymentDate: new Date().toISOString().split('T')[0], // Today in YYYY-MM-DD format
+    paymentDate: '', // Empty string initially, will be set in useEffect
     paymentType: 'cash', // cash, bank, easypaisa, jazzcash
     notes: '',
     receivedBy: '', // person who received the cash
   });
   const [transactionScreenshot, setTransactionScreenshot] =
     useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const paymentTypes = [
@@ -47,6 +48,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   ];
 
   const selectedBill = bills.find((bill) => bill.id === formData.billId);
+
+  // Cleanup image preview URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   useEffect(() => {
     if (isOpen && bills.length > 0) {
@@ -62,12 +72,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       setFormData({
         billId: latestBill?.id || bills[0].id,
         amount: '',
-        paymentDate: new Date().toISOString().split('T')[0], // Always default to today
+        paymentDate: new Date().toISOString().slice(0, 16), // Format: YYYY-MM-DDTHH:MM
         paymentType: 'cash',
         notes: '',
         receivedBy: '',
       });
       setTransactionScreenshot(null);
+      setImagePreview(null);
     }
   }, [isOpen, bills]);
 
@@ -79,14 +90,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       return;
     }
 
-    // Validate payment date is not in the future
+    // Validate payment date is not in future
     const selectedDate = new Date(formData.paymentDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to start of day for fair comparison
-    selectedDate.setHours(0, 0, 0, 0);
-
-    if (selectedDate > today) {
-      toast.error('Payment date cannot be in the future');
+    const now = new Date();
+    
+    // Simple date comparison without timezone complications
+    if (selectedDate.getTime() > now.getTime()) {
+      toast.error('Payment date and time cannot be in future');
       return;
     }
 
@@ -127,7 +137,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const payload = {
         action: 'addPayment',
         billId: formData.billId,
-        paymentDate: formData.paymentDate, // Use YYYY-MM-DD string directly, no time
+        paymentDate: formData.paymentDate, // Use YYYY-MM-DDTHH:MM datetime string
         paymentAmount: parseFloat(formData.amount),
         paymentMethod: formData.paymentType,
         transactionImageUrl: transactionScreenshotUrl,
@@ -178,17 +188,22 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
 
         {/* Payment Date */}
-        <Input
-          type='date'
-          label='Payment Date *'
-          name='paymentDate'
-          value={formData.paymentDate}
-          onChange={(e) =>
-            setFormData({ ...formData, paymentDate: e.target.value })
-          }
-          max={new Date().toISOString().split('T')[0]}
-          required
-        />
+        <div>
+          <label className='mb-2 block text-sm font-medium text-gray-700'>
+            Payment Date & Time *
+          </label>
+          <input
+            type='datetime-local'
+            name='paymentDate'
+            value={formData.paymentDate || new Date().toISOString().slice(0, 16)}
+            onChange={(e) =>
+              setFormData({ ...formData, paymentDate: e.target.value })
+            }
+            min='2020-01-01T00:00'
+            className='w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm'
+            required
+          />
+        </div>
 
         {/* Payment Amount */}
         <Input
@@ -273,16 +288,49 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <input
               type='file'
               accept='image/*'
-              onChange={(e) =>
-                setTransactionScreenshot(e.target.files?.[0] || null)
-              }
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                setTransactionScreenshot(file);
+                
+                // Create preview URL
+                if (file) {
+                  const preview = URL.createObjectURL(file);
+                  setImagePreview(preview);
+                } else {
+                  setImagePreview(null);
+                }
+              }}
               className='block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-blue-700 hover:file:bg-blue-100'
               required
             />
             {transactionScreenshot && (
-              <p className='mt-2 text-sm text-gray-600'>
-                Selected: {transactionScreenshot.name}
-              </p>
+              <div className='mt-3'>
+                <p className='mb-2 text-sm text-gray-600'>
+                  Selected: {transactionScreenshot.name}
+                </p>
+                {imagePreview && (
+                  <div className='relative inline-block'>
+                    <img
+                      src={imagePreview}
+                      alt='Transaction screenshot preview'
+                      className='max-h-32 w-auto rounded-lg border border-gray-300 shadow-sm'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setTransactionScreenshot(null);
+                        setImagePreview(null);
+                      }}
+                      className='absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600'
+                      title='Remove image'
+                    >
+                      <svg className='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}

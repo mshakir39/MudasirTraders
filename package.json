@@ -6,6 +6,7 @@
     "dev": "next dev",
     "dev:fixed": "node scripts/dev-fixed.js",
     "audit:dashboard": "node -r dotenv/config scripts/audit-dashboard.js",
+    "audit:dealers": "node -r dotenv/config scripts/audit-dealers.js",
     "build": "next build",
     "start": "next start",
     "format": "prettier --write --ignore-path .gitignore .",
