@@ -225,12 +225,14 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
               <span>{data?.paymentMethod?.join(' + ')}</span>
             </div>
 
-            {/* Warranty - Hidden only for charging services */}
-            {!data?.products?.some(
-              (product: any) => product.isChargingService
-            ) && (
+            {/* Warranty - Show only for non-charging service products */}
+            {data?.products?.filter(
+              (product: any) => !product.isChargingService
+            ).length > 0 && (
               <div className='space-y-1'>
-                {data?.products?.map((product: any, idx: number) => (
+                {data?.products?.filter(
+                  (product: any) => !product.isChargingService
+                ).map((product: any, idx: number) => (
                   <div key={idx} className='flex flex-wrap text-xs md:text-sm'>
                     <span className='mr-1 font-bold text-[#6B6B6B]'>
                       Warranty ({product.series || 'Item'}):

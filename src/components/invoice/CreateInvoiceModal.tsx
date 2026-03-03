@@ -316,6 +316,12 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({
             capacity: item.capacity || 'Unknown',
             voltage: item.voltage || 'Unknown',
             warranty: item.warranty || 'N/A',
+            // Add warranty fields
+            warrentyCode: item.noWarranty ? 'No Warranty' : item.warrentyCode,
+            warrentyStartDate: item.noWarranty ? '' : item.warrentyStartDate,
+            warrentyDuration: item.noWarranty ? '0' : item.warrentyDuration,
+            warrantyEndDate: item.noWarranty ? '' : item.warrantyEndDate,
+            noWarranty: item.noWarranty || false,
           }))
         : [];
     }
