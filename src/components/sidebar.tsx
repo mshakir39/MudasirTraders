@@ -9,7 +9,7 @@ import {
   FaTags,
   FaShieldAlt,
 } from 'react-icons/fa';
-import { FaHandshake, FaUserFriends } from 'react-icons/fa';
+import { FaHandshake, FaUserFriends, FaRobot } from 'react-icons/fa';
 import { FaCalendarAlt, FaStar } from 'react-icons/fa';
 import { TbCategoryPlus } from 'react-icons/tb';
 import { IoMdSettings } from 'react-icons/io';

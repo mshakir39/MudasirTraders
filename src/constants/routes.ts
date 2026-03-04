@@ -19,6 +19,7 @@ export const ROUTES = {
   WARRANTY_CHECK: '/dashboard/warranty-check',
   DEALER_BILLS: '/dashboard/dealer-bills',
   DEALERS: '/dashboard/dealers',
+  AI_ASSISTANT: '/dashboard/ai-assistant',
   PRICE_LIST: '/dashboard/priceList',
   SCRAP_STOCK: '/dashboard/scrapStock',
   REVIEWS: '/dashboard/reviews',
@@ -47,6 +48,7 @@ export const ROUTE_GROUPS = {
     ROUTES.WARRANTY_CHECK,
     ROUTES.DEALER_BILLS,
     ROUTES.DEALERS,
+    ROUTES.AI_ASSISTANT,
     ROUTES.PRICE_LIST,
     ROUTES.SCRAP_STOCK,
     ROUTES.REVIEWS,
@@ -141,6 +143,11 @@ export const NAVIGATION_ITEMS = [
     href: ROUTES.WARRANTY_CHECK,
     label: 'Warranty Check',
     icon: 'FaShieldAlt',
+  },
+  {
+    href: ROUTES.DEALERS,
+    label: 'Dealers',
+    icon: 'FaHandshake',
   },
   {
     href: ROUTES.MEETUPS,

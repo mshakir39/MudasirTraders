@@ -26,15 +26,18 @@ const WarrantyDetails: React.FC<WarrantyDetailsProps> = ({ warranty }) => {
   const endDate = isValid(startDate) ? new Date(startDate) : new Date();
 
   if (isValid(startDate)) {
+    // Add months to start date (warranty duration is in months)
     endDate.setMonth(endDate.getMonth() + warranty.warrentyDuration);
   }
 
-  const isExpired = isValid(endDate) && endDate < new Date();
+  const now = new Date();
+  const isExpired = isValid(endDate) && endDate < now;
+  
+  // Calculate exact days remaining (use floor for accuracy)
   const daysRemaining = isValid(endDate)
-    ? Math.ceil(
-        (endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-      )
+    ? Math.max(0, Math.floor((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : 0;
+
 
   return (
     <div className='rounded-lg bg-white p-6 shadow-md'>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import Providers from '@/components/Providers';
 import CookieConsent from '@/components/CookieConsent';
+import FloatingAIAssistantWrapper from '@/components/FloatingAIAssistantWrapper';
 import 'react-toastify/dist/ReactToastify.css';
 import 'leaflet/dist/leaflet.css';
 import 'rsuite-table/dist/css/rsuite-table.css';
@@ -161,6 +162,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <CookieConsent />
+          <FloatingAIAssistantWrapper />
         </Providers>
       </body>
     </html>
