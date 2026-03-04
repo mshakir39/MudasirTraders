@@ -161,6 +161,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
+
+  
+
   return (
     <Modal
       isOpen={isOpen}
