@@ -299,36 +299,70 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
         };
 
         if (existingCategory && existingCategory.id) {
-          // For JSON imports, replace the entire category series instead of appending
-          console.log('Before replacement:', {
+          // Smart merge: Add new products, update existing ones, keep old ones
+          console.log('Before merge:', {
             existingCount: existingCategory.series?.length || 0,
             newCount: finalSeries.length,
             existingProducts: existingCategory.series?.map((s) => s.name),
+            newProducts: finalSeries.map((s) => s.name),
           });
 
-          // Use patchCategory to fully replace the series array
+          // Create a map of existing products by name for quick lookup
+          const existingProductsMap = new Map(
+            existingCategory.series?.map((product) => [product.name, product]) || []
+          );
+
+          // Merge logic:
+          // 1. Keep all existing products (preserve references)
+          // 2. Add new products from JSON that don't exist
+          // 3. Update existing products with new data from JSON
+          const mergedSeries = [...(existingCategory.series || [])];
+
+          let newProductsAdded = 0;
+          let existingProductsUpdated = 0;
+
+          finalSeries.forEach((newProduct) => {
+            const existingProduct = existingProductsMap.get(newProduct.name);
+
+            if (existingProduct) {
+              // Update existing product with new data
+              const existingIndex = mergedSeries.findIndex((p) => p.name === newProduct.name);
+              if (existingIndex !== -1) {
+                mergedSeries[existingIndex] = {
+                  ...existingProduct, // Keep existing fields
+                  ...newProduct, // Override with new data
+                };
+                existingProductsUpdated++;
+              }
+            } else {
+              // Add new product
+              mergedSeries.push(newProduct);
+              newProductsAdded++;
+            }
+          });
+
+          // Update category with merged series
           const result = await patchCategory(existingCategory.id, {
             brandName: finalBrandName,
-            series: finalSeries,
+            series: mergedSeries,
             salesTax: finalSalesTax,
           });
 
           if (!result.success) {
             throw new Error(
-              result.error || 'Failed to update category with new series'
+              result.error || 'Failed to merge series into category'
             );
           }
 
-          console.log('After replacement:', {
+          console.log('After merge:', {
             resultCount: result.data?.series?.length || 0,
-            resultProducts: result.data?.series?.map((s: any) => s.name),
+            newProductsAdded,
+            existingProductsUpdated,
+            totalProducts: mergedSeries.length,
           });
 
-          const productsReplaced = finalSeries.length;
-          const productsRemoved = (existingCategory.series?.length || 0) - finalSeries.length;
-
           toast.success(
-            `Replaced ${finalBrandName} category: ${productsReplaced} products now in category${productsRemoved !== 0 ? ` (${Math.abs(productsRemoved)} ${productsRemoved > 0 ? 'removed' : 'added'})` : ''}`
+            `Merged ${finalBrandName} category: ${newProductsAdded} new products added, ${existingProductsUpdated} products updated, ${mergedSeries.length} total products`
           );
         } else if (!existingCategory) {
           // Create new category

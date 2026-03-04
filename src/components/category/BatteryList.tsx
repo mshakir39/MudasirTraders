@@ -43,16 +43,22 @@ const BatteryList: React.FC<BatteryListProps> = ({
   const filteredSeries = React.useMemo(() => {
     if (!detailData || !detailData.series) return [];
 
-    if (!searchQuery.trim()) return detailData.series;
+    if (!searchQuery.trim()) {
+      return [...detailData.series].sort((a, b) =>
+        (a.name ?? '').localeCompare(b.name ?? '')
+      );
+    }
 
     const query = searchQuery.toLowerCase().trim();
-    return detailData.series.filter(
-      (item: BatteryData) =>
-        (item.name && item.name.toLowerCase().includes(query)) ||
-        (item.plate && item.plate.toString().toLowerCase().includes(query)) ||
-        (item.ah && item.ah.toString().includes(query)) ||
-        (item.type && item.type.toLowerCase().includes(query))
-    );
+    return [...detailData.series]
+      .filter(
+        (item: BatteryData) =>
+          (item.name && item.name.toLowerCase().includes(query)) ||
+          (item.plate && item.plate.toString().toLowerCase().includes(query)) ||
+          (item.ah && item.ah.toString().includes(query)) ||
+          (item.type && item.type.toLowerCase().includes(query))
+      )
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
   }, [detailData, searchQuery]);
 
   return (
