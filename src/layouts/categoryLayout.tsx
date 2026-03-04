@@ -299,36 +299,36 @@ const CategoryLayoutRefactored: React.FC<CategoryLayoutProps> = ({
         };
 
         if (existingCategory && existingCategory.id) {
-          // Append new series to existing category instead of replacing
-          console.log('Before append:', {
+          // For JSON imports, replace the entire category series instead of appending
+          console.log('Before replacement:', {
             existingCount: existingCategory.series?.length || 0,
             newCount: finalSeries.length,
             existingProducts: existingCategory.series?.map((s) => s.name),
           });
 
-          const result = await appendSeriesToCategory(
-            existingCategory.id,
-            finalSeries
-          );
+          // Use patchCategory to fully replace the series array
+          const result = await patchCategory(existingCategory.id, {
+            brandName: finalBrandName,
+            series: finalSeries,
+            salesTax: finalSalesTax,
+          });
 
           if (!result.success) {
             throw new Error(
-              result.error || 'Failed to append series to category'
+              result.error || 'Failed to update category with new series'
             );
           }
 
-          console.log('After append:', {
+          console.log('After replacement:', {
             resultCount: result.data?.series?.length || 0,
             resultProducts: result.data?.series?.map((s: any) => s.name),
           });
 
-          const originalCount = existingCategory.series?.length || 0;
-          const newCount = result.data?.series?.length || 0;
-          const productsAdded = newCount - originalCount;
-          const productsUpdated = finalSeries.length - productsAdded;
+          const productsReplaced = finalSeries.length;
+          const productsRemoved = (existingCategory.series?.length || 0) - finalSeries.length;
 
           toast.success(
-            `Updated ${finalBrandName} category: ${productsAdded} new products added, ${productsUpdated} products updated`
+            `Replaced ${finalBrandName} category: ${productsReplaced} products now in category${productsRemoved !== 0 ? ` (${Math.abs(productsRemoved)} ${productsRemoved > 0 ? 'removed' : 'added'})` : ''}`
           );
         } else if (!existingCategory) {
           // Create new category
