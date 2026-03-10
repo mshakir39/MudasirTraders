@@ -16,6 +16,18 @@ function normalizeText(s: string) {
     .replace(/[^a-z0-9]/g, '');
 }
 
+// Better series matching function that preserves structure
+function normalizeSeries(s: string) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')     // Normalize multiple spaces to single space
+    .replace(/\s*\(\s*/g, ' (') // Add space before opening parenthesis
+    .replace(/\s*\)\s*/g, ') ') // Add space after closing parenthesis
+    .replace(/\s*\/\s*/g, '/') // Fix spaces around slashes
+    .replace(/\s+/g, ' ')     // Clean up any new multiple spaces
+    .trim();
+}
+
 // Build a regex that requires all tokens (split by space, '/', ',', '(', ')', '-') to appear in any order
 function buildTokenRegex(input: string) {
   const tokens = String(input || '')
@@ -780,7 +792,9 @@ export async function POST(req: NextRequest) {
       const currentStock = stockData.seriesStock?.find((item: any) => {
         const s = String(item.series || '');
         return (
-          normalizeText(s) === normalizeText(seriesName) || tokenPattern.test(s)
+          normalizeSeries(s) === normalizeSeries(seriesName) || 
+          normalizeText(s) === normalizeText(seriesName) || 
+          tokenPattern.test(s)
         );
       });
       if (!currentStock) {
