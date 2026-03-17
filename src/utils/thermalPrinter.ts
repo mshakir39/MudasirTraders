@@ -245,8 +245,22 @@ ${receiptContent}
 
     // Totals
     const grandTotal = getAllSum(data.products, 'totalPrice');
+    const totalQuantity = data.products.reduce((sum: number, item: any) => {
+      // Try different possible quantity field names
+      const qty = Number(item.quantity) || Number(item.qty) || Number(item.count) || 1;
+      return sum + qty;
+    }, 0);
+    
     content += line('=');
-    content += createRow('TOTAL:', `Rs ${grandTotal}`);
+    
+    // Create totals row with less right alignment
+    const totalLabel = 'TOTAL'.padEnd(descWidth);
+    const qtyTotal = String(totalQuantity).padStart(qtyWidth + 1); // Reduce to 1 extra space
+    const rateEmpty = ''.padStart(rateWidth);
+    const totalAmount = String(grandTotal).padStart(totalWidth); // Move 1 space to the left
+    
+    // Match the exact structure: ${no} ${description} ${qty} ${rate} ${total}
+    content += `   ${totalLabel} ${qtyTotal} ${rateEmpty} ${totalAmount}\n`;
 
     // Batteries count and weight (if available)
     if (data.batteriesCountAndWeight && data.batteriesRate) {
@@ -268,10 +282,24 @@ ${receiptContent}
         const paymentMethod = payment.paymentMethod
           ? ` (${payment.paymentMethod.join(' + ')})`
           : '';
-        content += createRow(
-          `Received ${paymentDate}${paymentMethod}:`,
-          `Rs ${payment.amount}`
-        );
+        
+        // Create the full text and wrap it if needed
+        const fullText = `Received ${paymentDate}${paymentMethod}:`;
+        const rightText = `Rs ${payment.amount}`;
+        
+        // Check if text needs wrapping
+        if (fullText.length > 25) { // Leave space for amount
+          // Split into two lines
+          const line1 = `Received ${paymentDate}:`;
+          const line2 = paymentMethod ? paymentMethod.replace(/[()]/g, '').trim() : '';
+          
+          content += createRow(line1, rightText);
+          if (line2) {
+            content += createRow(line2, '');
+          }
+        } else {
+          content += createRow(fullText, rightText);
+        }
       });
     }
 
