@@ -28,13 +28,15 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onWarrantyToggle,
   showWarrantyFields,
 }) => {
-  const selectedBrandOption = brandOptions.find(option => option.value === (accordionDataItem.brandName || ''));
+  const selectedBrandOption = brandOptions.find(
+    (option) => option.value === (accordionDataItem.brandName || '')
+  );
 
   return (
     <div className='space-y-4'>
       {/* Brand Selection */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 mb-1'>
+        <label className='mb-1 block text-sm font-medium text-gray-700'>
           Brand
         </label>
         <Dropdown
@@ -47,11 +49,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
       {/* Series Selection */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 mb-1'>
+        <label className='mb-1 block text-sm font-medium text-gray-700'>
           Series
         </label>
         <SeriesAutocomplete
-          series={stock.filter(item => item.brandName === accordionDataItem.brandName)}
+          series={stock.filter(
+            (item) => item.brandName === accordionDataItem.brandName
+          )}
           value={accordionDataItem.series || ''}
           onChange={(value) => onChange('series', value)}
         />
@@ -60,7 +64,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       {/* Quantity and Price */}
       <div className='grid grid-cols-2 gap-4'>
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
+          <label className='mb-1 block text-sm font-medium text-gray-700'>
             Quantity
           </label>
           <Input
@@ -71,7 +75,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           />
         </div>
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
+          <label className='mb-1 block text-sm font-medium text-gray-700'>
             Price
           </label>
           <Input
@@ -85,9 +89,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
       {/* Warranty Toggle */}
       <div className='flex items-center justify-between'>
-        <label className='text-sm font-medium text-gray-700'>
-          Warranty
-        </label>
+        <label className='text-sm font-medium text-gray-700'>Warranty</label>
         <Toggle
           checked={!accordionDataItem.noWarranty}
           onChange={onWarrantyToggle}
@@ -98,7 +100,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
       {showWarrantyFields && (
         <div className='space-y-3 border-t pt-3'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>
+            <label className='mb-1 block text-sm font-medium text-gray-700'>
               Warranty Code
             </label>
             <Input
@@ -109,7 +111,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           </div>
           <div className='grid grid-cols-2 gap-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
+              <label className='mb-1 block text-sm font-medium text-gray-700'>
                 Start Date
               </label>
               <Input
@@ -119,7 +121,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
               />
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
+              <label className='mb-1 block text-sm font-medium text-gray-700'>
                 Duration (months)
               </label>
               <Input

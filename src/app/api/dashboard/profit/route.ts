@@ -33,10 +33,7 @@ export async function POST(request: NextRequest) {
     const result = await calculateProfitForDateRange(start, end);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
     return NextResponse.json(result.data);
@@ -82,10 +79,7 @@ export async function GET(request: NextRequest) {
     const result = await calculateProfitForDateRange(start, end);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
     return NextResponse.json(result.data);

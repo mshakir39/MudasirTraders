@@ -38,7 +38,9 @@ interface CustomerInvoiceDataGridProps {
   className?: string;
 }
 
-export const CustomerInvoiceDataGrid: React.FC<CustomerInvoiceDataGridProps> = ({
+export const CustomerInvoiceDataGrid: React.FC<
+  CustomerInvoiceDataGridProps
+> = ({
   invoices,
   onPreview,
   onEditInvoice,

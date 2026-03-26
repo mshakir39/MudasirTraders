@@ -14,7 +14,7 @@ interface NativeDraggableModalProps {
 const sizeClasses = {
   small: 'max-w-sm',
   medium: 'max-w-2xl',
-  large: 'max-w-6xl'
+  large: 'max-w-6xl',
 };
 
 const NativeDraggableModal: React.FC<NativeDraggableModalProps> = ({
@@ -23,7 +23,7 @@ const NativeDraggableModal: React.FC<NativeDraggableModalProps> = ({
   title,
   children,
   size = 'medium',
-  draggable = false
+  draggable = false,
 }) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -48,10 +48,10 @@ const NativeDraggableModal: React.FC<NativeDraggableModalProps> = ({
   // Handle drag functionality
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!draggable) return;
-    
+
     setIsDragging(true);
     dragStartPos.current = { x: e.clientX, y: e.clientY };
-    
+
     // Get current position from computed style
     const dialog = dialogRef.current;
     if (dialog) {
@@ -62,12 +62,12 @@ const NativeDraggableModal: React.FC<NativeDraggableModalProps> = ({
           const values = matrix[1].split(', ');
           elementStartPos.current = {
             x: parseFloat(values[4]) || 0,
-            y: parseFloat(values[5]) || 0
+            y: parseFloat(values[5]) || 0,
           };
         }
       }
     }
-    
+
     e.preventDefault();
   };
 
@@ -119,13 +119,13 @@ const NativeDraggableModal: React.FC<NativeDraggableModalProps> = ({
   return (
     <dialog
       ref={dialogRef}
-      className={`backdrop:bg-black/50 backdrop:backdrop-blur-sm ${sizeClasses[size]} w-full rounded-lg shadow-2xl border border-gray-200 ${draggable ? 'cursor-move' : ''}`}
+      className={`backdrop:bg-black/50 backdrop:backdrop-blur-sm ${sizeClasses[size]} w-full rounded-lg border border-gray-200 shadow-2xl ${draggable ? 'cursor-move' : ''}`}
       onClose={handleDialogClose}
       style={{
         ...(draggable && {
           transform: `translate(${position.x}px, ${position.y}px)`,
-          transition: isDragging ? 'none' : 'transform 0.2s ease-out'
-        })
+          transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+        }),
       }}
     >
       {/* Header */}
@@ -134,30 +134,38 @@ const NativeDraggableModal: React.FC<NativeDraggableModalProps> = ({
           className={`flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-blue-900 to-blue-600 px-6 py-4 ${draggable ? 'cursor-move hover:cursor-grab active:cursor-grabbing' : ''}`}
           onMouseDown={handleMouseDown}
         >
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          <h3 className='text-lg font-semibold text-white'>{title}</h3>
           {draggable && (
-            <div className="flex items-center gap-2 text-white/80 text-xs bg-white/10 px-2 py-1 rounded-full">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+            <div className='flex items-center gap-2 rounded-full bg-white/10 px-2 py-1 text-xs text-white/80'>
+              <svg className='h-3 w-3' fill='currentColor' viewBox='0 0 20 20'>
+                <path d='M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z' />
               </svg>
               Drag to move
             </div>
           )}
           <button
             onClick={handleDialogClose}
-            className="text-white/80 hover:text-white transition-colors"
+            className='text-white/80 transition-colors hover:text-white'
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className='h-5 w-5'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M6 18L18 6M6 6l12 12'
+              />
             </svg>
           </button>
         </div>
       )}
-      
+
       {/* Content */}
-      <div className="p-6">
-        {children}
-      </div>
+      <div className='p-6'>{children}</div>
     </dialog>
   );
 };

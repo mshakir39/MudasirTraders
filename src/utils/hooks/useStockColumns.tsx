@@ -116,7 +116,8 @@ export function useStockColumns({
                 e.stopPropagation();
                 onEdit(row.original, currentBrandName);
               }}
-              className='p-2' style={{ color: '#2563eb' }}
+              className='p-2'
+              style={{ color: '#2563eb' }}
               title='Edit Stock'
             >
               <FaEdit size={16} />
@@ -126,7 +127,8 @@ export function useStockColumns({
                 e.stopPropagation();
                 onHistory(currentBrandName, row.original.series);
               }}
-              className='p-2' style={{ color: '#60a5fa' }}
+              className='p-2'
+              style={{ color: '#60a5fa' }}
               title='View History'
             >
               <FaHistory size={16} />
@@ -136,7 +138,8 @@ export function useStockColumns({
                 e.stopPropagation();
                 onDelete(row.original, currentBrandName);
               }}
-              className='p-2' style={{ color: '#dc2626' }}
+              className='p-2'
+              style={{ color: '#dc2626' }}
               title='Delete Stock'
             >
               <FaTrash size={16} />

@@ -26,16 +26,22 @@ export default function WarrantyCheckPage() {
         {/* Header Section */}
         <div className='mb-8 text-center'>
           <div className='mb-4 flex items-center justify-center'>
-            <FaShieldAlt className='mr-3 text-4xl' style={{ color: '#4287f5' }} />
-            <h1 className='text-2xl font-bold text-secondary-900'>Battery Warranty Check</h1>
+            <FaShieldAlt
+              className='mr-3 text-4xl'
+              style={{ color: '#4287f5' }}
+            />
+            <h1 className='text-2xl font-bold text-secondary-900'>
+              Battery Warranty Check
+            </h1>
           </div>
           <p className='text-secondary-600'>
-            Enter your warranty code to check the status of your battery warranty
+            Enter your warranty code to check the status of your battery
+            warranty
           </p>
         </div>
 
         {/* Search Section */}
-        <div className='mb-8 rounded-lg bg-white p-6 shadow-sm border border-secondary-200'>
+        <div className='mb-8 rounded-lg border border-secondary-200 bg-white p-6 shadow-sm'>
           <WarrantySearch onSearchResult={handleSearchResult} />
         </div>
 
@@ -44,7 +50,9 @@ export default function WarrantyCheckPage() {
 
         {/* Warranty Details */}
         {warrantyData && (warrantyData.success || warrantyData.warranty) && (
-          <WarrantyDetailsWrapper warranty={warrantyData.data || warrantyData} />
+          <WarrantyDetailsWrapper
+            warranty={warrantyData.data || warrantyData}
+          />
         )}
       </div>
     </div>

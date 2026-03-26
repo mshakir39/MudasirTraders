@@ -17,7 +17,7 @@ class Logger {
     success: '✅',
     warning: '⚠️',
     error: '❌',
-    debug: '🔍'
+    debug: '🔍',
   };
 
   constructor() {
@@ -25,17 +25,19 @@ class Logger {
       enabled: process.env.NODE_ENV === 'development' ? true : true, // Always enabled but filtered by level
       level: process.env.NODE_ENV === 'development' ? 'info' : 'error', // Only errors in production
       includeTimestamp: true,
-      includePrefix: true
+      includePrefix: true,
     };
   }
 
   private formatMessage(level: LogLevel, message: string, data?: any): string {
     const emoji = this.emojiMap[level];
-    const timestamp = this.config.includeTimestamp ? `[${new Date().toISOString()}] ` : '';
+    const timestamp = this.config.includeTimestamp
+      ? `[${new Date().toISOString()}] `
+      : '';
     const prefix = this.config.includePrefix ? `${emoji} ` : '';
-    
+
     let formattedMessage = `${timestamp}${prefix}${message}`;
-    
+
     if (data !== undefined) {
       if (typeof data === 'object') {
         formattedMessage += '\n' + JSON.stringify(data, null, 2);
@@ -43,18 +45,18 @@ class Logger {
         formattedMessage += ` ${data}`;
       }
     }
-    
+
     return formattedMessage;
   }
 
   private log(level: LogLevel, message: string, data?: any): void {
     if (!this.config.enabled) return;
-    
+
     // Filter logs based on level
     if (!this.shouldLog(level)) return;
-    
+
     const formattedMessage = this.formatMessage(level, message, data);
-    
+
     switch (level) {
       case 'info':
         console.info(formattedMessage);
@@ -78,16 +80,16 @@ class Logger {
 
   private shouldLog(level: LogLevel): boolean {
     const levels: Record<LogLevel, number> = {
-      'debug': 0,
-      'info': 1,
-      'success': 2,
-      'warning': 3,
-      'error': 4
+      debug: 0,
+      info: 1,
+      success: 2,
+      warning: 3,
+      error: 4,
     };
-    
+
     const currentLevel = levels[this.config.level];
     const messageLevel = levels[level];
-    
+
     return messageLevel >= currentLevel;
   }
 
@@ -121,55 +123,55 @@ class Logger {
   private getCategoryEmoji(category: string): string {
     const emojiMap: Record<string, string> = {
       // Business operations
-      'invoice': '�',
-      'stock': '��',
-      'sales': '💰',
-      'customer': '👤',
-      'product': '📦',
-      'order': '🛒',
-      'payment': '💳',
-      'warranty': '🔧',
-      'return': '🔄',
-      'refund': '💸',
-      
+      invoice: '�',
+      stock: '��',
+      sales: '💰',
+      customer: '👤',
+      product: '📦',
+      order: '🛒',
+      payment: '💳',
+      warranty: '🔧',
+      return: '🔄',
+      refund: '💸',
+
       // System operations
-      'database': '💾',
-      'api': '🌐',
-      'auth': '🔐',
-      'cache': '⚡',
-      'server': '🖥️',
-      'network': '🌐',
-      'file': '📁',
-      'email': '📧',
-      'sms': '📱',
-      
+      database: '💾',
+      api: '🌐',
+      auth: '🔐',
+      cache: '⚡',
+      server: '🖥️',
+      network: '🌐',
+      file: '📁',
+      email: '📧',
+      sms: '📱',
+
       // Development
-      'dev': '🔧',
-      'debug': '🔍',
-      'test': '🧪',
-      'build': '🏗️',
-      'deploy': '🚀',
-      
+      dev: '🔧',
+      debug: '🔍',
+      test: '🧪',
+      build: '🏗️',
+      deploy: '🚀',
+
       // Common categories
-      'system': '⚙️',
-      'config': '⚙️',
-      'security': '🔒',
-      'performance': '⚡',
-      'monitoring': '📊',
-      'backup': '💾',
-      'sync': '🔄',
-      'import': '📥',
-      'export': '📤',
-      'delete': '�️',
-      'create': '➕',
-      'update': '✏️',
-      'archive': '📚',
-      'restore': '♻️',
-      
+      system: '⚙️',
+      config: '⚙️',
+      security: '🔒',
+      performance: '⚡',
+      monitoring: '📊',
+      backup: '💾',
+      sync: '🔄',
+      import: '📥',
+      export: '📤',
+      delete: '�️',
+      create: '➕',
+      update: '✏️',
+      archive: '📚',
+      restore: '♻️',
+
       // Default
-      'default': 'ℹ️'
+      default: 'ℹ️',
     };
-    
+
     return emojiMap[category.toLowerCase()] || emojiMap['default'];
   }
 
@@ -265,10 +267,10 @@ export const log = {
   warning: logger.warning.bind(logger),
   error: logger.error.bind(logger),
   debug: logger.debug.bind(logger),
-  
+
   // Generic category method
   category: logger.category.bind(logger),
-  
+
   // Business operation methods
   invoice: logger.invoice.bind(logger),
   stock: logger.stock.bind(logger),
@@ -277,20 +279,20 @@ export const log = {
   product: logger.product.bind(logger),
   payment: logger.payment.bind(logger),
   warranty: logger.warranty.bind(logger),
-  
+
   // System operation methods
   database: logger.database.bind(logger),
   api: logger.api.bind(logger),
   auth: logger.auth.bind(logger),
   system: logger.system.bind(logger),
-  
+
   // Development methods
   dev: logger.dev.bind(logger),
   test: logger.test.bind(logger),
-  
+
   // Configuration methods
   configure: logger.configure.bind(logger),
   enable: logger.enable.bind(logger),
   disable: logger.disable.bind(logger),
-  isEnabled: logger.isEnabled.bind(logger)
+  isEnabled: logger.isEnabled.bind(logger),
 };

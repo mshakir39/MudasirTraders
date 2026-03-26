@@ -27,24 +27,32 @@ src/features/brand-management/
 ## FSD Layers
 
 ### 📱 Entities Layer
+
 Contains business entities and their types:
+
 - `Brand` interface with id, brandName, timestamps
 - `BrandFormData` for form handling
 - API request/response types
 
 ### 🧩 Shared Layer
+
 Contains reusable UI components:
+
 - `BrandTable` - Display brands with search and actions
 - `BrandCreateModal` - Modal for creating new brands
 
 ### ⚙️ Process Layer (lib)
+
 Contains business logic and state management:
+
 - `useBrandActions` - Custom hook for brand operations
 - Optimistic updates for create/delete operations
 - API integration with proper error handling
 
 ### 🎨 UI Layer
+
 Contains page-specific UI components:
+
 - `BrandManagement` - Main component orchestrating the feature
 - Integrates all layers and handles component composition
 

@@ -33,7 +33,10 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Stock action error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -48,26 +51,37 @@ export async function GET(request: NextRequest) {
     // Only fetch history if brandName is provided
     if (!brandName) {
       console.log('❌ No brandName provided');
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Brand name is required for stock history' 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Brand name is required for stock history',
+        },
+        { status: 400 }
+      );
     }
 
     console.log('🔍 Fetching history for:', brandName, series);
     const history = await getStockHistory(brandName, series || undefined);
-    console.log('📋 History result type:', typeof history, 'length:', Array.isArray(history) ? history.length : 'N/A');
-    
+    console.log(
+      '📋 History result type:',
+      typeof history,
+      'length:',
+      Array.isArray(history) ? history.length : 'N/A'
+    );
+
     // Return the history data wrapped in success format
-    return NextResponse.json({ 
-      success: true, 
-      data: history 
+    return NextResponse.json({
+      success: true,
+      data: history,
     });
   } catch (error) {
     console.error('❌ Stock history error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Internal server error' 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error',
+      },
+      { status: 500 }
+    );
   }
 }

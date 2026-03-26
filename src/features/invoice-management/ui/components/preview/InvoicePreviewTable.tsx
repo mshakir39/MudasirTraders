@@ -29,7 +29,9 @@ const columns = [
   { label: 'Total', renderCell: (item: any) => 'Rs ' + item.totalPrice },
 ];
 
-export const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({ data }) => {
+export const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({
+  data,
+}) => {
   const footerData = {
     ID: '',
     Name: 'Total',

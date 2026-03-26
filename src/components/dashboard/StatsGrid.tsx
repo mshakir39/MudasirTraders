@@ -69,7 +69,12 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
         value={`Rs ${(stats.totalProfit ?? 0).toLocaleString('en-PK')}`}
         subtitle='Gross profit for selected period'
         extraInfo={`Profit Margin: ${profitMargin.toFixed(1)}%`}
-        icon={<MdAccountBalanceWallet className='h-6 w-6' style={{ color: '#0284c7' }} />}
+        icon={
+          <MdAccountBalanceWallet
+            className='h-6 w-6'
+            style={{ color: '#0284c7' }}
+          />
+        }
         iconBgColor='bg-accent-50'
         iconColor='text-accent-800'
         valueColor='text-accent-700'
@@ -80,15 +85,17 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
         value={`Rs ${stats.totalPending.toLocaleString('en-PK')}`}
         subtitle='Outstanding amount'
         icon={
-          <MdAccountBalanceWallet 
-            className='h-6 w-6' 
-            style={{ 
-              color: stats.totalPending > 0 ? '#dc2626' : '#475569' 
-            }} 
+          <MdAccountBalanceWallet
+            className='h-6 w-6'
+            style={{
+              color: stats.totalPending > 0 ? '#dc2626' : '#475569',
+            }}
           />
         }
         iconBgColor={stats.totalPending > 0 ? 'bg-error-50' : 'bg-secondary-50'}
-        iconColor={stats.totalPending > 0 ? 'text-error-800' : 'text-secondary-800'}
+        iconColor={
+          stats.totalPending > 0 ? 'text-error-800' : 'text-secondary-800'
+        }
         valueColor={
           stats.totalPending > 0 ? 'text-error-600' : 'text-secondary-900'
         }

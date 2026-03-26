@@ -50,7 +50,7 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
   const [allCustomerInfo, setAllCustomerInfo] = useState<CustomerInfo[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  
+
   // Get invoices from Jotai store
   const [invoices] = useAtom(invoicesAtom);
 
@@ -60,14 +60,14 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
       setAllCustomerInfo([]);
       return;
     }
-    
+
     // Process customer data
     const customerMap = new Map<string, any>();
-    
+
     invoices.forEach((invoice: any) => {
       const customerName = invoice.customerName;
       const contactNumber = invoice.customerContactNumber;
-      
+
       if (
         customerName &&
         customerName.trim() !== ''
@@ -93,10 +93,10 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
       }
     });
 
-    const customerInfoArray = Array.from(customerMap.values()).sort(
-      (a, b) => a.name.localeCompare(b.name)
+    const customerInfoArray = Array.from(customerMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
     );
-    
+
     setAllCustomerInfo(customerInfoArray);
   }, [invoices]);
 
@@ -110,12 +110,17 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
     if (value && value.length >= 2 && !readOnly) {
       const searchValue = value.toLowerCase();
       const matches: CustomerInfoWithMatch[] = [];
-      
+
       allCustomerInfo.forEach((customer) => {
-        const nameMatch = customer.name && customer.name.toLowerCase().includes(searchValue);
-        const phoneMatch = customer.contactNumber && customer.contactNumber.includes(searchValue);
-        const addressMatch = customer.address && customer.address.toLowerCase().includes(searchValue);
-        
+        const nameMatch =
+          customer.name && customer.name.toLowerCase().includes(searchValue);
+        const phoneMatch =
+          customer.contactNumber &&
+          customer.contactNumber.includes(searchValue);
+        const addressMatch =
+          customer.address &&
+          customer.address.toLowerCase().includes(searchValue);
+
         if (nameMatch) {
           matches.push({ ...customer, matchType: 'name' });
         } else if (phoneMatch) {
@@ -124,7 +129,7 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
           matches.push({ ...customer, matchType: 'address' });
         }
       });
-      
+
       return matches.slice(0, 10); // Limit to 10 suggestions
     }
     return [];
@@ -266,7 +271,9 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
               <div className='text-sm font-medium text-gray-900'>
                 {customer.name}
                 {customer.matchType === 'name' && (
-                  <span className='ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded'>Name Match</span>
+                  <span className='ml-2 rounded bg-blue-100 px-2 py-1 text-xs text-blue-800'>
+                    Name Match
+                  </span>
                 )}
               </div>
               {customer.address && (
@@ -284,7 +291,9 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
                   </svg>
                   {customer.address}
                   {customer.matchType === 'address' && (
-                    <span className='ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded'>Address Match</span>
+                    <span className='ml-2 rounded bg-green-100 px-2 py-1 text-xs text-green-800'>
+                      Address Match
+                    </span>
                   )}
                 </div>
               )}
@@ -299,7 +308,9 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
                   </svg>
                   {customer.contactNumber}
                   {customer.matchType === 'phone' && (
-                    <span className='ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded'>Phone Match</span>
+                    <span className='ml-2 rounded bg-purple-100 px-2 py-1 text-xs text-purple-800'>
+                      Phone Match
+                    </span>
                   )}
                 </div>
               )}

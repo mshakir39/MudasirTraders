@@ -4,7 +4,10 @@
 'use client';
 
 import React from 'react';
-import { Customer, CustomerFormData } from '@/features/customer-management/entities/customer/model/types';
+import {
+  Customer,
+  CustomerFormData,
+} from '@/features/customer-management/entities/customer/model/types';
 import Modal from '@/components/modal';
 import Input from '@/components/customInput';
 import Button from '@/components/button';
@@ -43,37 +46,52 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
         email: initialData.email || '',
       });
     } else {
-      setFormData({ customerName: '', phoneNumber: '', address: '', email: '' });
+      setFormData({
+        customerName: '',
+        phoneNumber: '',
+        address: '',
+        email: '',
+      });
     }
   }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.customerName.trim() || !formData.phoneNumber.trim() || !formData.address.trim()) {
+
+    if (
+      !formData.customerName.trim() ||
+      !formData.phoneNumber.trim() ||
+      !formData.address.trim()
+    ) {
       return;
     }
-    
+
     const success = await onSubmit(formData);
     if (success) {
-      setFormData({ customerName: '', phoneNumber: '', address: '', email: '' });
+      setFormData({
+        customerName: '',
+        phoneNumber: '',
+        address: '',
+        email: '',
+      });
       onClose();
     }
   };
 
   const handleClose = () => {
     if (!isLoading) {
-      setFormData({ customerName: '', phoneNumber: '', address: '', email: '' });
+      setFormData({
+        customerName: '',
+        phoneNumber: '',
+        address: '',
+        email: '',
+      });
       onClose();
     }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title={title}
-    >
+    <Modal isOpen={isOpen} onClose={handleClose} title={title}>
       <form onSubmit={handleSubmit} className='space-y-4'>
         <Input
           type='text'
@@ -81,7 +99,9 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
           placeholder='Enter customer name'
           name='customerName'
           value={formData.customerName}
-          onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, customerName: e.target.value })
+          }
           parentClass='w-full'
           required
           disabled={isLoading}
@@ -93,7 +113,9 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
           placeholder='Enter phone number'
           name='phoneNumber'
           value={formData.phoneNumber}
-          onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, phoneNumber: e.target.value })
+          }
           parentClass='w-full'
           required
           disabled={isLoading}
@@ -105,7 +127,9 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
           placeholder='Enter address'
           name='address'
           value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, address: e.target.value })
+          }
           parentClass='w-full'
           required
           disabled={isLoading}
@@ -133,8 +157,19 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
           <Button
             type='submit'
             variant='fill'
-            text={isLoading ? 'Saving...' : (initialData ? 'Update Customer' : 'Create Customer')}
-            disabled={isLoading || !formData.customerName.trim() || !formData.phoneNumber.trim() || !formData.address.trim()}
+            text={
+              isLoading
+                ? 'Saving...'
+                : initialData
+                  ? 'Update Customer'
+                  : 'Create Customer'
+            }
+            disabled={
+              isLoading ||
+              !formData.customerName.trim() ||
+              !formData.phoneNumber.trim() ||
+              !formData.address.trim()
+            }
           />
         </div>
       </form>

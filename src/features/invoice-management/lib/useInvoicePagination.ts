@@ -40,7 +40,7 @@ export function useInvoicePagination(
   // Update invoices when initialInvoices changes (e.g., after creating/updating)
   useEffect(() => {
     setInvoices(initialInvoices);
-    setPagination(prev => ({
+    setPagination((prev) => ({
       ...prev,
       total: initialInvoices.length,
       totalPages: Math.ceil(initialInvoices.length / prev.pageSize),
@@ -49,7 +49,7 @@ export function useInvoicePagination(
 
   // Update pagination when page size changes
   const setPageSize = useCallback((newPageSize: number) => {
-    setPagination(prev => {
+    setPagination((prev) => {
       const newTotalPages = Math.ceil(prev.total / newPageSize);
       const newPage = Math.min(prev.page, newTotalPages - 1);
       return {
@@ -63,7 +63,7 @@ export function useInvoicePagination(
 
   // Update page
   const setPage = useCallback((newPage: number) => {
-    setPagination(prev => ({
+    setPagination((prev) => ({
       ...prev,
       page: Math.max(0, Math.min(newPage, prev.totalPages - 1)),
     }));
@@ -73,12 +73,12 @@ export function useInvoicePagination(
   const refetch = useCallback(() => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // In a real server-side pagination scenario, this would make an API call
       // For now, we just work with the client-side data
       setInvoices(initialInvoices);
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         total: initialInvoices.length,
         totalPages: Math.ceil(initialInvoices.length / prev.pageSize),

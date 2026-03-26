@@ -159,7 +159,7 @@ export default function DashboardPage() {
               </div>
 
               {authError && (
-                <div className='rounded-md bg-error-50 p-3 text-sm text-error-700'>
+                <div className='bg-error-50 text-error-700 rounded-md p-3 text-sm'>
                   {authError}
                 </div>
               )}
@@ -193,7 +193,7 @@ export default function DashboardPage() {
     return (
       <div className='flex min-h-screen items-center justify-center bg-secondary-50'>
         <div className='text-center'>
-          <p className='mb-4 text-error-600'>Error: {error}</p>
+          <p className='text-error-600 mb-4'>Error: {error}</p>
           <button
             onClick={() => window.location.reload()}
             className='rounded bg-primary-600 px-4 py-2 text-white hover:bg-primary-700'

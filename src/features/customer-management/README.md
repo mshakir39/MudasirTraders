@@ -28,25 +28,33 @@ src/features/customer-management/
 ## FSD Layers
 
 ### 📱 Entities Layer
+
 Contains business entities and their types:
-- `Customer` interface with _id, customerName, phoneNumber, address, email, timestamps
+
+- `Customer` interface with \_id, customerName, phoneNumber, address, email, timestamps
 - `CustomerFormData` for form handling
 - API request/response types for create, update, delete operations
 
 ### 🧩 Shared Layer
+
 Contains reusable UI components:
+
 - `CustomerTable` - Display customers with search and actions (view invoices, edit, delete)
 - `CustomerModal` - Modal for creating/editing customers
 
 ### ⚙️ Process Layer (lib)
+
 Contains business logic and state management:
+
 - `useCustomerActions` - Custom hook for customer operations
 - Optimistic updates for create operations
 - API integration with proper error handling
 - Global state management integration
 
 ### 🎨 UI Layer
+
 Contains page-specific UI components:
+
 - `CustomerManagement` - Main component orchestrating the feature
 - Integrates all layers and handles component composition
 - Manages search, modal state, and user interactions
@@ -58,7 +66,7 @@ import { CustomerManagement } from '@/features/customer-management';
 
 export default function CustomersPage() {
   return (
-    <CustomerManagement 
+    <CustomerManagement
       onViewInvoices={(customer) => {
         // Handle viewing customer invoices
       }}

@@ -21,9 +21,7 @@ function extractDbNameFromUri(uri: string): string | null {
 }
 
 const MONGODB_DB =
-  process.env.MONGODB_DB ||
-  extractDbNameFromUri(MONGODB_URI) ||
-  'batteryStore';
+  process.env.MONGODB_DB || extractDbNameFromUri(MONGODB_URI) || 'batteryStore';
 
 // ============================================================
 // Global singleton — survives Next.js hot reloads in dev
@@ -63,7 +61,7 @@ export async function connectToMongoDB(): Promise<Db | null> {
 
       const client = new MongoClient(MONGODB_URI, {
         maxPoolSize: 10,
-        minPoolSize: 2,           // keep at least 2 connections warm
+        minPoolSize: 2, // keep at least 2 connections warm
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
         connectTimeoutMS: 10000,

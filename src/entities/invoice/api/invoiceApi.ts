@@ -1,7 +1,14 @@
 // src/entities/invoice/api/invoiceApi.ts
 // Invoice API layer - business logic for invoice operations
 
-import { Invoice, InvoiceFilter, InvoiceSummary, InvoiceValidationResult, InvoiceStats, InvoiceFormData } from '../model/types';
+import {
+  Invoice,
+  InvoiceFilter,
+  InvoiceSummary,
+  InvoiceValidationResult,
+  InvoiceStats,
+  InvoiceFormData,
+} from '../model/types';
 
 export class InvoiceApi {
   // Generate next invoice number (8-digit format)
@@ -9,7 +16,7 @@ export class InvoiceApi {
     if (!lastInvoiceNo || !/^\d{8}$/.test(lastInvoiceNo)) {
       return '00000001';
     }
-    
+
     const numericPart = parseInt(lastInvoiceNo);
     const nextNumber = numericPart + 1;
     return nextNumber.toString().padStart(8, '0');
@@ -37,10 +44,13 @@ export class InvoiceApi {
         const total = invoice.totalAmount || 0;
         const received = invoice.receivedAmount || 0;
         const batteryRate = invoice.batteriesRate || 0;
-        const additionalPayments = (invoice.additionalPayment || []).reduce((sum: number, payment: any) => sum + (payment.amount || 0), 0);
+        const additionalPayments = (invoice.additionalPayment || []).reduce(
+          (sum: number, payment: any) => sum + (payment.amount || 0),
+          0
+        );
         const totalReceived = received + batteryRate + additionalPayments;
         const actualRemaining = total - totalReceived;
-        
+
         // Use the same logic as the grid
         let actualStatus: 'pending' | 'partial' | 'paid';
         if (totalReceived === 0) {
@@ -57,7 +67,8 @@ export class InvoiceApi {
       // Payment method filter
       if (filter.paymentMethod && filter.paymentMethod !== 'all') {
         const hasPaymentMethod = invoice.paymentMethod.some(
-          (method) => method.toLowerCase() === filter.paymentMethod!.toLowerCase()
+          (method) =>
+            method.toLowerCase() === filter.paymentMethod!.toLowerCase()
         );
         if (!hasPaymentMethod) return false;
       }
@@ -71,7 +82,10 @@ export class InvoiceApi {
       // Date range filter
       if (filter.dateRange) {
         const invoiceDate = new Date(invoice.createdDate);
-        if (invoiceDate < filter.dateRange.start || invoiceDate > filter.dateRange.end) {
+        if (
+          invoiceDate < filter.dateRange.start ||
+          invoiceDate > filter.dateRange.end
+        ) {
           return false;
         }
       }
@@ -109,7 +123,7 @@ export class InvoiceApi {
         case 'pending':
           summary.pendingAmount += total;
           summary.pendingInvoices++;
-          
+
           // Check if overdue
           if (invoice.dueDate && new Date(invoice.dueDate) < now) {
             summary.overdueAmount += total;
@@ -118,13 +132,17 @@ export class InvoiceApi {
           break;
         case 'partial':
           const paid = invoice.receivedAmount || 0;
-          const remaining = invoice.remainingAmount || (total - paid);
+          const remaining = invoice.remainingAmount || total - paid;
           summary.paidAmount += paid;
           summary.pendingAmount += remaining;
           summary.partialInvoices++;
-          
+
           // Check if partial payment is overdue
-          if (invoice.dueDate && new Date(invoice.dueDate) < now && remaining > 0) {
+          if (
+            invoice.dueDate &&
+            new Date(invoice.dueDate) < now &&
+            remaining > 0
+          ) {
             summary.overdueAmount += remaining;
             summary.overdueInvoices++;
           }
@@ -133,7 +151,10 @@ export class InvoiceApi {
     });
 
     // Calculate average invoice value
-    summary.averageInvoiceValue = summary.totalInvoices > 0 ? summary.totalAmount / summary.totalInvoices : 0;
+    summary.averageInvoiceValue =
+      summary.totalInvoices > 0
+        ? summary.totalAmount / summary.totalInvoices
+        : 0;
 
     return summary;
   }
@@ -166,7 +187,7 @@ export class InvoiceApi {
       // Transform entity data to match the exact structure the API expects
       // Based on the working CreateInvoiceModal code
       const formData: any = { ...invoiceData };
-      
+
       // Handle product data - the API expects productDetail array
       if (invoiceData.products && invoiceData.products.length > 0) {
         formData.productDetail = invoiceData.products.map((product: any) => ({
@@ -184,47 +205,60 @@ export class InvoiceApi {
           voltage: 'Unknown',
           warranty: 'N/A',
           // Add warranty fields
-          warrentyCode: product.noWarranty ? 'No Warranty' : (product.warrentyCode || ''),
-          warrentyStartDate: product.noWarranty ? '' : (product.warrentyStartDate || ''),
-          warrentyDuration: product.noWarranty ? '0' : (product.warrentyDuration || ''),
-          warrantyEndDate: product.noWarranty ? '' : (product.warrantyEndDate || ''),
+          warrentyCode: product.noWarranty
+            ? 'No Warranty'
+            : product.warrentyCode || '',
+          warrentyStartDate: product.noWarranty
+            ? ''
+            : product.warrentyStartDate || '',
+          warrentyDuration: product.noWarranty
+            ? '0'
+            : product.warrentyDuration || '',
+          warrantyEndDate: product.noWarranty
+            ? ''
+            : product.warrantyEndDate || '',
           noWarranty: product.noWarranty || false,
         }));
       } else {
         formData.productDetail = [];
       }
-      
+
       // Remove products field as API expects productDetail
       delete (formData as any).products;
-      
+
       // Convert payment method array to string (API expects string for storage, but validation expects array)
-      formData.paymentMethod = Array.isArray(invoiceData.paymentMethod) 
+      formData.paymentMethod = Array.isArray(invoiceData.paymentMethod)
         ? invoiceData.paymentMethod
-        : (invoiceData.paymentMethod ? [invoiceData.paymentMethod] : []);
-      
+        : invoiceData.paymentMethod
+          ? [invoiceData.paymentMethod]
+          : [];
+
       // Set customer type
       formData.customerType = invoiceData.customerType || 'WalkIn Customer';
       formData.clientName = invoiceData.customerName || '-'; // API expects clientName, use '-' as default
-      
+
       // Handle customer contact number - allow empty/null
       formData.customerContactNumber = invoiceData.customerContactNumber || '-';
       formData.customerAddress = invoiceData.customerAddress || '-';
-      
+
       // Ensure other required fields - handle battery fields properly
-      const hasOldBattery = Array.isArray(formData.paymentMethod) && formData.paymentMethod.includes('Old Battery');
-      
+      const hasOldBattery =
+        Array.isArray(formData.paymentMethod) &&
+        formData.paymentMethod.includes('Old Battery');
+
       if (!hasOldBattery) {
         formData.batteriesRate = 0;
         formData.batteriesCountAndWeight = '';
       } else {
         // Preserve battery values from invoiceData when Old Battery is selected
         formData.batteriesRate = invoiceData.batteriesRate || 0;
-        formData.batteriesCountAndWeight = invoiceData.batteriesCountAndWeight || '';
+        formData.batteriesCountAndWeight =
+          invoiceData.batteriesCountAndWeight || '';
       }
-      
+
       formData.customDate = invoiceData.customDate || undefined;
       formData.useCustomDate = invoiceData.useCustomDate || false;
-      
+
       // Call the API with the exact same structure as working code
       const response = await fetch('/api/invoice', {
         method: 'POST',
@@ -240,18 +274,19 @@ export class InvoiceApi {
       }
 
       const result = await response.json();
-      
+
       // Handle MongoDB Buffer serialization issue
       let invoiceId: string;
       if (result && result.acknowledged && result.insertedId) {
         // Convert MongoDB Buffer/ObjectId to string
-        invoiceId = typeof result.insertedId === 'object' && result.insertedId.toString 
-          ? result.insertedId.toString() 
-          : String(result.insertedId);
+        invoiceId =
+          typeof result.insertedId === 'object' && result.insertedId.toString
+            ? result.insertedId.toString()
+            : String(result.insertedId);
       } else {
         invoiceId = Date.now().toString();
       }
-      
+
       // Transform response back to entity format
       return {
         ...invoiceData,
@@ -307,7 +342,9 @@ export class InvoiceApi {
           errors.push(`Product ${index + 1}: Quantity must be greater than 0`);
         }
         if (!product.productPrice || product.productPrice <= 0) {
-          errors.push(`Product ${index + 1}: Unit price must be greater than 0`);
+          errors.push(
+            `Product ${index + 1}: Unit price must be greater than 0`
+          );
         }
         if (!product.warrentyCode?.trim()) {
           warnings.push(`Product ${index + 1}: Warranty code is missing`);
@@ -319,11 +356,17 @@ export class InvoiceApi {
       errors.push('Total amount must be greater than 0');
     }
 
-    if (typeof invoice.receivedAmount !== 'number' || invoice.receivedAmount < 0) {
+    if (
+      typeof invoice.receivedAmount !== 'number' ||
+      invoice.receivedAmount < 0
+    ) {
       errors.push('Received amount must be 0 or greater');
     }
 
-    if (invoice.receivedAmount && invoice.receivedAmount > (invoice.totalAmount || 0)) {
+    if (
+      invoice.receivedAmount &&
+      invoice.receivedAmount > (invoice.totalAmount || 0)
+    ) {
       errors.push('Received amount cannot exceed total amount');
     }
 
@@ -337,7 +380,11 @@ export class InvoiceApi {
   // Calculate invoice statistics
   static calculateInvoiceStats(invoices: Invoice[]): InvoiceStats {
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
     const weekStart = new Date(todayStart);
     weekStart.setDate(todayStart.getDate() - todayStart.getDay());
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -352,7 +399,7 @@ export class InvoiceApi {
     invoices.forEach((invoice) => {
       const invoiceDate = new Date(invoice.createdDate);
       const amount = invoice.totalAmount || 0;
-      
+
       stats.total.amount += amount;
 
       if (invoiceDate >= todayStart) {
@@ -434,7 +481,10 @@ export class InvoiceApi {
     const total = invoice.totalAmount || 0;
     const received = invoice.receivedAmount || 0;
     const batteryRate = invoice.batteriesRate || 0;
-    const additionalPayments = (invoice.additionalPayment || []).reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const additionalPayments = (invoice.additionalPayment || []).reduce(
+      (sum, payment) => sum + (payment.amount || 0),
+      0
+    );
     const totalReceived = received + batteryRate + additionalPayments;
     return Math.max(0, total - totalReceived);
   }
@@ -444,9 +494,12 @@ export class InvoiceApi {
     const total = invoice.totalAmount || 0;
     const received = invoice.receivedAmount || 0;
     const batteryRate = invoice.batteriesRate || 0;
-    const additionalPayments = (invoice.additionalPayment || []).reduce((sum, payment) => sum + (payment.amount || 0), 0);
+    const additionalPayments = (invoice.additionalPayment || []).reduce(
+      (sum, payment) => sum + (payment.amount || 0),
+      0
+    );
     const totalReceived = received + batteryRate + additionalPayments;
-    
+
     if (totalReceived >= total) {
       return 'paid';
     } else if (totalReceived > 0) {

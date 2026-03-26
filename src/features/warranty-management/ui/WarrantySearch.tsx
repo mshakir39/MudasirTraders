@@ -16,7 +16,7 @@ interface WarrantySearchProps {
 
 export const WarrantySearch: React.FC<WarrantySearchProps> = ({
   onSearchResult,
-  className = ''
+  className = '',
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
@@ -49,18 +49,23 @@ export const WarrantySearch: React.FC<WarrantySearchProps> = ({
           setSearchHistory((prev) => [trimmedSearchTerm, ...prev.slice(0, 9)]);
           return { success: true, data: result };
         } else {
-          
           // Check if database is empty by trying to find any invoice
           const testResponse = await fetch('/api/invoices');
           const testInvoices = await testResponse.json();
-          
-          if (testInvoices.success && Array.isArray(testInvoices.data) && testInvoices.data.length > 0) {
-            const hasWarrantyCodes = testInvoices.data.some((invoice: any) => 
-              invoice.products && Array.isArray(invoice.products) && 
-              invoice.products.some((product: any) => product.warrentyCode)
+
+          if (
+            testInvoices.success &&
+            Array.isArray(testInvoices.data) &&
+            testInvoices.data.length > 0
+          ) {
+            const hasWarrantyCodes = testInvoices.data.some(
+              (invoice: any) =>
+                invoice.products &&
+                Array.isArray(invoice.products) &&
+                invoice.products.some((product: any) => product.warrentyCode)
             );
           }
-          
+
           // Only show error toast if result doesn't have data
           if (!result.data) {
             toast.error(result?.error || 'No warranty found');
@@ -81,7 +86,7 @@ export const WarrantySearch: React.FC<WarrantySearchProps> = ({
   // Handle quick search from history
   const handleQuickSearch = async (code: string) => {
     setSearchTerm(code);
-    
+
     try {
       const result = await WarrantyApi.searchWarranty(code);
 
@@ -109,17 +114,17 @@ export const WarrantySearch: React.FC<WarrantySearchProps> = ({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Search Form */}
-      <form action={searchAction} className="flex gap-4">
+      <form action={searchAction} className='flex gap-4'>
         <SearchInput
           value={searchTerm}
           onChange={setSearchTerm}
-          placeholder="Enter warranty code(s) - supports multiple codes separated by comma or space"
-          name="warrantyCode"
+          placeholder='Enter warranty code(s) - supports multiple codes separated by comma or space'
+          name='warrantyCode'
           disabled={isPending}
         />
         <Button
-          type="submit"
-          variant="fill"
+          type='submit'
+          variant='fill'
           text={isPending ? 'Searching...' : 'Search'}
           icon={<FaSearch />}
           isPending={isPending}

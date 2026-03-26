@@ -2,7 +2,11 @@
 // Jotai atoms for invoice state management - carefully designed to avoid breaking existing functionality
 
 import { atom } from 'jotai';
-import { Invoice, InvoiceFormData, InvoiceModalState } from '@/entities/invoice';
+import {
+  Invoice,
+  InvoiceFormData,
+  InvoiceModalState,
+} from '@/entities/invoice';
 
 // AccordionData interface (from useAccordionData.tsx)
 interface AccordionData {
@@ -58,7 +62,9 @@ const getDefaultInvoiceFormData = (): InvoiceFormData => ({
 });
 
 // Core atoms
-export const invoiceFormDataAtom = atom<InvoiceFormData>(getDefaultInvoiceFormData());
+export const invoiceFormDataAtom = atom<InvoiceFormData>(
+  getDefaultInvoiceFormData()
+);
 
 // Modal state atom
 export const invoiceModalStateAtom = atom<InvoiceModalState>({
@@ -81,10 +87,13 @@ export const invoiceErrorAtom = atom<string | null>(null);
 export const invoiceTotalsAtom = atom((get) => {
   const formData = get(invoiceFormDataAtom);
   const accordionData = get(accordionDataAtom);
-  
+
   // Import transformers dynamically to avoid circular dependencies
-  const { transformAccordionData, calculateInvoiceTotals } = require('@/features/invoice-management/shared/transformers');
-  
+  const {
+    transformAccordionData,
+    calculateInvoiceTotals,
+  } = require('@/features/invoice-management/shared/transformers');
+
   try {
     const transformedProducts = transformAccordionData(accordionData);
     return calculateInvoiceTotals(
@@ -107,7 +116,11 @@ export const invoiceTotalsAtom = atom((get) => {
 // Action atoms for state updates
 export const updateInvoiceFieldAtom = atom(
   null,
-  (get, set, { field, value }: { field: keyof InvoiceFormData, value: any }) => {
+  (
+    get,
+    set,
+    { field, value }: { field: keyof InvoiceFormData; value: any }
+  ) => {
     set(invoiceFormDataAtom, (prev) => ({
       ...prev,
       [field]: value,
@@ -115,12 +128,9 @@ export const updateInvoiceFieldAtom = atom(
   }
 );
 
-export const resetInvoiceFormDataAtom = atom(
-  null,
-  (get, set) => {
-    set(invoiceFormDataAtom, getDefaultInvoiceFormData());
-  }
-);
+export const resetInvoiceFormDataAtom = atom(null, (get, set) => {
+  set(invoiceFormDataAtom, getDefaultInvoiceFormData());
+});
 
 export const setInvoiceFormDataAtom = atom(
   null,
@@ -132,7 +142,11 @@ export const setInvoiceFormDataAtom = atom(
 // Accordion action atoms
 export const updateAccordionFieldAtom = atom(
   null,
-  (get, set, { index, field, value }: { index: number, field: string, value: any }) => {
+  (
+    get,
+    set,
+    { index, field, value }: { index: number; field: string; value: any }
+  ) => {
     set(accordionDataAtom, (prev) => ({
       ...prev,
       [index]: {
@@ -143,13 +157,10 @@ export const updateAccordionFieldAtom = atom(
   }
 );
 
-export const resetAccordionDataAtom = atom(
-  null,
-  (get, set) => {
-    set(accordionDataAtom, {});
-    set(expandedAccordionIndexAtom, -1);
-  }
-);
+export const resetAccordionDataAtom = atom(null, (get, set) => {
+  set(accordionDataAtom, {});
+  set(expandedAccordionIndexAtom, -1);
+});
 
 export const setAccordionDataAtom = atom(
   null,
@@ -168,7 +179,11 @@ export const setExpandedAccordionIndexAtom = atom(
 // Modal action atoms
 export const openInvoiceModalAtom = atom(
   null,
-  (get, set, { type, data }: { type: InvoiceModalState['type'], data?: Invoice }) => {
+  (
+    get,
+    set,
+    { type, data }: { type: InvoiceModalState['type']; data?: Invoice }
+  ) => {
     set(invoiceModalStateAtom, {
       isOpen: true,
       type,
@@ -177,18 +192,21 @@ export const openInvoiceModalAtom = atom(
   }
 );
 
-export const closeInvoiceModalAtom = atom(
-  null,
-  (get, set) => {
-    set(invoiceModalStateAtom, {
-      isOpen: false,
-      type: 'create',
-      data: undefined,
-    });
-  }
-);
+export const closeInvoiceModalAtom = atom(null, (get, set) => {
+  set(invoiceModalStateAtom, {
+    isOpen: false,
+    type: 'create',
+    data: undefined,
+  });
+});
 
 // Utility atoms
-export const isInvoiceModalOpenAtom = atom((get) => get(invoiceModalStateAtom).isOpen);
-export const invoiceModalTypeAtom = atom((get) => get(invoiceModalStateAtom).type);
-export const invoiceModalDataAtom = atom((get) => get(invoiceModalStateAtom).data);
+export const isInvoiceModalOpenAtom = atom(
+  (get) => get(invoiceModalStateAtom).isOpen
+);
+export const invoiceModalTypeAtom = atom(
+  (get) => get(invoiceModalStateAtom).type
+);
+export const invoiceModalDataAtom = atom(
+  (get) => get(invoiceModalStateAtom).data
+);

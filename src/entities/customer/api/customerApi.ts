@@ -1,7 +1,12 @@
 // src/entities/customer/api/customerApi.ts
 // Customer API operations - wraps existing actions
 
-import { Customer, CustomerFormData, CustomerCreateRequest, CustomerApiResponse } from '../model/types';
+import {
+  Customer,
+  CustomerFormData,
+  CustomerCreateRequest,
+  CustomerApiResponse,
+} from '../model/types';
 
 export class CustomerApi {
   // Fetch all customers
@@ -9,13 +14,13 @@ export class CustomerApi {
     try {
       // Import the existing action
       const { getCustomers } = await import('@/actions/customerActions');
-      
+
       const result = await getCustomers();
-      
+
       if (result.success && Array.isArray(result.data)) {
         return result.data;
       }
-      
+
       return [];
     } catch (error) {
       console.error('Error fetching customers:', error);
@@ -24,31 +29,38 @@ export class CustomerApi {
   }
 
   // Create a new customer
-  static async createCustomer(customerData: CustomerCreateRequest): Promise<Customer> {
+  static async createCustomer(
+    customerData: CustomerCreateRequest
+  ): Promise<Customer> {
     try {
       // Import the existing action
       const { createCustomer } = await import('@/actions/customerActions');
-      
+
       const result = await createCustomer(customerData);
-      
+
       if (!result.success) {
         throw new Error(result.error || 'Failed to create customer');
       }
-      
+
       // Return the created customer data or a constructed customer object
-      if (result.data && typeof result.data === 'object' && 'customerName' in result.data) {
+      if (
+        result.data &&
+        typeof result.data === 'object' &&
+        'customerName' in result.data
+      ) {
         return {
           _id: `temp-${Date.now()}`,
           customerName: result.data.customerName,
           phoneNumber: result.data.phoneNumber,
           address: result.data.address || '',
           email: result.data.email,
-          createdAt: result.data.createdAt instanceof Date 
-            ? result.data.createdAt.toISOString() 
-            : new Date().toISOString()
+          createdAt:
+            result.data.createdAt instanceof Date
+              ? result.data.createdAt.toISOString()
+              : new Date().toISOString(),
         };
       }
-      
+
       // Fallback to constructed customer object
       return {
         _id: `temp-${Date.now()}`,
@@ -56,7 +68,7 @@ export class CustomerApi {
         phoneNumber: customerData.phoneNumber,
         address: customerData.address,
         email: customerData.email,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
     } catch (error) {
       console.error('Error creating customer:', error);
@@ -81,7 +93,10 @@ export class CustomerApi {
   }
 
   // Update a customer
-  static async updateCustomer(customerId: string, customerData: Partial<CustomerFormData>): Promise<Customer> {
+  static async updateCustomer(
+    customerId: string,
+    customerData: Partial<CustomerFormData>
+  ): Promise<Customer> {
     try {
       const response = await fetch(`/api/customers/${customerId}`, {
         method: 'PUT',
@@ -107,7 +122,7 @@ export class CustomerApi {
   static async getCustomerById(customerId: string): Promise<Customer | null> {
     try {
       const customers = await this.fetchCustomers();
-      return customers.find(customer => customer._id === customerId) || null;
+      return customers.find((customer) => customer._id === customerId) || null;
     } catch (error) {
       console.error('Error getting customer by ID:', error);
       return null;
@@ -115,23 +130,30 @@ export class CustomerApi {
   }
 
   // Search customers
-  static searchCustomers(customers: Customer[], searchTerm: string): Customer[] {
+  static searchCustomers(
+    customers: Customer[],
+    searchTerm: string
+  ): Customer[] {
     if (!searchTerm.trim()) {
       return customers;
     }
 
     const lowerSearchTerm = searchTerm.toLowerCase();
-    
-    return customers.filter(customer => 
-      customer.customerName.toLowerCase().includes(lowerSearchTerm) ||
-      customer.phoneNumber.toLowerCase().includes(lowerSearchTerm) ||
-      customer.email?.toLowerCase().includes(lowerSearchTerm) ||
-      customer.address.toLowerCase().includes(lowerSearchTerm)
+
+    return customers.filter(
+      (customer) =>
+        customer.customerName.toLowerCase().includes(lowerSearchTerm) ||
+        customer.phoneNumber.toLowerCase().includes(lowerSearchTerm) ||
+        customer.email?.toLowerCase().includes(lowerSearchTerm) ||
+        customer.address.toLowerCase().includes(lowerSearchTerm)
     );
   }
 
   // Validate customer form data
-  static validateCustomerForm(data: CustomerFormData): { isValid: boolean; errors: string[] } {
+  static validateCustomerForm(data: CustomerFormData): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!data.customerName.trim()) {
@@ -142,13 +164,17 @@ export class CustomerApi {
       errors.push('Phone number is required');
     }
 
-    if (data.email && data.email.trim() && !this.isValidEmail(data.email.trim())) {
+    if (
+      data.email &&
+      data.email.trim() &&
+      !this.isValidEmail(data.email.trim())
+    ) {
       errors.push('Invalid email format');
     }
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 

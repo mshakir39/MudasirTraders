@@ -11,7 +11,7 @@ export async function GET(
     // Await params for Next.js 15
     const resolvedParams = await params;
     let customerId: string | undefined = resolvedParams.customerId;
-    
+
     // Fallback: try to extract from URL if params is undefined
     if (!customerId) {
       const url = new URL(request.url);
@@ -21,7 +21,7 @@ export async function GET(
         customerId = pathSegments[customerIndex];
       }
     }
-    
+
     if (!customerId) {
       return NextResponse.json(
         { error: 'Customer name is required' },
@@ -34,7 +34,7 @@ export async function GET(
 
     // Get pending invoices for the customer
     const result = await getCustomerPendingInvoices(customerName);
-    
+
     if (!result.success) {
       return NextResponse.json(
         { error: result.error || 'Failed to fetch pending invoices' },
@@ -45,9 +45,8 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: result.data,
-      count: Array.isArray(result.data) ? result.data.length : 0
+      count: Array.isArray(result.data) ? result.data.length : 0,
     });
-    
   } catch (error: any) {
     console.error('API Error - GET pending invoices:', error);
     return NextResponse.json(

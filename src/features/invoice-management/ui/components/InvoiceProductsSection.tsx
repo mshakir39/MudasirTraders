@@ -30,11 +30,11 @@ export const InvoiceProductsSection: React.FC<InvoiceProductsSectionProps> = ({
   expandedAccordionIndex = -1,
   onAccordionClick,
   accordionMethods,
-  brandOptions
+  brandOptions,
 }) => {
   const normalizedStock = React.useMemo(() => {
     if (!Array.isArray(stock)) return [];
-    return stock.map(item => ({
+    return stock.map((item) => ({
       ...item,
       brandName: item.brandName || item.name || '',
       series: item.series || item.model || '',
@@ -44,9 +44,9 @@ export const InvoiceProductsSection: React.FC<InvoiceProductsSectionProps> = ({
   }, [stock]);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Products</h3>
+    <div className='space-y-3'>
+      <div className='flex items-center justify-between'>
+        <h3 className='text-lg font-semibold'>Products</h3>
         <Toggle
           checked={invoiceData?.isChargingService || false}
           onChange={(checked) => {
@@ -54,20 +54,25 @@ export const InvoiceProductsSection: React.FC<InvoiceProductsSectionProps> = ({
               ...invoiceData,
               isChargingService: checked,
               // Auto-create first service when enabling charging mode
-              chargingServices: checked && (!invoiceData.chargingServices || invoiceData.chargingServices.length === 0)
-                ? [{
-                    id: Date.now().toString(),
-                    description: '',
-                    quantity: 1,
-                    price: 0,
-                    total: 0,
-                  }]
-                : invoiceData.chargingServices,
+              chargingServices:
+                checked &&
+                (!invoiceData.chargingServices ||
+                  invoiceData.chargingServices.length === 0)
+                  ? [
+                      {
+                        id: Date.now().toString(),
+                        description: '',
+                        quantity: 1,
+                        price: 0,
+                        total: 0,
+                      },
+                    ]
+                  : invoiceData.chargingServices,
             });
           }}
-          label="Charging Service Mode"
-          size="sm"
-          color="blue"
+          label='Charging Service Mode'
+          size='sm'
+          color='blue'
         />
       </div>
 
@@ -95,7 +100,9 @@ export const InvoiceProductsSection: React.FC<InvoiceProductsSectionProps> = ({
             });
           }}
           onServiceRemove={(index: number) => {
-            const updatedServices = (invoiceData?.chargingServices || []).filter((_: any, i: number) => i !== index);
+            const updatedServices = (
+              invoiceData?.chargingServices || []
+            ).filter((_: any, i: number) => i !== index);
             setInvoiceData({
               ...invoiceData,
               chargingServices: updatedServices,

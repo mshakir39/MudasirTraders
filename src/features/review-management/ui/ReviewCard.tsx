@@ -19,13 +19,15 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({
   onApprove,
   onReject,
   actionLoading,
-  className = ''
+  className = '',
 }) => {
   const isPending = review.approved !== true;
   const isLoading = actionLoading === review.id;
 
   return (
-    <div className={`rounded-lg border border-gray-200 bg-white p-6 transition-shadow hover:shadow-md ${className}`}>
+    <div
+      className={`rounded-lg border border-gray-200 bg-white p-6 transition-shadow hover:shadow-md ${className}`}
+    >
       <div className='mb-4 flex items-start justify-between'>
         <div className='flex-1'>
           <div className='mb-2 flex items-center space-x-3'>

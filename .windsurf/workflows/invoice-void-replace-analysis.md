@@ -5,7 +5,9 @@ description: Invoice Void and Replace Feature Analysis
 # Invoice Void and Replace Feature Analysis
 
 ## 🎯 Business Problem
+
 Customer has an existing invoice and wants to add more products. Instead of creating separate invoices, we need to:
+
 1. Void the original invoice
 2. Create a new invoice with combined items
 3. Maintain audit trail
@@ -14,11 +16,13 @@ Customer has an existing invoice and wants to add more products. Instead of crea
 ## 📊 Current System Analysis
 
 ### Existing Invoice Flow
+
 ```
 Customer Request → Create Invoice → Update Stock → Payment → Reports
 ```
 
 ### Current Invoice Schema (Likely)
+
 ```typescript
 interface Invoice {
   _id: string;
@@ -32,12 +36,14 @@ interface Invoice {
 ```
 
 ### Current Database Collections
+
 - `invoices` - Main invoice records
 - `sales` - Sales data for reporting
 - `stock` - Current inventory
 - `stockHistory` - Historical stock changes
 
 ## 🔄 Proposed New Flow
+
 ```
 Customer Request → Void Original Invoice → Create New Invoice → Update Stock (additional only) → Payment → Reports
 ```
@@ -45,6 +51,7 @@ Customer Request → Void Original Invoice → Create New Invoice → Update Sto
 ## 📋 Feature Requirements
 
 ### Functional Requirements
+
 1. **Void Original Invoice**
    - Mark invoice as 'voided'
    - Add void reason and timestamp
@@ -69,6 +76,7 @@ Customer Request → Void Original Invoice → Create New Invoice → Update Sto
    - Show audit trail in admin reports
 
 ### Non-Functional Requirements
+
 1. **Data Integrity** - No orphaned invoices
 2. **Performance** - Minimal impact on existing queries
 3. **Audit Compliance** - Complete change history
@@ -77,6 +85,7 @@ Customer Request → Void Original Invoice → Create New Invoice → Update Sto
 ## 🏗️ Technical Implementation Plan
 
 ### Phase 1: Database Schema Updates
+
 ```typescript
 interface Invoice {
   _id: string;
@@ -85,7 +94,7 @@ interface Invoice {
   totalAmount: number;
   status: 'pending' | 'paid' | 'cancelled' | 'voided'; // NEW: voided status
   createdAt: Date;
-  
+
   // NEW FIELDS:
   voidedAt?: Date;
   voidReason?: string;
@@ -99,6 +108,7 @@ interface Invoice {
 ```
 
 **Impact Analysis:**
+
 - ✅ All fields are optional - no breaking changes
 - ✅ Existing invoices work without modification
 - ✅ Migration needed to add status field to existing records
@@ -106,16 +116,18 @@ interface Invoice {
 ### Phase 2: Core Functions
 
 #### New Action: voidAndReplaceInvoice
+
 ```typescript
 export async function voidAndReplaceInvoice(
   originalInvoiceId: string,
   additionalProducts: ProductItem[],
   additionalNotes?: string,
   userId?: string
-): Promise<{ newInvoice: Invoice; voidedInvoice: Invoice }>
+): Promise<{ newInvoice: Invoice; voidedInvoice: Invoice }>;
 ```
 
 **Steps:**
+
 1. Validate original invoice exists and not already voided
 2. Get original invoice details
 3. Update original invoice status to 'voided'
@@ -125,8 +137,11 @@ export async function voidAndReplaceInvoice(
 7. Return both invoices for UI update
 
 #### Helper: getInvoiceTransferChain
+
 ```typescript
-export async function getInvoiceTransferChain(invoiceId: string): Promise<Invoice[]>
+export async function getInvoiceTransferChain(
+  invoiceId: string
+): Promise<Invoice[]>;
 ```
 
 **Purpose:** Show complete transfer history for audit
@@ -134,6 +149,7 @@ export async function getInvoiceTransferChain(invoiceId: string): Promise<Invoic
 ### Phase 3: API Endpoints
 
 #### POST /api/invoices/[id]/void-and-replace
+
 ```typescript
 // Request body:
 {
@@ -150,6 +166,7 @@ export async function getInvoiceTransferChain(invoiceId: string): Promise<Invoic
 ```
 
 #### GET /api/invoices/[id]/transfer-chain
+
 ```typescript
 // Response:
 {
@@ -161,6 +178,7 @@ export async function getInvoiceTransferChain(invoiceId: string): Promise<Invoic
 ### Phase 4: UI Components
 
 #### Invoice Detail Page Updates
+
 ```typescript
 // Add new button if invoice not voided
 {invoice.status !== 'voided' && (
@@ -184,6 +202,7 @@ export async function getInvoiceTransferChain(invoiceId: string): Promise<Invoic
 ```
 
 #### New Modal: VoidReplaceModal
+
 ```typescript
 // Components:
 // - Product selector for additional items
@@ -193,6 +212,7 @@ export async function getInvoiceTransferChain(invoiceId: string): Promise<Invoic
 ```
 
 #### Invoice List Updates
+
 ```typescript
 // Status indicators
 {invoice.status === 'voided' && (
@@ -210,23 +230,28 @@ export async function getInvoiceTransferChain(invoiceId: string): Promise<Invoic
 ### Phase 5: Report Updates
 
 #### Dashboard Stats
+
 ```typescript
 // Current query (update needed):
-const salesData = await salesCollection.find({
-  status: { $ne: 'voided' }, // ADD THIS FILTER
-  // ... existing filters
-}).toArray();
+const salesData = await salesCollection
+  .find({
+    status: { $ne: 'voided' }, // ADD THIS FILTER
+    // ... existing filters
+  })
+  .toArray();
 ```
 
 #### Profit Analysis
+
 ```typescript
 // Exclude voided invoices from profit calculations
 const profitData = await calculateProfit({
-  excludeStatuses: ['voided']
+  excludeStatuses: ['voided'],
 });
 ```
 
 #### Audit Reports
+
 ```typescript
 // New report: Invoice Transfer History
 export async function getInvoiceTransferHistory(dateRange: DateRange) {
@@ -237,18 +262,21 @@ export async function getInvoiceTransferHistory(dateRange: DateRange) {
 ## 🧪 Testing Strategy
 
 ### Unit Tests
+
 1. `voidAndReplaceInvoice` function
 2. Schema validation
 3. Stock update logic
 4. Status transitions
 
 ### Integration Tests
+
 1. API endpoint testing
 2. Database transactions
 3. UI component interactions
 4. Report accuracy
 
 ### Test Cases
+
 ```typescript
 // Core scenarios:
 1. Void and replace with additional products
@@ -262,6 +290,7 @@ export async function getInvoiceTransferHistory(dateRange: DateRange) {
 ```
 
 ### Edge Cases
+
 1. Multiple transfers (A → B → C)
 2. Partial payments before void
 3. Different customer validation
@@ -271,6 +300,7 @@ export async function getInvoiceTransferHistory(dateRange: DateRange) {
 ## 📊 Impact Analysis
 
 ### Zero Impact Areas
+
 - ✅ Existing invoices (no schema breaking)
 - ✅ Current UI (no changes to existing components)
 - ✅ Dashboard stats (just add filter)
@@ -278,11 +308,13 @@ export async function getInvoiceTransferHistory(dateRange: DateRange) {
 - ✅ Payment processing (works with new invoice)
 
 ### Minimal Impact Areas
+
 - 📝 Invoice list (add status indicator)
 - 📝 Invoice detail (add transfer info)
 - 📝 Reports (add status filter)
 
 ### New Features Only
+
 - 🆕 Void/replace functionality
 - 🆕 Transfer chain viewing
 - 🆕 Audit reports
@@ -290,24 +322,28 @@ export async function getInvoiceTransferHistory(dateRange: DateRange) {
 ## 🚀 Implementation Timeline
 
 ### Week 1: Foundation
+
 - [ ] Database schema updates
 - [ ] Migration script for existing invoices
 - [ ] Core `voidAndReplaceInvoice` function
 - [ ] Basic API endpoint
 
 ### Week 2: UI Development
+
 - [ ] VoidReplaceModal component
 - [ ] Invoice detail updates
 - [ ] Invoice list enhancements
 - [ ] Status indicators
 
 ### Week 3: Integration & Testing
+
 - [ ] API integration
 - [ ] Stock management updates
 - [ ] Report modifications
 - [ ] Comprehensive testing
 
 ### Week 4: Polish & Deploy
+
 - [ ] Error handling
 - [ ] User permissions
 - [ ] Documentation
@@ -316,16 +352,19 @@ export async function getInvoiceTransferHistory(dateRange: DateRange) {
 ## 🔍 Success Metrics
 
 ### Business Metrics
+
 - Reduced customer confusion (single invoice view)
 - Improved audit compliance
 - Better customer service efficiency
 
 ### Technical Metrics
+
 - Zero downtime during deployment
 - No impact on existing functionality
 - 100% audit trail coverage
 
 ### User Experience Metrics
+
 - Clear visual indicators
 - Intuitive void/replace flow
 - Comprehensive transfer history
@@ -333,34 +372,41 @@ export async function getInvoiceTransferHistory(dateRange: DateRange) {
 ## 🚨 Risk Mitigation
 
 ### Data Integrity Risks
+
 - **Risk:** Orphaned invoices
 - **Mitigation:** Database constraints and validation
 
 ### Performance Risks
+
 - **Risk:** Slower queries with additional filters
 - **Mitigation:** Index on status field
 
 ### User Experience Risks
+
 - **Risk:** Confusing void/replace process
 - **Mitigation:** Clear UI and documentation
 
 ### Compliance Risks
+
 - **Risk:** Incomplete audit trail
 - **Mitigation:** Comprehensive logging and validation
 
 ## 📚 Documentation Requirements
 
 ### Technical Documentation
+
 - API endpoint documentation
 - Database schema changes
 - Migration procedures
 
 ### User Documentation
+
 - How to void and replace invoices
 - Understanding transfer chains
 - Report interpretation
 
 ### Admin Documentation
+
 - Audit procedures
 - Troubleshooting guide
 - Permission management
@@ -368,6 +414,7 @@ export async function getInvoiceTransferHistory(dateRange: DateRange) {
 ## ✅ Acceptance Criteria
 
 ### Must-Have
+
 - [ ] Original invoice marked as voided
 - [ ] New invoice contains all products
 - [ ] Stock updated for additional products only
@@ -375,12 +422,14 @@ export async function getInvoiceTransferHistory(dateRange: DateRange) {
 - [ ] Complete audit trail maintained
 
 ### Should-Have
+
 - [ ] Transfer chain visualization
 - [ ] Bulk operations support
 - [ ] Advanced audit reports
 - [ ] Permission controls
 
 ### Could-Have
+
 - [ ] Automatic void suggestions
 - [ ] Customer notifications
 - [ ] Advanced search filters
@@ -398,4 +447,4 @@ export async function getInvoiceTransferHistory(dateRange: DateRange) {
 
 ---
 
-*This document serves as the complete analysis and planning guide for the Invoice Void and Replace feature implementation.*
+_This document serves as the complete analysis and planning guide for the Invoice Void and Replace feature implementation._

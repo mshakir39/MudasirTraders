@@ -1,10 +1,10 @@
 'use server';
 import { NextResponse } from 'next/server';
-import { 
-  getBrands, 
-  createBrand, 
-  updateBrand, 
-  deleteBrand 
+import {
+  getBrands,
+  createBrand,
+  updateBrand,
+  deleteBrand,
 } from '@/actions/brandActions';
 
 export async function GET() {
@@ -38,14 +38,14 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { id, ...data } = body;
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Brand ID is required' },
         { status: 400 }
       );
     }
-    
+
     const result = await updateBrand(id, data);
     return NextResponse.json(result);
   } catch (error) {
@@ -61,14 +61,14 @@ export async function DELETE(request: Request) {
   try {
     const body = await request.json();
     const { id } = body;
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Brand ID is required' },
         { status: 400 }
       );
     }
-    
+
     const result = await deleteBrand(id);
     return NextResponse.json(result);
   } catch (error) {

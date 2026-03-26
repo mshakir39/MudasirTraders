@@ -68,9 +68,11 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({
   };
 
   return (
-    <div className='rounded-xl bg-white p-6 shadow-md h-full flex flex-col'>
+    <div className='flex h-full flex-col rounded-xl bg-white p-6 shadow-md'>
       <div className='mb-4 flex items-center justify-between'>
-        <h3 className='text-lg font-semibold text-secondary-900'>Sales Trend</h3>
+        <h3 className='text-lg font-semibold text-secondary-900'>
+          Sales Trend
+        </h3>
         <div className='text-sm text-secondary-500'>
           {formatDateRange(dateRange)}
         </div>
@@ -85,7 +87,11 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({
               <CartesianGrid strokeDasharray='3 3' stroke='#e2e8f0' />
               <XAxis dataKey='date' tick={{ fill: '#64748b' }} />
               <YAxis yAxisId='left' tick={{ fill: '#64748b' }} />
-              <YAxis yAxisId='right' orientation='right' tick={{ fill: '#64748b' }} />
+              <YAxis
+                yAxisId='right'
+                orientation='right'
+                tick={{ fill: '#64748b' }}
+              />
               <Tooltip
                 formatter={(value, name) => [
                   name === 'revenue'
@@ -113,7 +119,7 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className='flex-1 items-center justify-center text-secondary-500 flex'>
+        <div className='flex flex-1 items-center justify-center text-secondary-500'>
           <div className='text-center'>
             <FaShoppingCart className='mx-auto mb-2 h-12 w-12 text-primary-300' />
             <p>No sales data available for selected period</p>

@@ -20,10 +20,12 @@ export const FilterTabs: React.FC<FilterTabsProps> = ({
   tabs,
   activeFilter,
   onFilterChange,
-  className = ''
+  className = '',
 }) => {
   return (
-    <div className={`flex w-fit space-x-1 rounded-lg bg-gray-100 p-1 ${className}`}>
+    <div
+      className={`flex w-fit space-x-1 rounded-lg bg-gray-100 p-1 ${className}`}
+    >
       {tabs.map((tab) => (
         <button
           key={tab.key}

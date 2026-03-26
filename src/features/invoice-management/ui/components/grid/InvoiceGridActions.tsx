@@ -4,7 +4,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { FaFileInvoice, FaEdit, FaMoneyBillWave, FaTrash } from 'react-icons/fa';
+import {
+  FaFileInvoice,
+  FaEdit,
+  FaMoneyBillWave,
+  FaTrash,
+} from 'react-icons/fa';
 
 interface InvoiceGridActionsProps {
   invoice: any;
@@ -61,7 +66,7 @@ export const InvoiceGridActions: React.FC<InvoiceGridActionsProps> = ({
       <div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className='inline-flex justify-center w-full rounded-md border border-gray-300 shadow-sm px-3 py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-indigo-500'
+          className='inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0'
           id='actions-menu-button'
           aria-expanded={isOpen}
           aria-haspopup='true'
@@ -80,23 +85,35 @@ export const InvoiceGridActions: React.FC<InvoiceGridActionsProps> = ({
       </div>
 
       {isOpen && (
-        <div className='absolute right-0 z-10 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none'>
+        <div className='absolute right-0 z-10 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none'>
           <div className='py-1'>
-            <div className='px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2' onClick={() => handleAction('preview')}>
+            <div
+              className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+              onClick={() => handleAction('preview')}
+            >
               <FaFileInvoice className='text-green-600' />
               Preview
             </div>
-            <div className='px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2' onClick={() => handleAction('edit')}>
+            <div
+              className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+              onClick={() => handleAction('edit')}
+            >
               <FaEdit className='text-indigo-600' />
               Edit
             </div>
             {invoice.paymentStatus !== 'paid' && (
-              <div className='px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2' onClick={() => handleAction('payment')}>
+              <div
+                className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                onClick={() => handleAction('payment')}
+              >
                 <FaMoneyBillWave className='text-yellow-600' />
                 Add Payment
               </div>
             )}
-            <div className='px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2' onClick={() => handleAction('delete')}>
+            <div
+              className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+              onClick={() => handleAction('delete')}
+            >
               <FaTrash className='text-red-600' />
               Delete
             </div>

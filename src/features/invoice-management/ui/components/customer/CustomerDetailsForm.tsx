@@ -28,20 +28,20 @@ export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
     <div className='space-y-4'>
       {/* Customer Name */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 mb-1'>
+        <label className='mb-1 block text-sm font-medium text-gray-700'>
           Customer Name
         </label>
         <CustomerNameAutocomplete
           value={customerName}
           onChange={(value) => onChange('customerName', value)}
-          name="customerName"
-          label="Customer Name"
+          name='customerName'
+          label='Customer Name'
         />
       </div>
 
       {/* Customer Address */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 mb-1'>
+        <label className='mb-1 block text-sm font-medium text-gray-700'>
           Address
         </label>
         <Input
@@ -53,7 +53,7 @@ export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
 
       {/* Customer Contact */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 mb-1'>
+        <label className='mb-1 block text-sm font-medium text-gray-700'>
           Contact Number
         </label>
         <Input
@@ -66,14 +66,10 @@ export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
       {/* Customer ID (for regular customers) */}
       {customerId && (
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-1'>
+          <label className='mb-1 block text-sm font-medium text-gray-700'>
             Customer ID
           </label>
-          <Input
-            value={customerId}
-            disabled
-            className='bg-gray-50'
-          />
+          <Input value={customerId} disabled className='bg-gray-50' />
         </div>
       )}
     </div>

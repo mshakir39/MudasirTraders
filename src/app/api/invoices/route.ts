@@ -1,9 +1,9 @@
 'use server';
-import { 
-  getInvoices, 
+import {
+  getInvoices,
   getInvoicesPaginated,
-  createInvoice, 
-  updateInvoice, 
+  createInvoice,
+  updateInvoice,
   deleteInvoice,
   getInvoiceById,
   getInvoicesByCustomer,
@@ -12,7 +12,7 @@ import {
   getCustomerPendingInvoices,
   createConsolidatedInvoice,
   getInvoiceTransferChain,
-  generateInvoiceNumber
+  generateInvoiceNumber,
 } from '@/actions/invoiceActions';
 
 export async function GET(req: any) {
@@ -69,7 +69,7 @@ export async function POST(req: any) {
   try {
     const body = await req.json();
     const { action, ...data } = body;
-    
+
     if (action === 'consolidate') {
       // Create consolidated invoice
       const result = await createConsolidatedInvoice(
@@ -84,9 +84,9 @@ export async function POST(req: any) {
     } else if (action === 'generateNumber') {
       // Generate next invoice number
       const invoiceNumber = await generateInvoiceNumber();
-      return Response.json({ 
-        success: true, 
-        data: { invoiceNumber } 
+      return Response.json({
+        success: true,
+        data: { invoiceNumber },
       });
     } else {
       // Create regular invoice
@@ -94,27 +94,36 @@ export async function POST(req: any) {
       return Response.json(result);
     }
   } catch (err: any) {
-    return Response.json({ 
-      success: false,
-      error: err.message 
-    }, { status: 500 });
+    return Response.json(
+      {
+        success: false,
+        error: err.message,
+      },
+      { status: 500 }
+    );
   }
 }
 
 export async function PUT(req: any) {
   try {
     const { id, action, ...updateData } = await req.json();
-    
+
     if (!id) {
-      return Response.json({ 
-        success: false,
-        error: 'Invoice ID is required' 
-      }, { status: 400 });
+      return Response.json(
+        {
+          success: false,
+          error: 'Invoice ID is required',
+        },
+        { status: 400 }
+      );
     }
-    
+
     if (action === 'paymentStatus') {
       // Update payment status only
-      const result = await updateInvoicePaymentStatus(id, updateData.paymentStatus);
+      const result = await updateInvoicePaymentStatus(
+        id,
+        updateData.paymentStatus
+      );
       return Response.json(result);
     } else {
       // Update invoice using the existing invoice action
@@ -122,32 +131,41 @@ export async function PUT(req: any) {
       return Response.json(result);
     }
   } catch (err: any) {
-    return Response.json({ 
-      success: false,
-      error: err.message 
-    }, { status: 500 });
+    return Response.json(
+      {
+        success: false,
+        error: err.message,
+      },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(req: any) {
   try {
     const { id } = await req.json();
-    
+
     if (!id) {
-      return Response.json({ 
-        success: false,
-        error: 'Invoice ID is required' 
-      }, { status: 400 });
+      return Response.json(
+        {
+          success: false,
+          error: 'Invoice ID is required',
+        },
+        { status: 400 }
+      );
     }
-    
+
     // Delete invoice using the existing invoice action
     const result = await deleteInvoice(id);
-    
+
     return Response.json(result);
   } catch (err: any) {
-    return Response.json({ 
-      success: false,
-      error: err.message 
-    }, { status: 500 });
+    return Response.json(
+      {
+        success: false,
+        error: err.message,
+      },
+      { status: 500 }
+    );
   }
 }

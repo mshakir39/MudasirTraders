@@ -36,7 +36,7 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({
   };
 
   return (
-    <div className='rounded-xl  bg-white p-6 shadow-md h-full flex flex-col'>
+    <div className='flex  h-full flex-col rounded-xl bg-white p-6 shadow-md'>
       <div className='mb-4 flex items-center justify-between'>
         <h3 className='flex items-center text-lg font-semibold text-secondary-900'>
           <MdTrendingUp className='mr-2 text-primary-600' />
@@ -57,7 +57,10 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({
             >
               <div className='flex items-center space-x-3'>
                 <div className='flex h-8 w-8 items-center justify-center rounded-full bg-primary-50'>
-                  <span className='text-sm font-medium' style={{ color: '#2563eb' }}>
+                  <span
+                    className='text-sm font-medium'
+                    style={{ color: '#2563eb' }}
+                  >
                     #{index + 1}
                   </span>
                 </div>
@@ -82,7 +85,7 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({
           ))}
         </div>
       ) : (
-        <div className='flex-1 py-8 text-center text-secondary-500 flex flex-col justify-center'>
+        <div className='flex flex-1 flex-col justify-center py-8 text-center text-secondary-500'>
           <FaShoppingCart className='mx-auto mb-2 h-12 w-12 text-secondary-300' />
           <p>No sales data available for selected date range</p>
           <p className='mt-1 text-sm'>Try selecting a different time period</p>

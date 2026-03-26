@@ -305,7 +305,7 @@ const BatteryItem: React.FC<BatteryItemProps> = ({
                   ? Math.round(
                       (item.retailPrice *
                         (item.salesTax ?? detailData?.salesTax ?? 18)) /
-                      100
+                        100
                     )
                   : 'N/A'}
               </p>

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
+import {
   getCustomers,
   createCustomer,
   updateCustomer,
-  deleteCustomer
+  deleteCustomer,
 } from '@/actions/customerActions';
 
 export async function GET(req: NextRequest) {
@@ -52,14 +52,14 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const { id, ...data } = await req.json();
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Customer ID is required' },
         { status: 400 }
       );
     }
-    
+
     const result = await updateCustomer(id, data);
     return NextResponse.json(result);
   } catch (error: any) {
@@ -74,14 +74,14 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const { id } = await req.json();
-    
+
     if (!id) {
       return NextResponse.json(
         { error: 'Customer ID is required' },
         { status: 400 }
       );
     }
-    
+
     const result = await deleteCustomer(id);
     return NextResponse.json(result);
   } catch (error: any) {

@@ -64,8 +64,10 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
             return (
               <div className='text-sm'>
                 <div className='font-medium text-blue-600'>
-                  {(product as any).series || (product as any).batteryDetails?.name || 'Unknown Product'} ×{' '}
-                  {(product as any).quantity}
+                  {(product as any).series ||
+                    (product as any).batteryDetails?.name ||
+                    'Unknown Product'}{' '}
+                  × {(product as any).quantity}
                 </div>
                 {(product as any).warrentyCode && (
                   <div className='text-xs text-gray-500'>
@@ -83,8 +85,9 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
             <div className='text-sm'>
               <div>
                 <div className='font-medium text-blue-600'>
-                  {(firstProduct as any).series || (firstProduct as any).batteryDetails?.name} ×{' '}
-                  {(firstProduct as any).quantity}
+                  {(firstProduct as any).series ||
+                    (firstProduct as any).batteryDetails?.name}{' '}
+                  × {(firstProduct as any).quantity}
                 </div>
                 {(firstProduct as any).warrentyCode && (
                   <div className='text-xs text-gray-500'>
@@ -107,7 +110,12 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
         header: 'Total Amount',
         cell: ({ row }) => {
           const sale = row.original as any;
-          const amount = sale.grandTotal || sale.totalAmount || sale.amount || sale.total || 0;
+          const amount =
+            sale.grandTotal ||
+            sale.totalAmount ||
+            sale.amount ||
+            sale.total ||
+            0;
           return (
             <span className='font-semibold text-green-600'>
               Rs {Number(amount).toLocaleString()}
@@ -122,12 +130,11 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
           const method = row.original.paymentMethod;
           return (
             <span className='text-sm text-gray-600'>
-              {method 
-                ? Array.isArray(method) 
-                  ? method.join(', ') 
+              {method
+                ? Array.isArray(method)
+                  ? method.join(', ')
                   : method
-                : 'Not specified'
-              }
+                : 'Not specified'}
             </span>
           );
         },
@@ -139,7 +146,7 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
           <div className='flex items-center gap-2'>
             <button
               onClick={() => onViewProducts(row.original)}
-              className='text-blue-500 hover:text-blue-700 transition-colors'
+              className='text-blue-500 transition-colors hover:text-blue-700'
               title='View Products'
               disabled={isLoading}
             >
@@ -148,7 +155,7 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
             {onDeleteSale && (
               <button
                 onClick={() => onDeleteSale(row.original.id)}
-                className='text-red-500 hover:text-red-700 transition-colors'
+                className='text-red-500 transition-colors hover:text-red-700'
                 title='Delete Sale'
                 disabled={isLoading}
               >
@@ -172,7 +179,7 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
         minVisibleRows={13}
         searchPlaceholder='Search sales...'
         showButton={false}
-        emptyMessage="No sales found. Try adjusting your search or create a new sale."
+        emptyMessage='No sales found. Try adjusting your search or create a new sale.'
       />
     </div>
   );

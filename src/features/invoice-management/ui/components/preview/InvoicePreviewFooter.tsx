@@ -12,7 +12,9 @@ interface InvoicePreviewFooterProps {
   children?: React.ReactNode;
 }
 
-export const InvoicePreviewFooter: React.FC<InvoicePreviewFooterProps> = ({ children }) => {
+export const InvoicePreviewFooter: React.FC<InvoicePreviewFooterProps> = ({
+  children,
+}) => {
   return (
     <div className='mb-3 mt-8 flex justify-center md:mb-4 md:mt-12'>
       <span

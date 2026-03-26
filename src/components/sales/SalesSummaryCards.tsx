@@ -100,10 +100,7 @@ const SalesSummaryCards: React.FC<SalesSummaryCardsProps> = ({
   return (
     <div className='mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
       {cards.map((card, index) => (
-        <div
-          key={index}
-          className=' bg-white p-4'
-        >
+        <div key={index} className=' bg-white p-4'>
           <div className='flex items-center'>
             <div className={`p-2 ${card.bgColor} rounded-lg`}>{card.icon}</div>
             <div className='ml-4'>

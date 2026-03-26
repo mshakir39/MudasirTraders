@@ -5,9 +5,9 @@ import { ObjectId } from 'mongodb';
 export async function GET() {
   try {
     const storeDetails = await executeOperation('storeDetail', 'find', {});
-    return Response.json({ 
-      success: true, 
-      data: storeDetails 
+    return Response.json({
+      success: true,
+      data: storeDetails,
     });
   } catch (err: any) {
     return Response.json({ error: err.message }, { status: 500 });

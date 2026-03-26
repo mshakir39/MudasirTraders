@@ -7,12 +7,14 @@ export const isValidPrice = (price: string | number): boolean => {
 };
 
 export const isValidQuantity = (quantity: string | number): boolean => {
-  const numQuantity = typeof quantity === 'string' ? parseInt(quantity) : quantity;
+  const numQuantity =
+    typeof quantity === 'string' ? parseInt(quantity) : quantity;
   return !isNaN(numQuantity) && numQuantity > 0;
 };
 
 export const isValidWarrantyDuration = (duration: string | number): boolean => {
-  const numDuration = typeof duration === 'string' ? parseInt(duration) : duration;
+  const numDuration =
+    typeof duration === 'string' ? parseInt(duration) : duration;
   return !isNaN(numDuration) && numDuration >= 0 && numDuration <= 120;
 };
 
@@ -35,7 +37,7 @@ export const hasRequiredFields = (product: any): boolean => {
 
 export const hasValidWarranty = (product: any): boolean => {
   if (product.noWarranty) return true;
-  
+
   return !!(
     product.warrentyStartDate?.trim() &&
     product.warrentyDuration?.trim() &&
@@ -45,7 +47,9 @@ export const hasValidWarranty = (product: any): boolean => {
   );
 };
 
-export const validateProductForSubmission = (product: any): { isValid: boolean; errors: string[] } => {
+export const validateProductForSubmission = (
+  product: any
+): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
   if (!product.brandName?.trim()) {
@@ -82,6 +86,6 @@ export const validateProductForSubmission = (product: any): { isValid: boolean; 
 
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 };

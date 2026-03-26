@@ -47,7 +47,7 @@ const INVOICE_PATHS = [
 ];
 
 function revalidateInvoicePaths() {
-  INVOICE_PATHS.forEach(path => {
+  INVOICE_PATHS.forEach((path) => {
     // Add type parameter for dynamic paths
     if (path.includes('[') && path.includes(']')) {
       revalidatePath(path, 'page');
@@ -55,16 +55,16 @@ function revalidateInvoicePaths() {
       revalidatePath(path);
     }
   });
-  
+
   // Also revalidate stock paths since stock changes during invoice operations
   const STOCK_PATHS = [
     '/stock',
     '/dashboard/stock',
     '/api/stock',
-    '/api/stock/[brand]'
+    '/api/stock/[brand]',
   ];
-  
-  STOCK_PATHS.forEach(path => {
+
+  STOCK_PATHS.forEach((path) => {
     // Add type parameter for dynamic paths
     if (path.includes('[') && path.includes(']')) {
       revalidatePath(path, 'page');
@@ -117,12 +117,12 @@ export async function deleteInvoice(id: string) {
 // ✅ Now uses server-side pagination — MongoDB does sort/skip/limit
 export async function getInvoicesPaginated(page = 1, limit = 50) {
   try {
-    const result = await executeOperation('invoices', 'findPaginated', {
+    const result = (await executeOperation('invoices', 'findPaginated', {
       filter: {},
       sort: { createdAt: -1 },
       skip: (page - 1) * limit,
       limit,
-    }) as { docs: any[]; total: number };
+    })) as { docs: any[]; total: number };
 
     const data = result.docs.map((invoice: any) => ({
       ...invoice,
@@ -150,12 +150,12 @@ export async function getInvoicesPaginated(page = 1, limit = 50) {
 // ✅ Also updated — uses findPaginated with no limit for full list
 export async function getInvoices() {
   try {
-    const result = await executeOperation('invoices', 'findPaginated', {
+    const result = (await executeOperation('invoices', 'findPaginated', {
       filter: {},
       sort: { createdAt: -1 },
       skip: 0,
       limit: 1000, // hard cap — adjust if needed
-    }) as { docs: any[]; total: number };
+    })) as { docs: any[]; total: number };
 
     const data = result.docs.map((invoice: any) => ({
       ...invoice,
@@ -176,7 +176,9 @@ export async function getInvoiceById(id: string) {
 
     // Fallback to invoiceNo
     if (!invoice) {
-      const byNo = await executeOperation('invoices', 'find', { invoiceNo: id });
+      const byNo = await executeOperation('invoices', 'find', {
+        invoiceNo: id,
+      });
       invoice = Array.isArray(byNo) ? byNo[0] : byNo;
     }
 
@@ -188,7 +190,9 @@ export async function getInvoiceById(id: string) {
 
 export async function getInvoicesByCustomer(customerName: string) {
   try {
-    const invoices = await executeOperation('invoices', 'find', { customerName });
+    const invoices = await executeOperation('invoices', 'find', {
+      customerName,
+    });
     return { success: true, data: invoices };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -228,40 +232,51 @@ export async function getCustomerPendingInvoices(customerName: string) {
     const invoices = await executeOperation('invoices', 'find', {
       customerName: customerName,
       paymentStatus: { $in: ['pending', 'partial'] }, // Include both pending and partial invoices
-      status: { $ne: 'voided' }
+      status: { $ne: 'voided' },
     });
-    
+
     // Process invoices to calculate correct totals and remaining amounts
-    const processedInvoices = Array.isArray(invoices) 
+    const processedInvoices = Array.isArray(invoices)
       ? invoices.map((invoice: any) => {
           // Use InvoiceDataUtil to calculate totals
-          const calculation = InvoiceDataUtil.calculateAmounts(invoice.products || [], invoice.receivedAmount);
-          
-          console.log(`� Invoice ${invoice.invoiceNo}: Calculated=${calculation.totalAmount}, Remaining (from DB)=${invoice.remainingAmount || calculation.totalAmount}`);
-          
+          const calculation = InvoiceDataUtil.calculateAmounts(
+            invoice.products || [],
+            invoice.receivedAmount
+          );
+
+          console.log(
+            `� Invoice ${invoice.invoiceNo}: Calculated=${calculation.totalAmount}, Remaining (from DB)=${invoice.remainingAmount || calculation.totalAmount}`
+          );
+
           return {
             ...invoice,
             totalAmount: calculation.totalAmount,
-            remainingAmount: invoice.remainingAmount !== undefined ? invoice.remainingAmount : calculation.totalAmount
+            remainingAmount:
+              invoice.remainingAmount !== undefined
+                ? invoice.remainingAmount
+                : calculation.totalAmount,
           };
         })
       : [];
-    
+
     // Filter out partial invoices with 0 total amount (ignore them) using utility
-    const filteredInvoices = processedInvoices.filter((invoice: any) => 
+    const filteredInvoices = processedInvoices.filter((invoice: any) =>
       InvoiceDataUtil.shouldIncludeInPending(invoice)
     );
-    
+
     console.log(`🔍 Original pending invoices: ${processedInvoices.length}`);
     console.log(`🔍 Filtered pending invoices: ${filteredInvoices.length}`);
-    
+
     // Sort by date (most recent first)
-    const sortedInvoices = filteredInvoices.sort((a, b) => 
-      new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
+    const sortedInvoices = filteredInvoices.sort(
+      (a, b) =>
+        new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
     );
-    
-    console.log(`✅ Processed ${sortedInvoices.length} pending invoices for ${customerName}`);
-    
+
+    console.log(
+      `✅ Processed ${sortedInvoices.length} pending invoices for ${customerName}`
+    );
+
     return { success: true, data: sortedInvoices };
   } catch (error: any) {
     console.error('❌ Error in getCustomerPendingInvoices:', error);
@@ -292,43 +307,47 @@ export async function createConsolidatedInvoice(
       previousAmounts,
       newProductsCount: newProducts.length,
       receivedAmount,
-      batteriesRate
+      batteriesRate,
     });
 
     // 1. Get pending invoices to be voided
     // Convert string IDs to ObjectId for MongoDB query
-    const objectIds = pendingInvoiceIds.map(id => new ObjectId(id));
-    
+    const objectIds = pendingInvoiceIds.map((id) => new ObjectId(id));
+
     console.log('🔍 Debug - Converted IDs:', {
       originalIds: pendingInvoiceIds,
-      objectIds: objectIds.map(id => id.toString())
+      objectIds: objectIds.map((id) => id.toString()),
     });
-    
+
     const pendingInvoices = await executeOperation('invoices', 'find', {
-      _id: { $in: objectIds }
+      _id: { $in: objectIds },
     });
-    
+
     console.log('🔍 Debug - Database query result:', {
       query: { _id: { $in: pendingInvoiceIds } },
       foundInvoices: pendingInvoices,
       isArray: Array.isArray(pendingInvoices),
-      length: Array.isArray(pendingInvoices) ? pendingInvoices.length : 'N/A'
+      length: Array.isArray(pendingInvoices) ? pendingInvoices.length : 'N/A',
     });
-    
+
     if (!Array.isArray(pendingInvoices) || pendingInvoices.length === 0) {
       return { success: false, error: 'No pending invoices found' };
     }
-    
+
     // 2. Only use NEW products for the consolidated invoice (old invoice products are voided)
-    const existingProducts = pendingInvoices.flatMap((invoice: any) => invoice.products || []);
-    
+    const existingProducts = pendingInvoices.flatMap(
+      (invoice: any) => invoice.products || []
+    );
+
     // Store both invoice IDs and invoice numbers for better display
-    const consolidatedInvoiceIds = pendingInvoices.map(inv => inv.id);
-    const consolidatedInvoiceNumbers = pendingInvoices.map(inv => inv.invoiceNo);
-    
+    const consolidatedInvoiceIds = pendingInvoices.map((inv) => inv.id);
+    const consolidatedInvoiceNumbers = pendingInvoices.map(
+      (inv) => inv.invoiceNo
+    );
+
     // 3. Calculate totals using utility function
     const calculationResult = calculateInvoiceAmounts({
-      pendingInvoices: pendingInvoices.map(inv => ({
+      pendingInvoices: pendingInvoices.map((inv) => ({
         remainingAmount: inv.remainingAmount || 0,
         totalAmount: inv.totalAmount || 0,
         receivedAmount: inv.receivedAmount || 0,
@@ -337,196 +356,230 @@ export async function createConsolidatedInvoice(
       batteriesRate: batteriesRate,
       receivedAmount: receivedAmount,
     });
-    
+
     const totalAmount = calculationResult.totalAmount;
-    
+
     console.log('🔍 Debug - Amount calculations using utility:', {
       calculationResult,
-      pendingInvoices: pendingInvoices.map(inv => ({
+      pendingInvoices: pendingInvoices.map((inv) => ({
         id: inv.id,
         invoiceNo: inv.invoiceNo,
         totalAmount: inv.totalAmount,
         receivedAmount: inv.receivedAmount,
-        remainingAmount: inv.remainingAmount
+        remainingAmount: inv.remainingAmount,
       })),
-      originalBatteriesCountAndWeight: pendingInvoices[0].batteriesCountAndWeight
+      originalBatteriesCountAndWeight:
+        pendingInvoices[0].batteriesCountAndWeight,
     });
-    
+
     // 4. Generate new invoice number
     const newInvoiceNumber = await generateInvoiceNumber();
     console.log('🔍 Debug - Generated invoice number:', newInvoiceNumber);
-    
+
     // 5. Create consolidated invoice - JUST LIKE NEW INVOICE with tracking
     const originalInvoice = pendingInvoices[0]; // Use first invoice for customer info only
-    
+
     const newInvoice = {
       invoiceNo: newInvoiceNumber,
       // Customer info from original
       customerName: originalInvoice.customerName,
       customerAddress: originalInvoice.customerAddress,
       customerContactNumber: originalInvoice.customerContactNumber,
-      
+
       // Use current form data (fresh invoice data) - don't combine with old data
       customerType: customerType || 'WalkIn Customer',
       customerId: customerId || null,
       vehicleNo: vehicleNo || '',
-      
+
       // Use current payment method from form
-      paymentMethod: paymentMethod && paymentMethod.length > 0 
-        ? paymentMethod 
-        : ['Cash'],
-      
+      paymentMethod:
+        paymentMethod && paymentMethod.length > 0 ? paymentMethod : ['Cash'],
+
       // Use current battery data from form - don't combine with old
       batteriesCountAndWeight: batteriesCountAndWeight || '',
       batteriesRate: batteriesRate || 0,
-      
+
       // Use current received amount from form - don't add old amounts
       receivedAmount: receivedAmount || 0,
-      
+
       // Fresh invoice status
       isPayLater: false,
-      
+
       // New products only
       products: newProducts,
-      
+
       // Calculate total: remaining amounts + new products
       subtotal: totalAmount,
       taxAmount: 0,
       totalAmount: totalAmount,
-      
+
       // Calculate remaining amount and payment status using utility result
       remainingAmount: calculationResult.remainingAmount,
       paymentStatus: calculationResult.paymentStatus,
-      
+
       // Standard invoice fields
       createdDate: new Date(),
       addedDate: new Date(),
       status: 'active',
       createdAt: new Date(),
-      
+
       // Just track what was consolidated
       consolidatedFrom: consolidatedInvoiceIds,
       consolidatedInvoiceNumbers: consolidatedInvoiceNumbers,
       previousAmounts: previousAmounts,
       notes: `Consolidated from invoices: ${consolidatedInvoiceNumbers.join(', ')}${notes ? '. ' + notes : ''}`,
     };
-    
+
     console.log('🔍 Debug - New invoice object before insert:', {
       invoiceNo: newInvoice.invoiceNo,
       customerName: newInvoice.customerName,
       remainingAmount: newInvoice.remainingAmount,
       consolidatedFrom: newInvoice.consolidatedFrom,
       previousAmounts: newInvoice.previousAmounts,
-      notes: newInvoice.notes
+      notes: newInvoice.notes,
     });
-    
+
     // 6. Insert new invoice
-    const insertResult = await executeOperation('invoices', 'insertOne', newInvoice);
-    
-    if (!insertResult || typeof insertResult !== 'object' || !('insertedId' in insertResult)) {
+    const insertResult = await executeOperation(
+      'invoices',
+      'insertOne',
+      newInvoice
+    );
+
+    if (
+      !insertResult ||
+      typeof insertResult !== 'object' ||
+      !('insertedId' in insertResult)
+    ) {
       return { success: false, error: 'Failed to create new invoice' };
     }
-    
+
     const newInvoiceId = (insertResult as any).insertedId;
     const newInvoiceIdString = newInvoiceId.toString(); // Convert ObjectId to string
-    
+
     console.log('🔍 Debug - New invoice with ID:', {
       newInvoiceIdString,
       consolidatedFrom: newInvoice.consolidatedFrom,
-      previousAmounts: newInvoice.previousAmounts
+      previousAmounts: newInvoice.previousAmounts,
     });
-    
+
     // 7. Void all pending invoices and revert their stock (only if not already reverted)
     for (const invoiceId of pendingInvoiceIds) {
       // First, get the invoice details to revert stock
-      const invoiceToVoid = await executeOperation('invoices', 'findOne', { _id: invoiceId }) as any;
-      
+      const invoiceToVoid = (await executeOperation('invoices', 'findOne', {
+        _id: invoiceId,
+      })) as any;
+
       if (invoiceToVoid && invoiceToVoid.products) {
-        console.log(`🔄 Reverting stock for voided invoice ${invoiceToVoid.invoiceNo}...`);
-        
+        console.log(
+          `🔄 Reverting stock for voided invoice ${invoiceToVoid.invoiceNo}...`
+        );
+
         // Check if this invoice was already consolidated (has replacedBy link)
         if (invoiceToVoid.replacedBy) {
-          console.log(`⚠️  Invoice ${invoiceToVoid.invoiceNo} was already consolidated into ${invoiceToVoid.replacedBy}`);
-          console.log(`⏭️ Skipping stock reversal - already reverted in previous consolidation`);
+          console.log(
+            `⚠️  Invoice ${invoiceToVoid.invoiceNo} was already consolidated into ${invoiceToVoid.replacedBy}`
+          );
+          console.log(
+            `⏭️ Skipping stock reversal - already reverted in previous consolidation`
+          );
         } else {
-          console.log(`✅ Invoice ${invoiceToVoid.invoiceNo} is original - reverting stock`);
-          
+          console.log(
+            `✅ Invoice ${invoiceToVoid.invoiceNo} is original - reverting stock`
+          );
+
           // Revert stock for each product in the voided invoice
           for (const product of invoiceToVoid.products) {
             if (product.isChargingService) {
-              console.log(`⏭️ Skipping stock revert for charging service: ${product.brandName} ${product.series}`);
+              console.log(
+                `⏭️ Skipping stock revert for charging service: ${product.brandName} ${product.series}`
+              );
               continue;
             }
-            
+
             const quantityAsNumber = parseInt(String(product.quantity)) || 0;
-            console.log(`🔄 Adding back stock: ${product.brandName} - ${product.series} (+${quantityAsNumber})`);
-            
+            console.log(
+              `🔄 Adding back stock: ${product.brandName} - ${product.series} (+${quantityAsNumber})`
+            );
+
             // Add stock back and decrement sold count
-            const stockRevertResult = await executeOperation('stock', 'addStockAndDecrementSoldCount', {
-              brandName: product.brandName,
-              series: product.series,
-              quantity: quantityAsNumber
-            });
-            
+            const stockRevertResult = await executeOperation(
+              'stock',
+              'addStockAndDecrementSoldCount',
+              {
+                brandName: product.brandName,
+                series: product.series,
+                quantity: quantityAsNumber,
+              }
+            );
+
             if (!stockRevertResult) {
-              console.error(`❌ Failed to revert stock for ${product.brandName} - ${product.series}`);
+              console.error(
+                `❌ Failed to revert stock for ${product.brandName} - ${product.series}`
+              );
             } else {
-              console.log(`✅ Stock reverted for ${product.brandName} - ${product.series}`);
+              console.log(
+                `✅ Stock reverted for ${product.brandName} - ${product.series}`
+              );
             }
           }
         }
       }
-      
+
       // Now void the invoice
       await executeOperation('invoices', 'updateOne', {
         documentId: invoiceId,
         status: 'voided',
         voidedAt: new Date(),
         voidReason: 'Consolidated into new invoice',
-        replacedBy: newInvoiceIdString // Link to the new consolidated invoice
+        replacedBy: newInvoiceIdString, // Link to the new consolidated invoice
       });
-      
+
       console.log(`✅ Voided invoice ${invoiceId}`);
     }
-    
+
     // 8. Update stock for new products only (existing products already deducted)
     console.log('🔍 Debug - About to update stock for new products:', {
       newProductsCount: newProducts.length,
-      newProducts: newProducts.map(p => ({
+      newProducts: newProducts.map((p) => ({
         brandName: p.brandName,
         series: p.series,
         quantity: p.quantity,
-        totalPrice: p.totalPrice
-      }))
+        totalPrice: p.totalPrice,
+      })),
     });
     await updateStockForProducts(newProducts, 'deduct');
-    
+
     // 9. Create sales record for consolidated invoice
     console.log('💼 Creating sales record for consolidated invoice...');
-    
+
     // Calculate sales total amount for new products only (same as normal invoice)
-    const newProductsAsInvoiceProducts: InvoiceProduct[] = newProducts.map(item => ({
-      brandName: item.brandName,
-      series: item.series,
-      quantity: item.quantity,
-      productPrice: item.productPrice || item.unitPrice,
-      totalPrice: item.totalPrice,
-      warrentyCode: item.warrentyCode || 'No Warranty',
-      warrentyStartDate: item.warrentyStartDate || '',
-      warrentyDuration: item.warrentyDuration || '',
-      warrentyEndDate: item.warrentyEndDate || '',
-      isChargingService: item.isChargingService || false,
-      isScrapBattery: item.isScrapBattery || false
-    }));
-    
+    const newProductsAsInvoiceProducts: InvoiceProduct[] = newProducts.map(
+      (item) => ({
+        brandName: item.brandName,
+        series: item.series,
+        quantity: item.quantity,
+        productPrice: item.productPrice || item.unitPrice,
+        totalPrice: item.totalPrice,
+        warrentyCode: item.warrentyCode || 'No Warranty',
+        warrentyStartDate: item.warrentyStartDate || '',
+        warrentyDuration: item.warrentyDuration || '',
+        warrentyEndDate: item.warrentyEndDate || '',
+        isChargingService: item.isChargingService || false,
+        isScrapBattery: item.isScrapBattery || false,
+      })
+    );
+
     // Calculate sales total amount for consolidated invoice (should include previous amounts)
     const salesTotalAmount = totalAmount; // Use full consolidated amount
-    
+
     // Validate sales total amount (same as normal invoice)
     if (isNaN(salesTotalAmount) || salesTotalAmount <= 0) {
-      throw new Error(`Invalid sales total amount for consolidated invoice: ${salesTotalAmount}`);
+      throw new Error(
+        `Invalid sales total amount for consolidated invoice: ${salesTotalAmount}`
+      );
     }
-    
+
     const salesRecord = {
       invoiceId: newInvoice.invoiceNo,
       date: newInvoice.createdDate,
@@ -535,10 +588,12 @@ export async function createConsolidatedInvoice(
       totalAmount: salesTotalAmount, // Full consolidated amount
       paymentMethod: newInvoice.paymentMethod,
       // Add charging service flags for analytics (same as normal invoice)
-      isChargingService: newProducts?.some((product: any) => product.isChargingService) || false,
-      isScrapBattery: newProducts?.some((product: any) => product.isScrapBattery) || false,
+      isChargingService:
+        newProducts?.some((product: any) => product.isChargingService) || false,
+      isScrapBattery:
+        newProducts?.some((product: any) => product.isScrapBattery) || false,
     };
-    
+
     // 🔒 VALIDATION: Ensure sales record has required fields (same as normal invoice)
     if (
       !salesRecord.invoiceId ||
@@ -548,45 +603,51 @@ export async function createConsolidatedInvoice(
     ) {
       throw new Error('Sales record is missing required fields');
     }
-    
-    const salesResult = await executeOperation('sales', 'insertOne', salesRecord);
-    
+
+    const salesResult = await executeOperation(
+      'sales',
+      'insertOne',
+      salesRecord
+    );
+
     // 🔒 VALIDATION: Ensure sales record insertion was successful (same as normal invoice)
     if (!salesResult) {
       throw new Error('Failed to insert sales record into database');
     }
-    
-    console.log('✅ Sales record created successfully for consolidated invoice:', {
-      invoiceId: salesRecord.invoiceId,
-      totalAmount: salesRecord.totalAmount,
-      productsCount: salesRecord.products.length
-    });
-    
+
+    console.log(
+      '✅ Sales record created successfully for consolidated invoice:',
+      {
+        invoiceId: salesRecord.invoiceId,
+        totalAmount: salesRecord.totalAmount,
+        productsCount: salesRecord.products.length,
+      }
+    );
+
     // 10. Revalidate paths
     const finalNewInvoice = { ...newInvoice, id: newInvoiceIdString };
-    
+
     console.log('🔍 Debug - Final invoice being returned:', {
       invoiceId: finalNewInvoice.id,
       invoiceNo: finalNewInvoice.invoiceNo,
       consolidatedFrom: finalNewInvoice.consolidatedFrom,
-      previousAmounts: finalNewInvoice.previousAmounts
+      previousAmounts: finalNewInvoice.previousAmounts,
     });
-    
+
     revalidateInvoicePaths();
-    
+
     return {
       success: true,
       data: {
         newInvoice: finalNewInvoice, // Use string ID
-        voidedInvoices: pendingInvoices.map(invoice => ({
+        voidedInvoices: pendingInvoices.map((invoice) => ({
           ...invoice,
           id: invoice.id, // Already serialized by executeOperation
-          replacedBy: newInvoiceIdString // Ensure this is also a string
+          replacedBy: newInvoiceIdString, // Ensure this is also a string
         })),
-        consolidatedCount: pendingInvoices.length
-      }
+        consolidatedCount: pendingInvoices.length,
+      },
     };
-    
   } catch (error: any) {
     console.error('Error creating consolidated invoice:', error);
     return { success: false, error: error.message };
@@ -598,16 +659,18 @@ export async function getInvoiceTransferChain(invoiceId: string) {
   try {
     const chain = [];
     let currentId = invoiceId;
-    
+
     // Build chain forward (follow replacedBy links)
     while (currentId) {
-      const invoice = await executeOperation('invoices', 'findOne', { _id: currentId });
-      
+      const invoice = await executeOperation('invoices', 'findOne', {
+        _id: currentId,
+      });
+
       if (!invoice || typeof invoice !== 'object') break;
-      
+
       const invoiceObj = invoice as any;
       chain.push(invoiceObj);
-      
+
       // Follow replacedBy link
       if (invoiceObj.replacedBy) {
         currentId = invoiceObj.replacedBy;
@@ -615,23 +678,29 @@ export async function getInvoiceTransferChain(invoiceId: string) {
         break;
       }
     }
-    
+
     // Also check backwards (follow consolidatedFrom links)
     const consolidatedInvoices = await executeOperation('invoices', 'find', {
-      consolidatedFrom: invoiceId
+      consolidatedFrom: invoiceId,
     });
-    
-    if (Array.isArray(consolidatedInvoices) && consolidatedInvoices.length > 0) {
+
+    if (
+      Array.isArray(consolidatedInvoices) &&
+      consolidatedInvoices.length > 0
+    ) {
       chain.unshift(...consolidatedInvoices);
     }
-    
+
     // Sort by date
-    const sortedChain = Array.isArray(chain) 
-      ? chain.sort((a: any, b: any) => new Date(a.createdDate).getTime() - new Date(b.createdDate).getTime())
+    const sortedChain = Array.isArray(chain)
+      ? chain.sort(
+          (a: any, b: any) =>
+            new Date(a.createdDate).getTime() -
+            new Date(b.createdDate).getTime()
+        )
       : [];
-    
+
     return { success: true, data: sortedChain };
-    
   } catch (error: any) {
     console.error('Error getting invoice transfer chain:', error);
     return { success: false, error: error.message };
@@ -644,43 +713,45 @@ export async function generateInvoiceNumber(): Promise<string> {
     // Use our existing MongoDB connection utility
     const { connectToMongoDB } = await import('@/app/libs/connectToMongoDB');
     const db = await connectToMongoDB();
-    
+
     if (!db) {
       throw new Error('Failed to connect to database');
     }
-    
+
     const lastInvoice = await db
       .collection('invoices')
       .find({})
       .sort({ invoiceNo: -1 })
       .limit(1)
       .toArray();
-    
+
     console.log('🔍 Debug - Last invoice from database:', lastInvoice);
-    
+
     let lastNumber = 0;
-    
+
     if (Array.isArray(lastInvoice) && lastInvoice.length > 0) {
       const lastInvoiceData = lastInvoice[0] as any;
       console.log('🔍 Debug - Last invoice object:', {
         invoiceNo: lastInvoiceData.invoiceNo,
-        invoiceNumber: lastInvoiceData.invoiceNumber
+        invoiceNumber: lastInvoiceData.invoiceNumber,
       });
-      
+
       // Try both field names - invoiceNo or invoiceNumber
-      const invoiceNumberField = lastInvoiceData.invoiceNo || lastInvoiceData.invoiceNumber;
+      const invoiceNumberField =
+        lastInvoiceData.invoiceNo || lastInvoiceData.invoiceNumber;
       console.log('🔍 Debug - Using invoice number field:', invoiceNumberField);
-      
+
       if (invoiceNumberField) {
-        lastNumber = parseInt(String(invoiceNumberField).replace(/\D/g, '')) || 0;
+        lastNumber =
+          parseInt(String(invoiceNumberField).replace(/\D/g, '')) || 0;
       }
     }
-    
+
     console.log('🔍 Debug - Last number parsed:', lastNumber);
-    
+
     const newNumber = String(lastNumber + 1).padStart(8, '0');
     console.log('🔍 Debug - New invoice number:', newNumber);
-    
+
     return newNumber;
   } catch (error) {
     console.error('🔍 Debug - Error in generateInvoiceNumber:', error);
@@ -692,30 +763,37 @@ export async function generateInvoiceNumber(): Promise<string> {
 }
 
 // Helper: Update stock for products (you may already have this)
-async function updateStockForProducts(products: InvoiceItem[], operation: 'deduct' | 'add') {
+async function updateStockForProducts(
+  products: InvoiceItem[],
+  operation: 'deduct' | 'add'
+) {
   try {
     for (const product of products) {
       console.log('🔍 Debug - Updating stock:', {
         brandName: product.brandName,
         series: product.series,
         quantity: product.quantity,
-        operation
+        operation,
       });
-      
+
       if (operation === 'deduct') {
         // Convert quantity to number for stock update
         const quantityAsNumber = parseInt(String(product.quantity)) || 0;
         console.log('🔍 Debug - Converting quantity:', {
           originalQuantity: product.quantity,
-          convertedQuantity: quantityAsNumber
+          convertedQuantity: quantityAsNumber,
         });
-        
+
         // Use the existing updateStockQuantity operation
-        const stockUpdate = await executeOperation('stock', 'updateStockQuantity', {
-          brandName: product.brandName,
-          series: product.series,
-          quantity: quantityAsNumber
-        });
+        const stockUpdate = await executeOperation(
+          'stock',
+          'updateStockQuantity',
+          {
+            brandName: product.brandName,
+            series: product.series,
+            quantity: quantityAsNumber,
+          }
+        );
         console.log('✅ Stock deducted successfully:', stockUpdate);
       } else {
         // For adding stock back, we'd need to implement updateStockAdd operation

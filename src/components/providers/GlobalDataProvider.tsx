@@ -5,26 +5,28 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
-import { 
-  categoriesAtom, 
-  stockAtom, 
+import {
+  categoriesAtom,
+  stockAtom,
   brandsAtom,
   invoicesAtom,
-  fetchCategoriesAtom, 
-  fetchStockAtom, 
+  fetchCategoriesAtom,
+  fetchStockAtom,
   fetchBrandsAtom,
   fetchInvoicesAtom,
   setCategoriesAtom,
   setStockAtom,
   setBrandsAtom,
-  setInvoicesAtom
+  setInvoicesAtom,
 } from '@/store/sharedAtoms';
 
 interface GlobalDataProviderProps {
   children: React.ReactNode;
 }
 
-export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children }) => {
+export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({
+  children,
+}) => {
   const [isClient, setIsClient] = useState(false);
   const [categories] = useAtom(categoriesAtom);
   const [stock] = useAtom(stockAtom);
@@ -43,15 +45,19 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
   useEffect(() => {
     // Only fetch data on client-side after hydration and only once
     if (!isClient || hasInitialized) return;
-    
+
     // Check if data already exists before fetching
-    const hasData = stock.length > 0 || categories.length > 0 || brands.length > 0 || invoices.length > 0;
-    
+    const hasData =
+      stock.length > 0 ||
+      categories.length > 0 ||
+      brands.length > 0 ||
+      invoices.length > 0;
+
     if (hasData) {
       setHasInitialized(true);
       return;
     }
-    
+
     // Pre-load all shared data on dashboard initialization
     const initializeData = async () => {
       // Fetch all data in parallel for optimal performance
@@ -60,7 +66,7 @@ export const GlobalDataProvider: React.FC<GlobalDataProviderProps> = ({ children
           fetchCategories(),
           fetchStock(),
           fetchBrands(),
-          fetchInvoices()
+          fetchInvoices(),
         ]);
         setHasInitialized(true);
       } catch (error) {

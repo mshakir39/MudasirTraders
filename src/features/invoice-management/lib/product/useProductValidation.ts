@@ -17,7 +17,10 @@ export const useProductValidation = () => {
       errors.push('Series is required');
     }
 
-    if (!productData.productPrice || parseFloat(productData.productPrice) <= 0) {
+    if (
+      !productData.productPrice ||
+      parseFloat(productData.productPrice) <= 0
+    ) {
       errors.push('Valid product price is required');
     }
 
@@ -48,7 +51,7 @@ export const useProductValidation = () => {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }, []);
 

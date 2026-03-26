@@ -158,7 +158,11 @@ const Sidebar = ({
       try {
         const response = await fetch('/api/storeDetail');
         const result = await response.json();
-        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+        if (
+          result.success &&
+          Array.isArray(result.data) &&
+          result.data.length > 0
+        ) {
           setStoreDetail(result.data[0]);
           setStoreData(result.data[0]);
         } else {
@@ -356,7 +360,8 @@ const Sidebar = ({
             {navigationItems.map((item: NavigationItem) => {
               const Icon = item.icon;
               const isReviewsItem = item.href === ROUTES.REVIEWS;
-              const hasPendingReviews = isReviewsItem && pendingReviewsCount > 0;
+              const hasPendingReviews =
+                isReviewsItem && pendingReviewsCount > 0;
 
               return (
                 <Link
@@ -378,7 +383,8 @@ const Sidebar = ({
                       overflow: 'hidden',
                       whiteSpace: 'nowrap',
                       marginLeft: isCollapsed ? '0px' : '12px',
-                      transition: 'max-width 300ms ease, opacity 250ms ease, margin-left 300ms ease',
+                      transition:
+                        'max-width 300ms ease, opacity 250ms ease, margin-left 300ms ease',
                     }}
                   >
                     {item.label}
@@ -414,7 +420,8 @@ const Sidebar = ({
                 overflow: 'hidden',
                 whiteSpace: 'nowrap',
                 marginLeft: isCollapsed ? '0px' : '12px',
-                transition: 'max-width 300ms ease, opacity 250ms ease, margin-left 300ms ease',
+                transition:
+                  'max-width 300ms ease, opacity 250ms ease, margin-left 300ms ease',
               }}
             >
               {meetupsItem.label}
@@ -448,7 +455,8 @@ const Sidebar = ({
                 overflow: 'hidden',
                 whiteSpace: 'nowrap',
                 marginLeft: isCollapsed ? '0px' : '12px',
-                transition: 'max-width 300ms ease, opacity 250ms ease, margin-left 300ms ease',
+                transition:
+                  'max-width 300ms ease, opacity 250ms ease, margin-left 300ms ease',
               }}
             >
               Settings
@@ -478,7 +486,8 @@ const Sidebar = ({
                 overflow: 'hidden',
                 whiteSpace: 'nowrap',
                 marginLeft: isCollapsed ? '0px' : '12px',
-                transition: 'max-width 300ms ease, opacity 250ms ease, margin-left 300ms ease',
+                transition:
+                  'max-width 300ms ease, opacity 250ms ease, margin-left 300ms ease',
               }}
             >
               Logout
@@ -580,8 +589,6 @@ const Sidebar = ({
           </form>
         </Modal>
       )}
-
-      
     </>
   );
 };

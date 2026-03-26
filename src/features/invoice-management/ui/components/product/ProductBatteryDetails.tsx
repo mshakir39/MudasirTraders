@@ -15,20 +15,20 @@ interface ProductBatteryDetailsProps {
 export const ProductBatteryDetails: React.FC<ProductBatteryDetailsProps> = ({
   batteryDetails,
   onBatteryDetailsChange,
-  disabled = false
+  disabled = false,
 }) => {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className='mb-1 block text-sm font-medium text-gray-700'>
         Battery Details
       </label>
       <Input
-        type="text"
+        type='text'
         value={batteryDetails}
         onChange={(e) => onBatteryDetailsChange(e.target.value)}
-        placeholder="Enter battery details (optional)"
+        placeholder='Enter battery details (optional)'
         disabled={disabled}
-        className="w-full"
+        className='w-full'
       />
     </div>
   );

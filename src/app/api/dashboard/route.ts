@@ -27,7 +27,9 @@ const toNumber = (value: any): number => {
 const validateSoldCount = (soldCount: any): number => {
   const num = toNumber(soldCount);
   if (num < 0) {
-    logger.warning(`⚠️ Negative soldCount detected: ${soldCount}, setting to 0`);
+    logger.warning(
+      `⚠️ Negative soldCount detected: ${soldCount}, setting to 0`
+    );
     return 0;
   }
   return num;
@@ -37,34 +39,37 @@ const validateSoldCount = (soldCount: any): number => {
 const normalizeSeriesForMatching = (series: string): string => {
   return String(series || '')
     .toLowerCase()
-    .replace(/\s+/g, ' ')     // Normalize multiple spaces to single space
+    .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
     .replace(/\s*\(\s*/g, ' (') // Add space before opening parenthesis
     .replace(/\s*\)\s*/g, ') ') // Add space after closing parenthesis
     .replace(/\s*\/\s*/g, '/') // Fix spaces around slashes
-    .replace(/\s+/g, ' ')     // Clean up any new multiple spaces
+    .replace(/\s+/g, ' ') // Clean up any new multiple spaces
     .replace(/thin\/thick/g, 'thinthick') // Handle Thin/Thick vs ThinThick
-    .replace(/\s+/g, ' ')     // Clean up any new multiple spaces
+    .replace(/\s+/g, ' ') // Clean up any new multiple spaces
     .trim();
 };
 
 // Enhanced normalization for sales data (handles brand prefix)
 const normalizeSalesSeries = (brandName: string, series: string): string => {
   let cleanSeries = series;
-  
+
   // Remove brand prefix if present
-  if (brandName && cleanSeries.toLowerCase().startsWith(brandName.toLowerCase())) {
+  if (
+    brandName &&
+    cleanSeries.toLowerCase().startsWith(brandName.toLowerCase())
+  ) {
     cleanSeries = cleanSeries.substring(brandName.length).trim();
   }
-  
+
   return String(cleanSeries || '')
     .toLowerCase()
-    .replace(/\s+/g, ' ')     // Normalize multiple spaces to single space
+    .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
     .replace(/\s*\(\s*/g, ' (') // Add space before opening parenthesis
     .replace(/\s*\)\s*/g, ') ') // Add space after closing parenthesis
     .replace(/\s*\/\s*/g, '/') // Fix spaces around slashes
-    .replace(/\s+/g, ' ')     // Clean up any new multiple spaces
+    .replace(/\s+/g, ' ') // Clean up any new multiple spaces
     .replace(/thin\/thick/g, 'thinthick') // Handle Thin/Thick vs ThinThick
-    .replace(/\s+/g, ' ')     // Clean up any new multiple spaces
+    .replace(/\s+/g, ' ') // Clean up any new multiple spaces
     .trim();
 };
 
@@ -88,7 +93,7 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
       stockDoc.seriesStock.forEach((series: any) => {
         const normalizedSeries = normalizeSeriesForMatching(series.series);
         const normalizedKey = `${stockDoc.brandName}-${normalizedSeries}`;
-        
+
         // Store only normalized key to avoid duplicates
         stockMap.set(normalizedKey, {
           brandName: stockDoc.brandName,
@@ -129,7 +134,7 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
   // Compare stock soldCount with actual sales
   stockMap.forEach((stockItem, normalizedKey) => {
     syncSummary.totalProducts++;
-    
+
     // Use normalized key directly since we only store normalized keys
     const actualSales = salesMap.get(normalizedKey) || 0;
     const stockSoldCount = stockItem.stockSoldCount;
@@ -165,7 +170,7 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
   salesMap.forEach((salesCount, key) => {
     // Use only normalized keys for consistent matching
     const stockItem = stockMap.get(key);
-    
+
     if (!stockItem) {
       syncSummary.missingInStock++;
       syncIssues.push({
@@ -233,12 +238,13 @@ export async function GET(request: NextRequest) {
     logger.success('✅ Connected to MongoDB, fetching essential data...');
 
     // Fetch collections
-    const [initialStockDocs, salesDocs, invoicesDocs, customers] = await Promise.all([
-      db.collection('stock').find().toArray(),
-      db.collection('sales').find().toArray(),
-      db.collection('invoices').find().toArray(),
-      db.collection('customers').find().toArray(),
-    ]);
+    const [initialStockDocs, salesDocs, invoicesDocs, customers] =
+      await Promise.all([
+        db.collection('stock').find().toArray(),
+        db.collection('sales').find().toArray(),
+        db.collection('invoices').find().toArray(),
+        db.collection('customers').find().toArray(),
+      ]);
 
     let stockDocs = initialStockDocs;
     let stock = stockDocs as unknown as StockItem[];
@@ -446,9 +452,10 @@ export async function GET(request: NextRequest) {
             const normalizedSeries = normalizeSalesSeries(brandName, series);
             const normalizedKey = `${brandName}-${normalizedSeries}`;
             const quantity = toNumber(product.quantity);
-            
+
             // Store only normalized key to avoid duplicates
-            actualSalesCount[normalizedKey] = (actualSalesCount[normalizedKey] || 0) + quantity;
+            actualSalesCount[normalizedKey] =
+              (actualSalesCount[normalizedKey] || 0) + quantity;
 
             logger.debug(
               `📊 Sales count for ${brandName}-${series}: ${quantity} (total: ${actualSalesCount[normalizedKey]})`
@@ -491,9 +498,12 @@ export async function GET(request: NextRequest) {
       const documentSales = document.seriesStock
         .map((series) => {
           const seriesName = series.series || 'Unknown';
-          const normalizedSeries = normalizeSalesSeries(documentBrandName, seriesName);
+          const normalizedSeries = normalizeSalesSeries(
+            documentBrandName,
+            seriesName
+          );
           const normalizedKey = `${documentBrandName}-${normalizedSeries}`;
-          
+
           // Use only normalized key for consistent matching
           const actualSoldCount = actualSalesCount[normalizedKey] || 0;
 
@@ -533,7 +543,9 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.soldCount - a.soldCount)
       .slice(0, 5);
 
-    logger.debug('🏆 Top selling products (date range + fallback to historical):');
+    logger.debug(
+      '🏆 Top selling products (date range + fallback to historical):'
+    );
 
     logger.debug(
       `🏆 Top selling products calculated: ${topSellingProducts.length}`

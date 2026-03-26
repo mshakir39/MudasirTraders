@@ -15,16 +15,16 @@ interface ProductWarrantyToggleProps {
 export const ProductWarrantyToggle: React.FC<ProductWarrantyToggleProps> = ({
   noWarranty,
   onWarrantyChange,
-  disabled = false
+  disabled = false,
 }) => {
   return (
-    <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-      <div className="flex items-center gap-4">
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold text-gray-800">
+    <div className='mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4'>
+      <div className='flex items-center gap-4'>
+        <div className='flex flex-col'>
+          <label className='text-sm font-semibold text-gray-800'>
             No Warranty
           </label>
-          <p className="mt-1 text-xs text-gray-600">
+          <p className='mt-1 text-xs text-gray-600'>
             {noWarranty
               ? 'This product has no warranty coverage'
               : 'Enable if this product has no warranty'}
@@ -37,15 +37,15 @@ export const ProductWarrantyToggle: React.FC<ProductWarrantyToggleProps> = ({
             const newValue = !noWarranty;
             onWarrantyChange(newValue);
           }}
-          className="cursor-pointer"
+          className='cursor-pointer'
         >
           <Toggle
             checked={!!noWarranty}
             onChange={(noWarranty: boolean) => onWarrantyChange(noWarranty)}
             label={noWarranty ? 'No Warranty' : 'Has Warranty'}
-            size="sm"
-            color="red"
-            labelPosition="bottom"
+            size='sm'
+            color='red'
+            labelPosition='bottom'
           />
         </div>
       </div>

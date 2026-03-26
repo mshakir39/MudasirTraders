@@ -40,7 +40,8 @@ const Button: FunctionComponent<IButton> = ({
         variant === 'fill'
           ? {
               background: 'linear-gradient(135deg, #4287f5 0%, #021b3b 100%)',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              boxShadow:
+                '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
               transition: 'all 0.2s ease',
             }
           : {}

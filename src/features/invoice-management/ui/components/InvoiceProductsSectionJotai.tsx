@@ -5,7 +5,10 @@
 
 import React from 'react';
 import { useAtom, useSetAtom } from 'jotai';
-import { invoiceFormDataAtom, updateInvoiceFieldAtom } from '@/store/invoiceAtoms';
+import {
+  invoiceFormDataAtom,
+  updateInvoiceFieldAtom,
+} from '@/store/invoiceAtoms';
 import { InvoiceFormData } from '@/entities/invoice';
 import ProductSection from './product/ProductSectionRefactored';
 import ChargingServiceSection from './ChargingServiceSection';
@@ -18,14 +21,12 @@ interface InvoiceProductsSectionJotaiProps {
   brandOptions?: any[];
 }
 
-export const InvoiceProductsSectionJotai: React.FC<InvoiceProductsSectionJotaiProps> = ({
-  categories,
-  stock,
-  brandOptions
-}) => {
+export const InvoiceProductsSectionJotai: React.FC<
+  InvoiceProductsSectionJotaiProps
+> = ({ categories, stock, brandOptions }) => {
   const [invoiceData, setInvoiceData] = useAtom(invoiceFormDataAtom);
   const updateInvoiceField = useSetAtom(updateInvoiceFieldAtom);
-  
+
   // Use Jotai accordion hook
   const {
     accordionData,
@@ -33,7 +34,7 @@ export const InvoiceProductsSectionJotai: React.FC<InvoiceProductsSectionJotaiPr
     setExpandedAccordionIndex,
     handleAccordionClick,
     accordionMethods,
-    initializeAccordionData
+    initializeAccordionData,
   } = useAccordionDataJotai(categories, stock);
 
   // Initialize accordion data when component mounts
@@ -43,7 +44,7 @@ export const InvoiceProductsSectionJotai: React.FC<InvoiceProductsSectionJotaiPr
 
   const normalizedStock = React.useMemo(() => {
     if (!Array.isArray(stock)) return [];
-    return stock.map(item => ({
+    return stock.map((item) => ({
       ...item,
       brandName: item.brandName || item.name || '',
       series: item.series || item.model || '',
@@ -53,30 +54,35 @@ export const InvoiceProductsSectionJotai: React.FC<InvoiceProductsSectionJotaiPr
   }, [stock]);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Products</h3>
+    <div className='space-y-3'>
+      <div className='flex items-center justify-between'>
+        <h3 className='text-lg font-semibold'>Products</h3>
         <Toggle
           checked={invoiceData?.isChargingService || false}
           onChange={(checked) => {
             updateInvoiceField({ field: 'isChargingService', value: checked });
             // Auto-create first service when enabling charging mode
-            updateInvoiceField({ 
-              field: 'chargingServices', 
-              value: checked && (!invoiceData.chargingServices || invoiceData.chargingServices.length === 0)
-                ? [{
-                    id: Date.now().toString(),
-                    description: '',
-                    quantity: 1,
-                    price: 0,
-                    total: 0,
-                  }]
-                : invoiceData.chargingServices
+            updateInvoiceField({
+              field: 'chargingServices',
+              value:
+                checked &&
+                (!invoiceData.chargingServices ||
+                  invoiceData.chargingServices.length === 0)
+                  ? [
+                      {
+                        id: Date.now().toString(),
+                        description: '',
+                        quantity: 1,
+                        price: 0,
+                        total: 0,
+                      },
+                    ]
+                  : invoiceData.chargingServices,
             });
           }}
-          label="Charging Service Mode"
-          size="sm"
-          color="blue"
+          label='Charging Service Mode'
+          size='sm'
+          color='blue'
         />
       </div>
 
@@ -104,7 +110,9 @@ export const InvoiceProductsSectionJotai: React.FC<InvoiceProductsSectionJotaiPr
             });
           }}
           onServiceRemove={(index: number) => {
-            const updatedServices = (invoiceData?.chargingServices || []).filter((_: any, i: number) => i !== index);
+            const updatedServices = (
+              invoiceData?.chargingServices || []
+            ).filter((_: any, i: number) => i !== index);
             updateInvoiceField({
               field: 'chargingServices',
               value: updatedServices,
@@ -120,10 +128,7 @@ export const InvoiceProductsSectionJotai: React.FC<InvoiceProductsSectionJotaiPr
             };
             updateInvoiceField({
               field: 'chargingServices',
-              value: [
-                ...(invoiceData.chargingServices || []),
-                newService,
-              ],
+              value: [...(invoiceData.chargingServices || []), newService],
             });
           }}
         />

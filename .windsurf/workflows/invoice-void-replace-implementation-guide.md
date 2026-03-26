@@ -5,9 +5,11 @@ description: Complete Implementation Guide for Invoice Void and Replace Feature
 # Invoice Void and Replace Feature - Complete Implementation Guide
 
 ## 🎯 Overview
+
 This guide provides step-by-step instructions for implementing the invoice void and replace feature in the Mudasir Traders system. This feature allows customers to add products to existing invoices by voiding the original and creating a new combined invoice.
 
 ## 📋 Prerequisites
+
 - MongoDB database access
 - Node.js environment
 - Understanding of current invoice system
@@ -18,15 +20,18 @@ This guide provides step-by-step instructions for implementing the invoice void 
 ## 🗄️ Phase 1: Database Migration
 
 ### Step 1.1: Review Migration Script
+
 **File:** `migrations/add-invoice-void-fields.js`
 
 **What it does:**
+
 - Adds `status: 'active'` to all existing invoices
 - Adds void/replace specific fields as null
 - Creates performance indexes
 - Validates migration success
 
 **Key fields being added:**
+
 ```javascript
 {
   status: 'active',           // Invoice lifecycle status
@@ -42,6 +47,7 @@ This guide provides step-by-step instructions for implementing the invoice void 
 ```
 
 ### Step 1.2: Test Migration on Staging
+
 ```bash
 # Navigate to project root
 cd d:\MudasirTraders
@@ -66,13 +72,16 @@ node migrations/add-invoice-void-fields.js
 ```
 
 ### Step 1.3: Validate Migration Results
+
 After migration, verify:
+
 - All invoices have `status: 'active'`
 - New indexes are created
 - No data corruption
 - Existing functionality works
 
 ### Step 1.4: Production Migration
+
 ```bash
 # Backup production database first!
 # Then run migration:
@@ -83,6 +92,7 @@ node migrations/add-invoice-void-fields.js
 ```
 
 ### Step 1.5: Rollback Plan (If Needed)
+
 ```bash
 # If migration fails, rollback:
 node migrations/add-invoice-void-fields.js rollback
@@ -93,9 +103,11 @@ node migrations/add-invoice-void-fields.js rollback
 ## 📝 Phase 2: Type Definitions
 
 ### Step 2.1: Update Invoice Interface
+
 **File:** `src/interfaces/index.ts`
 
 Add to existing InvoiceData interface:
+
 ```typescript
 export interface InvoiceData {
   // ... existing fields
@@ -112,7 +124,7 @@ export interface InvoiceData {
   invoiceDate: Date;
   dueDate?: Date;
   notes?: string;
-  
+
   // NEW VOID/REPLACE FIELDS:
   status?: 'active' | 'voided' | 'cancelled';
   voidedAt?: Date;
@@ -126,6 +138,7 @@ export interface InvoiceData {
 ```
 
 ### Step 2.2: Add Supporting Types
+
 ```typescript
 // Add to interfaces file:
 export interface VoidReplaceResult {
@@ -150,6 +163,7 @@ export interface VoidReplaceRequest {
 ## 🔧 Phase 3: Core Business Logic
 
 ### Step 3.1: Create Core Void Function
+
 **File:** `src/actions/invoiceActions.ts`
 
 ```typescript
@@ -162,26 +176,26 @@ export async function voidAndReplaceInvoice(
   try {
     const db = await connectToMongoDB();
     const invoiceCollection = db.collection('invoices');
-    
+
     // 1. Validate original invoice
     const originalInvoice = await invoiceCollection.findOne({
-      _id: new ObjectId(originalInvoiceId)
+      _id: new ObjectId(originalInvoiceId),
     });
-    
+
     if (!originalInvoice) {
       throw new Error('Original invoice not found');
     }
-    
+
     if (originalInvoice.status === 'voided') {
       throw new Error('Invoice already voided');
     }
-    
+
     // 2. Calculate additional amount
     const additionalAmount = additionalProducts.reduce(
-      (sum, product) => sum + (product.totalPrice || 0), 
+      (sum, product) => sum + (product.totalPrice || 0),
       0
     );
-    
+
     // 3. Void the original invoice
     await invoiceCollection.updateOne(
       { _id: new ObjectId(originalInvoiceId) },
@@ -191,24 +205,26 @@ export async function voidAndReplaceInvoice(
           voidedAt: new Date(),
           voidReason: 'Replaced with additional products',
           voidedBy: userId,
-          notes: additionalNotes
-        }
+          notes: additionalNotes,
+        },
       }
     );
-    
+
     // 4. Create new invoice with combined products
-    const combinedProducts = [
-      ...originalInvoice.items,
-      ...additionalProducts
-    ];
-    
+    const combinedProducts = [...originalInvoice.items, ...additionalProducts];
+
     const newInvoiceData = {
       invoiceNumber: await generateInvoiceNumber(),
       customerName: originalInvoice.customerName,
       customerPhone: originalInvoice.customerPhone,
       customerAddress: originalInvoice.customerAddress,
       items: combinedProducts,
-      subtotal: originalInvoice.subtotal + additionalProducts.reduce((sum, p) => sum + (p.unitPrice * p.quantity), 0),
+      subtotal:
+        originalInvoice.subtotal +
+        additionalProducts.reduce(
+          (sum, p) => sum + p.unitPrice * p.quantity,
+          0
+        ),
       taxAmount: originalInvoice.taxAmount, // Recalculate if needed
       totalAmount: originalInvoice.totalAmount + additionalAmount,
       paymentMethod: originalInvoice.paymentMethod,
@@ -216,41 +232,40 @@ export async function voidAndReplaceInvoice(
       invoiceDate: new Date(),
       dueDate: originalInvoice.dueDate,
       notes: `Replaces Invoice #${originalInvoice.invoiceNumber} + additional items${additionalNotes ? ': ' + additionalNotes : ''}`,
-      
+
       // Void/replace fields
       status: 'active',
       replacesInvoice: originalInvoiceId,
       originalAmount: originalInvoice.totalAmount,
       additionalAmount: additionalAmount,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
-    
+
     // 5. Insert new invoice
     const result = await invoiceCollection.insertOne(newInvoiceData);
     const newInvoiceId = result.insertedId.toString();
-    
+
     // 6. Update original invoice with new invoice reference
     await invoiceCollection.updateOne(
       { _id: new ObjectId(originalInvoiceId) },
       {
         $set: {
-          replacedBy: newInvoiceId
-        }
+          replacedBy: newInvoiceId,
+        },
       }
     );
-    
+
     // 7. Update stock for additional products only
     await updateStockForProducts(additionalProducts, 'deduct');
-    
+
     // 8. Revalidate cache
     revalidateInvoicePaths();
-    
+
     return {
       newInvoice: { ...newInvoiceData, _id: newInvoiceId },
       voidedInvoice: { ...originalInvoice, status: 'voided' },
-      success: true
+      success: true,
     };
-    
   } catch (error) {
     console.error('Error voiding and replacing invoice:', error);
     throw error;
@@ -259,25 +274,28 @@ export async function voidAndReplaceInvoice(
 ```
 
 ### Step 3.2: Add Transfer Chain Function
+
 ```typescript
-export async function getInvoiceTransferChain(invoiceId: string): Promise<InvoiceTransferChain> {
+export async function getInvoiceTransferChain(
+  invoiceId: string
+): Promise<InvoiceTransferChain> {
   try {
     const db = await connectToMongoDB();
     const invoiceCollection = db.collection('invoices');
-    
+
     const chain = [];
     let currentId = invoiceId;
-    
+
     // Build chain forward (replacedBy)
     while (currentId) {
       const invoice = await invoiceCollection.findOne({
-        _id: new ObjectId(currentId)
+        _id: new ObjectId(currentId),
       });
-      
+
       if (!invoice) break;
-      
+
       chain.push(invoice);
-      
+
       // Follow replacedBy link
       if (invoice.replacedBy) {
         currentId = invoice.replacedBy;
@@ -285,21 +303,22 @@ export async function getInvoiceTransferChain(invoiceId: string): Promise<Invoic
         break;
       }
     }
-    
+
     // Also check backwards (replacesInvoice)
     const originalInvoice = await invoiceCollection.findOne({
-      replacedBy: new ObjectId(invoiceId)
+      replacedBy: new ObjectId(invoiceId),
     });
-    
+
     if (originalInvoice) {
       chain.unshift(originalInvoice);
     }
-    
+
     return {
-      chain: chain.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
-      success: true
+      chain: chain.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      ),
+      success: true,
     };
-    
   } catch (error) {
     console.error('Error getting invoice transfer chain:', error);
     return { chain: [], success: false };
@@ -308,21 +327,26 @@ export async function getInvoiceTransferChain(invoiceId: string): Promise<Invoic
 ```
 
 ### Step 3.3: Add Helper Functions
+
 ```typescript
 async function generateInvoiceNumber(): Promise<string> {
   // Your existing invoice number generation logic
   const db = await connectToMongoDB();
-  const lastInvoice = await db.collection('invoices')
+  const lastInvoice = await db
+    .collection('invoices')
     .find({})
     .sort({ createdAt: -1 })
     .limit(1)
     .toArray();
-  
+
   // Generate next number based on your existing logic
   return `INV-${Date.now()}`;
 }
 
-async function updateStockForProducts(products: InvoiceItem[], operation: 'deduct' | 'add') {
+async function updateStockForProducts(
+  products: InvoiceItem[],
+  operation: 'deduct' | 'add'
+) {
   // Your existing stock update logic
   // Only update for additional products in void/replace scenario
   for (const product of products) {
@@ -338,6 +362,7 @@ async function updateStockForProducts(products: InvoiceItem[], operation: 'deduc
 ## 🌐 Phase 4: API Endpoints
 
 ### Step 4.1: Create Void/Replace API
+
 **File:** `src/app/api/invoices/[id]/void-and-replace/route.ts`
 
 ```typescript
@@ -351,7 +376,7 @@ export async function POST(
   try {
     const userId = request.headers.get('x-user-id'); // Get from auth
     const { additionalProducts, additionalNotes } = await request.json();
-    
+
     // Validate request
     if (!additionalProducts || !Array.isArray(additionalProducts)) {
       return NextResponse.json(
@@ -359,17 +384,22 @@ export async function POST(
         { status: 400 }
       );
     }
-    
+
     // Validate products structure
     for (const product of additionalProducts) {
-      if (!product.brandName || !product.series || !product.quantity || !product.unitPrice) {
+      if (
+        !product.brandName ||
+        !product.series ||
+        !product.quantity ||
+        !product.unitPrice
+      ) {
         return NextResponse.json(
           { error: 'Invalid product structure' },
           { status: 400 }
         );
       }
     }
-    
+
     // Perform void and replace
     const result = await voidAndReplaceInvoice(
       params.id,
@@ -377,9 +407,8 @@ export async function POST(
       additionalNotes,
       userId
     );
-    
+
     return NextResponse.json(result);
-    
   } catch (error: any) {
     console.error('API Error:', error);
     return NextResponse.json(
@@ -391,6 +420,7 @@ export async function POST(
 ```
 
 ### Step 4.2: Create Transfer Chain API
+
 **File:** `src/app/api/invoices/[id]/transfer-chain/route.ts`
 
 ```typescript
@@ -403,9 +433,8 @@ export async function GET(
 ) {
   try {
     const result = await getInvoiceTransferChain(params.id);
-    
+
     return NextResponse.json(result);
-    
   } catch (error: any) {
     console.error('Transfer Chain API Error:', error);
     return NextResponse.json(
@@ -421,6 +450,7 @@ export async function GET(
 ## 🎨 Phase 5: UI Components
 
 ### Step 5.1: Update Invoice Detail Page
+
 **File:** `src/features/invoice-management/ui/components/InvoiceDetail.tsx`
 
 ```typescript
@@ -433,7 +463,7 @@ export function InvoiceDetail({ invoice }: { invoice: InvoiceData }) {
   return (
     <div>
       {/* Existing invoice details */}
-      
+
       {/* Add void/replace button - only show for active invoices */}
       {invoice.status !== 'voided' && (
         <button
@@ -443,7 +473,7 @@ export function InvoiceDetail({ invoice }: { invoice: InvoiceData }) {
           Add Products & Create New Invoice
         </button>
       )}
-      
+
       {/* Show transfer relationships */}
       {invoice.replacesInvoice && (
         <div className="mt-4 p-3 bg-orange-50 rounded">
@@ -452,7 +482,7 @@ export function InvoiceDetail({ invoice }: { invoice: InvoiceData }) {
           </span>
         </div>
       )}
-      
+
       {invoice.replacedBy && (
         <div className="mt-4 p-3 bg-gray-50 rounded">
           <span className="text-gray-600">
@@ -463,7 +493,7 @@ export function InvoiceDetail({ invoice }: { invoice: InvoiceData }) {
           </span>
         </div>
       )}
-      
+
       {/* Void/Replace Modal */}
       {showVoidReplaceModal && (
         <VoidReplaceModal
@@ -481,6 +511,7 @@ export function InvoiceDetail({ invoice }: { invoice: InvoiceData }) {
 ```
 
 ### Step 5.2: Create Void Replace Modal
+
 **File:** `src/features/invoice-management/ui/components/VoidReplaceModal.tsx`
 
 ```typescript
@@ -493,10 +524,10 @@ interface VoidReplaceModalProps {
   onSuccess: (newInvoice: InvoiceData) => void;
 }
 
-export default function VoidReplaceModal({ 
-  originalInvoice, 
-  onClose, 
-  onSuccess 
+export default function VoidReplaceModal({
+  originalInvoice,
+  onClose,
+  onSuccess
 }: VoidReplaceModalProps) {
   const [additionalProducts, setAdditionalProducts] = useState<InvoiceItem[]>([]);
   const [additionalNotes, setAdditionalNotes] = useState('');
@@ -560,7 +591,7 @@ export default function VoidReplaceModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">Add Products & Create New Invoice</h2>
-        
+
         {/* Original Invoice Summary */}
         <div className="mb-6 p-4 bg-gray-50 rounded">
           <h3 className="font-semibold mb-2">Original Invoice: #{originalInvoice.invoiceNumber}</h3>
@@ -572,10 +603,10 @@ export default function VoidReplaceModal({
         {/* Additional Products */}
         <div className="mb-6">
           <h3 className="font-semibold mb-2">Additional Products</h3>
-          
+
           {/* Product selector - integrate with your existing product selection */}
           <ProductSelector onProductSelect={handleAddProduct} />
-          
+
           {/* Selected additional products */}
           {additionalProducts.length > 0 && (
             <div className="mt-4">
@@ -646,13 +677,14 @@ export default function VoidReplaceModal({
 ```
 
 ### Step 5.3: Update Invoice List
+
 **File:** `src/features/invoice-management/ui/components/InvoiceDataTable.tsx`
 
 ```typescript
 // Add status column to invoice table
 const columns = [
   // ... existing columns
-  
+
   {
     header: 'Status',
     accessorKey: 'status',
@@ -670,14 +702,14 @@ const columns = [
       </div>
     )
   },
-  
+
   {
     header: 'Actions',
     accessorKey: 'actions',
     cell: (invoice: InvoiceData) => (
       <div className="flex space-x-2">
         {/* Existing actions */}
-        
+
         {/* Transfer chain link */}
         {invoice.replacedBy && (
           <a
@@ -698,6 +730,7 @@ const columns = [
 ## 📊 Phase 6: Reports & Dashboard Updates
 
 ### Step 6.1: Update Dashboard Stats
+
 **File:** `src/actions/dashboardActions.ts`
 
 ```typescript
@@ -706,25 +739,27 @@ export async function getDashboardStats() {
   try {
     const db = await connectToMongoDB();
     const salesCollection = db.collection('invoices');
-    
+
     // Add status filter to exclude voided invoices
     const salesData = await salesCollection
-      .find({ 
+      .find({
         status: { $ne: 'voided' }, // 🎯 KEY CHANGE
         // ... existing filters
       })
       .toArray();
-    
+
     // Rest of your existing logic remains the same
     const totalSales = salesData.length;
-    const totalRevenue = salesData.reduce((sum, sale) => sum + sale.totalAmount, 0);
-    
+    const totalRevenue = salesData.reduce(
+      (sum, sale) => sum + sale.totalAmount,
+      0
+    );
+
     return {
       totalSales,
       totalRevenue,
       // ... other existing metrics
     };
-    
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
     throw error;
@@ -733,24 +768,27 @@ export async function getDashboardStats() {
 ```
 
 ### Step 6.2: Update Profit Analysis
+
 ```typescript
-export async function calculateProfitForDateRange(startDate: Date, endDate: Date) {
+export async function calculateProfitForDateRange(
+  startDate: Date,
+  endDate: Date
+) {
   try {
     const db = await connectToMongoDB();
     const salesCollection = db.collection('invoices');
-    
+
     // Exclude voided invoices from profit calculation
     const sales = await salesCollection
       .find({
         invoiceDate: { $gte: startDate, $lte: endDate },
         status: { $ne: 'voided' }, // 🎯 KEY CHANGE
-        paymentStatus: 'paid' // Only include paid invoices
+        paymentStatus: 'paid', // Only include paid invoices
       })
       .toArray();
-    
+
     // Rest of your existing profit calculation logic
-    // ... 
-    
+    // ...
   } catch (error) {
     console.error('Error calculating profit:', error);
     throw error;
@@ -759,19 +797,20 @@ export async function calculateProfitForDateRange(startDate: Date, endDate: Date
 ```
 
 ### Step 6.3: Update Sales Trend Chart
+
 ```typescript
 // Ensure chart data excludes voided invoices
 export async function getSalesTrendData(dateRange: DateRange) {
   const db = await connectToMongoDB();
   const salesCollection = db.collection('invoices');
-  
+
   const sales = await salesCollection
     .find({
       invoiceDate: { $gte: dateRange.start, $lte: dateRange.end },
       status: { $ne: 'voided' }, // 🎯 KEY CHANGE
     })
     .toArray();
-  
+
   // Rest of your chart data processing
   // ...
 }
@@ -782,17 +821,18 @@ export async function getSalesTrendData(dateRange: DateRange) {
 ## 🧪 Phase 7: Testing
 
 ### Step 7.1: Unit Tests
+
 ```typescript
 // File: __tests__/invoiceActions.test.ts
 describe('voidAndReplaceInvoice', () => {
   test('should void original and create new invoice', async () => {
     // Test implementation
   });
-  
+
   test('should handle already voided invoice', async () => {
     // Test error handling
   });
-  
+
   test('should update stock correctly', async () => {
     // Test stock updates
   });
@@ -800,13 +840,14 @@ describe('voidAndReplaceInvoice', () => {
 ```
 
 ### Step 7.2: Integration Tests
+
 ```typescript
 // Test API endpoints
 describe('POST /api/invoices/[id]/void-and-replace', () => {
   test('should create new invoice successfully', async () => {
     // Test API integration
   });
-  
+
   test('should validate request data', async () => {
     // Test validation
   });
@@ -814,6 +855,7 @@ describe('POST /api/invoices/[id]/void-and-replace', () => {
 ```
 
 ### Step 7.3: Manual Testing Checklist
+
 - [ ] Migration runs successfully
 - [ ] Existing invoices show as 'active'
 - [ ] Void/replace button appears for active invoices
@@ -830,6 +872,7 @@ describe('POST /api/invoices/[id]/void-and-replace', () => {
 ## 🚀 Phase 8: Deployment
 
 ### Step 8.1: Pre-Deployment Checklist
+
 - [ ] Migration tested on staging
 - [ ] All code reviewed
 - [ ] Tests passing
@@ -838,6 +881,7 @@ describe('POST /api/invoices/[id]/void-and-replace', () => {
 - [ ] Deployment window scheduled
 
 ### Step 8.2: Deployment Steps
+
 1. **Run migration on production**
 2. **Deploy updated code**
 3. **Monitor system performance**
@@ -846,6 +890,7 @@ describe('POST /api/invoices/[id]/void-and-replace', () => {
 6. **Monitor error logs**
 
 ### Step 8.3: Post-Deployment
+
 - [ ] Monitor for 24 hours
 - [ ] Check user feedback
 - [ ] Verify reports accuracy
@@ -856,19 +901,25 @@ describe('POST /api/invoices/[id]/void-and-replace', () => {
 ## 📚 Phase 9: Documentation
 
 ### Step 9.1: User Documentation
+
 Create user guide:
+
 - How to void and replace invoices
 - Understanding transfer chains
 - Reading updated reports
 
 ### Step 9.2: Technical Documentation
+
 Update API documentation:
+
 - New endpoints
 - Request/response formats
 - Error handling
 
 ### Step 9.3: Admin Documentation
+
 Create admin guide:
+
 - Migration procedures
 - Troubleshooting
 - Audit procedures
@@ -878,12 +929,14 @@ Create admin guide:
 ## 🔍 Phase 10: Monitoring & Maintenance
 
 ### Step 10.1: Monitoring
+
 - Track void/replace usage
 - Monitor report accuracy
 - Check system performance
 - Watch for errors
 
 ### Step 10.2: Maintenance
+
 - Regular backup checks
 - Index optimization
 - User feedback collection
@@ -894,12 +947,14 @@ Create admin guide:
 ## 🎯 Success Metrics
 
 ### Technical Metrics
+
 - [ ] Zero downtime during deployment
 - [ ] No impact on existing functionality
 - [ ] 100% audit trail coverage
 - [ ] Report accuracy maintained
 
 ### Business Metrics
+
 - [ ] Reduced customer confusion
 - [ ] Improved invoice management
 - [ ] Better audit compliance
@@ -912,18 +967,23 @@ Create admin guide:
 ### Common Issues & Solutions
 
 #### Issue: Migration fails
+
 **Solution:** Check database connection, verify permissions, rollback if needed
 
 #### Issue: Reports show incorrect totals
+
 **Solution:** Verify status filter applied correctly, check indexes
 
 #### Issue: Stock not updated correctly
+
 **Solution:** Check stock update logic, verify product data structure
 
 #### Issue: Transfer chain not showing
+
 **Solution:** Verify replacedBy/replacesInvoice links, check API response
 
 #### Issue: Performance issues
+
 **Solution:** Check indexes, optimize queries, monitor database load
 
 ---
@@ -931,6 +991,7 @@ Create admin guide:
 ## 📞 Support
 
 For issues with this implementation:
+
 1. Check this guide first
 2. Review error logs
 3. Test on staging environment
@@ -946,4 +1007,4 @@ For issues with this implementation:
 
 ---
 
-*This guide provides complete step-by-step instructions for implementing the invoice void and replace feature. Follow each phase in order for successful deployment.*
+_This guide provides complete step-by-step instructions for implementing the invoice void and replace feature. Follow each phase in order for successful deployment._

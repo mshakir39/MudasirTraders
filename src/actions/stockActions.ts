@@ -274,7 +274,7 @@ export async function getStock() {
 export async function getStockHistory(brandName: string, series?: string) {
   try {
     console.log('🔍 getStockHistory called with:', { brandName, series });
-    
+
     const { ObjectId } = require('mongodb');
     const db = await connectToMongoDB();
     if (!db) {
@@ -296,7 +296,7 @@ export async function getStockHistory(brandName: string, series?: string) {
       .find(query)
       .sort({ historyDate: -1 })
       .toArray();
-    
+
     console.log('📊 Raw history count:', rawHistory.length);
     console.log('📋 Raw history sample:', rawHistory.slice(0, 2));
 

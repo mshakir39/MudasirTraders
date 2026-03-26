@@ -29,7 +29,7 @@ export const BrandCreateModal: React.FC<BrandCreateModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.brandName.trim()) return;
-    
+
     await onSubmit(formData);
     setFormData({ brandName: '' });
   };
@@ -40,11 +40,7 @@ export const BrandCreateModal: React.FC<BrandCreateModalProps> = ({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title='Add New Brand'
-    >
+    <Modal isOpen={isOpen} onClose={handleClose} title='Add New Brand'>
       <form onSubmit={handleSubmit} className='space-y-4'>
         <Input
           type='text'

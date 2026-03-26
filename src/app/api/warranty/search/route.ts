@@ -9,10 +9,10 @@ export async function GET(request: NextRequest) {
 
     if (!warrantyCode) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Warranty code is required' 
-        }, 
+        {
+          success: false,
+          error: 'Warranty code is required',
+        },
         { status: 400 }
       );
     }
@@ -25,10 +25,10 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('❌ Warranty search error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error.message || 'Failed to search warranty' 
-      }, 
+      {
+        success: false,
+        error: error.message || 'Failed to search warranty',
+      },
       { status: 500 }
     );
   }

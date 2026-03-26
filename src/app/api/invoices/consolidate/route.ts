@@ -7,7 +7,7 @@ import { InvoiceDataUtil } from '@/utils/invoiceDataUtil';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Validate request body
     const {
       customerName,
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       batteriesRate, // Add battery rate
       customerType, // Add customer type
       customerId, // Add customer ID
-      vehicleNo // Add vehicle number
+      vehicleNo, // Add vehicle number
     } = body;
 
     // Required fields validation
@@ -34,7 +34,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!newProducts || !Array.isArray(newProducts) || newProducts.length === 0) {
+    if (
+      !newProducts ||
+      !Array.isArray(newProducts) ||
+      newProducts.length === 0
+    ) {
       return NextResponse.json(
         { error: 'At least one new product is required' },
         { status: 400 }
@@ -70,14 +74,14 @@ export async function POST(request: NextRequest) {
       customerAddress,
       products: newProducts,
       receivedAmount: receivedAmount || 0, // Allow payment during consolidation
-      paymentMethod: paymentMethod || ['Cash'] // Allow payment method selection
+      paymentMethod: paymentMethod || ['Cash'], // Allow payment method selection
     });
 
     if (!productValidation.isValid) {
       return NextResponse.json(
-        { 
-          error: 'Invalid product data', 
-          details: productValidation.errors 
+        {
+          error: 'Invalid product data',
+          details: productValidation.errors,
         },
         { status: 400 }
       );
@@ -87,17 +91,25 @@ export async function POST(request: NextRequest) {
       pendingInvoiceIds,
       previousAmounts,
       newProductsCount: newProducts.length,
-      customerName
+      customerName,
     });
 
-    if (!pendingInvoiceIds || !Array.isArray(pendingInvoiceIds) || pendingInvoiceIds.length === 0) {
+    if (
+      !pendingInvoiceIds ||
+      !Array.isArray(pendingInvoiceIds) ||
+      pendingInvoiceIds.length === 0
+    ) {
       return NextResponse.json(
         { error: 'At least one pending invoice ID is required' },
         { status: 400 }
       );
     }
 
-    if (!previousAmounts || !Array.isArray(previousAmounts) || previousAmounts.length === 0) {
+    if (
+      !previousAmounts ||
+      !Array.isArray(previousAmounts) ||
+      previousAmounts.length === 0
+    ) {
       return NextResponse.json(
         { error: 'Previous amounts are required' },
         { status: 400 }
@@ -106,28 +118,40 @@ export async function POST(request: NextRequest) {
 
     if (pendingInvoiceIds.length !== previousAmounts.length) {
       return NextResponse.json(
-        { error: 'Pending invoice IDs and previous amounts must have the same length' },
+        {
+          error:
+            'Pending invoice IDs and previous amounts must have the same length',
+        },
         { status: 400 }
       );
     }
 
     // Validate new products structure
     for (const product of newProducts) {
-      if (!product.brandName || !product.series || !product.unitPrice || !product.quantity) {
+      if (
+        !product.brandName ||
+        !product.series ||
+        !product.unitPrice ||
+        !product.quantity
+      ) {
         return NextResponse.json(
-          { 
-            error: 'Each product must have brandName, series, unitPrice, and quantity',
-            details: product
+          {
+            error:
+              'Each product must have brandName, series, unitPrice, and quantity',
+            details: product,
           },
           { status: 400 }
         );
       }
 
-      if (parseFloat(product.unitPrice) <= 0 || parseInt(product.quantity) <= 0) {
+      if (
+        parseFloat(product.unitPrice) <= 0 ||
+        parseInt(product.quantity) <= 0
+      ) {
         return NextResponse.json(
-          { 
+          {
             error: 'Product price and quantity must be positive numbers',
-            details: product
+            details: product,
           },
           { status: 400 }
         );
@@ -175,10 +199,9 @@ export async function POST(request: NextRequest) {
         newInvoice: result.data?.newInvoice,
         voidedInvoices: result.data?.voidedInvoices,
         consolidatedCount: result.data?.consolidatedCount,
-        message: `Successfully consolidated ${result.data?.consolidatedCount || 0} invoices`
-      }
+        message: `Successfully consolidated ${result.data?.consolidatedCount || 0} invoices`,
+      },
     });
-    
   } catch (error: any) {
     console.error('API Error - POST consolidate invoice:', error);
     return NextResponse.json(

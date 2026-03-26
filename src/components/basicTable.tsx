@@ -21,7 +21,6 @@ const Table: React.FC<TableProps<any>> = ({ data, columns, footerData }) => {
             </th>
           ))}
         </tr>
-        
       </thead>
       <tbody>
         {data?.map((row, rowIndex) => (

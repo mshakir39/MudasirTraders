@@ -23,12 +23,12 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
   onCancel,
   isPending = false,
   isEdit = false,
-  className = ''
+  className = '',
 }) => {
   const handleInputChange = (field: keyof CustomerFormData, value: string) => {
     onFormChange({
       ...form,
-      [field]: value
+      [field]: value,
     });
   };
 
@@ -41,7 +41,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
         onChange={(e) => handleInputChange('customerName', e.target.value)}
         required
       />
-      
+
       <Input
         label='Phone Number'
         name='phoneNumber'
@@ -49,14 +49,14 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
         onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
         required
       />
-      
+
       <Input
         label='Address'
         name='address'
         value={form.address}
         onChange={(e) => handleInputChange('address', e.target.value)}
       />
-      
+
       <Input
         label='Email'
         name='email'
@@ -64,7 +64,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
         value={form.email || ''}
         onChange={(e) => handleInputChange('email', e.target.value)}
       />
-      
+
       <div className='flex gap-3'>
         <Button
           type='button'
@@ -75,7 +75,15 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
         <Button
           type='submit'
           variant='fill'
-          text={isPending ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update' : 'Create')}
+          text={
+            isPending
+              ? isEdit
+                ? 'Updating...'
+                : 'Creating...'
+              : isEdit
+                ? 'Update'
+                : 'Create'
+          }
           disabled={isPending}
         />
       </div>

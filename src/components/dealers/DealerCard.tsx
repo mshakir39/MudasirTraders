@@ -95,7 +95,7 @@ const DealerCard: React.FC<DealerCardProps> = ({
               Current Bill
             </span>
             {dealer.isOverdue && (
-              <span className='rounded-full bg-error-100 px-2 py-1 text-xs text-error-800'>
+              <span className='bg-error-100 text-error-800 rounded-full px-2 py-1 text-xs'>
                 Overdue
               </span>
             )}
@@ -144,7 +144,7 @@ const DealerCard: React.FC<DealerCardProps> = ({
               text='Add Bill'
               icon={<FaPlus />}
               onClick={() => onAddBill(dealer)}
-              className='px-2 py-1 text-xs !text-success-600 hover:!bg-success-50'
+              className='!text-success-600 hover:!bg-success-50 px-2 py-1 text-xs'
             />
             <Button
               variant='outline'
@@ -169,7 +169,7 @@ const DealerCard: React.FC<DealerCardProps> = ({
               {dealer.totalBillsCount || 0}
             </div>
           </div>
-          <div className='rounded bg-success-50 p-2'>
+          <div className='bg-success-50 rounded p-2'>
             <div className='text-xs text-secondary-500'>Total Paid</div>
             <div className='text-sm font-semibold' style={{ color: '#059669' }}>
               Rs{' '}
@@ -178,7 +178,7 @@ const DealerCard: React.FC<DealerCardProps> = ({
               })}
             </div>
           </div>
-          <div className='rounded bg-error-50 p-2'>
+          <div className='bg-error-50 rounded p-2'>
             <div className='text-xs text-secondary-500'>Outstanding</div>
             <div className='text-sm font-semibold' style={{ color: '#dc2626' }}>
               Rs{' '}
@@ -214,7 +214,7 @@ const DealerCard: React.FC<DealerCardProps> = ({
           text='Delete'
           icon={<FaTrash />}
           onClick={() => onDelete(dealer)}
-          className='px-3 py-2 text-xs !text-error-600 hover:!bg-error-50'
+          className='!text-error-600 hover:!bg-error-50 px-3 py-2 text-xs'
         />
       </div>
     </div>

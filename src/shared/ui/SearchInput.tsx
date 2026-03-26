@@ -19,18 +19,18 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   placeholder = 'Enter search term...',
   name = 'search',
   disabled = false,
-  className = ''
+  className = '',
 }) => {
   return (
     <div className={`flex-1 ${className}`}>
       <input
-        type="text"
+        type='text'
         name={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-secondary-100 disabled:cursor-not-allowed"
+        className='w-full rounded-lg border border-secondary-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-secondary-100'
       />
     </div>
   );

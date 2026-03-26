@@ -93,7 +93,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     // Validate payment date is not in future
     const selectedDate = new Date(formData.paymentDate);
     const now = new Date();
-    
+
     // Simple date comparison without timezone complications
     if (selectedDate.getTime() > now.getTime()) {
       toast.error('Payment date and time cannot be in future');
@@ -161,9 +161,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
-
-  
-
   return (
     <Modal
       isOpen={isOpen}
@@ -198,7 +195,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <input
             type='datetime-local'
             name='paymentDate'
-            value={formData.paymentDate || new Date().toISOString().slice(0, 16)}
+            value={
+              formData.paymentDate || new Date().toISOString().slice(0, 16)
+            }
             onChange={(e) =>
               setFormData({ ...formData, paymentDate: e.target.value })
             }
@@ -294,7 +293,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               onChange={(e) => {
                 const file = e.target.files?.[0] || null;
                 setTransactionScreenshot(file);
-                
+
                 // Create preview URL
                 if (file) {
                   const preview = URL.createObjectURL(file);
@@ -327,8 +326,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                       className='absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600'
                       title='Remove image'
                     >
-                      <svg className='h-4 w-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                      <svg
+                        className='h-4 w-4'
+                        fill='none'
+                        viewBox='0 0 24 24'
+                        stroke='currentColor'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M6 18L18 6M6 6l12 12'
+                        />
                       </svg>
                     </button>
                   </div>

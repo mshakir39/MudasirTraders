@@ -19,30 +19,30 @@ export const ProductPriceInput: React.FC<ProductPriceInputProps> = ({
   quantity,
   onPriceChange,
   onQuantityChange,
-  disabled = false
+  disabled = false,
 }) => {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className='grid grid-cols-2 gap-3'>
       <div>
         <Input
-          type="number"
-          label="Price *"
+          type='number'
+          label='Price *'
           value={productPrice}
           onChange={(e) => onPriceChange(e.target.value)}
-          placeholder="0"
+          placeholder='0'
           disabled={disabled}
-          parentClass="w-full"
+          parentClass='w-full'
         />
       </div>
       <div>
         <Input
-          type="number"
-          label="Quantity *"
+          type='number'
+          label='Quantity *'
           value={quantity}
           onChange={(e) => onQuantityChange(e.target.value)}
-          placeholder="1"
+          placeholder='1'
           disabled={disabled}
-          parentClass="w-full"
+          parentClass='w-full'
         />
       </div>
     </div>

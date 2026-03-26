@@ -63,18 +63,18 @@ export interface Invoice {
   // Battery-related fields for Old Battery payment method
   batteriesRate?: number;
   batteriesCountAndWeight?: string;
-  
+
   // NEW: Void/Replace fields
   voidedAt?: Date;
   voidReason?: string;
   voidedBy?: string;
   replacedBy?: string; // New invoice ID if this was voided
   replacesInvoice?: string; // Old invoice ID if this replaces another
-  
+
   // NEW: Consolidation fields
   consolidatedFrom?: string[]; // Array of voided invoice IDs
   previousAmounts?: number[]; // Individual amounts from previous invoices (for audit trail)
-  
+
   // Helper getters (can be calculated, no need to store)
   // consolidatedAmount = sum(previousAmounts)
   // newItemsAmount = totalAmount - sum(previousAmounts)
@@ -131,7 +131,13 @@ export interface InvoiceFormData {
   batteriesRate?: number;
 }
 
-export type InvoiceModalType = 'create' | 'edit' | 'preview' | 'payment' | 'productDetail' | 'voidReplace';
+export type InvoiceModalType =
+  | 'create'
+  | 'edit'
+  | 'preview'
+  | 'payment'
+  | 'productDetail'
+  | 'voidReplace';
 
 export interface InvoiceModalState {
   isOpen: boolean;
@@ -183,29 +189,29 @@ export class InvoiceUtils {
     }
     return invoice.previousAmounts.reduce((sum, amount) => sum + amount, 0);
   }
-  
+
   // Calculate new items amount
   static getNewItemsAmount(invoice: Invoice): number {
     const consolidatedAmount = InvoiceUtils.getConsolidatedAmount(invoice);
     return invoice.totalAmount - consolidatedAmount;
   }
-  
+
   // Check if invoice is consolidated
   static isConsolidated(invoice: Invoice): boolean {
     return !!(invoice.consolidatedFrom && invoice.consolidatedFrom.length > 0);
   }
-  
+
   // Get consolidation summary
   static getConsolidationSummary(invoice: Invoice) {
     if (!InvoiceUtils.isConsolidated(invoice)) {
       return null;
     }
-    
+
     return {
       consolidatedAmount: InvoiceUtils.getConsolidatedAmount(invoice),
       newItemsAmount: InvoiceUtils.getNewItemsAmount(invoice),
       consolidatedCount: invoice.consolidatedFrom?.length || 0,
-      previousAmounts: invoice.previousAmounts || []
+      previousAmounts: invoice.previousAmounts || [],
     };
   }
 }

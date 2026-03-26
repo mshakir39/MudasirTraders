@@ -22,24 +22,24 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
   isLoading,
   onSubmit,
   onCancel,
-  children
+  children,
 }) => {
   return (
-    <form onSubmit={onSubmit} className="space-y-2">
+    <form onSubmit={onSubmit} className='space-y-2'>
       {children}
-      
-      <div className="flex justify-end gap-3 pt-2">
+
+      <div className='flex justify-end gap-3 pt-2'>
         <Button
-          variant="outline"
-          text="Cancel"
+          variant='outline'
+          text='Cancel'
           onClick={onCancel}
-          type="button"
+          type='button'
         />
         <Button
-          variant="fill"
+          variant='fill'
           text={isLoading ? 'Saving...' : 'Save Invoice'}
           isPending={isLoading}
-          type="submit"
+          type='submit'
         />
       </div>
     </form>

@@ -251,36 +251,39 @@ ${receiptContent}
     const grandTotal = getAllSum(data.products, 'totalPrice');
     const totalQuantity = data.products.reduce((sum: number, item: any) => {
       // Try different possible quantity field names
-      const qty = Number(item.quantity) || Number(item.qty) || Number(item.count) || 1;
+      const qty =
+        Number(item.quantity) || Number(item.qty) || Number(item.count) || 1;
       return sum + qty;
     }, 0);
-    
+
     content += line('=');
-    
+
     // Create totals row with less right alignment
     const totalLabel = 'TOTAL'.padEnd(descWidth);
     const qtyTotal = String(totalQuantity).padStart(qtyWidth + 4); // Reduce to 1 extra space
     const rateEmpty = ''.padStart(rateWidth);
     const totalAmount = String(grandTotal).padStart(totalWidth); // Move 1 space to the left
-    
+
     // Match the exact structure: ${no} ${description} ${qty} ${rate} ${total}
     content += `${totalLabel} ${qtyTotal} ${rateEmpty} ${totalAmount}\n`;
 
     // Consolidation details for consolidated invoices
-    if (data.consolidatedFrom && data.consolidatedFrom.length > 0 && data.previousAmounts && data.previousAmounts.length > 0) {
-
-      
+    if (
+      data.consolidatedFrom &&
+      data.consolidatedFrom.length > 0 &&
+      data.previousAmounts &&
+      data.previousAmounts.length > 0
+    ) {
       // Calculate total consolidated amount
-      
-      
+
       // Show individual consolidated invoices
       data.previousAmounts.forEach((amount: number, index: number) => {
         const invoiceId = data.consolidatedFrom?.[index];
-        const invoiceNo = data.consolidatedInvoiceNumbers?.[index] || `INV-${invoiceId?.slice(-6) || 'N/A'}`;
+        const invoiceNo =
+          data.consolidatedInvoiceNumbers?.[index] ||
+          `INV-${invoiceId?.slice(-6) || 'N/A'}`;
         content += createRow(`#${invoiceNo}`, `Rs ${amount}`);
       });
-      
-
     }
 
     // Batteries count and weight (if available)
@@ -293,18 +296,33 @@ ${receiptContent}
 
     // Calculate correct remaining amount for consolidated invoices
     let actualRemaining = data.remainingAmount;
-    if (data.consolidatedFrom && data.consolidatedFrom.length > 0 && data.previousAmounts && data.previousAmounts.length > 0) {
+    if (
+      data.consolidatedFrom &&
+      data.consolidatedFrom.length > 0 &&
+      data.previousAmounts &&
+      data.previousAmounts.length > 0
+    ) {
       // For consolidated invoices, calculate remaining amount properly
-      const consolidatedAmount = data.previousAmounts.reduce((sum: number, amount: number) => sum + amount, 0);
-      const newItemsAmount = data.products?.reduce((sum: number, product: any) => sum + (product.totalPrice || 0), 0) || 0;
+      const consolidatedAmount = data.previousAmounts.reduce(
+        (sum: number, amount: number) => sum + amount,
+        0
+      );
+      const newItemsAmount =
+        data.products?.reduce(
+          (sum: number, product: any) => sum + (product.totalPrice || 0),
+          0
+        ) || 0;
       const totalAmount = consolidatedAmount + newItemsAmount;
-      
+
       const initialReceived = Number(data.receivedAmount) || 0;
       const additionalPayments = data.additionalPayment || [];
       const batteriesRate = Number(data.batteriesRate) || 0;
-      const totalAdditionalReceived = additionalPayments.reduce((sum: number, payment: any) => sum + Number(payment.amount), 0);
+      const totalAdditionalReceived = additionalPayments.reduce(
+        (sum: number, payment: any) => sum + Number(payment.amount),
+        0
+      );
       const totalReceived = initialReceived + totalAdditionalReceived;
-      
+
       actualRemaining = totalAmount - totalReceived - batteriesRate;
     }
 
@@ -318,19 +336,22 @@ ${receiptContent}
       data.additionalPayment.forEach((payment: any) => {
         const paymentDate = convertDate(payment.addedDate).dateTime;
         const paymentMethod = payment.paymentMethod
-          ? ` (${payment.paymentMethod.join(' + ')})` 
+          ? ` (${payment.paymentMethod.join(' + ')})`
           : '';
-        
+
         // Create the full text and wrap it if needed
         const fullText = `Received ${paymentDate}${paymentMethod}:`;
         const rightText = `Rs ${payment.amount}`;
-        
+
         // Check if text needs wrapping
-        if (fullText.length > 25) { // Leave space for amount
+        if (fullText.length > 25) {
+          // Leave space for amount
           // Split into two lines
           const line1 = `Received ${paymentDate}:`;
-          const line2 = paymentMethod ? paymentMethod.replace(/[()]/g, '').trim() : '';
-          
+          const line2 = paymentMethod
+            ? paymentMethod.replace(/[()]/g, '').trim()
+            : '';
+
           content += createRow(line1, rightText);
           if (line2) {
             content += createRow(line2, '');

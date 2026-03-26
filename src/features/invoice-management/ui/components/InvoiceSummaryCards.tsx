@@ -14,7 +14,7 @@ interface InvoiceSummaryCardsProps {
 
 export const InvoiceSummaryCards: React.FC<InvoiceSummaryCardsProps> = ({
   summary,
-  className = ''
+  className = '',
 }) => {
   const cards = [
     {
@@ -62,18 +62,20 @@ export const InvoiceSummaryCards: React.FC<InvoiceSummaryCardsProps> = ({
   ];
 
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 ${className}`}>
+    <div
+      className={`grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 ${className}`}
+    >
       {cards.map((card, index) => (
         <div
           key={index}
-          className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm"
+          className='rounded-lg border border-gray-200 bg-white p-4 shadow-sm'
         >
-          <div className="flex items-center">
-            <div className={`p-2 ${card.bgColor} rounded-lg mr-3`}>
-              <span className="text-2xl">{card.icon}</span>
+          <div className='flex items-center'>
+            <div className={`p-2 ${card.bgColor} mr-3 rounded-lg`}>
+              <span className='text-2xl'>{card.icon}</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-600">{card.title}</p>
+              <p className='text-sm font-medium text-gray-600'>{card.title}</p>
               <p className={`text-lg font-bold ${card.textColor}`}>
                 {card.value}
               </p>

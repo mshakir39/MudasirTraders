@@ -3,13 +3,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-export const useAccordionLogic = (accordionData: any, accordionMethods: any, invoiceData: any) => {
+export const useAccordionLogic = (
+  accordionData: any,
+  accordionMethods: any,
+  invoiceData: any
+) => {
   const [expandedAccordionIndex, setExpandedAccordionIndex] = useState(-1);
   const [lastSyncedDate, setLastSyncedDate] = useState('');
 
-  const handleAccordionClick = useCallback((index: number) => {
-    setExpandedAccordionIndex(expandedAccordionIndex === index ? -1 : index);
-  }, [expandedAccordionIndex]);
+  const handleAccordionClick = useCallback(
+    (index: number) => {
+      setExpandedAccordionIndex(expandedAccordionIndex === index ? -1 : index);
+    },
+    [expandedAccordionIndex]
+  );
 
   // Sync warranty dates with custom date
   const syncWarrantyDatesWithCustomDate = useCallback(
@@ -38,7 +45,9 @@ export const useAccordionLogic = (accordionData: any, accordionMethods: any, inv
       });
 
       if (updatedCount > 0) {
-        console.log(`Warranty start dates synced with custom date: ${customDateOnly}`);
+        console.log(
+          `Warranty start dates synced with custom date: ${customDateOnly}`
+        );
       }
     },
     [accordionData, accordionMethods]
@@ -54,7 +63,14 @@ export const useAccordionLogic = (accordionData: any, accordionMethods: any, inv
         setLastSyncedDate(customDateOnly);
       }
     }
-  }, [invoiceData?.useCustomDate, invoiceData?.customDate, lastSyncedDate, accordionData, accordionMethods, syncWarrantyDatesWithCustomDate]);
+  }, [
+    invoiceData?.useCustomDate,
+    invoiceData?.customDate,
+    lastSyncedDate,
+    accordionData,
+    accordionMethods,
+    syncWarrantyDatesWithCustomDate,
+  ]);
 
   return {
     expandedAccordionIndex,

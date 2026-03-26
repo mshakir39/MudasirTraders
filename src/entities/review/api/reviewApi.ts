@@ -1,18 +1,23 @@
 // src/entities/review/api/reviewApi.ts
 // Review API operations - wraps existing API endpoints
 
-import { CustomerReview, ReviewAction, ReviewApiResponse, ReviewStats } from '../model/types';
+import {
+  CustomerReview,
+  ReviewAction,
+  ReviewApiResponse,
+  ReviewStats,
+} from '../model/types';
 
 export class ReviewApi {
   // Fetch all reviews for admin management
   static async fetchReviews(admin: boolean = true): Promise<CustomerReview[]> {
     try {
       const response = await fetch(`/api/reviews?admin=${admin}`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch reviews');
       }
-      
+
       const data: ReviewApiResponse = await response.json();
       return data.reviews || [];
     } catch (error) {
@@ -64,19 +69,24 @@ export class ReviewApi {
   // Get review statistics
   static getReviewStats(reviews: CustomerReview[]): ReviewStats {
     const total = reviews.length;
-    const approved = reviews.filter(review => review.approved === true).length;
-    const pending = reviews.filter(review => review.approved !== true).length;
+    const approved = reviews.filter(
+      (review) => review.approved === true
+    ).length;
+    const pending = reviews.filter((review) => review.approved !== true).length;
 
     return { total, approved, pending };
   }
 
   // Filter reviews by status
-  static filterReviews(reviews: CustomerReview[], filter: 'all' | 'approved' | 'pending'): CustomerReview[] {
+  static filterReviews(
+    reviews: CustomerReview[],
+    filter: 'all' | 'approved' | 'pending'
+  ): CustomerReview[] {
     switch (filter) {
       case 'approved':
-        return reviews.filter(review => review.approved === true);
+        return reviews.filter((review) => review.approved === true);
       case 'pending':
-        return reviews.filter(review => review.approved !== true);
+        return reviews.filter((review) => review.approved !== true);
       default:
         return reviews;
     }

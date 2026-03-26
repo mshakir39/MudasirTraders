@@ -66,7 +66,9 @@ export async function PATCH(req: NextRequest) {
     console.log('📋 Original invoice:', {
       invoiceNo: originalInvoice.invoiceNo,
       productsCount: originalInvoice.products?.length || 0,
-      totalAmount: InvoiceDataUtil.calculateAmounts(originalInvoice.products || []).totalAmount,
+      totalAmount: InvoiceDataUtil.calculateAmounts(
+        originalInvoice.products || []
+      ).totalAmount,
     });
 
     // 2. Get current stock levels for validation
@@ -185,9 +187,10 @@ export async function PATCH(req: NextRequest) {
             product.series.toLowerCase().includes('water')) ||
           product.series.toLowerCase().includes('distilled'));
 
-      // Validate warranty information if provided (skip for battery tonic)
+      // Validate warranty information if provided (skip for battery tonic and when warranty is disabled)
       if (
         !isBatteryTonic &&
+        !product.noWarranty &&
         product.warrentyCode &&
         product.warrentyCode.trim() !== '' &&
         product.warrentyCode !== 'No Warranty'
@@ -291,7 +294,10 @@ export async function PATCH(req: NextRequest) {
     });
 
     // Calculate financial values
-    const calculation = InvoiceDataUtil.calculateAmounts(updatedProducts, formData.receivedAmount);
+    const calculation = InvoiceDataUtil.calculateAmounts(
+      updatedProducts,
+      formData.receivedAmount
+    );
     const totalProductAmount = calculation.totalAmount;
 
     let receivedAmount = 0;
@@ -325,8 +331,12 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Calculate remaining amount
-    const additionalPayments = (originalInvoice.additionalPayment || []).reduce((sum: number, payment: any) => sum + (payment.amount || 0), 0);
-    let remainingAmount = totalProductAmount - receivedAmount - batteriesRate - additionalPayments;
+    const additionalPayments = (originalInvoice.additionalPayment || []).reduce(
+      (sum: number, payment: any) => sum + (payment.amount || 0),
+      0
+    );
+    let remainingAmount =
+      totalProductAmount - receivedAmount - batteriesRate - additionalPayments;
 
     // Set payment status based on remaining amount
     let paymentStatus = 'partial';
@@ -480,13 +490,13 @@ export async function PATCH(req: NextRequest) {
     revalidatePath('/api/invoice');
     revalidatePath('/api/invoice/[id]');
     revalidatePath('/api/customers/[customerId]/invoices');
-    
+
     // Revalidate stock data to reflect stock changes
     revalidatePath('/stock');
     revalidatePath('/dashboard/stock');
     revalidatePath('/api/stock');
     revalidatePath('/api/stock/[brand]');
-    
+
     console.log('✅ Stock cache revalidated');
 
     return NextResponse.json({

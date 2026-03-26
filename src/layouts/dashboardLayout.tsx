@@ -66,10 +66,7 @@ const InventoryByBrandChartLazy = dynamic<InventoryByBrandChartProps>(
   { ssr: false, loading: () => null }
 );
 const ProfitAnalysisLazy = dynamic(
-  () =>
-    import('@/components/dashboard/ProfitAnalysis').then(
-      (m) => m.default
-    ),
+  () => import('@/components/dashboard/ProfitAnalysis').then((m) => m.default),
   { ssr: false, loading: () => null }
 );
 import { lockDashboard } from '@/actions/dashboardActions';
@@ -357,7 +354,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 : 'bg-accent-50 text-accent-700 hover:bg-accent-100'
             }`}
           >
-            <MdElectricalServices className='h-5 w-5' style={{ color: '#0ea5e9' }} />
+            <MdElectricalServices
+              className='h-5 w-5'
+              style={{ color: '#0ea5e9' }}
+            />
             <span className='font-medium'>Charging Analytics</span>
           </Link>
           <Link
@@ -386,7 +386,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <StatsGrid stats={stats} revenueDateRange={revenueDateRange} />
 
       {/* Charts Section */}
-      <div className='mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:min-h-[500px]'>
+      <div className='mb-8 grid grid-cols-1 gap-6 lg:min-h-[500px] lg:grid-cols-2'>
         <TopSellingProductsLazy
           products={stats.topSellingProducts}
           dateRange={topProductsDateRange}

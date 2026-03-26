@@ -13,7 +13,7 @@ interface InvoiceManagementPageProps {
 }
 
 export default function InvoiceManagementPage({
-  initialInvoices
+  initialInvoices,
 }: InvoiceManagementPageProps) {
   const handleCreateInvoice = () => {
     // This will be passed to the table component
@@ -27,7 +27,7 @@ export default function InvoiceManagementPage({
       </div>
 
       {/* Invoice Management Component */}
-      <InvoiceManagement 
+      <InvoiceManagement
         initialInvoices={initialInvoices}
         onCreateInvoice={handleCreateInvoice}
       />

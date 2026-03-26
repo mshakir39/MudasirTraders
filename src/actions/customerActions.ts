@@ -14,9 +14,9 @@ export async function createCustomer(data: CustomerData) {
       ...data,
       createdAt: new Date(),
     };
-    
+
     await executeOperation('customers', 'insertOne', customerDocument);
-    
+
     // Return the customer document that was inserted
     return { success: true, data: customerDocument };
   } catch (error: any) {

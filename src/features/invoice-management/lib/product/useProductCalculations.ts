@@ -10,15 +10,18 @@ export const useProductCalculations = () => {
   }, []);
 
   // Calculate warranty end date
-  const calculateWarrantyEndDate = useCallback((startDate: string, months: number) => {
-    if (!startDate || isNaN(new Date(startDate).getTime()) || months <= 0) {
-      return '';
-    }
+  const calculateWarrantyEndDate = useCallback(
+    (startDate: string, months: number) => {
+      if (!startDate || isNaN(new Date(startDate).getTime()) || months <= 0) {
+        return '';
+      }
 
-    const date = new Date(startDate);
-    date.setMonth(date.getMonth() + months);
-    return date.toISOString().split('T')[0];
-  }, []);
+      const date = new Date(startDate);
+      date.setMonth(date.getMonth() + months);
+      return date.toISOString().split('T')[0];
+    },
+    []
+  );
 
   // Format price for display
   const formatPrice = useCallback((price: number | string) => {

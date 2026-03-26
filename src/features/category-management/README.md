@@ -27,26 +27,34 @@ src/features/category-management/
 ## FSD Layers
 
 ### 📱 Entities Layer
+
 Contains business entities and their types:
+
 - `CategoryWithBatteryData` interface with brandName, series, salesTax
 - `BatteryData` interface with detailed battery information
 - `CategoryFormData` for form handling
 - API request/response types for create, update, delete operations
 
 ### 🧩 Shared Layer
+
 Contains reusable UI components:
+
 - `CategoryTable` - Display categories with search and actions (view, edit, delete)
 - `BatteryList` - Display and manage batteries within a category with price editing
 
 ### ⚙️ Process Layer (lib)
+
 Contains business logic and state management:
+
 - `useCategoryActions` - Custom hook for category operations
 - API integration with proper error handling
 - Price update functionality
 - Battery management operations
 
 ### 🎨 UI Layer
+
 Contains page-specific UI components:
+
 - `CategoryManagement` - Main component orchestrating the feature
 - Integrates all layers and handles component composition
 - Manages modals, search, and user interactions
@@ -103,6 +111,7 @@ This feature replaces the old `categoryLayout.tsx` file with a proper FSD struct
 ## Preserved Functionality
 
 All original functionality from `categoryLayout.tsx` has been preserved:
+
 - ✅ Category listing with search
 - ✅ Battery management within categories
 - ✅ Price editing interface

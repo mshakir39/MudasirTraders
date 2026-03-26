@@ -16,8 +16,10 @@ export const AlertsBanner: React.FC<AlertsBannerProps> = ({ alerts }) => {
   if (!hasAlerts) return null;
 
   return (
-    <div className='mb-6 rounded-r-lg border-l-4 p-4'
-        style={{ borderLeftColor: '#0ea5e9', backgroundColor: '#f0f9ff' }}>
+    <div
+      className='mb-6 rounded-r-lg border-l-4 p-4'
+      style={{ borderLeftColor: '#0ea5e9', backgroundColor: '#f0f9ff' }}
+    >
       <div className='flex items-center'>
         <FaExclamationTriangle className='mr-3' style={{ color: '#0ea5e9' }} />
         <div>

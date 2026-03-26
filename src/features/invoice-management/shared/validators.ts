@@ -9,7 +9,7 @@ export const validateCustomerInfo = (invoiceData: InvoiceFormData): boolean => {
     toast.error('Please enter customer name');
     return false;
   }
-  
+
   if (!invoiceData.customerContactNumber?.trim()) {
     toast.error('Please enter customer contact number');
     return false;
@@ -61,7 +61,9 @@ export const validateProducts = (accordionData: any): boolean => {
   return true;
 };
 
-export const validatePaymentMethod = (invoiceData: InvoiceFormData): boolean => {
+export const validatePaymentMethod = (
+  invoiceData: InvoiceFormData
+): boolean => {
   if (!invoiceData?.paymentMethod || invoiceData?.paymentMethod.length === 0) {
     toast.error('Please select at least one payment method');
     return false;
@@ -85,15 +87,18 @@ export const validateCustomDate = (invoiceData: InvoiceFormData): boolean => {
   return true;
 };
 
-export const validateForm = (invoiceData: InvoiceFormData, accordionData: any): boolean => {
+export const validateForm = (
+  invoiceData: InvoiceFormData,
+  accordionData: any
+): boolean => {
   if (!validateCustomerInfo(invoiceData)) return false;
-  
+
   if (!invoiceData.isChargingService) {
     if (!validateProducts(accordionData)) return false;
   }
-  
+
   if (!validatePaymentMethod(invoiceData)) return false;
-  
+
   if (!validateCustomDate(invoiceData)) return false;
 
   return true;

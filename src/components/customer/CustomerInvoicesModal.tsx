@@ -84,7 +84,7 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
       const response = await fetch(`/api/invoice/${invoiceId}`, {
         method: 'DELETE',
       });
-      
+
       if (response.ok) {
         toast.success('Invoice deleted successfully');
         await fetchCustomerInvoices();
@@ -108,15 +108,14 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
   const totalInvoices = customerInvoices.length;
   const totalAmount = customerInvoices.reduce((sum, invoice) => {
     // Calculate total from products (same logic as data table)
-    const productTotal = invoice.products?.reduce(
-      (sum: number, product: any) => {
+    const productTotal =
+      invoice.products?.reduce((sum: number, product: any) => {
         // Try different possible price fields - prioritize productPrice
-        const productPrice = product.productPrice || product.totalPrice || product.price || 0;
+        const productPrice =
+          product.productPrice || product.totalPrice || product.price || 0;
         const quantity = product.quantity || 1;
-        return sum + (Number(productPrice) * Number(quantity));
-      },
-      0
-    ) || 0;
+        return sum + Number(productPrice) * Number(quantity);
+      }, 0) || 0;
     return sum + productTotal;
   }, 0);
   const totalRemaining = customerInvoices.reduce(
@@ -154,7 +153,7 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
                 <div className='text-lg font-bold text-green-600'>
                   Rs {Number(totalAmount || 0).toLocaleString()}
                   {/* Debug: Show raw value */}
-                  <span className='text-xs text-gray-500 ml-2'>
+                  <span className='ml-2 text-xs text-gray-500'>
                     (raw: {totalAmount})
                   </span>
                 </div>

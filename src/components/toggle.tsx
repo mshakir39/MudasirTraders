@@ -20,25 +20,25 @@ export const Toggle: React.FC<ToggleProps> = ({
   color = 'blue',
   disabled = false,
   className = '',
-  labelPosition = 'right'
+  labelPosition = 'right',
 }) => {
   const trackSize = {
     sm: 'w-8 h-4',
     md: 'w-11 h-6',
-    lg: 'w-14 h-7'
+    lg: 'w-14 h-7',
   };
 
   const thumbSize = {
     sm: 'w-3 h-3',
     md: 'w-5 h-5',
-    lg: 'w-6 h-6'
+    lg: 'w-6 h-6',
   };
 
   const trackColor = {
     blue: checked ? 'bg-blue-600' : 'bg-gray-200',
     red: checked ? 'bg-red-500' : 'bg-gray-200',
     green: checked ? 'bg-green-500' : 'bg-gray-200',
-    gray: checked ? 'bg-gray-500' : 'bg-gray-200'
+    gray: checked ? 'bg-gray-500' : 'bg-gray-200',
   };
 
   const getLayoutClasses = () => {
@@ -57,9 +57,11 @@ export const Toggle: React.FC<ToggleProps> = ({
 
   const renderLabel = () => {
     if (!label) return null;
-    
+
     return (
-      <span className={`text-sm font-medium ${disabled ? 'text-gray-400' : 'text-gray-700'}`}>
+      <span
+        className={`text-sm font-medium ${disabled ? 'text-gray-400' : 'text-gray-700'}`}
+      >
         {label}
       </span>
     );
@@ -67,12 +69,15 @@ export const Toggle: React.FC<ToggleProps> = ({
 
   return (
     <div className={className}>
-      <label className={`inline-flex ${getLayoutClasses()} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
-        {(labelPosition === 'top' || labelPosition === 'bottom') && renderLabel()}
-        
-        <div className="relative">
+      <label
+        className={`inline-flex ${getLayoutClasses()} ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+      >
+        {(labelPosition === 'top' || labelPosition === 'bottom') &&
+          renderLabel()}
+
+        <div className='relative'>
           <input
-            type="checkbox"
+            type='checkbox'
             checked={checked}
             onChange={(e) => {
               if (!disabled && onChange) {
@@ -80,31 +85,36 @@ export const Toggle: React.FC<ToggleProps> = ({
               }
             }}
             disabled={disabled}
-            className="sr-only"
+            className='sr-only'
           />
-         {/* Track */}
-        <div
-          className={`
-    ${trackSize[size]} ${trackColor[color]}
-    rounded-full transition-colors duration-200
-    flex items-center px-0.5
-    ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-  `}
-        >
-          {/* Thumb */}
+          {/* Track */}
           <div
             className={`
-      ${thumbSize[size]} ${checked ? 
-        (size === 'sm' ? 'translate-x-4' : size === 'md' ? 'translate-x-5' : 'translate-x-7') : 
-        'translate-x-0.5'
+    ${trackSize[size]} ${trackColor[color]}
+    flex items-center rounded-full
+    px-0.5 transition-colors duration-200
+    ${disabled ? 'cursor-not-allowed opacity-50' : ''}
+  `}
+          >
+            {/* Thumb */}
+            <div
+              className={`
+      ${thumbSize[size]} ${
+        checked
+          ? size === 'sm'
+            ? 'translate-x-4'
+            : size === 'md'
+              ? 'translate-x-5'
+              : 'translate-x-7'
+          : 'translate-x-0.5'
       }
-      bg-white rounded-full shadow-md
+      rounded-full bg-white shadow-md
       transition-transform duration-200
     `}
-          />
+            />
+          </div>
         </div>
-        </div>
-        
+
         {labelPosition === 'left' && renderLabel()}
         {labelPosition === 'right' && renderLabel()}
       </label>
@@ -116,60 +126,62 @@ export const Toggle: React.FC<ToggleProps> = ({
 export const TestToggle = () => {
   const [checked, setChecked] = React.useState(false);
   return (
-    <div className="p-4 space-y-6">
+    <div className='space-y-6 p-4'>
       <h3>Toggle Label Positions Demo</h3>
-      
-      <div className="grid grid-cols-2 gap-4">
+
+      <div className='grid grid-cols-2 gap-4'>
         <div>
-          <p className="text-xs text-gray-600 mb-2">Top Position:</p>
+          <p className='mb-2 text-xs text-gray-600'>Top Position:</p>
           <Toggle
             checked={checked}
             onChange={setChecked}
-            label="Top Label"
-            size="sm"
-            color="blue"
-            labelPosition="top"
+            label='Top Label'
+            size='sm'
+            color='blue'
+            labelPosition='top'
           />
         </div>
-        
+
         <div>
-          <p className="text-xs text-gray-600 mb-2">Bottom Position:</p>
+          <p className='mb-2 text-xs text-gray-600'>Bottom Position:</p>
           <Toggle
             checked={checked}
             onChange={setChecked}
-            label="Bottom Label"
-            size="sm"
-            color="green"
-            labelPosition="bottom"
+            label='Bottom Label'
+            size='sm'
+            color='green'
+            labelPosition='bottom'
           />
         </div>
-        
+
         <div>
-          <p className="text-xs text-gray-600 mb-2">Left Position:</p>
+          <p className='mb-2 text-xs text-gray-600'>Left Position:</p>
           <Toggle
             checked={checked}
             onChange={setChecked}
-            label="Left Label"
-            size="sm"
-            color="red"
-            labelPosition="left"
+            label='Left Label'
+            size='sm'
+            color='red'
+            labelPosition='left'
           />
         </div>
-        
+
         <div>
-          <p className="text-xs text-gray-600 mb-2">Right Position (Default):</p>
+          <p className='mb-2 text-xs text-gray-600'>
+            Right Position (Default):
+          </p>
           <Toggle
             checked={checked}
             onChange={setChecked}
-            label="Right Label"
-            size="sm"
-            color="blue"
-            labelPosition="right"
+            label='Right Label'
+            size='sm'
+            color='blue'
+            labelPosition='right'
           />
         </div>
       </div>
-      
-      <p className="text-sm text-gray-700">State: {checked ? 'ON' : 'OFF'}</p>
+
+      <p className='text-sm text-gray-700'>State: {checked ? 'ON' : 'OFF'}</p>
     </div>
   );
 };

@@ -5,14 +5,17 @@ export async function GET() {
   try {
     const db = await connectToMongoDB();
     if (!db) {
-      return Response.json({ error: 'Failed to connect to database' }, { status: 500 });
+      return Response.json(
+        { error: 'Failed to connect to database' },
+        { status: 500 }
+      );
     }
 
     // Check if stockHistory collection exists and has data
     const historyCollection = db.collection('stockHistory');
     const count = await historyCollection.countDocuments();
     const sample = await historyCollection.find().limit(5).toArray();
-    
+
     // Also check stock collection
     const stockCollection = db.collection('stock');
     const stockCount = await stockCollection.countDocuments();
@@ -22,13 +25,13 @@ export async function GET() {
       stockHistory: {
         exists: true,
         count: count,
-        sample: sample
+        sample: sample,
       },
       stock: {
         exists: true,
         count: stockCount,
-        sample: stockSample
-      }
+        sample: stockSample,
+      },
     });
   } catch (error: any) {
     console.error('Debug error:', error);

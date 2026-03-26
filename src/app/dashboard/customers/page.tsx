@@ -11,7 +11,9 @@ import { useState } from 'react';
 
 // Client Component to handle event handlers
 export default function CustomersPage() {
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
   const [isInvoicesModalOpen, setIsInvoicesModalOpen] = useState(false);
 
   const handleViewInvoices = (customer: Customer) => {
@@ -26,10 +28,8 @@ export default function CustomersPage() {
 
   return (
     <CustomersErrorBoundary>
-      <CustomerManagement 
-        onViewInvoices={handleViewInvoices}
-      />
-      
+      <CustomerManagement onViewInvoices={handleViewInvoices} />
+
       {/* Customer Invoices Modal */}
       {selectedCustomer && (
         <CustomerInvoicesModal

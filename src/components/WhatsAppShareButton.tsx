@@ -71,7 +71,6 @@ Questions? Call us at:
 
   const handleWhatsAppClick = async () => {
     try {
-
       // Generate PDF and get it as base64 or blob
       const invoiceModal = document.querySelector(
         '[data-invoice-modal]'

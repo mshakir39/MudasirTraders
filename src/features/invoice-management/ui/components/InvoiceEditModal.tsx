@@ -5,13 +5,22 @@
 
 import React, { useEffect } from 'react';
 import Modal from '@/components/modal';
-import { InvoiceForm, InvoiceCustomerSection, InvoiceProductsSectionJotai, InvoicePaymentSection, InvoiceDateSection } from './index';
+import {
+  InvoiceForm,
+  InvoiceCustomerSection,
+  InvoiceProductsSectionJotai,
+  InvoicePaymentSection,
+  InvoiceDateSection,
+} from './index';
 import { Invoice, InvoiceFormData } from '@/entities/invoice';
 import { useAccordionData } from '../../lib/useAccordionData';
 import { useCustomers } from '../../lib/useCustomers';
 import { useInvoiceForm } from '../../lib/useInvoiceForm';
 import { useAccordionLogic } from '../../lib/useAccordionLogic';
-import { transformAccordionData, calculateInvoiceTotals } from '../../shared/transformers';
+import {
+  transformAccordionData,
+  calculateInvoiceTotals,
+} from '../../shared/transformers';
 
 interface InvoiceEditModalProps {
   isOpen: boolean;
@@ -32,7 +41,7 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
   isLoading,
   categories,
   customers,
-  stock
+  stock,
 }) => {
   // Initialize accordion data and customers
   const {
@@ -63,16 +72,16 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
   };
 
   // Use custom hooks for form and accordion logic
-  const {
-    invoiceData,
-    setInvoiceData,
-    handleSubmit,
-  } = useInvoiceForm({ onSubmit, initialData: initialFormData });
+  const { invoiceData, setInvoiceData, handleSubmit } = useInvoiceForm({
+    onSubmit,
+    initialData: initialFormData,
+  });
 
-  const {
-    expandedAccordionIndex,
-    handleAccordionClick,
-  } = useAccordionLogic(accordionData, accordionMethods, invoiceData);
+  const { expandedAccordionIndex, handleAccordionClick } = useAccordionLogic(
+    accordionData,
+    accordionMethods,
+    invoiceData
+  );
 
   // Initialize accordion data with existing products
   useEffect(() => {
@@ -80,7 +89,9 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
       if (!startDate || !endDate) return '';
       const start = new Date(startDate);
       const end = new Date(endDate);
-      const monthsDiff = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+      const monthsDiff =
+        (end.getFullYear() - start.getFullYear()) * 12 +
+        (end.getMonth() - start.getMonth());
       return monthsDiff.toString();
     };
 
@@ -96,7 +107,10 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
           totalPrice: product.totalPrice,
           warrentyCode: product.warrentyCode,
           warrentyStartDate: product.warrentyStartDate,
-          warrentyDuration: calculateWarrentyDuration(product.warrentyStartDate, product.warrentyEndDate),
+          warrentyDuration: calculateWarrentyDuration(
+            product.warrentyStartDate,
+            product.warrentyEndDate
+          ),
           // Add other necessary fields
         };
       });
@@ -120,12 +134,18 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
       invoiceData.taxAmount || 0,
       invoiceData.receivedAmount || 0
     );
-    
-    setInvoiceData(prev => ({
+
+    setInvoiceData((prev) => ({
       ...prev,
-      ...totals
+      ...totals,
     }));
-  }, [accordionData, invoiceData.chargingServices, invoiceData.taxAmount, invoiceData.receivedAmount, invoiceData.isChargingService]);
+  }, [
+    accordionData,
+    invoiceData.chargingServices,
+    invoiceData.taxAmount,
+    invoiceData.receivedAmount,
+    invoiceData.isChargingService,
+  ]);
 
   // Reset form when modal closes
   useEffect(() => {
@@ -140,8 +160,8 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={`Edit Invoice #${invoice.invoiceNo}`}
-      size="large"
-      dialogPanelClass="w-full max-w-6xl"
+      size='large'
+      dialogPanelClass='w-full max-w-6xl'
     >
       <InvoiceForm
         invoiceData={invoiceData}
@@ -150,9 +170,9 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
         onSubmit={handleFormSubmit}
         onCancel={onClose}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="flex flex-col h-full">
-            <div className="space-y-4">
+        <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+          <div className='flex h-full flex-col'>
+            <div className='space-y-4'>
               <InvoiceCustomerSection
                 invoiceData={invoiceData}
                 setInvoiceData={setInvoiceData}
@@ -164,10 +184,10 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
               />
             </div>
           </div>
-          
-          <div className="hidden lg:block lg:relative">
-            <div className="absolute left-0 top-0 bottom-0 w-px bg-gray-200"></div>
-            <div className="pl-6 flex flex-col h-full">
+
+          <div className='hidden lg:relative lg:block'>
+            <div className='absolute bottom-0 left-0 top-0 w-px bg-gray-200'></div>
+            <div className='flex h-full flex-col pl-6'>
               <InvoiceProductsSectionJotai
                 categories={categories}
                 stock={stock}
@@ -178,10 +198,10 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
               />
             </div>
           </div>
-          
-          <div className="hidden lg:block lg:relative">
-            <div className="absolute left-0 top-0 bottom-0 w-px bg-gray-200"></div>
-            <div className="pl-6 flex flex-col h-full">
+
+          <div className='hidden lg:relative lg:block'>
+            <div className='absolute bottom-0 left-0 top-0 w-px bg-gray-200'></div>
+            <div className='flex h-full flex-col pl-6'>
               <InvoicePaymentSection
                 invoiceData={invoiceData}
                 setInvoiceData={setInvoiceData}

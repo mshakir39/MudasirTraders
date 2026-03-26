@@ -349,7 +349,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({
           // For regular batteries, show the warranty toggle
           return (
             <div className='mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4'>
-              <div className="flex items-center gap-4">
+              <div className='flex items-center gap-4'>
                 <div className='flex flex-col'>
                   <label className='text-sm font-semibold text-gray-800'>
                     No Warranty
@@ -360,7 +360,7 @@ const ProductSection: React.FC<ProductSectionProps> = ({
                       : 'Enable if this product has no warranty'}
                   </p>
                 </div>
-                <div 
+                <div
                   onClick={(e) => {
                     e.stopPropagation();
                     const newValue = !accordionDataItem.noWarranty;
@@ -370,15 +370,19 @@ const ProductSection: React.FC<ProductSectionProps> = ({
                       newValue
                     );
                   }}
-                  className="cursor-pointer"
+                  className='cursor-pointer'
                 >
                   <Toggle
                     checked={!!accordionDataItem.noWarranty}
                     onChange={() => {}}
-                    label={accordionDataItem.noWarranty ? 'No Warranty' : 'Has Warranty'}
-                    size="sm"
-                    color="red"
-                    labelPosition="bottom"
+                    label={
+                      accordionDataItem.noWarranty
+                        ? 'No Warranty'
+                        : 'Has Warranty'
+                    }
+                    size='sm'
+                    color='red'
+                    labelPosition='bottom'
                   />
                 </div>
               </div>

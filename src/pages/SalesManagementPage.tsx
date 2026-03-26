@@ -8,7 +8,9 @@ interface SalesManagementPageProps {
   initialSales: any[];
 }
 
-export default function SalesManagementPage({ initialSales }: SalesManagementPageProps) {
+export default function SalesManagementPage({
+  initialSales,
+}: SalesManagementPageProps) {
   return (
     <div className='p-0 py-6 md:p-6'>
       {/* Header */}

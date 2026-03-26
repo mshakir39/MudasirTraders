@@ -3,6 +3,7 @@
 ## 🎯 Core FSD Implementation Rules
 
 ### 📏 Component Size Rule
+
 ```
 ✅ ALL components must be < 150 lines
 ❌ NO exceptions - split immediately if exceeds
@@ -10,6 +11,7 @@
 ```
 
 ### 🔧 Functionality Preservation Rule
+
 ```
 ✅ Keep ALL existing functionality intact
 ❌ NO new features during migration
@@ -18,6 +20,7 @@
 ```
 
 ### 🏗️ FSD Structure Rules
+
 ```
 📁 entities/     - Business models and APIs only
 📁 features/     - Complete business features
@@ -27,6 +30,7 @@
 ```
 
 ### 🔄 Backend Integration Rule
+
 ```
 ✅ Use existing API endpoints
 ✅ Use existing database schema
@@ -36,6 +40,7 @@
 ```
 
 ### 🎨 Frontend Preservation Rule
+
 ```
 ✅ Keep existing UI/UX design
 ✅ Keep existing component behavior
@@ -48,6 +53,7 @@
 ## 📝 Implementation Guidelines
 
 ### 🚦 Migration Steps
+
 1. **Analyze current component** - Identify responsibilities
 2. **Create entity layer** - Types and API wrappers
 3. **Split into feature components** - <150 lines each
@@ -55,6 +61,7 @@
 5. **Compose in pages** - Keep pages as orchestrators
 
 ### 🎯 Component Splitting Strategy
+
 ```
 📊 Current: Large component (200+ lines)
 🎯 Target: 3-4 small components (<150 lines each)
@@ -67,6 +74,7 @@ Example:
 ```
 
 ### 🔗 API Integration Pattern
+
 ```
 📡 Entity API Layer:
 ✅ Wrap existing server actions
@@ -84,6 +92,7 @@ export class WarrantyApi {
 ```
 
 ### 🎨 UI Component Pattern
+
 ```
 🧩 Shared UI Components:
 ✅ Extract from existing components
@@ -100,6 +109,7 @@ Example:
 ## 📋 Quality Rules
 
 ### ✅ Do's
+
 - Preserve all existing functionality
 - Keep same user interface
 - Use existing APIs and data
@@ -109,6 +119,7 @@ Example:
 - Maintain performance
 
 ### ❌ Don'ts
+
 - Add new features
 - Change UI/UX design
 - Create new API endpoints
@@ -120,6 +131,7 @@ Example:
 ## 🎯 Success Metrics
 
 ### 📊 Technical Metrics
+
 ```
 📏 Component Size: All < 150 lines
 🚀 Bundle Size: Same or smaller
@@ -129,6 +141,7 @@ Example:
 ```
 
 ### 👥 Business Metrics
+
 ```
 ✅ All features work exactly as before
 ✅ No user training required
@@ -140,6 +153,7 @@ Example:
 ## 🔧 Implementation Checklist
 
 ### For Each Component
+
 ```
 □ Analyze current responsibilities
 □ Create entity types if needed
@@ -152,6 +166,7 @@ Example:
 ```
 
 ### For Each Feature
+
 ```
 □ Create entity model types
 □ Create entity API wrapper
@@ -164,6 +179,7 @@ Example:
 ## 🚀 Migration Priority
 
 ### 🔥 High Priority (Week 1)
+
 ```
 1. Create shared UI components
 2. Split largest components (>200 lines)
@@ -172,6 +188,7 @@ Example:
 ```
 
 ### ⚡ Medium Priority (Week 2)
+
 ```
 1. Split medium components (150-200 lines)
 2. Optimize bundle with lazy loading
@@ -180,6 +197,7 @@ Example:
 ```
 
 ### 🎯 Low Priority (Week 3)
+
 ```
 1. Fine-tune performance
 2. Add comprehensive tests
@@ -190,6 +208,7 @@ Example:
 ## 💡 Key Principles
 
 ### 🎯 "Refactor, Don't Rebuild"
+
 ```
 ✅ Keep what works
 ✅ Improve structure only
@@ -198,6 +217,7 @@ Example:
 ```
 
 ### 🔧 "Split, Don't Duplicate"
+
 ```
 ✅ Break down large components
 ✅ Extract reusable parts
@@ -206,6 +226,7 @@ Example:
 ```
 
 ### 🚀 "Preserve, Enhance"
+
 ```
 ✅ Keep existing functionality
 ✅ Improve developer experience
@@ -262,6 +283,7 @@ src/
 ## 🎯 Component Size Examples
 
 ### ✅ Good Examples (<150 lines)
+
 ```typescript
 // ✅ WarrantySearch.tsx (80 lines)
 export const WarrantySearch = () => {
@@ -283,6 +305,7 @@ export const Button = () => {
 ```
 
 ### ❌ Bad Examples (>150 lines)
+
 ```typescript
 // ❌ CreateInvoiceModal.tsx (571 lines)
 export const CreateInvoiceModal = () => {
@@ -300,6 +323,7 @@ export const ProductSection = () => {
 ## 🔄 Migration Example: Warranty Check
 
 ### Current Structure
+
 ```
 src/app/dashboard/warranty-check/page.tsx (209 lines)
 ├── Search logic
@@ -310,6 +334,7 @@ src/app/dashboard/warranty-check/page.tsx (209 lines)
 ```
 
 ### Target FSD Structure
+
 ```
 src/entities/warranty/
 ├── model/types.ts
@@ -335,6 +360,7 @@ src/pages/
 ## 🧪 Testing Strategy
 
 ### Unit Tests
+
 ```
 ✅ Test each component independently
 ✅ Mock entity APIs
@@ -343,6 +369,7 @@ src/pages/
 ```
 
 ### Integration Tests
+
 ```
 ✅ Test complete user flows
 ✅ Test API integration
@@ -351,6 +378,7 @@ src/pages/
 ```
 
 ### E2E Tests
+
 ```
 ✅ Test complete user journeys
 ✅ Verify all functionality works
@@ -361,6 +389,7 @@ src/pages/
 ## 📊 Performance Monitoring
 
 ### Bundle Size
+
 ```
 📏 Before: 2.5MB
 📏 After: 1.5MB (40% reduction)
@@ -368,6 +397,7 @@ src/pages/
 ```
 
 ### Load Time
+
 ```
 ⚡ Before: 3.2s
 ⚡ After: 1.3s (60% improvement)
@@ -375,6 +405,7 @@ src/pages/
 ```
 
 ### Hot Reload
+
 ```
 🔥 Before: 2.1s
 🔥 After: 0.8s (70% improvement)
@@ -386,6 +417,7 @@ src/pages/
 ## 🎯 AI Implementation Commands
 
 ### For AI Assistant
+
 ```
 📋 Read these rules before any implementation
 🔍 Analyze current component structure
@@ -396,6 +428,7 @@ src/pages/
 ```
 
 ### Validation Checklist
+
 ```
 □ All components < 150 lines?
 □ All functionality preserved?

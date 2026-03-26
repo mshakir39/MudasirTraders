@@ -4,7 +4,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Invoice, InvoiceModalState, InvoiceModalType } from '@/entities/invoice';
+import {
+  Invoice,
+  InvoiceModalState,
+  InvoiceModalType,
+} from '@/entities/invoice';
 
 // Import the existing modals for full functionality
 import { default as InvoicePreviewModal } from './InvoicePreviewModal';
@@ -42,7 +46,7 @@ export const InvoiceModals: React.FC<InvoiceModalsProps> = ({
   customers = [],
   brandOptions = [],
   accordionMethods = null,
-  accordionData = {}
+  accordionData = {},
 }) => {
   // No need for useInvoiceForm hook since new modals handle their own state
   const renderModalContent = () => {
@@ -94,11 +98,7 @@ export const InvoiceModals: React.FC<InvoiceModalsProps> = ({
             onClose={onClose}
             invoice={modalState.data as Invoice}
             onSubmit={(amount, method) => {
-              onAddPayment(
-                modalState.data?.id || '',
-                amount,
-                method
-              );
+              onAddPayment(modalState.data?.id || '', amount, method);
             }}
             isLoading={isLoading}
           />
@@ -106,28 +106,35 @@ export const InvoiceModals: React.FC<InvoiceModalsProps> = ({
 
       case 'productDetail':
         return (
-          <div className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Product Details</h3>
-            <div className="space-y-4">
-              <div className="max-h-96 overflow-y-auto">
+          <div className='p-6'>
+            <h3 className='mb-4 text-lg font-semibold'>Product Details</h3>
+            <div className='space-y-4'>
+              <div className='max-h-96 overflow-y-auto'>
                 {modalState.data?.products?.map((product, index) => (
-                  <div key={index} className="border-b border-gray-200 pb-3 mb-3 last:border-b-0">
-                    <div className="font-medium">{product.brandName} {product.series}</div>
-                    <div className="text-sm text-gray-600">
-                      Quantity: {product.quantity} × Rs {product.productPrice?.toLocaleString() || '0'} = Rs {product.totalPrice?.toLocaleString() || '0'}
+                  <div
+                    key={index}
+                    className='mb-3 border-b border-gray-200 pb-3 last:border-b-0'
+                  >
+                    <div className='font-medium'>
+                      {product.brandName} {product.series}
+                    </div>
+                    <div className='text-sm text-gray-600'>
+                      Quantity: {product.quantity} × Rs{' '}
+                      {product.productPrice?.toLocaleString() || '0'} = Rs{' '}
+                      {product.totalPrice?.toLocaleString() || '0'}
                     </div>
                     {product.warrentyCode && (
-                      <div className="text-sm text-gray-600">
+                      <div className='text-sm text-gray-600'>
                         Warranty: {product.warrentyCode}
                       </div>
                     )}
                   </div>
                 ))}
               </div>
-              <div className="flex justify-end">
+              <div className='flex justify-end'>
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                  className='rounded-md bg-gray-600 px-4 py-2 text-white hover:bg-gray-700'
                 >
                   Close
                 </button>
@@ -191,11 +198,7 @@ export const InvoiceModals: React.FC<InvoiceModalsProps> = ({
         onClose={onClose}
         invoice={modalState.data as Invoice}
         onSubmit={(amount, method) => {
-          onAddPayment(
-            modalState.data?.id || '',
-            amount,
-            method
-          );
+          onAddPayment(modalState.data?.id || '', amount, method);
         }}
         isLoading={isLoading}
       />
@@ -206,8 +209,8 @@ export const InvoiceModals: React.FC<InvoiceModalsProps> = ({
   if (!modalState.isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+      <div className='mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl'>
         {renderModalContent()}
       </div>
     </div>

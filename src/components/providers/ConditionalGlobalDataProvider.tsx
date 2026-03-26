@@ -10,11 +10,17 @@ interface ConditionalGlobalDataProviderProps {
   children: React.ReactNode;
 }
 
-export default function ConditionalGlobalDataProvider({ children }: ConditionalGlobalDataProviderProps) {
+export default function ConditionalGlobalDataProvider({
+  children,
+}: ConditionalGlobalDataProviderProps) {
   const pathname = usePathname();
-  
+
   // Only provide GlobalDataProvider for dashboard routes
   const isDashboardRoute = pathname?.startsWith('/dashboard');
-  
-  return isDashboardRoute ? <GlobalDataProvider>{children}</GlobalDataProvider> : <>{children}</>;
+
+  return isDashboardRoute ? (
+    <GlobalDataProvider>{children}</GlobalDataProvider>
+  ) : (
+    <>{children}</>
+  );
 }

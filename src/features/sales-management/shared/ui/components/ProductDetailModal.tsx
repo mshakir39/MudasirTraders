@@ -122,11 +122,21 @@ const ProductsDetailModal: React.FC<ProductsDetailModalProps> = ({
                         {Number(product.quantity) || 0}
                       </td>
                       <td className='px-4 py-3 text-sm text-gray-900'>
-                        Rs {Number(product.productPrice || product.price || product.unitPrice || 0).toLocaleString()}
+                        Rs{' '}
+                        {Number(
+                          product.productPrice ||
+                            product.price ||
+                            product.unitPrice ||
+                            0
+                        ).toLocaleString()}
                       </td>
                       <td className='px-4 py-3 text-sm font-medium text-gray-900'>
-               
-                        Rs {Number(product.totalPrice || product.price * product.quantity || 0).toLocaleString()}
+                        Rs{' '}
+                        {Number(
+                          product.totalPrice ||
+                            product.price * product.quantity ||
+                            0
+                        ).toLocaleString()}
                       </td>
                     </tr>
                   ))}
@@ -148,7 +158,11 @@ const ProductsDetailModal: React.FC<ProductsDetailModalProps> = ({
                       Rs{' '}
                       {selectedSaleProducts
                         .reduce(
-                          (sum, p) => sum + (Number(p.totalPrice) || Number(p.price) * Number(p.quantity) || 0),
+                          (sum, p) =>
+                            sum +
+                            (Number(p.totalPrice) ||
+                              Number(p.price) * Number(p.quantity) ||
+                              0),
                           0
                         )
                         .toLocaleString()}

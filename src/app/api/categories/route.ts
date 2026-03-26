@@ -1,11 +1,11 @@
 'use server';
-import { 
+import {
   getCategories,
   createCategory,
   updateCategory,
   deleteCategory,
   getCategory,
-  appendSeriesToCategory
+  appendSeriesToCategory,
 } from '@/actions/categoryActions';
 
 export async function GET() {
@@ -30,11 +30,14 @@ export async function POST(req: any, res: any) {
 export async function PUT(req: any, res: any) {
   try {
     const { id, ...data } = await req.json();
-    
+
     if (!id) {
-      return Response.json({ error: 'Category ID is required' }, { status: 400 });
+      return Response.json(
+        { error: 'Category ID is required' },
+        { status: 400 }
+      );
     }
-    
+
     const result = await updateCategory(id, data);
     return Response.json(result);
   } catch (err: any) {
@@ -45,11 +48,14 @@ export async function PUT(req: any, res: any) {
 export async function DELETE(req: any, res: any) {
   try {
     const { id } = await req.json();
-    
+
     if (!id) {
-      return Response.json({ error: 'Category ID is required' }, { status: 400 });
+      return Response.json(
+        { error: 'Category ID is required' },
+        { status: 400 }
+      );
     }
-    
+
     const result = await deleteCategory(id);
     return Response.json(result);
   } catch (err: any) {

@@ -10,9 +10,7 @@ interface ProvidersProps {
 export default function Providers({ children }: ProvidersProps) {
   return (
     <SessionProvider>
-      <Provider>
-        {children}
-      </Provider>
+      <Provider>{children}</Provider>
     </SessionProvider>
   );
 }

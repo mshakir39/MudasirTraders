@@ -1,7 +1,13 @@
 // src/entities/sale/api/saleApi.ts
 // Sale API operations - wraps existing actions
 
-import { Sale, DateRange, SalesFilter, SalesSummary, CustomerOption } from '../model/types';
+import {
+  Sale,
+  DateRange,
+  SalesFilter,
+  SalesSummary,
+  CustomerOption,
+} from '../model/types';
 
 export class SaleApi {
   // Fetch all sales
@@ -9,13 +15,13 @@ export class SaleApi {
     try {
       // Import the existing action
       const { getSales } = await import('@/actions/salesActions');
-      
+
       const result = await getSales();
-      
+
       if (result.success && Array.isArray(result.data)) {
         return result.data;
       }
-      
+
       return [];
     } catch (error) {
       console.error('Error fetching sales:', error);
@@ -122,15 +128,19 @@ export class SaleApi {
     }
 
     const lowerSearchTerm = searchTerm.toLowerCase();
-    
-    return sales.filter(sale => 
-      sale.customerName.toLowerCase().includes(lowerSearchTerm) ||
-      sale.customerContactNumber.toLowerCase().includes(lowerSearchTerm)
+
+    return sales.filter(
+      (sale) =>
+        sale.customerName.toLowerCase().includes(lowerSearchTerm) ||
+        sale.customerContactNumber.toLowerCase().includes(lowerSearchTerm)
     );
   }
 
   // Validate sale data
-  static validateSaleData(sale: Partial<Sale>): { isValid: boolean; errors: string[] } {
+  static validateSaleData(sale: Partial<Sale>): {
+    isValid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!sale.customerName?.trim()) {
@@ -151,7 +161,7 @@ export class SaleApi {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 }

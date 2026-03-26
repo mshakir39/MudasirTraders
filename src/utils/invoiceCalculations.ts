@@ -38,18 +38,28 @@ export interface InvoiceCalculationResult {
  * Calculate invoice totals and remaining amounts consistently
  * Used for both normal and consolidated invoices
  */
-export function calculateInvoiceAmounts(data: InvoiceCalculationData): InvoiceCalculationResult {
+export function calculateInvoiceAmounts(
+  data: InvoiceCalculationData
+): InvoiceCalculationResult {
   // 1. Calculate consolidated amount from pending invoices
   let consolidatedAmount = 0;
   let actualRemainingAmounts: number[] = [];
 
   if (data.pendingInvoices && data.pendingInvoices.length > 0) {
     // Use actual remaining amounts from pending invoices
-    actualRemainingAmounts = data.pendingInvoices.map(inv => inv.remainingAmount || 0);
-    consolidatedAmount = actualRemainingAmounts.reduce((sum, amount) => sum + amount, 0);
+    actualRemainingAmounts = data.pendingInvoices.map(
+      (inv) => inv.remainingAmount || 0
+    );
+    consolidatedAmount = actualRemainingAmounts.reduce(
+      (sum, amount) => sum + amount,
+      0
+    );
   } else if (data.previousAmounts && data.previousAmounts.length > 0) {
     // Fallback to provided previous amounts
-    consolidatedAmount = data.previousAmounts.reduce((sum, amount) => sum + amount, 0);
+    consolidatedAmount = data.previousAmounts.reduce(
+      (sum, amount) => sum + amount,
+      0
+    );
     actualRemainingAmounts = data.previousAmounts;
   }
 
@@ -100,7 +110,7 @@ export function calculateInvoiceAmounts(data: InvoiceCalculationData): InvoiceCa
       newProductsTotal: newItemsAmount,
       batteryRate: batteriesAmount,
       receivedAmount: receivedAmount,
-    }
+    },
   };
 }
 

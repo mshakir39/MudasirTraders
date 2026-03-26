@@ -21,7 +21,7 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
   initialBrands,
 }) => {
   unstable_noStore();
-  
+
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [brands, setBrands] = useAtom(brandsAtom);
   const fetchBrands = useAtom(fetchBrandsAtom)[1];
@@ -46,14 +46,17 @@ export const BrandManagement: React.FC<BrandManagementProps> = ({
     setIsModalOpen(false);
   }, []);
 
-  const handleCreateBrand = useCallback(async (data: { brandName: string }) => {
-    await createBrand(data);
-    handleCloseModal();
-  }, [createBrand, handleCloseModal]);
+  const handleCreateBrand = useCallback(
+    async (data: { brandName: string }) => {
+      await createBrand(data);
+      handleCloseModal();
+    },
+    [createBrand, handleCloseModal]
+  );
 
   return (
     <div className='p-0 py-6 md:p-6'>
-      <h1 className='text-2xl font-bold mb-6'>Brands</h1>
+      <h1 className='mb-6 text-2xl font-bold'>Brands</h1>
 
       <BrandTable
         brands={optimisticBrands}

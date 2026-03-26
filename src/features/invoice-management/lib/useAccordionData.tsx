@@ -210,7 +210,9 @@ export const useAccordionData = (categories: any[], stock?: any[]) => {
         }
       } else if (fieldName === 'series') {
         const currentAccordion = accordionData[accordionIndex];
-        const seriesOptions = Array.isArray(currentAccordion.seriesOption) ? currentAccordion.seriesOption : [];
+        const seriesOptions = Array.isArray(currentAccordion.seriesOption)
+          ? currentAccordion.seriesOption
+          : [];
         const selectedSeries = seriesOptions.find(
           (option) => option.value === fieldValue
         );

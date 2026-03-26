@@ -39,7 +39,9 @@ interface CustomerInvoiceDataTableProps {
   className?: string;
 }
 
-export const CustomerInvoiceDataTable: React.FC<CustomerInvoiceDataTableProps> = ({
+export const CustomerInvoiceDataTable: React.FC<
+  CustomerInvoiceDataTableProps
+> = ({
   invoices,
   onPreview,
   onEditInvoice,
@@ -64,23 +66,25 @@ export const CustomerInvoiceDataTable: React.FC<CustomerInvoiceDataTableProps> =
           );
         },
       },
-            {
+      {
         accessorKey: 'totalAmount',
         header: 'Total Amount',
         cell: ({ row }) => {
           const invoice = row.original;
-          
+
           // Calculate total from products
-          const productTotal = invoice.products?.reduce(
-            (sum: number, product: any) => {
+          const productTotal =
+            invoice.products?.reduce((sum: number, product: any) => {
               // Try different possible price fields - prioritize productPrice
-              const productPrice = product.productPrice || product.totalPrice || product.price || 0;
+              const productPrice =
+                product.productPrice ||
+                product.totalPrice ||
+                product.price ||
+                0;
               const quantity = product.quantity || 1;
-              return sum + (Number(productPrice) * Number(quantity));
-            },
-            0
-          ) || 0;
-          
+              return sum + Number(productPrice) * Number(quantity);
+            }, 0) || 0;
+
           return (
             <span className='font-semibold text-green-600'>
               Rs {Number(productTotal).toLocaleString()}
@@ -96,28 +100,32 @@ export const CustomerInvoiceDataTable: React.FC<CustomerInvoiceDataTableProps> =
           const received = invoice.receivedAmount || 0;
           const remaining = invoice.remainingAmount || 0;
           const additionalPayments = invoice.additionalPayment || [];
-          
+
           // Calculate total from products
-          const productTotal = invoice.products?.reduce(
-            (sum: number, product: any) => {
+          const productTotal =
+            invoice.products?.reduce((sum: number, product: any) => {
               // Use same logic as total amount - prioritize productPrice
-              const productPrice = product.productPrice || product.totalPrice || product.price || 0;
+              const productPrice =
+                product.productPrice ||
+                product.totalPrice ||
+                product.price ||
+                0;
               const quantity = product.quantity || 1;
-              return sum + (Number(productPrice) * Number(quantity));
-            },
-            0
-          ) || 0;
+              return sum + Number(productPrice) * Number(quantity);
+            }, 0) || 0;
 
           // Calculate total additional payments
-          const totalAdditional = additionalPayments.reduce((sum: number, payment: any) => 
-            sum + Number(payment.amount || 0), 0
+          const totalAdditional = additionalPayments.reduce(
+            (sum: number, payment: any) => sum + Number(payment.amount || 0),
+            0
           );
-          
+
           // Total paid amount
           const totalPaid = received + totalAdditional;
-          
+
           // Calculate payment progress
-          const paymentProgress = productTotal > 0 ? (totalPaid / productTotal) * 100 : 0;
+          const paymentProgress =
+            productTotal > 0 ? (totalPaid / productTotal) * 100 : 0;
           const isPayLater = invoice.isPayLater || received === 0;
 
           return (
@@ -127,10 +135,11 @@ export const CustomerInvoiceDataTable: React.FC<CustomerInvoiceDataTableProps> =
               </div>
               {additionalPayments.length > 0 && (
                 <div className='text-purple-600'>
-                  Additional: Rs {Number(totalAdditional).toLocaleString()} ({additionalPayments.length})
+                  Additional: Rs {Number(totalAdditional).toLocaleString()} (
+                  {additionalPayments.length})
                 </div>
               )}
-              <div className='text-blue-600 font-medium'>
+              <div className='font-medium text-blue-600'>
                 Total Paid: Rs {Number(totalPaid).toLocaleString()}
               </div>
               {remaining > 0 && (
@@ -138,7 +147,7 @@ export const CustomerInvoiceDataTable: React.FC<CustomerInvoiceDataTableProps> =
                   Remaining: Rs {Number(remaining).toLocaleString()}
                 </div>
               )}
-              <div className='text-xs text-gray-500 mt-1'>
+              <div className='mt-1 text-xs text-gray-500'>
                 {paymentProgress.toFixed(0)}% paid
               </div>
             </div>
@@ -164,13 +173,15 @@ export const CustomerInvoiceDataTable: React.FC<CustomerInvoiceDataTableProps> =
           const invoice = row.original;
           const remaining = invoice.remainingAmount || 0;
           const isPaid = remaining === 0;
-          
+
           return (
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              isPaid 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-yellow-100 text-yellow-800'
-            }`}>
+            <span
+              className={`rounded-full px-2 py-1 text-xs font-medium ${
+                isPaid
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}
+            >
               {isPaid ? 'Paid' : 'Pending'}
             </span>
           );
@@ -185,14 +196,16 @@ export const CustomerInvoiceDataTable: React.FC<CustomerInvoiceDataTableProps> =
             <div className='flex items-center gap-2'>
               <button
                 onClick={() => onPreview(invoice)}
-                className='p-2' style={{ color: '#2563eb' }}
+                className='p-2'
+                style={{ color: '#2563eb' }}
                 title='View Invoice'
               >
                 <FaEye />
               </button>
               <button
                 onClick={() => onEditInvoice(invoice)}
-                className='p-2' style={{ color: '#0284c7' }}
+                className='p-2'
+                style={{ color: '#0284c7' }}
                 title='Edit Invoice'
               >
                 <FaEdit />
@@ -200,7 +213,8 @@ export const CustomerInvoiceDataTable: React.FC<CustomerInvoiceDataTableProps> =
               {(invoice.remainingAmount || 0) > 0 && (
                 <button
                   onClick={() => onAddPayment(invoice)}
-                  className='p-2' style={{ color: '#fbcc5e' }}
+                  className='p-2'
+                  style={{ color: '#fbcc5e' }}
                   title='Add Payment'
                 >
                   <FaMoneyBillWave />
@@ -208,7 +222,8 @@ export const CustomerInvoiceDataTable: React.FC<CustomerInvoiceDataTableProps> =
               )}
               <button
                 onClick={() => onDeleteInvoice(invoice._id)}
-                className='p-2' style={{ color: '#dc2626' }}
+                className='p-2'
+                style={{ color: '#dc2626' }}
                 title='Delete Invoice'
               >
                 <FaTrash />
@@ -229,7 +244,7 @@ export const CustomerInvoiceDataTable: React.FC<CustomerInvoiceDataTableProps> =
         enableSearch={true}
         searchPlaceholder='Search invoices...'
         showButton={false}
-        emptyMessage="No invoices found for this customer."
+        emptyMessage='No invoices found for this customer.'
       />
     </div>
   );

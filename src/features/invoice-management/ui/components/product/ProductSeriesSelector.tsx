@@ -25,7 +25,7 @@ export const ProductSeriesSelector: React.FC<ProductSeriesSelectorProps> = ({
   selectedBrand,
   categories,
   stock,
-  disabled = false
+  disabled = false,
 }) => {
   // Function to filter series options based on stock availability (from original ProductSection)
   const getFilteredSeriesOptions = React.useCallback(() => {
@@ -102,7 +102,7 @@ export const ProductSeriesSelector: React.FC<ProductSeriesSelectorProps> = ({
       const existsInStock = stockSeriesOptions.some(
         (stockSeries: any) => stockSeries.value === categorySeries.value
       );
-      
+
       if (!existsInStock) {
         allSeriesOptions.push(categorySeries);
       }
@@ -114,47 +114,74 @@ export const ProductSeriesSelector: React.FC<ProductSeriesSelectorProps> = ({
   const filteredSeriesOptions = getFilteredSeriesOptions();
 
   // Convert to IBatterySeries format for SeriesAutocomplete
-  const seriesData: IBatterySeries[] = filteredSeriesOptions.map(option => {
+  const seriesData: IBatterySeries[] = filteredSeriesOptions.map((option) => {
     // Get data from categories since batteryDetails is null
-    const category = categories.find(cat => cat.brandName === selectedBrand);
-    const categorySeries = category?.series?.find((s: IBatterySeries) => s.name === (option.value || option.label));
-    
+    const category = categories.find((cat) => cat.brandName === selectedBrand);
+    const categorySeries = category?.series?.find(
+      (s: IBatterySeries) => s.name === (option.value || option.label)
+    );
+
     // Extract numeric values from the data structure
-    const plate = option.plate || option.batteryDetails?.plate || categorySeries?.plate || 0;
-    const ah = option.ah || option.batteryDetails?.ah || categorySeries?.ah || 0;
-    const retailPrice = option.retailPrice || option.batteryDetails?.retailPrice || categorySeries?.retailPrice || 0;
-    const maxRetailPrice = option.maxRetailPrice || option.batteryDetails?.maxRetailPrice || categorySeries?.maxRetailPrice || 0;
-    const salesTax = option.salesTax || option.batteryDetails?.salesTax || categorySeries?.salesTax || 0;
-    const type = option.type || option.batteryDetails?.type || categorySeries?.type;
-    
+    const plate =
+      option.plate ||
+      option.batteryDetails?.plate ||
+      categorySeries?.plate ||
+      0;
+    const ah =
+      option.ah || option.batteryDetails?.ah || categorySeries?.ah || 0;
+    const retailPrice =
+      option.retailPrice ||
+      option.batteryDetails?.retailPrice ||
+      categorySeries?.retailPrice ||
+      0;
+    const maxRetailPrice =
+      option.maxRetailPrice ||
+      option.batteryDetails?.maxRetailPrice ||
+      categorySeries?.maxRetailPrice ||
+      0;
+    const salesTax =
+      option.salesTax ||
+      option.batteryDetails?.salesTax ||
+      categorySeries?.salesTax ||
+      0;
+    const type =
+      option.type || option.batteryDetails?.type || categorySeries?.type;
+
     const converted = {
       name: option.value || option.label,
       plate: typeof plate === 'string' ? parseInt(plate) : plate || 0,
       ah: typeof ah === 'string' ? parseInt(ah) : ah || 0,
       type: type,
-      retailPrice: typeof retailPrice === 'string' ? parseFloat(retailPrice) : retailPrice || 0,
-      salesTax: typeof salesTax === 'string' ? parseFloat(salesTax) : salesTax || 0,
-      maxRetailPrice: typeof maxRetailPrice === 'string' ? parseFloat(maxRetailPrice) : maxRetailPrice || 0,
+      retailPrice:
+        typeof retailPrice === 'string'
+          ? parseFloat(retailPrice)
+          : retailPrice || 0,
+      salesTax:
+        typeof salesTax === 'string' ? parseFloat(salesTax) : salesTax || 0,
+      maxRetailPrice:
+        typeof maxRetailPrice === 'string'
+          ? parseFloat(maxRetailPrice)
+          : maxRetailPrice || 0,
     };
-    
+
     return converted;
   });
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className='mb-1 block text-sm font-medium text-gray-700'>
         Series *
       </label>
       <SeriesAutocomplete
         series={seriesData}
         value={series}
         onChange={(value) => {
-          const selectedSeries = seriesData.find(s => s.name === value);
+          const selectedSeries = seriesData.find((s) => s.name === value);
           onSeriesChange(value, selectedSeries);
         }}
-        placeholder="Search series..."
+        placeholder='Search series...'
         disabled={disabled}
-        className="w-full"
+        className='w-full'
         showPrices={true}
       />
     </div>

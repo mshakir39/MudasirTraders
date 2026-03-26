@@ -338,7 +338,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
               doesn't block the dropdown panel itself. Charts are disabled via the
               body.date-picker-open CSS class (add to globals.css — see below). */}
           <div
-            className='fixed inset-0 date-picker-backdrop'
+            className='date-picker-backdrop fixed inset-0'
             style={{ zIndex: 99998, pointerEvents: 'none' }}
           />
 
@@ -350,7 +350,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
            */}
           <div
             className='absolute top-full mt-2 w-64 overflow-visible rounded-lg border border-secondary-200 bg-white shadow-lg'
-            style={{ zIndex: 99999, position: 'absolute', pointerEvents: 'all' }}
+            style={{
+              zIndex: 99999,
+              position: 'absolute',
+              pointerEvents: 'all',
+            }}
           >
             <div className='p-4'>
               <div className='mb-4 flex items-center justify-between'>

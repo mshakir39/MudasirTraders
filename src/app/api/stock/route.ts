@@ -1,11 +1,11 @@
 'use server';
-import { 
+import {
   getStock,
   createStock,
   updateStock,
   deleteStock,
   deleteAllBrandStock,
-  getStockHistory
+  getStockHistory,
 } from '@/actions/stockActions';
 
 // GET method to fetch all stock or stock history
@@ -18,7 +18,10 @@ export async function GET(req: any) {
 
     if (history === 'true') {
       // Get stock history
-      const result = await getStockHistory(brandName || '', series || undefined);
+      const result = await getStockHistory(
+        brandName || '',
+        series || undefined
+      );
       return Response.json(result);
     } else {
       // Get all stock
@@ -56,7 +59,7 @@ export async function PUT(req: any, res: any) {
 export async function DELETE(req: any, res: any) {
   try {
     const { brandName, series } = await req.json();
-    
+
     if (brandName && series) {
       // Delete specific stock item
       const result = await deleteStock(brandName, series);
@@ -66,7 +69,10 @@ export async function DELETE(req: any, res: any) {
       const result = await deleteAllBrandStock(brandName);
       return Response.json(result);
     } else {
-      return Response.json({ error: 'Brand name is required' }, { status: 400 });
+      return Response.json(
+        { error: 'Brand name is required' },
+        { status: 400 }
+      );
     }
   } catch (error: any) {
     console.error('Error deleting stock:', error);

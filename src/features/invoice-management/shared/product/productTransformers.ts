@@ -1,7 +1,9 @@
 // src/features/invoice-management/ui/shared/product/productTransformers.ts
 // Product data transformation utilities
 
-export const transformProductData = (accordionData: { [key: number]: any }): any[] => {
+export const transformProductData = (accordionData: {
+  [key: number]: any;
+}): any[] => {
   return Object.values(accordionData).map((item) => {
     const {
       seriesOption,
@@ -17,14 +19,22 @@ export const transformProductData = (accordionData: { [key: number]: any }): any
       warrentyStartDate: noWarranty ? '' : warrentyStartDate,
       warrentyDuration: noWarranty ? '0' : warrentyDuration,
       warrentyCode: noWarranty ? 'No Warranty' : item.warrentyCode,
-      warrantyEndDate: noWarranty ? '' : calculateWarrantyEndDate(item.warrentyStartDate, item.warrentyDuration),
+      warrantyEndDate: noWarranty
+        ? ''
+        : calculateWarrantyEndDate(
+            item.warrentyStartDate,
+            item.warrentyDuration
+          ),
       totalPrice: Number(rest.productPrice) * Number(rest.quantity),
       batteryDetails,
     };
   });
 };
 
-export const calculateWarrantyEndDate = (startDate: string, months: number | string): string => {
+export const calculateWarrantyEndDate = (
+  startDate: string,
+  months: number | string
+): string => {
   if (!startDate || isNaN(new Date(startDate).getTime())) {
     return '';
   }
@@ -58,7 +68,7 @@ export const calculateProductSubtotal = (products: any[]) => {
   return products.reduce((sum, product) => {
     const price = parseFloat(product.productPrice) || 0;
     const quantity = parseInt(product.quantity) || 0;
-    return sum + (price * quantity);
+    return sum + price * quantity;
   }, 0);
 };
 
@@ -67,6 +77,8 @@ export const formatProductForDisplay = (product: any) => {
     ...product,
     displayPrice: `Rs ${parseFloat(product.productPrice || 0).toLocaleString()}`,
     displayTotal: `Rs ${parseFloat(product.totalPrice || 0).toLocaleString()}`,
-    displayWarranty: product.noWarranty ? 'No Warranty' : `${product.warrentyDuration} months`,
+    displayWarranty: product.noWarranty
+      ? 'No Warranty'
+      : `${product.warrentyDuration} months`,
   };
 };

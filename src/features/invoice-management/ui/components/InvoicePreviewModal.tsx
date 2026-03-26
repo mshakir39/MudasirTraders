@@ -36,7 +36,9 @@ const InvoicePreviewModalRefactored: React.FC<InvoicePreviewModalProps> = ({
     previousAmounts: data?.previousAmounts,
     productsCount: data?.products?.length,
     products: data?.products,
-    isConsolidated: !!(data?.consolidatedFrom && data?.consolidatedFrom.length > 0)
+    isConsolidated: !!(
+      data?.consolidatedFrom && data?.consolidatedFrom.length > 0
+    ),
   });
 
   const [showPrinterInstructions, setShowPrinterInstructions] = useState(false);

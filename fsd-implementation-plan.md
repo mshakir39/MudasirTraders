@@ -3,58 +3,58 @@
 
 // 1. Create FSD folder structure
 src/
-├── entities/          # Business entities
-│   ├── invoice/
-│   │   ├── model.ts
-│   │   └── index.ts
-│   ├── customer/
-│   ├── product/
-│   └── stock/
-├── features/         # Business features
-│   ├── create-invoice/
-│   │   ├── api/
-│   │   │   └── invoiceApi.ts
-│   │   ├── model/
-│   │   │   └── types.ts
-│   │   ├── ui/
-│   │   │   ├── InvoiceForm.tsx      # ~120 lines
-│   │   │   ├── ProductSelector.tsx  # ~80 lines
-│   │   │   ├── CustomerInfo.tsx     # ~60 lines
-│   │   │   ├── PaymentSection.tsx   # ~90 lines
-│   │   │   └── InvoicePreview.tsx   # ~100 lines
-│   │   ├── lib/
-│   │   │   ├── validation.ts
-│   │   │   └── calculations.ts
-│   │   └── index.ts
-│   ├── dashboard/
-│   │   ├── ui/
-│   │   │   ├── StatsCards.tsx       # ~80 lines
-│   │   │   ├── SalesChart.tsx       # ~100 lines
-│   │   │   ├── InventoryChart.tsx   # ~90 lines
-│   │   │   └── RecentActivity.tsx   # ~70 lines
-│   │   └── index.ts
-│   ├── manage-customers/
-│   ├── manage-stock/
-│   └── ai-assistant/
-├── shared/          # Reusable UI
-│   ├── ui/
-│   │   ├── Button.tsx              # ~50 lines
-│   │   ├── Input.tsx               # ~60 lines
-│   │   ├── Modal.tsx               # ~80 lines
-│   │   ├── Dropdown.tsx            # ~70 lines
-│   │   └── Table.tsx               # ~100 lines
-│   ├── lib/
-│   │   ├── utils.ts
-│   │   └── constants.ts
-│   └── config/
-├── pages/           # Page components
-│   ├── DashboardPage.tsx           # ~100 lines
-│   ├── InvoicePage.tsx             # ~80 lines
-│   └── CustomersPage.tsx           # ~90 lines
-└── app/             # App configuration
-    ├── providers/
-    ├── styles/
-    └── config.ts
+├── entities/ # Business entities
+│ ├── invoice/
+│ │ ├── model.ts
+│ │ └── index.ts
+│ ├── customer/
+│ ├── product/
+│ └── stock/
+├── features/ # Business features
+│ ├── create-invoice/
+│ │ ├── api/
+│ │ │ └── invoiceApi.ts
+│ │ ├── model/
+│ │ │ └── types.ts
+│ │ ├── ui/
+│ │ │ ├── InvoiceForm.tsx # ~120 lines
+│ │ │ ├── ProductSelector.tsx # ~80 lines
+│ │ │ ├── CustomerInfo.tsx # ~60 lines
+│ │ │ ├── PaymentSection.tsx # ~90 lines
+│ │ │ └── InvoicePreview.tsx # ~100 lines
+│ │ ├── lib/
+│ │ │ ├── validation.ts
+│ │ │ └── calculations.ts
+│ │ └── index.ts
+│ ├── dashboard/
+│ │ ├── ui/
+│ │ │ ├── StatsCards.tsx # ~80 lines
+│ │ │ ├── SalesChart.tsx # ~100 lines
+│ │ │ ├── InventoryChart.tsx # ~90 lines
+│ │ │ └── RecentActivity.tsx # ~70 lines
+│ │ └── index.ts
+│ ├── manage-customers/
+│ ├── manage-stock/
+│ └── ai-assistant/
+├── shared/ # Reusable UI
+│ ├── ui/
+│ │ ├── Button.tsx # ~50 lines
+│ │ ├── Input.tsx # ~60 lines
+│ │ ├── Modal.tsx # ~80 lines
+│ │ ├── Dropdown.tsx # ~70 lines
+│ │ └── Table.tsx # ~100 lines
+│ ├── lib/
+│ │ ├── utils.ts
+│ │ └── constants.ts
+│ └── config/
+├── pages/ # Page components
+│ ├── DashboardPage.tsx # ~100 lines
+│ ├── InvoicePage.tsx # ~80 lines
+│ └── CustomersPage.tsx # ~90 lines
+└── app/ # App configuration
+├── providers/
+├── styles/
+└── config.ts
 
 // 2. Component Size Rules
 // - Each UI component: < 150 lines

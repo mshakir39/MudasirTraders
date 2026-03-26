@@ -18,7 +18,14 @@ import {
 import { useTabOrder } from '@/utils/hooks/useTabOrder';
 import { useStockColumns } from '@/utils/hooks/useStockColumns';
 import { transformStockData, calculateStockCost } from '@/utils/stockUtils';
-import { stockAtom, fetchStockAtom, setStockAtom, stockLoadingAtom, stockErrorAtom, categoriesAtom } from '@/store/sharedAtoms';
+import {
+  stockAtom,
+  fetchStockAtom,
+  setStockAtom,
+  stockLoadingAtom,
+  stockErrorAtom,
+  categoriesAtom,
+} from '@/store/sharedAtoms';
 import { DraggableTabs } from '@/components/stock/DraggableTabs';
 import { MobileStockList } from '@/components/stock/MobileStockList';
 import { StockFormModal } from '@/components/stock/StockFormModal';
@@ -42,7 +49,9 @@ const EMPTY_EDIT_DATA: EditData = {
   inStock: '',
 };
 
-const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories }) => {
+const StockLayout: React.FC<StockLayoutProps> = ({
+  categories: propCategories,
+}) => {
   // Use global state for categories (pre-loaded by GlobalDataProvider)
   const [categories] = useAtom(categoriesAtom);
   const {
@@ -158,7 +167,14 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
       setTableData([]);
       setStockCost(0);
     }
-  }, [stock, currentBrandName, orderedCategories, categories, optimisticStock, fetchData]);
+  }, [
+    stock,
+    currentBrandName,
+    orderedCategories,
+    categories,
+    optimisticStock,
+    fetchData,
+  ]);
 
   // Open edit modal pre-fills series options
   useEffect(() => {
@@ -193,14 +209,14 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
       const response = await fetch('/api/stock/actions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'create', 
+        body: JSON.stringify({
+          action: 'create',
           data: {
             brandName: formData.brandName,
             series: formData.series,
             productCost: formData.productCost,
             inStock: formData.inStock,
-          }
+          },
         }),
       });
       const result = await response.json();
@@ -228,14 +244,14 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
       const response = await fetch('/api/stock/actions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'update', 
+        body: JSON.stringify({
+          action: 'update',
           data: {
             brandName: editModalData.brandName,
             series: editModalData.series,
             productCost: editModalData.productCost,
             inStock: editModalData.inStock,
-          }
+          },
         }),
       });
       const result = await response.json();
@@ -280,9 +296,9 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
         const response = await fetch('/api/stock/actions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            action: 'delete', 
-            data: { brandName, series: item.series }
+          body: JSON.stringify({
+            action: 'delete',
+            data: { brandName, series: item.series },
           }),
         });
         const result = await response.json();
@@ -307,32 +323,32 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
   const handleViewHistory = useCallback(
     async (brandName: string, series?: string) => {
       console.log('🔍 handleViewHistory called with:', { brandName, series });
-      
+
       if (!brandName) {
         console.log('❌ No brandName provided to handleViewHistory');
         return;
       }
-      
+
       setIsLoadingHistory(true);
       try {
         // Build query parameters
         const params = new URLSearchParams({ brandName });
         if (series) params.append('series', series);
-        
+
         const url = `/api/stock/actions?${params.toString()}`;
         console.log('🌐 Fetching URL:', url);
-        
+
         const response = await fetch(url);
         console.log('📡 Response status:', response.status);
-        
+
         const result = await response.json();
         console.log('📋 Response result:', result);
-        
+
         if (!result.success || !Array.isArray(result.data)) {
           console.log('❌ Invalid response:', result);
           throw new Error(result.error || 'Failed to fetch history');
         }
-        
+
         setStockHistory(result.data);
         setIsHistoryModalOpen(true);
       } catch (error) {
@@ -355,9 +371,9 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
       const response = await fetch('/api/stock/actions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'deleteAllBrand', 
-          data: { brandName: currentBrandName }
+        body: JSON.stringify({
+          action: 'deleteAllBrand',
+          data: { brandName: currentBrandName },
         }),
       });
       const result = await response.json();
@@ -390,11 +406,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
       {/* Header */}
       <div className='mb-6 flex items-center justify-between'>
         <h1 className='text-2xl font-bold text-secondary-900'>Stock</h1>
-        <Button
-          variant='fill'
-          text='Add Stock'
-          onClick={openAddModal}
-        />
+        <Button variant='fill' text='Add Stock' onClick={openAddModal} />
       </div>
 
       {/* Tabs */}
@@ -442,7 +454,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
           {!loading && stockCost > 0 && (
             <button
               onClick={() => setShowStockCost(!showStockCost)}
-              className='whitespace-nowrap font-bold text-gray-500 transition-colors hover:text-gray-700 text-sm'
+              className='whitespace-nowrap text-sm font-bold text-gray-500 transition-colors hover:text-gray-700'
               title={showStockCost ? 'Hide Stock Cost' : 'Show Stock Cost'}
             >
               Total Stock Cost:{' '}
@@ -456,10 +468,10 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
         {/* Mobile List */}
         <div className='sm:hidden'>
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-                <p className="text-secondary-600">Loading stock data...</p>
+            <div className='flex h-64 items-center justify-center'>
+              <div className='text-center'>
+                <div className='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600'></div>
+                <p className='text-secondary-600'>Loading stock data...</p>
               </div>
             </div>
           ) : (
@@ -476,10 +488,10 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
         {/* Desktop Table */}
         <div className='hidden sm:block'>
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-                <p className="text-secondary-600">Loading stock data...</p>
+            <div className='flex h-64 items-center justify-center'>
+              <div className='text-center'>
+                <div className='mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600'></div>
+                <p className='text-secondary-600'>Loading stock data...</p>
               </div>
             </div>
           ) : (
@@ -506,11 +518,18 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
         onClose={closeFormModal}
         onSubmitAdd={handleSubmitAdd}
         onSubmitEdit={handleSubmitEdit}
-        onChangeAdd={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+        onChangeAdd={(
+          e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+        ) =>
           setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
         }
-        onChangeEdit={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-          setEditModalData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+        onChangeEdit={(
+          e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+        ) =>
+          setEditModalData((prev) => ({
+            ...prev,
+            [e.target.name]: e.target.value,
+          }))
         }
         onSeriesChange={(value) => {
           if (modalType === 'add') {
@@ -558,9 +577,12 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories })
             const response = await fetch('/api/stock/actions', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                action: 'delete', 
-                data: { brandName: deleteItem.brandName, series: deleteItem.series }
+              body: JSON.stringify({
+                action: 'delete',
+                data: {
+                  brandName: deleteItem.brandName,
+                  series: deleteItem.series,
+                },
               }),
             });
             const result = await response.json();

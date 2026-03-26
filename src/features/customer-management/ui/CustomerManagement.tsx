@@ -6,7 +6,10 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { unstable_noStore } from 'next/cache';
 import { useAtom } from 'jotai';
-import { Customer, CustomerFormData } from '@/features/customer-management/entities/customer/model/types';
+import {
+  Customer,
+  CustomerFormData,
+} from '@/features/customer-management/entities/customer/model/types';
 import { customersAtom, fetchCustomersAtom } from '@/store/sharedAtoms';
 import { useCustomerActions } from '@/features/customer-management/lib/useCustomerActions';
 import { CustomerTable } from '@/features/customer-management/shared/ui/components/CustomerTable';
@@ -24,14 +27,16 @@ interface CustomerManagementProps {
 export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   initialCustomers,
   onViewInvoices,
-  className = ''
+  className = '',
 }) => {
   unstable_noStore();
-  
+
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const [customers, setCustomers] = useAtom(customersAtom);
   const fetchCustomers = useAtom(fetchCustomersAtom)[1];
 
@@ -46,7 +51,12 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     await fetchCustomers();
   }, [fetchCustomers]);
 
-  const { optimisticCustomers, createCustomer, updateCustomer, deleteCustomer } = useCustomerActions({
+  const {
+    optimisticCustomers,
+    createCustomer,
+    updateCustomer,
+    deleteCustomer,
+  } = useCustomerActions({
     customers,
     onCustomersChange: setCustomers,
     onRefreshCustomers: handleRefreshCustomers,
@@ -55,13 +65,15 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   // Filter customers based on search
   const filteredCustomers = useMemo(() => {
     if (!searchTerm.trim()) return optimisticCustomers;
-    
+
     const lowerSearchTerm = searchTerm.toLowerCase();
-    return optimisticCustomers.filter(customer => 
-      customer.customerName.toLowerCase().includes(lowerSearchTerm) ||
-      customer.phoneNumber.toLowerCase().includes(lowerSearchTerm) ||
-      customer.address.toLowerCase().includes(lowerSearchTerm) ||
-      (customer.email && customer.email.toLowerCase().includes(lowerSearchTerm))
+    return optimisticCustomers.filter(
+      (customer) =>
+        customer.customerName.toLowerCase().includes(lowerSearchTerm) ||
+        customer.phoneNumber.toLowerCase().includes(lowerSearchTerm) ||
+        customer.address.toLowerCase().includes(lowerSearchTerm) ||
+        (customer.email &&
+          customer.email.toLowerCase().includes(lowerSearchTerm))
     );
   }, [optimisticCustomers, searchTerm]);
 
@@ -80,17 +92,20 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     setSelectedCustomer(null);
   }, []);
 
-  const handleModalSubmit = useCallback(async (data: CustomerFormData) => {
-    if (selectedCustomer) {
-      return await updateCustomer(selectedCustomer._id, data);
-    } else {
-      return await createCustomer(data);
-    }
-  }, [selectedCustomer, updateCustomer, createCustomer]);
+  const handleModalSubmit = useCallback(
+    async (data: CustomerFormData) => {
+      if (selectedCustomer) {
+        return await updateCustomer(selectedCustomer._id, data);
+      } else {
+        return await createCustomer(data);
+      }
+    },
+    [selectedCustomer, updateCustomer, createCustomer]
+  );
 
   return (
     <div className={`p-0 py-6 md:p-6 ${className}`}>
-      <h1 className='text-2xl font-bold mb-6 text-secondary-900'>Customers</h1>
+      <h1 className='mb-6 text-2xl font-bold text-secondary-900'>Customers</h1>
 
       {/* Customer Table with built-in search */}
       <CustomerTable
@@ -100,7 +115,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         onDeleteCustomer={deleteCustomer}
         onAddCustomer={handleCreateCustomer}
         loading={false}
-        className="mt-4"
+        className='mt-4'
       />
 
       {/* Customer Modal */}

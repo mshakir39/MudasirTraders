@@ -5,7 +5,11 @@
 
 import { useCallback, useOptimistic } from 'react';
 import { toast } from 'react-toastify';
-import { Brand, BrandCreateRequest, BrandDeleteRequest } from '@/features/brand-management/entities/brand/model/types';
+import {
+  Brand,
+  BrandCreateRequest,
+  BrandDeleteRequest,
+} from '@/features/brand-management/entities/brand/model/types';
 
 export interface UseBrandActionsProps {
   brands: Brand[];
@@ -27,64 +31,70 @@ export const useBrandActions = ({
     ]
   );
 
-  const createBrand = useCallback(async (data: BrandCreateRequest) => {
-    try {
-      // Add optimistic update
-      addOptimisticBrand({ brandName: data.brandName } as Brand);
+  const createBrand = useCallback(
+    async (data: BrandCreateRequest) => {
+      try {
+        // Add optimistic update
+        addOptimisticBrand({ brandName: data.brandName } as Brand);
 
-      const response = await fetch('/api/brands', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ brandName: data.brandName.trim() }),
-      });
+        const response = await fetch('/api/brands', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ brandName: data.brandName.trim() }),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (response.ok) {
-        toast.success('Brand created successfully');
-        await onRefreshBrands(); // Refresh store after create
-        return { success: true };
-      } else {
-        toast.error(result.error || 'Failed to create brand');
-        return { error: result.error || 'Failed to create brand' };
+        if (response.ok) {
+          toast.success('Brand created successfully');
+          await onRefreshBrands(); // Refresh store after create
+          return { success: true };
+        } else {
+          toast.error(result.error || 'Failed to create brand');
+          return { error: result.error || 'Failed to create brand' };
+        }
+      } catch (error) {
+        toast.error('An error occurred while creating the brand');
+        return { error: 'An error occurred while creating the brand' };
       }
-    } catch (error) {
-      toast.error('An error occurred while creating the brand');
-      return { error: 'An error occurred while creating the brand' };
-    }
-  }, [addOptimisticBrand, onRefreshBrands]);
+    },
+    [addOptimisticBrand, onRefreshBrands]
+  );
 
-  const deleteBrand = useCallback(async (id: string) => {
-    if (!id) {
-      toast.error('Cannot delete brand: ID is missing');
-      return;
-    }
-
-    if (!confirm('Are you sure you want to delete this brand?')) return;
-
-    try {
-      const response = await fetch('/api/brands', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        toast.success('Brand deleted successfully');
-        await onRefreshBrands(); // Refresh store after delete
-      } else {
-        toast.error(result.error || 'Failed to delete brand');
+  const deleteBrand = useCallback(
+    async (id: string) => {
+      if (!id) {
+        toast.error('Cannot delete brand: ID is missing');
+        return;
       }
-    } catch (error) {
-      toast.error('An error occurred while deleting the brand');
-    }
-  }, [onRefreshBrands]);
+
+      if (!confirm('Are you sure you want to delete this brand?')) return;
+
+      try {
+        const response = await fetch('/api/brands', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          toast.success('Brand deleted successfully');
+          await onRefreshBrands(); // Refresh store after delete
+        } else {
+          toast.error(result.error || 'Failed to delete brand');
+        }
+      } catch (error) {
+        toast.error('An error occurred while deleting the brand');
+      }
+    },
+    [onRefreshBrands]
+  );
 
   return {
     optimisticBrands,

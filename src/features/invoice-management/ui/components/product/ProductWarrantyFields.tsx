@@ -29,7 +29,7 @@ export const ProductWarrantyFields: React.FC<ProductWarrantyFieldsProps> = ({
   disabled = false,
   accordionIndex,
   accordionMethods,
-  series
+  series,
 }) => {
   // Check if it's battery tonic (from original logic)
   const isBatteryTonic = React.useMemo(() => {
@@ -45,31 +45,34 @@ export const ProductWarrantyFields: React.FC<ProductWarrantyFieldsProps> = ({
   }, [series]);
 
   // Handle warranty duration change with validation (from original logic)
-  const handleDurationChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Ensure value is not negative and not greater than 120, allow 0 for no warranty
-    const numValue = parseInt(value);
-    if (value === '' || (numValue >= 0 && numValue <= 120)) {
-      if (accordionMethods && accordionIndex !== undefined) {
-        accordionMethods.handleAccordionChange(
-          accordionIndex,
-          'warrentyDuration',
-          value
-        );
+  const handleDurationChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      // Ensure value is not negative and not greater than 120, allow 0 for no warranty
+      const numValue = parseInt(value);
+      if (value === '' || (numValue >= 0 && numValue <= 120)) {
+        if (accordionMethods && accordionIndex !== undefined) {
+          accordionMethods.handleAccordionChange(
+            accordionIndex,
+            'warrentyDuration',
+            value
+          );
+        }
+        onDurationChange(value);
       }
-      onDurationChange(value);
-    }
-  }, [accordionMethods, accordionIndex, onDurationChange]);
+    },
+    [accordionMethods, accordionIndex, onDurationChange]
+  );
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="w-full">
+    <div className='space-y-4'>
+      <div className='grid grid-cols-2 gap-4'>
+        <div className='w-full'>
           <Input
-            parentClass="w-full"
-            type="date"
-            label="Warranty Start Date"
-            name="warrentyStartDate"
+            parentClass='w-full'
+            type='date'
+            label='Warranty Start Date'
+            name='warrentyStartDate'
             value={warrentyStartDate}
             onChange={(e) => {
               if (accordionMethods && accordionIndex !== undefined) {
@@ -84,15 +87,15 @@ export const ProductWarrantyFields: React.FC<ProductWarrantyFieldsProps> = ({
             disabled={disabled}
           />
         </div>
-        <div className="w-full">
+        <div className='w-full'>
           <Input
-            parentClass="w-full"
-            type="number"
-            label="Warranty Duration"
-            name="warrentyDuration"
+            parentClass='w-full'
+            type='number'
+            label='Warranty Duration'
+            name='warrentyDuration'
             min={0}
             max={120}
-            placeholder="0-120 (0 for no warranty)"
+            placeholder='0-120 (0 for no warranty)'
             value={warrentyDuration || ''}
             onChange={handleDurationChange}
             disabled={disabled}
@@ -100,13 +103,13 @@ export const ProductWarrantyFields: React.FC<ProductWarrantyFieldsProps> = ({
         </div>
       </div>
 
-      <div className="w-full">
+      <div className='w-full'>
         <Input
-          parentClass="w-full"
-          type="text"
-          label="Warranty Code"
-          name="warrentyCode"
-          placeholder="Enter warranty code(s) - multiple codes separated by comma or space"
+          parentClass='w-full'
+          type='text'
+          label='Warranty Code'
+          name='warrentyCode'
+          placeholder='Enter warranty code(s) - multiple codes separated by comma or space'
           value={warrentyCode}
           onChange={(e) => {
             if (accordionMethods && accordionIndex !== undefined) {

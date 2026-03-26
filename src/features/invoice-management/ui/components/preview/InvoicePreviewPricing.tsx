@@ -13,17 +13,26 @@ interface InvoicePreviewPricingProps {
   data: any;
 }
 
-export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({ data }) => {
+export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
+  data,
+}) => {
   // Calculate total received amount including additional payments
   const initialReceived = Number(data?.receivedAmount) || 0;
   const additionalPayments = data?.additionalPayment || [];
-  const totalAdditionalReceived = additionalPayments.reduce((sum: number, payment: any) => sum + Number(payment.amount), 0);
+  const totalAdditionalReceived = additionalPayments.reduce(
+    (sum: number, payment: any) => sum + Number(payment.amount),
+    0
+  );
   const totalReceived = initialReceived + totalAdditionalReceived;
-  
+
   // Calculate amounts for consolidated invoices
-  const consolidatedAmount = data?.previousAmounts?.reduce((sum: number, amount: number) => sum + amount, 0) || 0;
+  const consolidatedAmount =
+    data?.previousAmounts?.reduce(
+      (sum: number, amount: number) => sum + amount,
+      0
+    ) || 0;
   const subtotalAmount = Number(getAllSum(data?.products, 'totalPrice')) || 0;
-  
+
   // Debug logging
   console.log('🔍 Consolidated Invoice Debug:', {
     consolidatedAmount,
@@ -38,17 +47,18 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({ da
     batteriesRate: data?.batteriesRate,
     receivedAmount: data?.receivedAmount,
     remainingAmount: data?.remainingAmount,
-    totalAmount: data?.totalAmount
+    totalAmount: data?.totalAmount,
   });
-  
+
   // For consolidated invoices, total includes both consolidated amount and new items
-  const totalAmount = data?.consolidatedFrom && data?.consolidatedFrom.length > 0 
-    ? subtotalAmount + consolidatedAmount 
-    : subtotalAmount;
-    
+  const totalAmount =
+    data?.consolidatedFrom && data?.consolidatedFrom.length > 0
+      ? subtotalAmount + consolidatedAmount
+      : subtotalAmount;
+
   const batteriesRate = Number(data?.batteriesRate) || 0;
   const actualRemaining = totalAmount - totalReceived - batteriesRate;
-  
+
   return (
     <div className='flex w-full flex-col border border-gray-100 lg:w-[45%]'>
       <div className='flex items-center justify-between bg-sidebar-gradient p-2 text-white md:p-3'>
@@ -62,38 +72,40 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({ da
 
       {/* Consolidation Details - Only show for consolidated invoices */}
       {data?.consolidatedFrom && data?.consolidatedFrom.length > 0 && (
-        <div className='bg-purple-50 border border-purple-200 p-3'>
+        <div className='border border-purple-200 bg-purple-50 p-3'>
           <div className='flex flex-col space-y-1 text-sm'>
-            {data?.consolidatedInvoiceNumbers?.length > 0 ? (
-              // New format: Use actual invoice numbers if available
-              data?.consolidatedInvoiceNumbers?.map((invoiceNo: string, index: number) => (
-                <div key={invoiceNo} className='flex justify-between items-center'>
-                  <span className='text-purple-700 font-medium'>
-                    #{invoiceNo}
-                  </span>
-                  <span className='font-bold text-purple-900'>
-                    Rs {data?.previousAmounts?.[index]?.toLocaleString() || 0}
-                  </span>
-                </div>
-              ))
-            ) : (
-              // Fallback: Use truncated IDs for existing invoices
-              data?.consolidatedFrom?.map((id: string, index: number) => (
-                <div key={id} className='flex justify-between items-center'>
-                  <span className='text-purple-700 font-medium'>
-                    #INV-{id.slice(-6)}
-                  </span>
-                  <span className='font-bold text-purple-900'>
-                    Rs {data?.previousAmounts?.[index]?.toLocaleString() || 0}
-                  </span>
-                </div>
-              ))
-            )}
+            {data?.consolidatedInvoiceNumbers?.length > 0
+              ? // New format: Use actual invoice numbers if available
+                data?.consolidatedInvoiceNumbers?.map(
+                  (invoiceNo: string, index: number) => (
+                    <div
+                      key={invoiceNo}
+                      className='flex items-center justify-between'
+                    >
+                      <span className='font-medium text-purple-700'>
+                        #{invoiceNo}
+                      </span>
+                      <span className='font-bold text-purple-900'>
+                        Rs{' '}
+                        {data?.previousAmounts?.[index]?.toLocaleString() || 0}
+                      </span>
+                    </div>
+                  )
+                )
+              : // Fallback: Use truncated IDs for existing invoices
+                data?.consolidatedFrom?.map((id: string, index: number) => (
+                  <div key={id} className='flex items-center justify-between'>
+                    <span className='font-medium text-purple-700'>
+                      #INV-{id.slice(-6)}
+                    </span>
+                    <span className='font-bold text-purple-900'>
+                      Rs {data?.previousAmounts?.[index]?.toLocaleString() || 0}
+                    </span>
+                  </div>
+                ))}
           </div>
         </div>
       )}
-
- 
 
       {(Number(data?.batteriesRate) || 0) > 0 && (
         <div className='flex items-center justify-between border-b border-gray-50 p-2 text-black md:p-3'>
@@ -106,16 +118,15 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({ da
         </div>
       )}
 
-      {(Number(data?.batteriesRate) || 0) === 0 && data?.batteriesCountAndWeight && (
-        <div className='flex items-center justify-between border-b border-gray-50 p-2 text-black md:p-3'>
-          <span className='text-xs font-bold uppercase text-gray-500 md:text-sm'>
-            {data?.batteriesCountAndWeight}
-          </span>
-          <span className='text-xs font-bold md:text-sm'>
-            - Old Battery
-          </span>
-        </div>
-      )}
+      {(Number(data?.batteriesRate) || 0) === 0 &&
+        data?.batteriesCountAndWeight && (
+          <div className='flex items-center justify-between border-b border-gray-50 p-2 text-black md:p-3'>
+            <span className='text-xs font-bold uppercase text-gray-500 md:text-sm'>
+              {data?.batteriesCountAndWeight}
+            </span>
+            <span className='text-xs font-bold md:text-sm'>- Old Battery</span>
+          </div>
+        )}
 
       {Number(data?.receivedAmount) > 0 && (
         <div className='flex items-center justify-between border-b border-gray-50 p-2 text-black md:p-3'>
@@ -156,9 +167,7 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({ da
           {actualRemaining === 0 ? 'Total' : 'Balance Due'}
         </span>
         <span className='text-sm font-bold md:text-base lg:text-lg'>
-          {actualRemaining === 0
-            ? 'PAID'
-            : `Rs ${actualRemaining}`}
+          {actualRemaining === 0 ? 'PAID' : `Rs ${actualRemaining}`}
         </span>
       </div>
     </div>

@@ -11,7 +11,10 @@ interface UseInvoiceFormProps {
   onSubmit: (data: InvoiceFormData) => void;
 }
 
-export const useInvoiceForm = ({ initialData, onSubmit }: UseInvoiceFormProps) => {
+export const useInvoiceForm = ({
+  initialData,
+  onSubmit,
+}: UseInvoiceFormProps) => {
   const [invoiceData, setInvoiceData] = useState<InvoiceFormData>({
     customerType: 'WalkIn Customer',
     customerName: '',
@@ -39,31 +42,44 @@ export const useInvoiceForm = ({ initialData, onSubmit }: UseInvoiceFormProps) =
   const [lastSyncedDate, setLastSyncedDate] = useState('');
 
   // Recalculate totals when data changes
-  const calculateTotal = useCallback((transformedProducts?: any[], chargingServices?: any[]) => {
-    if (invoiceData.isChargingService) {
-      const subtotal = (chargingServices || []).reduce((sum, service) => sum + (service.total || 0), 0);
-      const total = subtotal + (invoiceData.taxAmount || 0);
-      const remaining = total - (invoiceData.receivedAmount || 0);
-      
-      setInvoiceData(prev => ({
-        ...prev,
-        subtotal,
-        totalAmount: total,
-        remainingAmount: Math.max(0, remaining)
-      }));
-    } else {
-      const subtotal = (transformedProducts || []).reduce((sum, product) => sum + (product.totalPrice || 0), 0);
-      const total = subtotal + (invoiceData.taxAmount || 0);
-      const remaining = total - (invoiceData.receivedAmount || 0);
-      
-      setInvoiceData(prev => ({
-        ...prev,
-        subtotal,
-        totalAmount: total,
-        remainingAmount: Math.max(0, remaining)
-      }));
-    }
-  }, [invoiceData.isChargingService, invoiceData.taxAmount, invoiceData.receivedAmount]);
+  const calculateTotal = useCallback(
+    (transformedProducts?: any[], chargingServices?: any[]) => {
+      if (invoiceData.isChargingService) {
+        const subtotal = (chargingServices || []).reduce(
+          (sum, service) => sum + (service.total || 0),
+          0
+        );
+        const total = subtotal + (invoiceData.taxAmount || 0);
+        const remaining = total - (invoiceData.receivedAmount || 0);
+
+        setInvoiceData((prev) => ({
+          ...prev,
+          subtotal,
+          totalAmount: total,
+          remainingAmount: Math.max(0, remaining),
+        }));
+      } else {
+        const subtotal = (transformedProducts || []).reduce(
+          (sum, product) => sum + (product.totalPrice || 0),
+          0
+        );
+        const total = subtotal + (invoiceData.taxAmount || 0);
+        const remaining = total - (invoiceData.receivedAmount || 0);
+
+        setInvoiceData((prev) => ({
+          ...prev,
+          subtotal,
+          totalAmount: total,
+          remainingAmount: Math.max(0, remaining),
+        }));
+      }
+    },
+    [
+      invoiceData.isChargingService,
+      invoiceData.taxAmount,
+      invoiceData.receivedAmount,
+    ]
+  );
 
   // Sync warranty dates with custom date
   const syncWarrantyDatesWithCustomDate = useCallback(
@@ -92,39 +108,66 @@ export const useInvoiceForm = ({ initialData, onSubmit }: UseInvoiceFormProps) =
       });
 
       if (updatedCount > 0) {
-        console.log(`Warranty start dates synced with custom date: ${customDateOnly}`);
+        console.log(
+          `Warranty start dates synced with custom date: ${customDateOnly}`
+        );
       }
     },
     []
   );
 
   // Handle form submission
-  const handleSubmit = useCallback((e: React.FormEvent, transformedProducts: any[], accordionData: any) => {
-    e.preventDefault();
-    
-    if (!validateForm(invoiceData, accordionData)) return;
-    
-    const finalData = {
-      ...invoiceData,
-      products: invoiceData.isChargingService ? [] : transformedProducts,
-      chargingServices: invoiceData.isChargingService ? invoiceData.chargingServices : [],
-      subtotal: invoiceData.isChargingService 
-        ? (invoiceData.chargingServices || []).reduce((sum, service) => sum + (service.total || 0), 0)
-        : transformedProducts.reduce((sum, product) => sum + (product.totalPrice || 0), 0),
-      taxAmount: invoiceData.taxAmount || 0,
-      totalAmount: invoiceData.isChargingService 
-        ? (invoiceData.chargingServices || []).reduce((sum, service) => sum + (service.total || 0), 0) + (invoiceData.taxAmount || 0)
-        : transformedProducts.reduce((sum, product) => sum + (product.totalPrice || 0), 0) + (invoiceData.taxAmount || 0),
-      remainingAmount: Math.max(0, 
-        (invoiceData.isChargingService 
-          ? (invoiceData.chargingServices || []).reduce((sum, service) => sum + (service.total || 0), 0)
-          : transformedProducts.reduce((sum, product) => sum + (product.totalPrice || 0), 0)
-        ) + (invoiceData.taxAmount || 0) - (invoiceData.receivedAmount || 0)
-      ),
-    };
-    
-    onSubmit(finalData);
-  }, [invoiceData, onSubmit]);
+  const handleSubmit = useCallback(
+    (e: React.FormEvent, transformedProducts: any[], accordionData: any) => {
+      e.preventDefault();
+
+      if (!validateForm(invoiceData, accordionData)) return;
+
+      const finalData = {
+        ...invoiceData,
+        products: invoiceData.isChargingService ? [] : transformedProducts,
+        chargingServices: invoiceData.isChargingService
+          ? invoiceData.chargingServices
+          : [],
+        subtotal: invoiceData.isChargingService
+          ? (invoiceData.chargingServices || []).reduce(
+              (sum, service) => sum + (service.total || 0),
+              0
+            )
+          : transformedProducts.reduce(
+              (sum, product) => sum + (product.totalPrice || 0),
+              0
+            ),
+        taxAmount: invoiceData.taxAmount || 0,
+        totalAmount: invoiceData.isChargingService
+          ? (invoiceData.chargingServices || []).reduce(
+              (sum, service) => sum + (service.total || 0),
+              0
+            ) + (invoiceData.taxAmount || 0)
+          : transformedProducts.reduce(
+              (sum, product) => sum + (product.totalPrice || 0),
+              0
+            ) + (invoiceData.taxAmount || 0),
+        remainingAmount: Math.max(
+          0,
+          (invoiceData.isChargingService
+            ? (invoiceData.chargingServices || []).reduce(
+                (sum, service) => sum + (service.total || 0),
+                0
+              )
+            : transformedProducts.reduce(
+                (sum, product) => sum + (product.totalPrice || 0),
+                0
+              )) +
+            (invoiceData.taxAmount || 0) -
+            (invoiceData.receivedAmount || 0)
+        ),
+      };
+
+      onSubmit(finalData);
+    },
+    [invoiceData, onSubmit]
+  );
 
   return {
     invoiceData,

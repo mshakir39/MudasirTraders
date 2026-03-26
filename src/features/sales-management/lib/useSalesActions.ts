@@ -3,7 +3,10 @@
 
 import { useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { Sale, SalesFilters } from '@/features/sales-management/entities/sales/model/types';
+import {
+  Sale,
+  SalesFilters,
+} from '@/features/sales-management/entities/sales/model/types';
 
 export interface UseSalesActionsProps {
   sales: Sale[];
@@ -30,7 +33,7 @@ export const useSalesActions = ({
         }
 
         toast.success('Sale deleted successfully');
-        
+
         // Refresh sales data
         if (onRefreshSales) {
           await onRefreshSales();
@@ -57,7 +60,7 @@ export const useSalesActions = ({
         }
 
         toast.success('Sale updated successfully');
-        
+
         // Refresh sales data
         if (onRefreshSales) {
           await onRefreshSales();
@@ -85,7 +88,7 @@ export const useSalesActions = ({
 
         const result = await response.json();
         toast.success('Sale created successfully');
-        
+
         // Refresh sales data
         if (onRefreshSales) {
           await onRefreshSales();
@@ -100,28 +103,25 @@ export const useSalesActions = ({
     [onRefreshSales]
   );
 
-  const applyFilters = useCallback(
-    async (filters: SalesFilters) => {
-      try {
-        const response = await fetch('/api/sales/filter', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(filters),
-        });
+  const applyFilters = useCallback(async (filters: SalesFilters) => {
+    try {
+      const response = await fetch('/api/sales/filter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(filters),
+      });
 
-        if (!response.ok) {
-          throw new Error('Failed to apply filters');
-        }
-
-        const result = await response.json();
-        return result.data;
-      } catch (error) {
-        toast.error('Failed to apply filters');
-        throw error;
+      if (!response.ok) {
+        throw new Error('Failed to apply filters');
       }
-    },
-    []
-  );
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      toast.error('Failed to apply filters');
+      throw error;
+    }
+  }, []);
 
   return {
     deleteSale,

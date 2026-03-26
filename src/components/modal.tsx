@@ -36,28 +36,42 @@ const Modal: FunctionComponent<ModalProps> = ({
   const heightClass = dynamicHeight ? '' : 'max-h-[90vh]';
 
   return (
-    <Dialog open={isOpen} onClose={preventBackdropClose ? () => {} : (onClose || (() => {}))} className="relative z-50">
+    <Dialog
+      open={isOpen}
+      onClose={preventBackdropClose ? () => {} : onClose || (() => {})}
+      className='relative z-50'
+    >
       {/* The backdrop, rendered as a fixed sibling to the panel container */}
-      <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
-      
+      <div className='fixed inset-0 bg-black/50' aria-hidden='true' />
+
       {/* Full-screen container to center the panel */}
-      <div className="fixed inset-0 flex items-center justify-center p-4">
+      <div className='fixed inset-0 flex items-center justify-center p-4'>
         {/* The actual dialog panel */}
-        <Dialog.Panel className={`${defaultPanelClass} ${dialogPanelClass || ''} ${heightClass}`}>
+        <Dialog.Panel
+          className={`${defaultPanelClass} ${dialogPanelClass || ''} ${heightClass}`}
+        >
           {/* Header */}
           {title && (
             <div
-              className="border-b border-gray-200 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-8 shadow-lg"
-              style={{background: 'linear-gradient(to right, rgb(30, 58, 138), rgb(29, 78, 216), rgb(37, 99, 235))'}}
+              className='border-b border-gray-200 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 px-4 py-6 shadow-lg backdrop-blur-sm sm:px-6 sm:py-8'
+              style={{
+                background:
+                  'linear-gradient(to right, rgb(30, 58, 138), rgb(29, 78, 216), rgb(37, 99, 235))',
+              }}
             >
-              <Dialog.Title className='text-base font-bold leading-5 text-white sm:text-xl sm:leading-6 drop-shadow-lg' style={{color: 'white !important'}}>
+              <Dialog.Title
+                className='text-base font-bold leading-5 text-white drop-shadow-lg sm:text-xl sm:leading-6'
+                style={{ color: 'white !important' }}
+              >
                 {title}
               </Dialog.Title>
             </div>
           )}
-          
+
           {/* Content */}
-          <div className={`${parentClass || 'p-4 sm:p-6'} ${dynamicHeight ? 'overflow-y-auto' : 'overflow-y-auto'}`}>
+          <div
+            className={`${parentClass || 'p-4 sm:p-6'} ${dynamicHeight ? 'overflow-y-auto' : 'overflow-y-auto'}`}
+          >
             {children}
           </div>
         </Dialog.Panel>

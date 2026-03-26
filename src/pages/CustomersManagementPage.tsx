@@ -14,10 +14,14 @@ interface CustomersManagementPageProps {
   initialCustomers: Customer[];
 }
 
-export default function CustomersManagementPage({ initialCustomers }: CustomersManagementPageProps) {
+export default function CustomersManagementPage({
+  initialCustomers,
+}: CustomersManagementPageProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInvoicesModalOpen, setIsInvoicesModalOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleViewInvoices = useCallback((customer: Customer) => {
@@ -41,7 +45,7 @@ export default function CustomersManagementPage({ initialCustomers }: CustomersM
   }, []);
 
   const handleModalSuccess = useCallback(() => {
-    setRefreshKey(prev => prev + 1); // Trigger refresh
+    setRefreshKey((prev) => prev + 1); // Trigger refresh
   }, []);
 
   const handleModalSubmit = useCallback(async (data: CustomerFormData) => {

@@ -19,30 +19,30 @@ export const InvoiceFilters: React.FC<InvoiceFiltersProps> = ({
   onFilterChange,
   customerOptions,
   paymentMethodOptions,
-  className = ''
+  className = '',
 }) => {
   const handleFilterChange = (key: keyof InvoiceFilter, value: any) => {
     onFilterChange({
       ...filter,
-      [key]: value
+      [key]: value,
     });
   };
 
   return (
     <div className={`${className}`}>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         {/* Customer Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className='mb-1 block text-sm font-medium text-gray-700'>
             Customer
           </label>
           <select
             value={filter.customer || ''}
             onChange={(e) => handleFilterChange('customer', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
           >
-            <option value="">All Customers</option>
-            {customerOptions.map(customer => (
+            <option value=''>All Customers</option>
+            {customerOptions.map((customer) => (
               <option key={customer} value={customer}>
                 {customer}
               </option>
@@ -52,33 +52,37 @@ export const InvoiceFilters: React.FC<InvoiceFiltersProps> = ({
 
         {/* Payment Status Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className='mb-1 block text-sm font-medium text-gray-700'>
             Payment Status
           </label>
           <select
             value={filter.paymentStatus || 'all'}
-            onChange={(e) => handleFilterChange('paymentStatus', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) =>
+              handleFilterChange('paymentStatus', e.target.value)
+            }
+            className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
           >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="partial">Partial</option>
-            <option value="paid">Paid</option>
+            <option value='all'>All Status</option>
+            <option value='pending'>Pending</option>
+            <option value='partial'>Partial</option>
+            <option value='paid'>Paid</option>
           </select>
         </div>
 
         {/* Payment Method Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className='mb-1 block text-sm font-medium text-gray-700'>
             Payment Method
           </label>
           <select
             value={filter.paymentMethod || ''}
-            onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) =>
+              handleFilterChange('paymentMethod', e.target.value)
+            }
+            className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
           >
-            <option value="">All Methods</option>
-            {paymentMethodOptions.map(method => (
+            <option value=''>All Methods</option>
+            {paymentMethodOptions.map((method) => (
               <option key={method} value={method}>
                 {method}
               </option>

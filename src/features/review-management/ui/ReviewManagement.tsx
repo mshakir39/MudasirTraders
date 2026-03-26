@@ -14,7 +14,7 @@ interface ReviewManagementProps {
 }
 
 export const ReviewManagement: React.FC<ReviewManagementProps> = ({
-  className = ''
+  className = '',
 }) => {
   const [reviews, setReviews] = useState<CustomerReview[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,7 @@ export const ReviewManagement: React.FC<ReviewManagementProps> = ({
       await ReviewApi.approveReview(reviewId);
       toast.success('Review approved successfully');
       fetchReviews(); // Refresh the list
-      
+
       // Notify sidebar to refresh pending reviews count
       window.dispatchEvent(new CustomEvent('reviewsUpdated'));
     } catch (error) {
@@ -61,7 +61,7 @@ export const ReviewManagement: React.FC<ReviewManagementProps> = ({
       await ReviewApi.rejectReview(reviewId);
       toast.success('Review rejected and removed');
       fetchReviews(); // Refresh the list
-      
+
       // Notify sidebar to refresh pending reviews count
       window.dispatchEvent(new CustomEvent('reviewsUpdated'));
     } catch (error) {
@@ -73,7 +73,7 @@ export const ReviewManagement: React.FC<ReviewManagementProps> = ({
   };
 
   if (loading) {
-    return <LoadingSpinner size="lg" className="h-64" />;
+    return <LoadingSpinner size='lg' className='h-64' />;
   }
 
   const stats = ReviewApi.getReviewStats(reviews);
@@ -90,17 +90,17 @@ export const ReviewManagement: React.FC<ReviewManagementProps> = ({
       case 'pending':
         return {
           message: 'No pending reviews',
-          description: 'All reviews have been processed.'
+          description: 'All reviews have been processed.',
         };
       case 'approved':
         return {
           message: 'No approved reviews',
-          description: 'No reviews have been approved yet.'
+          description: 'No reviews have been approved yet.',
         };
       default:
         return {
           message: 'No reviews yet',
-          description: 'Customer reviews will appear here.'
+          description: 'Customer reviews will appear here.',
         };
     }
   };
@@ -113,7 +113,9 @@ export const ReviewManagement: React.FC<ReviewManagementProps> = ({
       <FilterTabs
         tabs={filterTabs}
         activeFilter={filter}
-        onFilterChange={(newFilter) => setFilter(newFilter as ReviewFilter['type'])}
+        onFilterChange={(newFilter) =>
+          setFilter(newFilter as ReviewFilter['type'])
+        }
       />
 
       {/* Reviews List */}

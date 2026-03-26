@@ -57,7 +57,9 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
             <div>
               <div className='font-medium'>{invoice.customerName}</div>
               {invoice.customerContactNumber && (
-                <div className='text-xs text-gray-500'>{invoice.customerContactNumber}</div>
+                <div className='text-xs text-gray-500'>
+                  {invoice.customerContactNumber}
+                </div>
               )}
             </div>
           );
@@ -70,8 +72,8 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
         cell: ({ row }) => {
           const invoice = row.original;
           return (
-            <InvoiceStatusBadge 
-              invoice={invoice} 
+            <InvoiceStatusBadge
+              invoice={invoice}
               showTransferLinks={true}
               onPreviewReplacement={onPreviewReplacement}
             />
@@ -91,13 +93,21 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
           const initialReceived = invoice.receivedAmount || 0;
           const additionalPayments = invoice.additionalPayment || [];
           const batteriesRate = invoice.batteriesRate || 0;
-          
+
           // Calculate total amount correctly for consolidated invoices
           let totalAmount;
           if (invoice.consolidatedFrom && invoice.consolidatedFrom.length > 0) {
             // For consolidated invoices, total includes both consolidated amount and new items
-            const consolidatedAmount = invoice.previousAmounts?.reduce((sum: number, amount: number) => sum + amount, 0) || 0;
-            const newItemsAmount = invoice.products?.reduce((sum: number, product: any) => sum + (product.totalPrice || 0), 0) || 0;
+            const consolidatedAmount =
+              invoice.previousAmounts?.reduce(
+                (sum: number, amount: number) => sum + amount,
+                0
+              ) || 0;
+            const newItemsAmount =
+              invoice.products?.reduce(
+                (sum: number, product: any) => sum + (product.totalPrice || 0),
+                0
+              ) || 0;
             totalAmount = consolidatedAmount + newItemsAmount;
           } else {
             // For normal invoices, use the stored totalAmount
@@ -105,9 +115,12 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
           }
 
           // Calculate total received amount including additional payments
-          const totalAdditionalReceived = additionalPayments.reduce((sum: number, payment: any) => sum + Number(payment.amount), 0);
+          const totalAdditionalReceived = additionalPayments.reduce(
+            (sum: number, payment: any) => sum + Number(payment.amount),
+            0
+          );
           const totalReceived = initialReceived + totalAdditionalReceived;
-          
+
           // Calculate actual remaining amount
           const actualRemaining = totalAmount - totalReceived - batteriesRate;
 
@@ -123,10 +136,14 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
 
           additionalPayments.forEach((payment: any) => {
             const paymentDate = payment.addedDate || payment.createdAt;
-            const dateStr = paymentDate ? new Date(paymentDate).toLocaleString() : '';
+            const dateStr = paymentDate
+              ? new Date(paymentDate).toLocaleString()
+              : '';
             paymentLines.push(
               <div key={payment.id || Math.random()}>
-                <span className='font-medium text-gray-900'>Rs {payment.amount}</span>
+                <span className='font-medium text-gray-900'>
+                  Rs {payment.amount}
+                </span>
                 {dateStr && (
                   <span className='ml-1 text-xs text-gray-500'>
                     ({dateStr})
@@ -135,16 +152,16 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
               </div>
             );
           });
-          
+
           return (
             <div className='text-sm'>
               {paymentLines.map((line, index) => (
-                <div key={index}>
-                  {line}
-                </div>
+                <div key={index}>{line}</div>
               ))}
               {actualRemaining > 0 && (
-                <div className='text-xs text-red-600'>Due: Rs {actualRemaining}</div>
+                <div className='text-xs text-red-600'>
+                  Due: Rs {actualRemaining}
+                </div>
               )}
             </div>
           );
@@ -158,13 +175,21 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
           const initialReceived = invoice.receivedAmount || 0;
           const additionalPayments = invoice.additionalPayment || [];
           const batteriesRate = invoice.batteriesRate || 0;
-          
+
           // Calculate total amount correctly for consolidated invoices
           let totalAmount;
           if (invoice.consolidatedFrom && invoice.consolidatedFrom.length > 0) {
             // For consolidated invoices, total includes both consolidated amount and new items
-            const consolidatedAmount = invoice.previousAmounts?.reduce((sum: number, amount: number) => sum + amount, 0) || 0;
-            const newItemsAmount = invoice.products?.reduce((sum: number, product: any) => sum + (product.totalPrice || 0), 0) || 0;
+            const consolidatedAmount =
+              invoice.previousAmounts?.reduce(
+                (sum: number, amount: number) => sum + amount,
+                0
+              ) || 0;
+            const newItemsAmount =
+              invoice.products?.reduce(
+                (sum: number, product: any) => sum + (product.totalPrice || 0),
+                0
+              ) || 0;
             totalAmount = consolidatedAmount + newItemsAmount;
           } else {
             // For normal invoices, use the stored totalAmount
@@ -172,12 +197,15 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
           }
 
           // Calculate total received amount including additional payments
-          const totalAdditionalReceived = additionalPayments.reduce((sum: number, payment: any) => sum + Number(payment.amount), 0);
+          const totalAdditionalReceived = additionalPayments.reduce(
+            (sum: number, payment: any) => sum + Number(payment.amount),
+            0
+          );
           const totalReceived = initialReceived + totalAdditionalReceived;
-          
+
           // Calculate actual remaining amount
           const actualRemaining = totalAmount - totalReceived - batteriesRate;
-          
+
           // Show actual payment status based on actual received amount
           let actualStatus: 'pending' | 'partial' | 'paid';
           if (totalReceived === 0) {
@@ -187,15 +215,15 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
           } else {
             actualStatus = 'paid';
           }
-          
+
           return (
             <span
-              className={`px-2 py-1 text-xs font-medium rounded-full ${
+              className={`rounded-full px-2 py-1 text-xs font-medium ${
                 actualStatus === 'paid'
                   ? 'bg-green-100 text-green-800'
                   : actualStatus === 'partial'
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-red-100 text-red-800'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
               }`}
             >
               {actualStatus}
@@ -224,29 +252,32 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
   );
 
   // Enhanced search text for better filtering
-  const extraGlobalSearchText = useMemo(() => (invoice: Invoice) => {
-    const parts = [
-      invoice.invoiceNo,
-      invoice.customerName,
-      invoice.customerContactNumber,
-      invoice.totalAmount?.toString(),
-      invoice.paymentStatus,
-      invoice.receivedAmount?.toString(),
-      invoice.remainingAmount?.toString(),
-      invoice.batteriesRate?.toString(),
-      ...(invoice.paymentMethod || [])
-    ];
-    
-    // Add payment details to search
-    if (invoice.additionalPayment) {
-      invoice.additionalPayment.forEach((payment: any) => {
-        parts.push(payment.amount?.toString());
-        parts.push(payment.addedDate);
-      });
-    }
-    
-    return parts.filter(Boolean).join(' ');
-  }, []);
+  const extraGlobalSearchText = useMemo(
+    () => (invoice: Invoice) => {
+      const parts = [
+        invoice.invoiceNo,
+        invoice.customerName,
+        invoice.customerContactNumber,
+        invoice.totalAmount?.toString(),
+        invoice.paymentStatus,
+        invoice.receivedAmount?.toString(),
+        invoice.remainingAmount?.toString(),
+        invoice.batteriesRate?.toString(),
+        ...(invoice.paymentMethod || []),
+      ];
+
+      // Add payment details to search
+      if (invoice.additionalPayment) {
+        invoice.additionalPayment.forEach((payment: any) => {
+          parts.push(payment.amount?.toString());
+          parts.push(payment.addedDate);
+        });
+      }
+
+      return parts.filter(Boolean).join(' ');
+    },
+    []
+  );
 
   return (
     <div className={className}>
@@ -254,13 +285,13 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
         data={invoices}
         columns={columns}
         enableSearch={true}
-        searchPlaceholder="Search invoices..."
+        searchPlaceholder='Search invoices...'
         enablePagination={true}
         pageSize={10}
         extraGlobalSearchText={extraGlobalSearchText}
-        emptyMessage="No invoices found. Try adjusting your search or filters."
+        emptyMessage='No invoices found. Try adjusting your search or filters.'
         showButton={!!onCreateInvoice}
-        buttonTitle="Create Invoice"
+        buttonTitle='Create Invoice'
         buttonOnClick={onCreateInvoice}
       />
     </div>

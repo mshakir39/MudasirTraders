@@ -5,7 +5,10 @@
 
 import React from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { CategoryWithBatteryData, BatteryData } from '@/features/category-management/entities/category/model/types';
+import {
+  CategoryWithBatteryData,
+  BatteryData,
+} from '@/features/category-management/entities/category/model/types';
 import { FaEye, FaTrash, FaEdit } from 'react-icons/fa';
 import Table from '@/components/table';
 
@@ -41,7 +44,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
         cell: (info) => {
           const series = info.getValue<BatteryData[]>();
           return (
-            <span className='bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium'>
+            <span className='rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800'>
               {series?.length || 0}
             </span>
           );
@@ -53,7 +56,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
         cell: (info) => {
           const tax = info.getValue<number>();
           return tax ? (
-            <span className='text-green-600 font-medium'>{tax}%</span>
+            <span className='font-medium text-green-600'>{tax}%</span>
           ) : (
             <span className='text-gray-400'>-</span>
           );
@@ -83,7 +86,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
           <div className='flex items-center gap-2'>
             <button
               onClick={() => onViewDetails(row.original)}
-              className='text-blue-500 hover:text-blue-700 transition-colors'
+              className='text-blue-500 transition-colors hover:text-blue-700'
               title='View Details'
               disabled={isLoading}
             >
@@ -91,7 +94,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
             </button>
             <button
               onClick={() => onEditCategory(row.original)}
-              className='text-green-500 hover:text-green-700 transition-colors'
+              className='text-green-500 transition-colors hover:text-green-700'
               title='Edit Category'
               disabled={isLoading}
             >
@@ -99,7 +102,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
             </button>
             <button
               onClick={() => onDeleteCategory(row.original)}
-              className='text-red-500 hover:text-red-700 transition-colors'
+              className='text-red-500 transition-colors hover:text-red-700'
               title='Delete Category'
               disabled={isLoading}
             >
@@ -122,7 +125,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
         showButton={false}
         buttonTitle='Add Category'
         buttonOnClick={() => {}} // Will be handled by parent
-        emptyMessage="No categories found. Try adjusting your search or create a new category."
+        emptyMessage='No categories found. Try adjusting your search or create a new category.'
       />
     </div>
   );

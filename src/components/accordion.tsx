@@ -30,7 +30,8 @@ const Accordion = ({
       <button
         className='relative flex w-full items-center justify-between rounded-md px-1 py-2 text-sm font-medium text-white transition duration-300 ease-in-out'
         style={{
-          background: 'linear-gradient(to right, rgb(30, 58, 138), rgb(29, 78, 216), rgb(37, 99, 235))',
+          background:
+            'linear-gradient(to right, rgb(30, 58, 138), rgb(29, 78, 216), rgb(37, 99, 235))',
           boxShadow:
             'rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px',
         }}

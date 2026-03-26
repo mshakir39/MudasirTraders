@@ -3,7 +3,13 @@
 
 'use client';
 
-import React, { useState, useCallback, useMemo, useOptimistic, useActionState } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useOptimistic,
+  useActionState,
+} from 'react';
 import { unstable_noStore } from 'next/cache';
 import { useAtom } from 'jotai';
 import { toast } from 'react-toastify';
@@ -30,15 +36,20 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
   className = '',
 }) => {
   unstable_noStore();
-  
+
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [detailData, setDetailData] = useState<CategoryWithBatteryData | null>(null);
+  const [detailData, setDetailData] = useState<CategoryWithBatteryData | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingBattery, setEditingBattery] = useState<string | null>(null);
-  const [editingPrice, setEditingPrice] = useState<{ [key: string]: number }>({});
+  const [editingPrice, setEditingPrice] = useState<{ [key: string]: number }>(
+    {}
+  );
   const [globalSalesTax, setGlobalSalesTax] = useState<string>('0');
-  const [isEditingGlobalSalesTax, setIsEditingGlobalSalesTax] = useState<boolean>(false);
+  const [isEditingGlobalSalesTax, setIsEditingGlobalSalesTax] =
+    useState<boolean>(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState<boolean>(false);
   const [brands, setBrands] = useState<IBrand[]>(initialBrands);
 
@@ -193,7 +204,10 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
 
           // Create a map of existing products by name for quick lookup
           const existingProductsMap = new Map(
-            existingCategory.series?.map((product: any) => [product.name, product]) || []
+            existingCategory.series?.map((product: any) => [
+              product.name,
+              product,
+            ]) || []
           );
 
           // Merge logic:
@@ -210,7 +224,9 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
 
             if (existingProduct) {
               // Update existing product with new data
-              const existingIndex = mergedSeries.findIndex((p) => p.name === newProduct.name);
+              const existingIndex = mergedSeries.findIndex(
+                (p) => p.name === newProduct.name
+              );
               if (existingIndex !== -1) {
                 mergedSeries[existingIndex] = {
                   ...existingProduct, // Keep existing fields
@@ -290,7 +306,14 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
     [categories, fetchCategories]
   );
 
-  const { createCategory, updateCategory, deleteCategory, updateBatteryPrice, deleteBattery, updateGlobalSalesTax } = useCategoryActions({
+  const {
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    updateBatteryPrice,
+    deleteBattery,
+    updateGlobalSalesTax,
+  } = useCategoryActions({
     categories,
     onCategoriesChange: setCategories,
     onRefreshCategories: handleRefreshCategories,
@@ -299,14 +322,18 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
   // Filter categories based on search
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return optimisticCategories;
-    
+
     const lowerSearchQuery = searchQuery.toLowerCase();
-    return optimisticCategories.filter(category => 
-      category.brandName.toLowerCase().includes(lowerSearchQuery) ||
-      category.series.some((battery: any) => 
-        (battery.name || '').toLowerCase().includes(lowerSearchQuery) ||
-        (battery.warrentyCode || '').toLowerCase().includes(lowerSearchQuery)
-      )
+    return optimisticCategories.filter(
+      (category) =>
+        category.brandName.toLowerCase().includes(lowerSearchQuery) ||
+        category.series.some(
+          (battery: any) =>
+            (battery.name || '').toLowerCase().includes(lowerSearchQuery) ||
+            (battery.warrentyCode || '')
+              .toLowerCase()
+              .includes(lowerSearchQuery)
+        )
     );
   }, [optimisticCategories, searchQuery]);
 
@@ -320,12 +347,15 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
     toast.info('Edit category functionality coming soon');
   }, []);
 
-  const handleDeleteCategory = useCallback(async (category: any) => {
-    await deleteCategory(category.id);
-    if (detailData?.id === category.id) {
-      setDetailData(null);
-    }
-  }, [deleteCategory, detailData]);
+  const handleDeleteCategory = useCallback(
+    async (category: any) => {
+      await deleteCategory(category.id);
+      if (detailData?.id === category.id) {
+        setDetailData(null);
+      }
+    },
+    [deleteCategory, detailData]
+  );
 
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
@@ -333,26 +363,29 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
 
   const handlePriceChange = useCallback((batteryId: string, price: string) => {
     const numPrice = parseFloat(price) || 0;
-    setEditingPrice(prev => ({ ...prev, [batteryId]: numPrice }));
+    setEditingPrice((prev) => ({ ...prev, [batteryId]: numPrice }));
   }, []);
 
-  const handleSavePrice = useCallback(async (batteryId: string) => {
-    const price = editingPrice[batteryId];
-    if (isNaN(price) || price < 0) {
-      toast.error('Please enter a valid price');
-      return;
-    }
+  const handleSavePrice = useCallback(
+    async (batteryId: string) => {
+      const price = editingPrice[batteryId];
+      if (isNaN(price) || price < 0) {
+        toast.error('Please enter a valid price');
+        return;
+      }
 
-    if (detailData) {
-      await updateBatteryPrice(detailData.id, batteryId, price);
-      setEditingBattery(null);
-      setEditingPrice(prev => {
-        const newState = { ...prev };
-        delete newState[batteryId];
-        return newState;
-      });
-    }
-  }, [updateBatteryPrice, editingPrice, detailData]);
+      if (detailData) {
+        await updateBatteryPrice(detailData.id, batteryId, price);
+        setEditingBattery(null);
+        setEditingPrice((prev) => {
+          const newState = { ...prev };
+          delete newState[batteryId];
+          return newState;
+        });
+      }
+    },
+    [updateBatteryPrice, editingPrice, detailData]
+  );
 
   const handleEditGlobalSalesTax = useCallback(() => {
     // This will be handled by the input change
@@ -368,15 +401,18 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
     }
   }, [updateGlobalSalesTax, detailData, globalSalesTax]);
 
-  const handleDeleteBattery = useCallback(async (batteryId: string) => {
-    if (detailData) {
-      await deleteBattery(detailData.id, batteryId);
-    }
-  }, [deleteBattery, detailData]);
+  const handleDeleteBattery = useCallback(
+    async (batteryId: string) => {
+      if (detailData) {
+        await deleteBattery(detailData.id, batteryId);
+      }
+    },
+    [deleteBattery, detailData]
+  );
 
   return (
     <div className={`p-0 py-6 md:p-6 ${className}`}>
-      <div className='flex items-center justify-between mb-6'>
+      <div className='mb-6 flex items-center justify-between'>
         <h1 className='text-2xl font-bold text-secondary-900'>Categories</h1>
         <div className='flex gap-2'>
           <Button
@@ -387,7 +423,6 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
         </div>
       </div>
 
-      
       {/* Category Table */}
       <CategoryTable
         categories={filteredCategories}
@@ -438,12 +473,15 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
 
       {/* Add Category Modal */}
       {isModalOpen && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white rounded-lg p-6 max-w-md w-full'>
-            <h2 className='text-xl font-bold mb-4'>Add New Category</h2>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
+          <div className='w-full max-w-md rounded-lg bg-white p-6'>
+            <h2 className='mb-4 text-xl font-bold'>Add New Category</h2>
             <form action={createCategoryAction} className='space-y-4'>
               <div>
-                <label htmlFor='brandName' className='block text-sm font-medium text-gray-700 mb-1'>
+                <label
+                  htmlFor='brandName'
+                  className='mb-1 block text-sm font-medium text-gray-700'
+                >
                   Brand Name
                 </label>
                 <input
@@ -451,12 +489,15 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
                   id='brandName'
                   name='brandName'
                   required
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
                   placeholder='Enter brand name'
                 />
               </div>
               <div>
-                <label htmlFor='salesTax' className='block text-sm font-medium text-gray-700 mb-1'>
+                <label
+                  htmlFor='salesTax'
+                  className='mb-1 block text-sm font-medium text-gray-700'
+                >
                   Sales Tax (%)
                 </label>
                 <input
@@ -467,7 +508,7 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
                   step='0.1'
                   min='0'
                   max='100'
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                  className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
                   placeholder='Enter sales tax percentage'
                 />
               </div>
@@ -475,14 +516,14 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
                 <button
                   type='submit'
                   disabled={isCreatePending}
-                  className='flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='flex-1 rounded-md bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   {isCreatePending ? 'Creating...' : 'Create Category'}
                 </button>
                 <button
                   type='button'
                   onClick={() => setIsModalOpen(false)}
-                  className='flex-1 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors'
+                  className='flex-1 rounded-md bg-gray-500 px-4 py-2 text-white transition-colors hover:bg-gray-600'
                 >
                   Cancel
                 </button>

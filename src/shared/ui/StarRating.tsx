@@ -13,7 +13,7 @@ interface StarRatingProps {
 export const StarRating: React.FC<StarRatingProps> = ({
   rating,
   maxRating = 5,
-  className = ''
+  className = '',
 }) => {
   return (
     <div className={`flex items-center space-x-1 ${className}`}>

@@ -23,7 +23,7 @@ export const ReviewList: React.FC<ReviewListProps> = ({
   actionLoading,
   emptyMessage = 'No reviews yet',
   emptyDescription = 'Customer reviews will appear here.',
-  className = ''
+  className = '',
 }) => {
   if (reviews.length === 0) {
     return (
@@ -32,9 +32,7 @@ export const ReviewList: React.FC<ReviewListProps> = ({
         <h3 className='mb-2 text-xl font-medium text-gray-900'>
           {emptyMessage}
         </h3>
-        <p className='text-gray-600'>
-          {emptyDescription}
-        </p>
+        <p className='text-gray-600'>{emptyDescription}</p>
       </div>
     );
   }

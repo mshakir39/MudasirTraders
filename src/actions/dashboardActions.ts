@@ -306,7 +306,10 @@ export async function unlockDashboard() {
   redirect('/');
 }
 
-export async function calculateProfitForDateRange(startDate: Date, endDate: Date) {
+export async function calculateProfitForDateRange(
+  startDate: Date,
+  endDate: Date
+) {
   try {
     const { connectToMongoDB } = require('@/app/libs/connectToMongoDB');
     const db = await connectToMongoDB();
@@ -321,8 +324,8 @@ export async function calculateProfitForDateRange(startDate: Date, endDate: Date
         $or: [
           { date: { $gte: startDate, $lte: endDate } },
           { createdAt: { $gte: startDate, $lte: endDate } },
-          { saleDate: { $gte: startDate, $lte: endDate } }
-        ]
+          { saleDate: { $gte: startDate, $lte: endDate } },
+        ],
       })
       .toArray();
 
@@ -337,12 +340,12 @@ export async function calculateProfitForDateRange(startDate: Date, endDate: Date
     // Calculate profit for each sale
     for (const sale of sales) {
       const saleDate = new Date(sale.date || sale.createdAt || sale.saleDate);
-      
+
       // Skip charging services and scrap batteries
       if (sale.isChargingService || sale.isScrapBattery) {
         continue;
       }
-      
+
       // Process each product in the sale
       if (sale.products && Array.isArray(sale.products)) {
         for (const product of sale.products) {
@@ -381,7 +384,7 @@ export async function calculateProfitForDateRange(startDate: Date, endDate: Date
             historicalCost,
             saleRevenue,
             saleCost,
-            saleProfit
+            saleProfit,
           });
         }
       }
@@ -395,8 +398,8 @@ export async function calculateProfitForDateRange(startDate: Date, endDate: Date
         totalProfit,
         profitMargin: totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0,
         saleCount: sales.length,
-        profitDetails
-      }
+        profitDetails,
+      },
     };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -415,7 +418,7 @@ async function getHistoricalCost(
       .find({
         brandName,
         series,
-        historyDate: { $lte: saleDate }
+        historyDate: { $lte: saleDate },
       })
       .sort({ historyDate: -1 })
       .limit(1)
@@ -430,13 +433,15 @@ async function getHistoricalCost(
     const { connectToMongoDB } = require('@/app/libs/connectToMongoDB');
     const db = await connectToMongoDB();
     const stockCollection = db.collection('stock');
-    
+
     const currentStock = await stockCollection.findOne({
-      brandName
+      brandName,
     });
 
     if (currentStock && currentStock.seriesStock) {
-      const seriesData = currentStock.seriesStock.find((s: any) => s.series === series);
+      const seriesData = currentStock.seriesStock.find(
+        (s: any) => s.series === series
+      );
       return Number(seriesData?.productCost) || 0;
     }
 

@@ -11,7 +11,9 @@ interface InvoicePreviewDetailsProps {
   data: any;
 }
 
-export const InvoicePreviewDetails: React.FC<InvoicePreviewDetailsProps> = ({ data }) => {
+export const InvoicePreviewDetails: React.FC<InvoicePreviewDetailsProps> = ({
+  data,
+}) => {
   return (
     <>
       {/* Date and Time */}

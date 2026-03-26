@@ -12,7 +12,12 @@ import React, {
 } from 'react';
 import { unstable_noStore } from 'next/cache';
 import { toast } from 'react-toastify';
-import { Sale, SalesFilters, DateRange, CustomerOption } from '@/features/sales-management/entities/sales/model/types';
+import {
+  Sale,
+  SalesFilters,
+  DateRange,
+  CustomerOption,
+} from '@/features/sales-management/entities/sales/model/types';
 import { useSalesActions } from '@/features/sales-management/lib/useSalesActions';
 import { SalesDataGrid } from '@/features/sales-management/shared/ui/components/SalesDataGrid';
 import ProductsDetailModal from '@/features/sales-management/shared/ui/components/ProductDetailModal';
@@ -24,13 +29,15 @@ interface SalesManagementProps {
 
 export const SalesManagement: React.FC<SalesManagementProps> = ({
   initialSales,
-  className = ''
+  className = '',
 }) => {
   unstable_noStore();
-  
+
   // Modal state for products
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [selectedSaleProducts, setSelectedSaleProducts] = useState<Sale['products']>([]);
+  const [selectedSaleProducts, setSelectedSaleProducts] = useState<
+    Sale['products']
+  >([]);
   const [selectedSaleInfo, setSelectedSaleInfo] = useState<Sale | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -174,12 +181,9 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
   }, []);
 
   // Handle customer selection
-  const handleCustomerSelect = useCallback(
-    (option: CustomerOption) => {
-      setSelectedCustomer(option.value);
-    },
-    []
-  );
+  const handleCustomerSelect = useCallback((option: CustomerOption) => {
+    setSelectedCustomer(option.value);
+  }, []);
 
   // Handle viewing products - React 19: Enhanced with error boundary
   const handleViewProducts = useCallback((sale: Sale) => {
@@ -243,9 +247,9 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
       if (!response.ok) {
         throw new Error('Failed to fetch sales data');
       }
-      
+
       const allSales = await response.json();
-      
+
       if (!allSales || allSales.length === 0) {
         toast.warning('No sales data found to export');
         return;
@@ -254,19 +258,22 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
       const salesData = allSales.map((sale: any) => {
         // Flatten products for CSV export - include all product details
         const products = sale.products || [];
-        const productDetails = products.map((product: any) => 
-          `${product.brandName} ${product.series} × ${product.quantity} (Rs ${product.totalPrice}) [Warranty: ${product.warrentyCode || 'N/A'}]`
-        ).join(' | ');
-        
+        const productDetails = products
+          .map(
+            (product: any) =>
+              `${product.brandName} ${product.series} × ${product.quantity} (Rs ${product.totalPrice}) [Warranty: ${product.warrentyCode || 'N/A'}]`
+          )
+          .join(' | ');
+
         // Extract individual product details for separate columns
         const product1 = products[0] || {};
         const product2 = products[1] || {};
         const product3 = products[2] || {};
-        
+
         return {
           'Invoice ID': sale.invoiceId || '',
-          'Date': new Date(sale.date).toLocaleString('en-GB'),
-          'Customer': sale.customerName || '',
+          Date: new Date(sale.date).toLocaleString('en-GB'),
+          Customer: sale.customerName || '',
           'Total Amount': sale.totalAmount || 0,
           'Payment Method': sale.paymentMethod || 'Not specified',
           'Product Count': products.length,
@@ -299,9 +306,13 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
           'P3 Warranty Start': product3.warrentyStartDate || '',
           'P3 Warranty End': product3.warrentyEndDate || '',
           // Additional sale metadata
-          'Created At': sale.createdAt ? new Date(sale.createdAt).toLocaleString('en-GB') : '',
-          'Updated At': sale.updatedAt ? new Date(sale.updatedAt).toLocaleString('en-GB') : '',
-          'Notes': sale.notes || ''
+          'Created At': sale.createdAt
+            ? new Date(sale.createdAt).toLocaleString('en-GB')
+            : '',
+          'Updated At': sale.updatedAt
+            ? new Date(sale.updatedAt).toLocaleString('en-GB')
+            : '',
+          Notes: sale.notes || '',
         };
       });
 
@@ -309,23 +320,29 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
       const headers = Object.keys(salesData[0] || {});
       const csvContent = [
         headers.join(','),
-        ...salesData.map((row: any) => 
-          headers.map(header => {
-            const value = row[header as keyof typeof row];
-            // Handle different data types and escape properly
-            if (value === null || value === undefined) return '';
-            if (typeof value === 'number') return value.toString();
-            if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-            if (typeof value === 'object') return JSON.stringify(value);
-            
-            // Escape quotes and wrap in quotes if contains comma, quote, or newline
-            const stringValue = value.toString();
-            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-              return `"${stringValue.replace(/"/g, '""')}"`;
-            }
-            return stringValue;
-          }).join(',')
-        )
+        ...salesData.map((row: any) =>
+          headers
+            .map((header) => {
+              const value = row[header as keyof typeof row];
+              // Handle different data types and escape properly
+              if (value === null || value === undefined) return '';
+              if (typeof value === 'number') return value.toString();
+              if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+              if (typeof value === 'object') return JSON.stringify(value);
+
+              // Escape quotes and wrap in quotes if contains comma, quote, or newline
+              const stringValue = value.toString();
+              if (
+                stringValue.includes(',') ||
+                stringValue.includes('"') ||
+                stringValue.includes('\n')
+              ) {
+                return `"${stringValue.replace(/"/g, '""')}"`;
+              }
+              return stringValue;
+            })
+            .join(',')
+        ),
       ].join('\n');
 
       // Create and download file
@@ -333,13 +350,18 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `all-sales-export-${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute(
+        'download',
+        `all-sales-export-${new Date().toISOString().split('T')[0]}.csv`
+      );
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      toast.success(`Exported ALL ${allSales.length} sales records with ${headers.length} data fields`);
+
+      toast.success(
+        `Exported ALL ${allSales.length} sales records with ${headers.length} data fields`
+      );
     } catch (error) {
       toast.error('Failed to export sales data');
       console.error('Export error:', error);
@@ -348,26 +370,25 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
 
   return (
     <div className={`p-0 py-6 md:p-6 ${className}`}>
-    
       {/* Export Button */}
-      <div className="mb-4 flex justify-end">
+      <div className='mb-4 flex justify-end'>
         <button
           onClick={handleExportSales}
           disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          title="Export ALL sales data to CSV"
+          className='flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400'
+          title='Export ALL sales data to CSV'
         >
-          <svg 
-            className="w-4 h-4" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
+          <svg
+            className='h-4 w-4'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
           >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
             />
           </svg>
           Export All Sales Data

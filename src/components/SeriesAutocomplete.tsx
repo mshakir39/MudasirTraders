@@ -141,36 +141,54 @@ const SeriesAutocomplete: React.FC<SeriesAutocompleteProps> = ({
               onMouseEnter={() => setHighlightedIndex(index)}
               style={{ minWidth: '0' }}
             >
-              <div className='flex flex-col space-y-1' style={{ minWidth: '0' }}>
-                <div className='font-medium text-gray-900 truncate' style={{ minWidth: '0' }}>{item.name}</div>
-                <div className='flex flex-col gap-1 text-xs' style={{ minWidth: '0' }}>
+              <div
+                className='flex flex-col space-y-1'
+                style={{ minWidth: '0' }}
+              >
+                <div
+                  className='truncate font-medium text-gray-900'
+                  style={{ minWidth: '0' }}
+                >
+                  {item.name}
+                </div>
+                <div
+                  className='flex flex-col gap-1 text-xs'
+                  style={{ minWidth: '0' }}
+                >
                   <div className='flex items-center space-x-2 text-gray-500'>
-                    <span className='flex items-center flex-shrink-0'>
+                    <span className='flex flex-shrink-0 items-center'>
                       <span className='font-medium'>{item.plate || 'N/A'}</span>
                       <span className='ml-1 text-gray-400'>plates</span>
                     </span>
-                    <span className='flex items-center flex-shrink-0'>
+                    <span className='flex flex-shrink-0 items-center'>
                       <span className='font-medium'>{item.ah || 'N/A'}</span>
                       <span className='ml-1 text-gray-400'>AH</span>
                     </span>
                   </div>
                   {showPrices && (
-                    <div className='flex flex-wrap items-center gap-1' style={{ minWidth: '0' }}>
-                      <span className='text-gray-600 font-medium whitespace-nowrap'>
+                    <div
+                      className='flex flex-wrap items-center gap-1'
+                      style={{ minWidth: '0' }}
+                    >
+                      <span className='whitespace-nowrap font-medium text-gray-600'>
                         Rs{' '}
                         {item.retailPrice
                           ? Number(item.retailPrice).toLocaleString()
                           : 'N/A'}
                       </span>
-                      <span className='text-[10px] text-gray-400 flex-shrink-0'>Stock</span>
+                      <span className='flex-shrink-0 text-[10px] text-gray-400'>
+                        Stock
+                      </span>
                       {item.maxRetailPrice &&
                         typeof item.maxRetailPrice === 'number' &&
                         item.maxRetailPrice > 0 && (
                           <>
-                            <span className='text-green-600 font-medium whitespace-nowrap'>
+                            <span className='whitespace-nowrap font-medium text-green-600'>
                               Rs {Number(item.maxRetailPrice).toLocaleString()}
                             </span>
-                            <span className='text-[10px] text-green-500 flex-shrink-0'>List</span>
+                            <span className='flex-shrink-0 text-[10px] text-green-500'>
+                              List
+                            </span>
                           </>
                         )}
                     </div>

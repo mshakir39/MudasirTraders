@@ -4,4 +4,7 @@
 export { ReviewManagement } from './ui/ReviewManagement';
 export { ReviewCard } from './ui/ReviewCard';
 export { ReviewList } from './ui/ReviewList';
-export type { CustomerReview, ReviewFilter } from '@/entities/review/model/types';
+export type {
+  CustomerReview,
+  ReviewFilter,
+} from '@/entities/review/model/types';

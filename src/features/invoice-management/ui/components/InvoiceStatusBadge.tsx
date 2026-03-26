@@ -9,10 +9,10 @@ interface InvoiceStatusBadgeProps {
   onPreviewReplacement?: (replacementInvoiceId: string) => void;
 }
 
-const InvoiceStatusBadge: React.FC<InvoiceStatusBadgeProps> = ({ 
-  invoice, 
+const InvoiceStatusBadge: React.FC<InvoiceStatusBadgeProps> = ({
+  invoice,
   showTransferLinks = false,
-  onPreviewReplacement
+  onPreviewReplacement,
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -44,37 +44,40 @@ const InvoiceStatusBadge: React.FC<InvoiceStatusBadgeProps> = ({
     }
   };
 
-  const isConsolidated = invoice.consolidatedFrom && invoice.consolidatedFrom.length > 0;
+  const isConsolidated =
+    invoice.consolidatedFrom && invoice.consolidatedFrom.length > 0;
   const isVoided = invoice.status === 'voided';
 
   return (
-    <div className="flex flex-col space-y-1">
+    <div className='flex flex-col space-y-1'>
       {/* Status Badge */}
-      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(invoice.status || 'active')}`}>
+      <div
+        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(invoice.status || 'active')}`}
+      >
         {getStatusText(invoice.status || 'active')}
       </div>
 
       {/* Consolidation Badge */}
       {isConsolidated && (
-        <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+        <div className='inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800'>
           CONSOLIDATED ({invoice.consolidatedFrom?.length})
         </div>
       )}
 
       {/* Transfer Links */}
       {showTransferLinks && (
-        <div className="space-y-1">
+        <div className='space-y-1'>
           {invoice.replacedBy && (
-            <button 
+            <button
               onClick={() => onPreviewReplacement?.(invoice.replacedBy!)}
-              className="text-blue-600 hover:text-blue-800 text-xs hover:underline bg-transparent border-none cursor-pointer"
+              className='cursor-pointer border-none bg-transparent text-xs text-blue-600 hover:text-blue-800 hover:underline'
             >
               View Replacement →
             </button>
           )}
-          
+
           {isVoided && invoice.replacesInvoice && (
-            <div className="text-gray-500 text-xs">
+            <div className='text-xs text-gray-500'>
               Replaced #{invoice.replacesInvoice.slice(-6)}
             </div>
           )}

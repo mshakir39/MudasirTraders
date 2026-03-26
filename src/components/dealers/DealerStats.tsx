@@ -113,7 +113,10 @@ const DealerStats: React.FC<DealerStatsProps> = ({
             <FaToggleOn className='mr-2' style={{ color: '#059669' }} />
             <div>
               <div className='text-xs text-secondary-500'>Active</div>
-              <div className='text-lg font-semibold' style={{ color: '#059669' }}>
+              <div
+                className='text-lg font-semibold'
+                style={{ color: '#059669' }}
+              >
                 {overallStats.activeDealers.toLocaleString()}
               </div>
             </div>
@@ -125,7 +128,10 @@ const DealerStats: React.FC<DealerStatsProps> = ({
             <FaToggleOff className='mr-2' style={{ color: '#fbcc5e' }} />
             <div>
               <div className='text-xs text-secondary-500'>Inactive</div>
-              <div className='text-lg font-semibold' style={{ color: '#fbcc5e' }}>
+              <div
+                className='text-lg font-semibold'
+                style={{ color: '#fbcc5e' }}
+              >
                 {overallStats.inactiveDealers.toLocaleString()}
               </div>
             </div>
@@ -137,7 +143,10 @@ const DealerStats: React.FC<DealerStatsProps> = ({
             <FaFileInvoice className='mr-2' style={{ color: '#0284c7' }} />
             <div>
               <div className='text-xs text-secondary-500'>Total Bills</div>
-              <div className='text-lg font-semibold' style={{ color: '#0284c7' }}>
+              <div
+                className='text-lg font-semibold'
+                style={{ color: '#0284c7' }}
+              >
                 {overallStats.totalBills.toLocaleString()}
               </div>
             </div>
@@ -149,7 +158,10 @@ const DealerStats: React.FC<DealerStatsProps> = ({
             <FaMoneyBillWave className='mr-2' style={{ color: '#059669' }} />
             <div>
               <div className='text-xs text-secondary-500'>Total Paid</div>
-              <div className='text-lg font-semibold' style={{ color: '#059669' }}>
+              <div
+                className='text-lg font-semibold'
+                style={{ color: '#059669' }}
+              >
                 Rs {overallStats.totalPaid.toLocaleString()}
               </div>
             </div>
@@ -161,7 +173,10 @@ const DealerStats: React.FC<DealerStatsProps> = ({
             <FaMoneyBillWave className='mr-2' style={{ color: '#dc2626' }} />
             <div>
               <div className='text-xs text-secondary-500'>Outstanding</div>
-              <div className='text-lg font-semibold' style={{ color: '#dc2626' }}>
+              <div
+                className='text-lg font-semibold'
+                style={{ color: '#dc2626' }}
+              >
                 Rs {overallStats.totalOutstanding.toLocaleString()}
               </div>
             </div>

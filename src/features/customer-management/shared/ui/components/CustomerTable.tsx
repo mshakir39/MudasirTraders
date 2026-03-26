@@ -26,7 +26,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
   onDeleteCustomer,
   loading = false,
   className = '',
-  onAddCustomer
+  onAddCustomer,
 }) => {
   // Define columns for the Table component
   const columns: ColumnDef<Customer>[] = React.useMemo(
@@ -35,7 +35,9 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
         accessorKey: 'customerName',
         header: 'Customer Name',
         cell: ({ row }) => (
-          <span className="font-medium text-secondary-900">{row.original.customerName}</span>
+          <span className='font-medium text-secondary-900'>
+            {row.original.customerName}
+          </span>
         ),
       },
       {
@@ -53,13 +55,13 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
           return email ? (
             <a
               href={`mailto:${email}`}
-              className="text-blue-500 hover:underline"
+              className='text-blue-500 hover:underline'
               style={{ color: '#2563eb' }}
             >
               {email}
             </a>
           ) : (
-            <span className="text-secondary-400">No email</span>
+            <span className='text-secondary-400'>No email</span>
           );
         },
       },
@@ -67,15 +69,21 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
         accessorKey: 'address',
         header: 'Address',
         cell: ({ row }) => (
-          <span>{row.original.address || <span className="text-secondary-400">No address</span>}</span>
+          <span>
+            {row.original.address || (
+              <span className='text-secondary-400'>No address</span>
+            )}
+          </span>
         ),
       },
       {
         accessorKey: 'createdAt',
         header: 'Created Date',
         cell: ({ row }) => (
-          <span className="text-secondary-600">
-            {row.original.createdAt ? new Date(row.original.createdAt).toLocaleDateString() : 'N/A'}
+          <span className='text-secondary-600'>
+            {row.original.createdAt
+              ? new Date(row.original.createdAt).toLocaleDateString()
+              : 'N/A'}
           </span>
         ),
       },
@@ -83,25 +91,28 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => (
-          <div className="flex gap-2">
+          <div className='flex gap-2'>
             <button
               onClick={() => onViewInvoices(row.original)}
-              className="p-2" style={{ color: '#2563eb' }}
-              title="View Customer Invoices"
+              className='p-2'
+              style={{ color: '#2563eb' }}
+              title='View Customer Invoices'
             >
               <FaEye size={16} />
             </button>
             <button
               onClick={() => onEditCustomer(row.original)}
-              className="p-2" style={{ color: '#0284c7' }}
-              title="Edit Customer"
+              className='p-2'
+              style={{ color: '#0284c7' }}
+              title='Edit Customer'
             >
               <FaEdit size={16} />
             </button>
             <button
               onClick={() => onDeleteCustomer(row.original)}
-              className="p-2" style={{ color: '#dc2626' }}
-              title="Delete Customer"
+              className='p-2'
+              style={{ color: '#dc2626' }}
+              title='Delete Customer'
             >
               <FaTrash size={16} />
             </button>
@@ -118,11 +129,11 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
         data={customers}
         columns={columns}
         enableSearch={true}
-        searchPlaceholder="Search customers..."
+        searchPlaceholder='Search customers...'
         showButton={!!onAddCustomer}
-        buttonTitle="Add Customer"
+        buttonTitle='Add Customer'
         buttonOnClick={onAddCustomer}
-        emptyMessage="No customers found."
+        emptyMessage='No customers found.'
       />
     </div>
   );

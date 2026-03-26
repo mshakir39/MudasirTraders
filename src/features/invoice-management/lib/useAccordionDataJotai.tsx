@@ -3,11 +3,11 @@
 
 import { useCallback } from 'react';
 import { useAtom, useSetAtom } from 'jotai';
-import { 
-  accordionDataAtom, 
-  expandedAccordionIndexAtom, 
+import {
+  accordionDataAtom,
+  expandedAccordionIndexAtom,
   updateAccordionFieldAtom,
-  resetAccordionDataAtom 
+  resetAccordionDataAtom,
 } from '@/store/invoiceAtoms';
 import { normalizeInStock } from '@/utils/stockUtils';
 
@@ -69,7 +69,9 @@ const calculateAmountReceived = (data: AccordionData) => {
 
 export const useAccordionDataJotai = (categories: any[], stock?: any[]) => {
   const [accordionData, setAccordionData] = useAtom(accordionDataAtom);
-  const [expandedAccordionIndex, setExpandedAccordionIndex] = useAtom(expandedAccordionIndexAtom);
+  const [expandedAccordionIndex, setExpandedAccordionIndex] = useAtom(
+    expandedAccordionIndexAtom
+  );
   const updateAccordionField = useSetAtom(updateAccordionFieldAtom);
   const resetAccordionDataAction = useSetAtom(resetAccordionDataAtom);
 
@@ -96,33 +98,39 @@ export const useAccordionDataJotai = (categories: any[], stock?: any[]) => {
     }
   }, [accordionData, setAccordionData]);
 
-  const handleRemoveAccordion = useCallback((accordionIndex: number) => {
-    setAccordionData((prevData) => {
-      const newData = { ...prevData };
-      delete newData[accordionIndex];
-      return newData;
-    });
-  }, [setAccordionData]);
+  const handleRemoveAccordion = useCallback(
+    (accordionIndex: number) => {
+      setAccordionData((prevData) => {
+        const newData = { ...prevData };
+        delete newData[accordionIndex];
+        return newData;
+      });
+    },
+    [setAccordionData]
+  );
 
-  const handleAddAccordion = useCallback((accordionIndex: number) => {
-    const warrantyStartDate = new Date().toISOString().split('T')[0];
-    setAccordionData((prevData) => ({
-      ...prevData,
-      [accordionIndex + 1]: {
-        brandName: '',
-        series: '',
-        productPrice: '',
-        quantity: '',
-        seriesOption: [],
-        warrentyStartDate: warrantyStartDate,
-        warrentyEndDate: calculateEndDate(warrantyStartDate, '6'),
-        warrentyCode: '',
-        warrentyDuration: '6',
-        noWarranty: false,
-        batteryDetails: undefined,
-      },
-    }));
-  }, [setAccordionData]);
+  const handleAddAccordion = useCallback(
+    (accordionIndex: number) => {
+      const warrantyStartDate = new Date().toISOString().split('T')[0];
+      setAccordionData((prevData) => ({
+        ...prevData,
+        [accordionIndex + 1]: {
+          brandName: '',
+          series: '',
+          productPrice: '',
+          quantity: '',
+          seriesOption: [],
+          warrentyStartDate: warrantyStartDate,
+          warrentyEndDate: calculateEndDate(warrantyStartDate, '6'),
+          warrentyCode: '',
+          warrentyDuration: '6',
+          noWarranty: false,
+          batteryDetails: undefined,
+        },
+      }));
+    },
+    [setAccordionData]
+  );
 
   const handleAccordionChange = useCallback(
     (
@@ -228,19 +236,21 @@ export const useAccordionDataJotai = (categories: any[], stock?: any[]) => {
         }
       } else if (fieldName === 'series') {
         const currentAccordion = accordionData[accordionIndex];
-        const seriesOptions = Array.isArray(currentAccordion?.seriesOption) ? currentAccordion.seriesOption : [];
+        const seriesOptions = Array.isArray(currentAccordion?.seriesOption)
+          ? currentAccordion.seriesOption
+          : [];
         const selectedSeries = seriesOptions.find(
           (option: any) => option.value === fieldValue
         );
         updateAccordionField({
           index: accordionIndex,
           field: 'series',
-          value: String(fieldValue)
+          value: String(fieldValue),
         });
         updateAccordionField({
           index: accordionIndex,
           field: 'batteryDetails',
-          value: selectedSeries?.batteryDetails
+          value: selectedSeries?.batteryDetails,
         });
       } else if (
         fieldName === 'warrentyDuration' ||
@@ -260,12 +270,12 @@ export const useAccordionDataJotai = (categories: any[], stock?: any[]) => {
         updateAccordionField({
           index: accordionIndex,
           field: fieldName,
-          value: newValue
+          value: newValue,
         });
         updateAccordionField({
           index: accordionIndex,
           field: 'warrentyEndDate',
-          value: calculateEndDate(startDate, duration)
+          value: calculateEndDate(startDate, duration),
         });
       } else if (fieldName === 'noWarranty') {
         const isNoWarranty = Boolean(fieldValue);
@@ -298,7 +308,8 @@ export const useAccordionDataJotai = (categories: any[], stock?: any[]) => {
         updateAccordionField({
           index: accordionIndex,
           field: fieldName,
-          value: typeof fieldValue === 'string' ? fieldValue.trim() : fieldValue
+          value:
+            typeof fieldValue === 'string' ? fieldValue.trim() : fieldValue,
         });
       }
     },
@@ -325,6 +336,6 @@ export const useAccordionDataJotai = (categories: any[], stock?: any[]) => {
       handleAccordionChange,
       handleAddAccordion,
       handleRemoveAccordion,
-    }
+    },
   };
 };

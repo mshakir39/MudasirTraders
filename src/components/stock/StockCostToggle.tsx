@@ -8,9 +8,9 @@ interface StockCostToggleProps {
   className?: string;
 }
 
-export const StockCostToggle: React.FC<StockCostToggleProps> = ({ 
-  stockCost, 
-  className = '' 
+export const StockCostToggle: React.FC<StockCostToggleProps> = ({
+  stockCost,
+  className = '',
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -27,25 +27,21 @@ export const StockCostToggle: React.FC<StockCostToggleProps> = ({
     <div className={`flex items-center space-x-2 ${className}`}>
       <button
         onClick={() => setIsVisible(!isVisible)}
-        className="flex items-center space-x-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 text-sm"
+        className='flex items-center space-x-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm transition-colors duration-200 hover:bg-gray-50'
         title={isVisible ? 'Hide stock cost' : 'Show stock cost'}
       >
-        <span className="text-gray-600 font-medium">
-          Total Stock Cost:
-        </span>
+        <span className='font-medium text-gray-600'>Total Stock Cost:</span>
         {isVisible ? (
-          <span className="font-semibold text-green-600">
+          <span className='font-semibold text-green-600'>
             {formatCurrency(stockCost)}
           </span>
         ) : (
-          <span className="text-gray-400">
-            ••••••••
-          </span>
+          <span className='text-gray-400'>••••••••</span>
         )}
         {isVisible ? (
-          <FaEyeSlash className="text-gray-500 h-3.5 w-3.5" />
+          <FaEyeSlash className='h-3.5 w-3.5 text-gray-500' />
         ) : (
-          <FaEye className="text-gray-500 h-3.5 w-3.5" />
+          <FaEye className='h-3.5 w-3.5 text-gray-500' />
         )}
       </button>
     </div>

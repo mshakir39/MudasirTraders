@@ -9,7 +9,9 @@ interface InvoiceProviderProps {
   children: ReactNode;
 }
 
-export const InvoiceProvider: React.FC<InvoiceProviderProps> = ({ children }) => {
+export const InvoiceProvider: React.FC<InvoiceProviderProps> = ({
+  children,
+}) => {
   return <>{children}</>;
 };
 

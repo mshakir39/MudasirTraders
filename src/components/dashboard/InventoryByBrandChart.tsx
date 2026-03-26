@@ -51,8 +51,16 @@ export const InventoryByBrandChart: React.FC<InventoryByBrandChartProps> = ({
             ]}
           />
           <Legend />
-          <Bar dataKey='value' fill='url(#sidebarGradient)' name='Inventory Value' />
-          <Bar dataKey='products' fill='url(#accentGradient)' name='Product Count' />
+          <Bar
+            dataKey='value'
+            fill='url(#sidebarGradient)'
+            name='Inventory Value'
+          />
+          <Bar
+            dataKey='products'
+            fill='url(#accentGradient)'
+            name='Product Count'
+          />
         </BarChart>
       </ResponsiveContainer>
     ) : (

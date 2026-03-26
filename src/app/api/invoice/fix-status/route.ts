@@ -15,7 +15,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!paymentStatus || !['pending', 'partial', 'paid'].includes(paymentStatus)) {
+    if (
+      !paymentStatus ||
+      !['pending', 'partial', 'paid'].includes(paymentStatus)
+    ) {
       return NextResponse.json(
         { error: 'Valid payment status is required (pending, partial, paid)' },
         { status: 400 }
@@ -36,9 +39,8 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Payment status updated to "${paymentStatus}" successfully`,
       invoiceId: invoiceId,
-      newStatus: paymentStatus
+      newStatus: paymentStatus,
     });
-
   } catch (error: any) {
     console.error('API Error - POST fix payment status:', error);
     return NextResponse.json(

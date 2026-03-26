@@ -52,20 +52,26 @@ export const calculateInvoiceTotals = (
   receivedAmount: number
 ) => {
   if (isChargingService) {
-    const subtotal = (chargingServices || []).reduce((sum, service) => sum + (service.total || 0), 0);
+    const subtotal = (chargingServices || []).reduce(
+      (sum, service) => sum + (service.total || 0),
+      0
+    );
     const total = subtotal + (taxAmount || 0);
     return {
       subtotal,
       totalAmount: total,
-      remainingAmount: Math.max(0, total - receivedAmount)
+      remainingAmount: Math.max(0, total - receivedAmount),
     };
   } else {
-    const subtotal = (transformedProducts || []).reduce((sum, product) => sum + (product.totalPrice || 0), 0);
+    const subtotal = (transformedProducts || []).reduce(
+      (sum, product) => sum + (product.totalPrice || 0),
+      0
+    );
     const total = subtotal + (taxAmount || 0);
     return {
       subtotal,
       totalAmount: total,
-      remainingAmount: Math.max(0, total - receivedAmount)
+      remainingAmount: Math.max(0, total - receivedAmount),
     };
   }
 };

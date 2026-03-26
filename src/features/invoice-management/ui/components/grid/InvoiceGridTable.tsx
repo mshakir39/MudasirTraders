@@ -33,25 +33,31 @@ export const InvoiceGridTable: React.FC<InvoiceGridTableProps> = ({
             {columns.map((column, index) => (
               <th
                 key={index}
-                className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+                className='px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500'
               >
                 {column.header}
               </th>
             ))}
-            <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider'>
+            <th className='px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500'>
               Actions
             </th>
           </tr>
         </thead>
-        <tbody className='bg-white divide-y divide-gray-200'>
+        <tbody className='divide-y divide-gray-200 bg-white'>
           {invoices.map((invoice) => (
             <tr key={invoice.id}>
               {columns.map((column, index) => (
-                <td key={index} className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                  {column.cell({ getValue: () => invoice[column.accessorKey], invoice })}
+                <td
+                  key={index}
+                  className='whitespace-nowrap px-6 py-4 text-sm text-gray-900'
+                >
+                  {column.cell({
+                    getValue: () => invoice[column.accessorKey],
+                    invoice,
+                  })}
                 </td>
               ))}
-              <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium'>
+              <td className='whitespace-nowrap px-6 py-4 text-right text-sm font-medium'>
                 <InvoiceGridActions
                   invoice={invoice}
                   onPreview={onPreview}

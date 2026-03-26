@@ -127,8 +127,7 @@ export async function POST() {
       sale.products.forEach((product: any) => {
         const brandName =
           product?.brandName || product?.batteryDetails?.brandName || '';
-        const series =
-          product?.series || product?.batteryDetails?.name || '';
+        const series = product?.series || product?.batteryDetails?.name || '';
 
         if (!brandName || !series) {
           return;
@@ -232,12 +231,17 @@ export async function POST() {
       }
     }
 
-    const missingInStock: Array<{ normalizedKey: string; actualSales: number }> = [];
+    const missingInStock: Array<{
+      normalizedKey: string;
+      actualSales: number;
+    }> = [];
 
     salesMap.forEach((salesCount, key) => {
       if (!stockMap.has(key)) {
         missingInStock.push({ normalizedKey: key, actualSales: salesCount });
-        logger.warning(`⚠️ Dashboard fix-sync: ${key} has sales ${salesCount} but no stock record`);
+        logger.warning(
+          `⚠️ Dashboard fix-sync: ${key} has sales ${salesCount} but no stock record`
+        );
       }
     });
 

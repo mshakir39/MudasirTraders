@@ -8,7 +8,9 @@ interface WarrantyDetailsWrapperProps {
   warranty: any;
 }
 
-const WarrantyDetailsWrapper: React.FC<WarrantyDetailsWrapperProps> = ({ warranty }) => {
+const WarrantyDetailsWrapper: React.FC<WarrantyDetailsWrapperProps> = ({
+  warranty,
+}) => {
   // Handle new structure: { warranty: {...}, daysRemaining: 0, isExpired: false, canClaim: false }
   if (warranty.warranty) {
     // Convert new structure to old structure
@@ -24,10 +26,10 @@ const WarrantyDetailsWrapper: React.FC<WarrantyDetailsWrapperProps> = ({ warrant
       invoiceNumber: warranty.warranty.invoiceNumber || '',
       saleDate: warranty.warranty.purchaseDate || new Date().toISOString(),
     };
-    
+
     return <WarrantyDetails warranty={convertedWarranty} />;
   }
-  
+
   // Handle old structure: direct warranty data
   return <WarrantyDetails warranty={warranty} />;
 };

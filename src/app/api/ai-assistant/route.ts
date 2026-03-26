@@ -15,8 +15,14 @@ const MONGODB_URI = process.env.MONGODB_URI!;
 const PROJECT_ROOT = path.resolve(process.cwd());
 
 const BLOCKED_PATTERNS = [
-  '.env', 'node_modules', '.next', '.git',
-  'secret', 'password', 'private', 'key',
+  '.env',
+  'node_modules',
+  '.next',
+  '.git',
+  'secret',
+  'password',
+  'private',
+  'key',
 ];
 
 const FORBIDDEN_STAGES = ['$out', '$merge', '$where', '$function'];
@@ -33,14 +39,17 @@ type Intent =
 function detectIntent(msg: string): Intent {
   const m = msg.toLowerCase();
 
-  if (/(sale|sales|invoice|amount|kitni|count|total|sum|month|year|today|aaj|mahina|saal)/.test(m))
+  if (
+    /(sale|sales|invoice|amount|kitni|count|total|sum|month|year|today|aaj|mahina|saal)/.test(
+      m
+    )
+  )
     return 'data_query';
 
   if (/(field|schema|type|interface|collection|column)/.test(m))
     return 'schema_query';
 
-  if (/(file|code|typescript|model|read)/.test(m))
-    return 'code_query';
+  if (/(file|code|typescript|model|read)/.test(m)) return 'code_query';
 
   if (m.trim().length < 2) return 'invalid';
 
@@ -52,19 +61,17 @@ function detectIntent(msg: string): Intent {
 function isSafeToRead(filePath: string): boolean {
   const resolved = path.resolve(PROJECT_ROOT, filePath);
   if (!resolved.startsWith(PROJECT_ROOT)) return false;
-  return !BLOCKED_PATTERNS.some(p => resolved.toLowerCase().includes(p));
+  return !BLOCKED_PATTERNS.some((p) => resolved.toLowerCase().includes(p));
 }
 
 function isPipelineSafe(pipeline: any): boolean {
   // must be array
   if (!Array.isArray(pipeline)) return false;
 
-  return !pipeline.some(stage => {
-    if (typeof stage !== "object" || stage === null) return true;
+  return !pipeline.some((stage) => {
+    if (typeof stage !== 'object' || stage === null) return true;
 
-    return Object.keys(stage).some(k =>
-      FORBIDDEN_STAGES.includes(k)
-    );
+    return Object.keys(stage).some((k) => FORBIDDEN_STAGES.includes(k));
   });
 }
 
@@ -80,8 +87,24 @@ interface SchemaCache {
 let schemaCache: SchemaCache | null = null;
 let warmUpPromise: Promise<void> | null = null;
 
-const TYPE_DIRS = ['types', 'lib', 'models', 'interfaces', 'schema', 'app/types'];
-const TYPE_KEYWORDS = ['interface ', 'type ', 'Schema', 'model', 'Invoice', 'Stock', 'Dealer', 'Product'];
+const TYPE_DIRS = [
+  'types',
+  'lib',
+  'models',
+  'interfaces',
+  'schema',
+  'app/types',
+];
+const TYPE_KEYWORDS = [
+  'interface ',
+  'type ',
+  'Schema',
+  'model',
+  'Invoice',
+  'Stock',
+  'Dealer',
+  'Product',
+];
 
 function findTypeFiles(): string[] {
   const found: string[] = [];
@@ -94,7 +117,10 @@ function findTypeFiles(): string[] {
       try {
         const entries = fs.readdirSync(d, { withFileTypes: true });
         for (const entry of entries) {
-          if (BLOCKED_PATTERNS.some(p => entry.name.toLowerCase().includes(p))) continue;
+          if (
+            BLOCKED_PATTERNS.some((p) => entry.name.toLowerCase().includes(p))
+          )
+            continue;
           const full = path.join(d, entry.name);
 
           if (entry.isDirectory()) {
@@ -102,11 +128,12 @@ function findTypeFiles(): string[] {
             continue;
           }
 
-          if (!entry.name.endsWith('.ts') && !entry.name.endsWith('.tsx')) continue;
+          if (!entry.name.endsWith('.ts') && !entry.name.endsWith('.tsx'))
+            continue;
 
           try {
             const preview = fs.readFileSync(full, 'utf8').slice(0, 500);
-            if (TYPE_KEYWORDS.some(k => preview.includes(k))) {
+            if (TYPE_KEYWORDS.some((k) => preview.includes(k))) {
               found.push(path.relative(PROJECT_ROOT, full));
             }
           } catch {}
@@ -160,14 +187,15 @@ async function buildSchemaCache(mongoClient: MongoClient): Promise<void> {
           }
         }
 
-        const fieldList = Array.from(fields.entries()).map(([k, v]) => `${k}: ${v}`);
+        const fieldList = Array.from(fields.entries()).map(
+          ([k, v]) => `${k}: ${v}`
+        );
 
         cache.collectionSamples.push({
           name: col.name,
           sample: JSON.stringify(docs[0], null, 2).slice(0, 800),
           fields: fieldList,
         });
-
       } catch (e: any) {
         console.warn(`⚠️ Could not sample ${col.name}`, e.message);
       }
@@ -208,7 +236,7 @@ async function buildSchemaCache(mongoClient: MongoClient): Promise<void> {
 }
 
 async function getSchemaCache(mongoClient: MongoClient): Promise<SchemaCache> {
-  if (schemaCache && (Date.now() - schemaCache.builtAt.getTime()) < 3600_000) {
+  if (schemaCache && Date.now() - schemaCache.builtAt.getTime() < 3600_000) {
     return schemaCache;
   }
 
@@ -227,7 +255,8 @@ async function getSchemaCache(mongoClient: MongoClient): Promise<SchemaCache> {
 function tool_list_files(dir: string): string {
   try {
     const resolved = path.resolve(PROJECT_ROOT, dir);
-    if (!resolved.startsWith(PROJECT_ROOT)) return 'Error: Path outside project';
+    if (!resolved.startsWith(PROJECT_ROOT))
+      return 'Error: Path outside project';
 
     const walk = (d: string, depth = 0): string[] => {
       if (depth > 3) return [];
@@ -236,7 +265,8 @@ function tool_list_files(dir: string): string {
 
       for (const entry of entries) {
         const rel = path.relative(PROJECT_ROOT, path.join(d, entry.name));
-        if (BLOCKED_PATTERNS.some(p => rel.toLowerCase().includes(p))) continue;
+        if (BLOCKED_PATTERNS.some((p) => rel.toLowerCase().includes(p)))
+          continue;
 
         if (entry.isDirectory()) {
           results.push(`📁 ${rel}/`);
@@ -275,41 +305,48 @@ async function tool_query_db(
   collection: string,
   pipeline: Document[]
 ): Promise<string> {
-// 🔧 normalize pipeline
-if (!Array.isArray(pipeline)) {
-  // if LLM returned a plain object → wrap it as $match
-  if (typeof pipeline === "object" && pipeline !== null) {
-    pipeline = [{ $match: pipeline }];
-  } else {
-    return "Main database se search nahi kar sakta kyun ke query samajh nahi aayi.";
+  // 🔧 normalize pipeline
+  if (!Array.isArray(pipeline)) {
+    // if LLM returned a plain object → wrap it as $match
+    if (typeof pipeline === 'object' && pipeline !== null) {
+      pipeline = [{ $match: pipeline }];
+    } else {
+      return 'Main database se search nahi kar sakta kyun ke query samajh nahi aayi.';
+    }
   }
-}
 
-if (!isPipelineSafe(pipeline)) {
-  throw new Error("Unsafe pipeline");
-}
+  if (!isPipelineSafe(pipeline)) {
+    throw new Error('Unsafe pipeline');
+  }
 
   try {
     const safePipeline: Document[] = JSON.parse(
       JSON.stringify(pipeline),
       (_key, value) => {
-        if (value && typeof value === 'object' && '$date' in value) return new Date(value['$date']);
-        if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) return new Date(value);
+        if (value && typeof value === 'object' && '$date' in value)
+          return new Date(value['$date']);
+        if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value))
+          return new Date(value);
         return value;
       }
     );
 
-    const result = await db.collection(collection).aggregate(safePipeline).toArray();
+    const result = await db
+      .collection(collection)
+      .aggregate(safePipeline)
+      .toArray();
     return JSON.stringify(result, null, 2);
   } catch (e: any) {
     return `Error running query: ${e.message}`;
   }
 }
 
-async function tool_list_collections(db: ReturnType<MongoClient['db']>): Promise<string> {
+async function tool_list_collections(
+  db: ReturnType<MongoClient['db']>
+): Promise<string> {
   try {
     const collections = await db.listCollections().toArray();
-    return collections.map(c => c.name).join(', ');
+    return collections.map((c) => c.name).join(', ');
   } catch (e: any) {
     return `Error listing collections: ${e.message}`;
   }
@@ -417,7 +454,6 @@ async function runAgentLoop(
   db: ReturnType<MongoClient['db']>,
   mongoClient: MongoClient
 ): Promise<string> {
-
   const now = new Date();
   const cached = await getSchemaCache(mongoClient);
 
@@ -486,7 +522,8 @@ Year start: ${new Date(now.getFullYear(), 0, 1).toISOString()}
             if (result.startsWith('Error') || result === '[]') {
               messages.push({
                 role: 'system',
-                content: 'Query failed or empty. Re-check field names and retry.',
+                content:
+                  'Query failed or empty. Re-check field names and retry.',
               });
             }
             break;
@@ -515,15 +552,24 @@ export async function POST(request: NextRequest) {
     const { message, history = [] } = await request.json();
 
     if (!message) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Message is required' },
+        { status: 400 }
+      );
     }
 
     if (!process.env.OPENROUTER_API_KEY) {
-      return NextResponse.json({ error: 'OPENROUTER_API_KEY missing' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'OPENROUTER_API_KEY missing' },
+        { status: 500 }
+      );
     }
 
     if (!MONGODB_URI) {
-      return NextResponse.json({ error: 'MONGODB_URI missing' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'MONGODB_URI missing' },
+        { status: 500 }
+      );
     }
 
     const intent = detectIntent(message);
@@ -535,9 +581,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (intent === 'data_query' && !/(today|month|year|\d{4})/.test(message.toLowerCase())) {
+    if (
+      intent === 'data_query' &&
+      !/(today|month|year|\d{4})/.test(message.toLowerCase())
+    ) {
       return NextResponse.json({
-        response: 'Aap kis date range ka data chahte ho? (today, this month, this year)',
+        response:
+          'Aap kis date range ka data chahte ho? (today, this month, this year)',
         timestamp: new Date().toISOString(),
       });
     }
@@ -550,7 +600,9 @@ export async function POST(request: NextRequest) {
     const db = globalMongo.db();
 
     if (!schemaCache) {
-      getSchemaCache(globalMongo).catch(e => console.warn('Warm-up error:', e));
+      getSchemaCache(globalMongo).catch((e) =>
+        console.warn('Warm-up error:', e)
+      );
     }
 
     const response = await runAgentLoop(message, history, db, globalMongo);
@@ -559,7 +611,6 @@ export async function POST(request: NextRequest) {
       response: summarizeResult(response),
       timestamp: new Date().toISOString(),
     });
-
   } catch (error: any) {
     console.error('API error:', error);
     return NextResponse.json(
