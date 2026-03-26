@@ -102,10 +102,10 @@ export default function ChargingAnalyticsPage() {
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 p-6'>
+    <div className='p-0 py-6 md:p-6'>
       <div className='mx-auto'>
         <div className='mb-8'>
-          <h1 className='mb-2 text-3xl font-bold text-gray-900'>
+          <h1 className='mb-2 text-2xl font-bold text-secondary-900'>
             Charging Service Analytics
           </h1>
           <p className='text-gray-600'>

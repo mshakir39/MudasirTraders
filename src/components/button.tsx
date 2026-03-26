@@ -1,3 +1,5 @@
+'use client';
+
 import React, { ButtonHTMLAttributes, FunctionComponent } from 'react';
 import { useFormStatus } from 'react-dom';
 
@@ -22,9 +24,9 @@ const Button: FunctionComponent<IButton> = ({
     'flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200';
 
   const variantClasses = {
-    fill: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+    fill: 'text-white focus:ring-primary-500 transition-all duration-200',
     outline:
-      'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-500',
+      'border border-secondary-300 bg-white text-secondary-700 hover:bg-secondary-50 focus:ring-primary-500',
   };
 
   const disabledClasses = 'disabled:opacity-50 disabled:cursor-not-allowed';
@@ -34,6 +36,25 @@ const Button: FunctionComponent<IButton> = ({
       type='button'
       disabled={pending || isPending}
       className={`${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className}`}
+      style={
+        variant === 'fill'
+          ? {
+              background: 'linear-gradient(135deg, #4287f5 0%, #021b3b 100%)',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.2s ease',
+            }
+          : {}
+      }
+      onMouseEnter={(e) => {
+        if (variant === 'fill') {
+          e.currentTarget.style.filter = 'brightness(1.1)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (variant === 'fill') {
+          e.currentTarget.style.filter = 'brightness(1)';
+        }
+      }}
       {...rest}
     >
       {pending ||

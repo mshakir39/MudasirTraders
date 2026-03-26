@@ -51,7 +51,7 @@ const Tabs: React.FC<TabsProps> = ({ tabs, onTabClick }) => {
         }
         .tab-header {
           display: flex;
-          border-bottom: 1px solid #ccc;
+          border-bottom: 1px solid var(--color-gray-300);
         }
         .tab-item {
           padding: 10px 20px;
@@ -59,11 +59,11 @@ const Tabs: React.FC<TabsProps> = ({ tabs, onTabClick }) => {
           border-bottom: 1px solid transparent;
         }
         .tab-item:hover {
-          background-color: #f0f0f0;
+          background-color: var(--color-gray-100);
         }
         .tab-item.active {
-          border-bottom-color: #5b4eea;
-          color: #5b4eea;
+          border-bottom-color: var(--color-primary-500);
+          color: var(--color-primary-500);
           font-weight: bold;
         }
       `}</style>

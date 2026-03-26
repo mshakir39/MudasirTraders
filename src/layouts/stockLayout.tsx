@@ -4,15 +4,10 @@ import React, { useCallback, useEffect, useState, useOptimistic } from 'react';
 import { toast } from 'react-toastify';
 import dynamic from 'next/dynamic';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { useAtom, useSetAtom } from 'jotai';
+import Button from '@/components/button';
 
-import { revalidatePathCustom } from '../../actions/revalidatePathCustom';
-import {
-  createStock,
-  updateStock,
-  getStockHistory,
-  deleteStock,
-  deleteAllBrandStock,
-} from '@/actions/stockActions';
+import { revalidatePathAction } from '../../actions/revalidatePath';
 import {
   EditData,
   FormStockData,
@@ -23,6 +18,7 @@ import {
 import { useTabOrder } from '@/utils/hooks/useTabOrder';
 import { useStockColumns } from '@/utils/hooks/useStockColumns';
 import { transformStockData, calculateStockCost } from '@/utils/stockUtils';
+import { stockAtom, fetchStockAtom, setStockAtom, stockLoadingAtom, stockErrorAtom, categoriesAtom } from '@/store/sharedAtoms';
 import { DraggableTabs } from '@/components/stock/DraggableTabs';
 import { MobileStockList } from '@/components/stock/MobileStockList';
 import { StockFormModal } from '@/components/stock/StockFormModal';
@@ -46,7 +42,9 @@ const EMPTY_EDIT_DATA: EditData = {
   inStock: '',
 };
 
-const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
+const StockLayout: React.FC<StockLayoutProps> = ({ categories: propCategories }) => {
+  // Use global state for categories (pre-loaded by GlobalDataProvider)
+  const [categories] = useAtom(categoriesAtom);
   const {
     orderedCategories,
     setOrderedCategories,
@@ -54,13 +52,18 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     setCurrentBrandName,
   } = useTabOrder(categories);
 
+  // Use Jotai atoms for stock data (pre-loaded by GlobalDataProvider)
+  const [stock, setStock] = useAtom(stockAtom);
+  const fetchStock = useSetAtom(fetchStockAtom);
+  const updateGlobalStock = useSetAtom(setStockAtom);
+  const [loading, setLoading] = useState(false);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'add' | 'edit' | ''>('');
   const [editModalData, setEditModalData] = useState<EditData>(EMPTY_EDIT_DATA);
   const [tableData, setTableData] = useState<StockBatteryData[]>([]);
   const [seriesOptions, setSeriesOptions] = useState<SeriesOption[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [stockData, setStockData] = useState<FormStockData>(EMPTY_FORM_STOCK);
+  const [formData, setFormData] = useState<FormStockData>(EMPTY_FORM_STOCK);
   const [stockCost, setStockCost] = useState(0);
   const [showStockCost, setShowStockCost] = useState(false);
 
@@ -141,6 +144,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
     const filtered = (optimisticStock || stock).filter(
       (item) => item.brandName === currentBrandName
     );
+
     if (filtered.length > 0) {
       const category = categories.find((c) => c.brandName === currentBrandName);
       const transformed = filtered[0].seriesStock.map(
@@ -154,14 +158,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
       setTableData([]);
       setStockCost(0);
     }
-  }, [
-    currentBrandName,
-    orderedCategories,
-    optimisticStock,
-    stock,
-    categories,
-    fetchData,
-  ]);
+  }, [stock, currentBrandName, orderedCategories, categories, optimisticStock, fetchData]);
 
   // Open edit modal pre-fills series options
   useEffect(() => {
@@ -173,13 +170,13 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   const closeFormModal = () => {
     setIsModalOpen(false);
     setEditModalData(EMPTY_EDIT_DATA);
-    setStockData(EMPTY_FORM_STOCK);
+    setFormData(EMPTY_FORM_STOCK);
     setModalType('');
   };
 
   const openAddModal = () => {
     fetchData(currentBrandName);
-    setStockData({ ...EMPTY_FORM_STOCK, brandName: currentBrandName });
+    setFormData({ ...EMPTY_FORM_STOCK, brandName: currentBrandName });
     setModalType('add');
     setIsModalOpen(true);
   };
@@ -191,53 +188,71 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   // --- CRUD handlers ---
   const handleSubmitAdd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     try {
-      const result = await createStock({
-        brandName: stockData.brandName,
-        series: stockData.series,
-        productCost: stockData.productCost,
-        inStock: stockData.inStock,
+      const response = await fetch('/api/stock/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'create', 
+          data: {
+            brandName: formData.brandName,
+            series: formData.series,
+            productCost: formData.productCost,
+            inStock: formData.inStock,
+          }
+        }),
       });
+      const result = await response.json();
       if (result.success) {
         toast.success('Stock added successfully');
-        await revalidatePathCustom('/stock');
+        await revalidatePathAction('/stock');
         closeFormModal();
-        window.location.reload();
+        // Refresh global stock state instead of reloading page
+        await fetchStock();
       } else {
         toast.error(result.error || 'Failed to add stock');
       }
     } catch {
       toast.error('Failed to add stock');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const handleSubmitEdit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     try {
       if (!editModalData.series) throw new Error('Invalid edit data');
-      const result = await updateStock({
-        brandName: editModalData.brandName,
-        series: editModalData.series,
-        productCost: editModalData.productCost,
-        inStock: editModalData.inStock,
+      const response = await fetch('/api/stock/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'update', 
+          data: {
+            brandName: editModalData.brandName,
+            series: editModalData.series,
+            productCost: editModalData.productCost,
+            inStock: editModalData.inStock,
+          }
+        }),
       });
+      const result = await response.json();
       if (!result.success)
         throw new Error(result.error || 'Failed to update stock');
 
-      await revalidatePathCustom('/stock');
+      await revalidatePathAction('/stock');
       closeFormModal();
       toast.success('Stock updated successfully');
-      fetchData(currentBrandName);
+      // Refresh global stock state instead of just fetching local data
+      await fetchStock();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Failed to update stock'
       );
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -262,34 +277,66 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
       setIsDeleting(true);
       try {
         addOptimisticStock({ type: 'delete', brandName, series: item.series });
-        const result = await deleteStock(brandName, item.series);
+        const response = await fetch('/api/stock/actions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            action: 'delete', 
+            data: { brandName, series: item.series }
+          }),
+        });
+        const result = await response.json();
         if (result.success) {
           toast.success('Stock deleted successfully');
-          await revalidatePathCustom('/stock');
-          window.location.reload();
+          await revalidatePathAction('/stock');
+          await fetchStock();
         } else {
           toast.error(result.error || 'Failed to delete stock');
         }
-      } catch {
-        toast.error('An error occurred while deleting stock');
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to delete stock'
+        );
       } finally {
         setIsDeleting(false);
       }
     },
-    [addOptimisticStock]
+    [addOptimisticStock, fetchStock]
   );
 
   const handleViewHistory = useCallback(
     async (brandName: string, series?: string) => {
-      if (!brandName) return;
+      console.log('🔍 handleViewHistory called with:', { brandName, series });
+      
+      if (!brandName) {
+        console.log('❌ No brandName provided to handleViewHistory');
+        return;
+      }
+      
       setIsLoadingHistory(true);
       try {
-        const result = await getStockHistory(brandName, series);
-        if (!result.success || !Array.isArray(result.data))
+        // Build query parameters
+        const params = new URLSearchParams({ brandName });
+        if (series) params.append('series', series);
+        
+        const url = `/api/stock/actions?${params.toString()}`;
+        console.log('🌐 Fetching URL:', url);
+        
+        const response = await fetch(url);
+        console.log('📡 Response status:', response.status);
+        
+        const result = await response.json();
+        console.log('📋 Response result:', result);
+        
+        if (!result.success || !Array.isArray(result.data)) {
+          console.log('❌ Invalid response:', result);
           throw new Error(result.error || 'Failed to fetch history');
+        }
+        
         setStockHistory(result.data);
         setIsHistoryModalOpen(true);
       } catch (error) {
+        console.error('❌ handleViewHistory error:', error);
         toast.error(
           error instanceof Error
             ? error.message
@@ -305,12 +352,21 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   const handleDeleteAll = async () => {
     setIsDeletingAll(true);
     try {
-      const result = await deleteAllBrandStock(currentBrandName);
+      const response = await fetch('/api/stock/actions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'deleteAllBrand', 
+          data: { brandName: currentBrandName }
+        }),
+      });
+      const result = await response.json();
       if (result.success) {
         toast.success(`Successfully deleted all stock for ${currentBrandName}`);
-        await revalidatePathCustom('/stock');
+        await revalidatePathAction('/stock');
         setIsDeleteAllModalOpen(false);
-        fetchData(currentBrandName);
+        // Refresh global stock state instead of just fetching local data
+        await fetchStock();
       } else {
         toast.error(result.error || 'Failed to delete all stock');
       }
@@ -330,79 +386,83 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
   });
 
   return (
-    <div className='min-h-screen pt-14 sm:pt-0'>
-      {/* Mobile Header */}
-      <div className='fixed left-0 right-0 top-0 z-10 h-14 bg-white px-4 py-2 shadow-sm sm:hidden'>
-        <div className='flex h-full items-center justify-between'>
-          <div className='flex min-w-0 flex-1 items-center gap-0' />
-          <div className='absolute left-1/2 -translate-x-1/2 transform'>
-            <h1 className='text-base font-semibold text-gray-900'>Stock</h1>
-          </div>
-          <button
-            onClick={openAddModal}
-            className='flex-shrink-0 touch-manipulation rounded-lg bg-blue-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-600'
-          >
-            Add Stock
-          </button>
-        </div>
+    <div className='min-h-screen p-0 py-6 md:p-6'>
+      {/* Header */}
+      <div className='mb-6 flex items-center justify-between'>
+        <h1 className='text-2xl font-bold text-secondary-900'>Stock</h1>
+        <Button
+          variant='fill'
+          text='Add Stock'
+          onClick={openAddModal}
+        />
       </div>
 
-      {/* Desktop Header */}
-      <div className='hidden p-4 sm:block sm:p-6 lg:p-8'>
-        <div className='flex flex-col gap-4 py-2 sm:flex-row sm:items-center sm:justify-between'>
-          <h1 className='text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl'>
-            Stock
-          </h1>
-        </div>
-      </div>
-
-      <div className='px-4 pb-4 sm:px-6 lg:px-8'>
-        {/* Tabs */}
-        <div className='mb-4 rounded-lg bg-white shadow-sm sm:mb-6 sm:rounded-none sm:bg-transparent sm:shadow-none'>
-          <div className='p-4 sm:p-0'>
-            <div className='mb-4 flex items-center justify-between'>
-              <div className='-mx-4 flex-1 overflow-x-auto px-4 sm:mx-0 sm:px-0'>
-                <DraggableTabs
-                  categories={orderedCategories}
-                  currentBrandName={currentBrandName}
-                  onTabClick={handleTabClick}
-                  onReorder={setOrderedCategories}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Data Grid */}
-        <div className='rounded-lg bg-white shadow-sm sm:rounded-none sm:bg-transparent sm:shadow-none'>
-          {/* Mobile Search */}
-          <div className='border-b border-gray-200 p-4 sm:hidden'>
-            <div className='relative'>
-              <input
-                type='text'
-                placeholder='Search stock...'
-                className='w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+      {/* Tabs */}
+      <div className='mb-4 rounded-lg bg-white shadow-sm sm:mb-6 sm:rounded-none sm:bg-transparent sm:shadow-none'>
+        <div className='p-4 sm:p-0'>
+          <div className='mb-4 flex items-center justify-between'>
+            <div className='-mx-4 flex-1 overflow-x-auto px-4 sm:mx-0 sm:px-0'>
+              <DraggableTabs
+                categories={orderedCategories}
+                currentBrandName={currentBrandName}
+                onTabClick={handleTabClick}
+                onReorder={setOrderedCategories}
               />
-              <div className='absolute inset-y-0 left-0 flex items-center pl-3'>
-                <svg
-                  className='h-4 w-4 text-gray-400'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-                  />
-                </svg>
-              </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Mobile List */}
-          <div className='sm:hidden'>
+      {/* Data Grid */}
+      <div className='rounded-lg bg-white shadow-sm sm:rounded-none sm:bg-transparent sm:shadow-none'>
+        {/* Mobile Search */}
+        <div className='flex flex-col space-y-3 border-b border-secondary-200 p-4 sm:hidden'>
+          <div className='relative'>
+            <input
+              type='text'
+              placeholder='Search stock...'
+              className='w-full rounded-lg border border-secondary-300 py-2 pl-10 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500'
+            />
+            <div className='absolute inset-y-0 left-0 flex items-center pl-3'>
+              <svg
+                className='h-4 w-4 text-secondary-400'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+                />
+              </svg>
+            </div>
+          </div>
+          {!loading && stockCost > 0 && (
+            <button
+              onClick={() => setShowStockCost(!showStockCost)}
+              className='whitespace-nowrap font-bold text-gray-500 transition-colors hover:text-gray-700 text-sm'
+              title={showStockCost ? 'Hide Stock Cost' : 'Show Stock Cost'}
+            >
+              Total Stock Cost:{' '}
+              {showStockCost
+                ? Math.round(stockCost).toLocaleString()
+                : '•••••••'}
+            </button>
+          )}
+        </div>
+
+        {/* Mobile List */}
+        <div className='sm:hidden'>
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                <p className="text-secondary-600">Loading stock data...</p>
+              </div>
+            </div>
+          ) : (
             <MobileStockList
               tableData={tableData}
               currentBrandName={currentBrandName}
@@ -410,72 +470,28 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
               onHistory={handleViewHistory}
               onDelete={(row: any) => handleDeleteClick(row, currentBrandName)}
             />
-          </div>
+          )}
+        </div>
 
-          {/* Desktop Table */}
-          <div className='hidden sm:block'>
+        {/* Desktop Table */}
+        <div className='hidden sm:block'>
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                <p className="text-secondary-600">Loading stock data...</p>
+              </div>
+            </div>
+          ) : (
             <Table
               data={tableData}
               columns={columns as any}
               enableSearch={true}
               searchPlaceholder='Search stock...'
               stockCost={stockCost}
-              buttonTitle='Create Stock'
-              showButton={true}
-              extraGlobalSearchText={(row) => {
-                const parts: string[] = [];
-                const series = (row as any)?.series ?? '';
-                const bd = (row as any)?.batteryDetails ?? {};
-                const plate = String(bd?.plate ?? '').trim();
-                const ah = bd?.ah ? String(bd.ah) : '';
-                const name = bd?.name ? String(bd.name) : '';
-
-                if (series) parts.push(String(series));
-                if (name) parts.push(name);
-                if (ah) parts.push(`${ah}ah`, `${ah} ah`);
-                if (plate) {
-                  const n = plate.replace(/\s+/g, '');
-                  parts.push(
-                    `${plate}p`,
-                    `${plate} p`,
-                    `${plate} plate`,
-                    `${plate} plates`,
-                    `${plate}-plate`,
-                    `${plate}-plates`,
-                    `${n}p`,
-                    `${n} p`,
-                    `${n} plate`,
-                    `${n} plates`
-                  );
-                }
-                return parts.filter(Boolean).join(' ');
-              }}
-              customGlobalFilter={(row, searchText, query) => {
-                const m = query.match(
-                  /^(\s*)(\d{1,3})(\s*)(p|pl|pla|plat|plate|plates)?/
-                );
-                if (m) {
-                  const numStr = m[2];
-                  const hasPlateWord = !!m[4];
-                  if (hasPlateWord) {
-                    const bd = (row.original as any)?.batteryDetails ?? {};
-                    const plateNum = Number(
-                      String(bd?.plate).replace(/[^0-9]/g, '')
-                    );
-                    const qNum = Number(numStr);
-                    if (!isNaN(plateNum) && !isNaN(qNum))
-                      return plateNum === qNum;
-                    return false;
-                  }
-                }
-                return searchText.includes(query);
-              }}
-              buttonOnClick={openAddModal}
-              secondaryButtonTitle='Delete All Stock'
-              showSecondaryButton={tableData.length > 0}
-              secondaryButtonOnClick={() => setIsDeleteAllModalOpen(true)}
+              defaultShowStockCost={false}
             />
-          </div>
+          )}
         </div>
       </div>
 
@@ -483,29 +499,26 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
       <StockFormModal
         isOpen={isModalOpen}
         modalType={modalType}
-        stockData={stockData}
+        stockData={formData}
         editModalData={editModalData}
         seriesOptions={seriesOptions}
-        isLoading={isLoading}
+        isLoading={loading}
         onClose={closeFormModal}
         onSubmitAdd={handleSubmitAdd}
         onSubmitEdit={handleSubmitEdit}
-        onChangeAdd={(
-          e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-        ) =>
-          setStockData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+        onChangeAdd={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+          setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
         }
-        onChangeEdit={(
-          e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-        ) =>
-          setEditModalData((prev) => ({
-            ...prev,
-            [e.target.name]: e.target.value,
-          }))
+        onChangeEdit={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+          setEditModalData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
         }
-        onSeriesChange={(value) =>
-          setStockData((prev) => ({ ...prev, series: value }))
-        }
+        onSeriesChange={(value) => {
+          if (modalType === 'add') {
+            setFormData((prev) => ({ ...prev, series: value }));
+          } else {
+            setEditModalData((prev) => ({ ...prev, series: value }));
+          }
+        }}
       />
 
       {/* History Modal */}
@@ -538,23 +551,33 @@ const StockLayout: React.FC<StockLayoutProps> = ({ categories, stock }) => {
           </>
         }
         confirmText='Delete Stock'
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!deleteItem) return;
           setIsDeleting(true);
-          deleteStock(deleteItem.brandName, deleteItem.series)
-            .then(async (result) => {
-              if (result.success) {
-                toast.success('Stock deleted successfully');
-                await revalidatePathCustom('/stock');
-                setIsDeleteModalOpen(false);
-                setDeleteItem(null);
-                fetchData(deleteItem.brandName);
-              } else {
-                toast.error(result.error || 'Failed to delete stock');
-              }
-            })
-            .catch(() => toast.error('An error occurred while deleting stock'))
-            .finally(() => setIsDeleting(false));
+          try {
+            const response = await fetch('/api/stock/actions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                action: 'delete', 
+                data: { brandName: deleteItem.brandName, series: deleteItem.series }
+              }),
+            });
+            const result = await response.json();
+            if (result.success) {
+              toast.success('Stock deleted successfully');
+              await revalidatePathAction('/stock');
+              setIsDeleteModalOpen(false);
+              setDeleteItem(null);
+              fetchData(deleteItem.brandName);
+            } else {
+              toast.error(result.error || 'Failed to delete stock');
+            }
+          } catch {
+            toast.error('An error occurred while deleting stock');
+          } finally {
+            setIsDeleting(false);
+          }
         }}
         onClose={() => {
           setIsDeleteModalOpen(false);

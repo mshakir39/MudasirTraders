@@ -9,9 +9,7 @@ const FloatingAIAssistant: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSendMessage = async () => {
-    console.log('handleSendMessage called, input:', input);
     if (!input.trim()) {
-      console.log('Empty input, returning');
       return;
     }
 
@@ -21,7 +19,6 @@ const FloatingAIAssistant: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log('Sending API request...');
       const response = await fetch('/api/ai-assistant', {
         method: 'POST',
         headers: {
@@ -38,7 +35,6 @@ const FloatingAIAssistant: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log('API response:', data);
       
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -161,7 +157,6 @@ const FloatingAIAssistant: React.FC = () => {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    console.log('Enter key pressed, sending message...');
                     handleSendMessage();
                   }
                 }}
@@ -169,7 +164,6 @@ const FloatingAIAssistant: React.FC = () => {
               />
               <button
                 onClick={() => {
-                  console.log('Send button clicked');
                   handleSendMessage();
                 }}
                 disabled={isLoading}

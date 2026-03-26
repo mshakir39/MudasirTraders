@@ -31,7 +31,7 @@ export function useStockColumns({
           return bd ? (
             <div>
               <div>{bd.name}</div>
-              <div className='text-xs text-gray-500'>
+              <div className='text-xs text-secondary-500'>
                 {bd.ah}AH{bd.type && `, ${bd.type}`}
               </div>
             </div>
@@ -83,13 +83,13 @@ export function useStockColumns({
           if (priceData.maxRetailPrice === 'N/A') {
             return (
               <div className='flex w-full items-center justify-start'>
-                <span className='font-medium text-gray-500'>Rs N/A</span>
+                <span className='font-medium text-secondary-500'>Rs N/A</span>
               </div>
             );
           }
           return (
             <div className='flex w-full items-center justify-start'>
-              <span className='font-medium text-gray-900'>
+              <span className='font-medium text-secondary-900'>
                 Rs {Number(priceData.maxRetailPrice).toLocaleString()}
               </span>
             </div>
@@ -116,7 +116,7 @@ export function useStockColumns({
                 e.stopPropagation();
                 onEdit(row.original, currentBrandName);
               }}
-              className='p-2 text-blue-600 transition-colors hover:text-blue-800'
+              className='p-2' style={{ color: '#2563eb' }}
               title='Edit Stock'
             >
               <FaEdit size={16} />
@@ -126,7 +126,7 @@ export function useStockColumns({
                 e.stopPropagation();
                 onHistory(currentBrandName, row.original.series);
               }}
-              className='p-2 text-gray-600 transition-colors hover:text-gray-800'
+              className='p-2' style={{ color: '#60a5fa' }}
               title='View History'
             >
               <FaHistory size={16} />
@@ -136,7 +136,7 @@ export function useStockColumns({
                 e.stopPropagation();
                 onDelete(row.original, currentBrandName);
               }}
-              className='p-2 text-red-600 transition-colors hover:text-red-800'
+              className='p-2' style={{ color: '#dc2626' }}
               title='Delete Stock'
             >
               <FaTrash size={16} />

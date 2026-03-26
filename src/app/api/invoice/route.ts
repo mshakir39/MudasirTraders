@@ -1,9 +1,11 @@
 'use server';
 import { executeOperation } from '@/app/libs/executeOperation';
-import { getAllSum } from '@/utils/getTotalSum';
-import { validateAndNormalizeStock } from '@/utils/stockUtils';
+import { InvoiceDataUtil } from '@/utils/invoiceDataUtil';
+import { generateInvoiceNumber } from '@/actions/invoiceActions';
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import log from '@/utils/logger';
 
 // Escape user-provided text for use inside a RegExp
 function escapeRegex(input: string) {
@@ -28,15 +30,19 @@ function normalizeSeries(s: string) {
     .trim();
 }
 
-// Build a regex that requires all tokens (split by space, '/', ',', '(', ')', '-') to appear in any order
-function buildTokenRegex(input: string) {
-  const tokens = String(input || '')
-    .split(/[\s/,()\-]+/)
-    .map((t) => t.trim())
-    .filter((t) => t.length > 0);
-  if (tokens.length === 0) return '.*';
-  const lookaheads = tokens.map((t) => `(?=.*${escapeRegex(t)})`).join('');
-  return `^${lookaheads}.*$`;
+// Normalize series by replacing all symbols with spaces, then exact matching
+function normalizeSeriesForMatching(input: string) {
+  return String(input || '')
+    .toLowerCase()
+    .replace(/[\/\(\)\-\,\.\+]/g, ' ') // Replace symbols with spaces
+    .replace(/([a-z])([0-9])/g, '$1 $2') // Add space between letters and numbers
+    .replace(/([0-9])([a-z])/g, '$1 $2') // Add space between numbers and letters
+    .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space between lowercase and uppercase
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // Add space before capitalized words
+    .replace(/(thin)(thick)/g, '$1 $2') // Split ThinThick
+    .replace(/(thinthick)/g, 'thin thick') // Handle combined form
+    .replace(/\s+/g, ' ')           // Normalize multiple spaces to single space
+    .trim();
 }
 
 // Track processing invoices to prevent duplicates
@@ -95,6 +101,92 @@ export async function POST(req: NextRequest) {
   processingInvoices.add(requestId);
 
   try {
+    // 🔍 SMART INVOICE LOGIC: Check for pending invoices first
+    console.log('🔍 Smart Invoice Logic: Checking for pending invoices...');
+    console.log(`   Customer: ${formData.customerName}`);
+    console.log(`   Phone: ${formData.customerContactNumber}`);
+    
+    // Check if customer has pending invoices
+    const pendingInvoices = await executeOperation('invoices', 'find', {
+      customerName: formData.customerName,
+      customerContactNumber: formData.customerContactNumber,
+      paymentStatus: { $in: ['pending', 'partial'] },
+      status: 'active'
+    }) as any[];
+    
+    console.log(`   Found pending invoices: ${pendingInvoices?.length || 0}`);
+    
+    if (pendingInvoices && pendingInvoices.length > 0) {
+      console.log('🔄 Pending invoices found - Creating consolidated invoice instead');
+      
+      // Prepare consolidation data
+      const pendingInvoiceIds = pendingInvoices.map((inv: any) => inv.id);
+      const previousAmounts = pendingInvoices.map((inv: any) => inv.remainingAmount);
+      
+      const consolidationData = {
+        customerName: formData.customerName,
+        customerPhone: formData.customerContactNumber,
+        customerAddress: formData.customerAddress || '',
+        newProducts: formData.productDetail || [],
+        pendingInvoiceIds: pendingInvoiceIds,
+        previousAmounts: previousAmounts,
+        notes: formData.notes || 'Auto-consolidated invoice',
+        receivedAmount: formData.receivedAmount || 0,
+        paymentMethod: formData.paymentMethod || ['Cash'],
+        batteriesCountAndWeight: formData.batteriesCountAndWeight || '',
+        batteriesRate: formData.batteriesRate || 0,
+        customerType: formData.customerType || 'WalkIn Customer',
+        customerId: formData.customerId || null,
+        vehicleNo: formData.vehicleNo || ''
+      };
+      
+      // Forward to consolidation route
+      try {
+        const { createConsolidatedInvoice } = await import('@/actions/invoiceActions');
+        const result = await createConsolidatedInvoice(
+          consolidationData.customerName,
+          consolidationData.customerPhone,
+          consolidationData.customerAddress,
+          consolidationData.newProducts,
+          consolidationData.pendingInvoiceIds,
+          consolidationData.previousAmounts,
+          consolidationData.notes,
+          consolidationData.receivedAmount,
+          consolidationData.paymentMethod,
+          consolidationData.batteriesCountAndWeight,
+          consolidationData.batteriesRate,
+          consolidationData.customerType,
+          consolidationData.customerId,
+          consolidationData.vehicleNo
+        );
+        
+        if (result.success) {
+          console.log('✅ Auto-consolidated invoice created successfully');
+          return NextResponse.json({
+            message: 'Auto-consolidated invoice created successfully',
+            invoice: result.data?.newInvoice,
+            consolidatedFrom: consolidationData.pendingInvoiceIds,
+            previousAmounts: consolidationData.previousAmounts,
+            isConsolidated: true
+          });
+        } else {
+          console.log('❌ Auto-consolidation failed:', result.error);
+          return NextResponse.json(
+            { error: result.error || 'Failed to create auto-consolidated invoice' },
+            { status: 500 }
+          );
+        }
+      } catch (error: any) {
+        console.error('💥 Auto-consolidation error:', error);
+        return NextResponse.json(
+          { error: 'Auto-consolidation failed: ' + error.message },
+          { status: 500 }
+        );
+      }
+    } else {
+      console.log('✅ No pending invoices - Creating normal invoice');
+    }
+    
     // Debug custom date logic
     console.log('🔍 Custom Date Debug:');
     console.log('useCustomDate:', formData.useCustomDate);
@@ -146,72 +238,60 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create an invoice document
-    const invoice: any = {
-      invoiceNo: nextInvoiceNumber,
+    // Validate invoice data using InvoiceDataUtil
+    const invoiceValidation = InvoiceDataUtil.validateInvoice({
       customerName: formData.customerName,
-      customerAddress: formData.customerAddress,
       customerContactNumber: formData.customerContactNumber,
-      customerType: formData.customerType || 'WalkIn Customer', // Add customer type
-      customerId:
-        formData.customerType === 'Regular' ? formData.customerId : null, // Add customerId for regular customers
-      vehicleNo: formData.vehicleNo || '',
+      customerAddress: formData.customerAddress,
+      products: formData.productDetail,
       paymentMethod: formData.paymentMethod,
+      receivedAmount: formData.receivedAmount,
+      taxRate: formData.taxRate
+    });
+
+    if (!invoiceValidation.isValid) {
+      return NextResponse.json(
+        { 
+          error: 'Invalid invoice data', 
+          details: invoiceValidation.errors,
+          warnings: invoiceValidation.warnings 
+        },
+        { status: 400 }
+      );
+    }
+
+    // Use cleaned data from validation
+    const validatedInvoiceData = invoiceValidation.cleanedData!;
+    console.log('✅ Invoice data validated:', {
+      customerName: validatedInvoiceData.customerName,
+      productCount: validatedInvoiceData.products?.length || 0,
+      totalAmount: validatedInvoiceData.totalAmount,
+      warnings: invoiceValidation.warnings
+    });
+
+    // Create an invoice document using validated data
+    const invoice = {
+      invoiceNo: nextInvoiceNumber,
+      customerName: validatedInvoiceData.customerName,
+      customerAddress: validatedInvoiceData.customerAddress,
+      customerContactNumber: validatedInvoiceData.customerContactNumber,
+      customerType: formData.customerType || 'WalkIn Customer',
+      customerId: formData.customerType === 'Regular' ? formData.customerId : null,
+      vehicleNo: formData.vehicleNo || '',
+      paymentMethod: validatedInvoiceData.paymentMethod,
       batteriesCountAndWeight: formData?.batteriesCountAndWeight,
-      batteriesRate: 0, // Will be validated and set below
-      receivedAmount: 0, // Will be validated and set below
+      batteriesRate: 0,
+      receivedAmount: validatedInvoiceData.receivedAmount,
       isPayLater: formData?.paymentMethod?.includes('Pay Later') || false,
 
-      products: formData.productDetail.map((product: any) => {
-        // 🔒 VALIDATION: Ensure product has required fields
-        if (
-          !product.brandName ||
-          !product.series ||
-          !product.productPrice ||
-          !product.quantity
-        ) {
-          return NextResponse.json(
-            {
-              error: `Product is missing required fields: ${JSON.stringify(product)}`,
-              showToast: true,
-            },
-            { status: 400 }
-          );
-        }
-
-        const productPrice = parseFloat(product.productPrice);
-        const quantity = parseInt(product.quantity);
-
-        if (isNaN(productPrice) || productPrice <= 0) {
-          return NextResponse.json(
-            {
-              error: `Invalid product price for ${product.brandName} - ${product.series}: ${product.productPrice}`,
-              showToast: true,
-            },
-            { status: 400 }
-          );
-        }
-
-        if (isNaN(quantity) || quantity <= 0) {
-          return NextResponse.json(
-            {
-              error: `Invalid quantity for ${product.brandName} - ${product.series}: ${quantity}`,
-              showToast: true,
-            },
-            { status: 400 }
-          );
-        }
-
-        const totalPrice = productPrice * quantity;
-
+      products: (validatedInvoiceData.products || []).map((product: any) => {
         // Calculate warranty end date if warranty code is provided
         let warrantyEndDate = product.warrentyEndDate;
 
         // Determine the actual warranty start date to use for calculations
         let actualWarrantyStartDate = product.warrentyStartDate;
         if (
-          (formData.useCustomDate === true ||
-            formData.useCustomDate === 'true') &&
+          (formData.useCustomDate === true || formData.useCustomDate === 'true') &&
           formData.customDate
         ) {
           actualWarrantyStartDate = new Date(formData.customDate)
@@ -219,59 +299,29 @@ export async function POST(req: NextRequest) {
             .split('T')[0];
         }
 
+        // Calculate warranty end date if warranty code is provided
         if (
           product.warrentyCode &&
           actualWarrantyStartDate &&
           product.warrentyDuration
         ) {
           const startDate = new Date(actualWarrantyStartDate);
-          if (isNaN(startDate.getTime())) {
-            return NextResponse.json(
-              {
-                error: `Warranty start date for ${product.brandName} - ${product.series} cannot be in the future: ${actualWarrantyStartDate}`,
-                showToast: true,
-              },
-              { status: 400 }
-            );
-          }
+          // Note: Warranty validation will be done outside the map function
+          const duration = parseInt(product.warrentyDuration);
           const endDate = new Date(startDate);
-          endDate.setMonth(
-            endDate.getMonth() + parseInt(product.warrentyDuration.toString())
-          );
+          endDate.setMonth(endDate.getMonth() + duration);
           warrantyEndDate = endDate.toISOString().split('T')[0];
-
-          // 🔒 VALIDATION: Ensure warranty end date is valid
-          const calculatedEndDate = new Date(warrantyEndDate);
-          if (isNaN(calculatedEndDate.getTime())) {
-            return NextResponse.json(
-              {
-                error: `Invalid warranty end date calculated for ${product.brandName} - ${product.series}: ${warrantyEndDate}`,
-                showToast: true,
-              },
-              { status: 400 }
-            );
-          }
-
-          // Note: Allow warranty end date to be in the past to support backdated invoices
         }
 
         // Auto-set warranty start date to custom date if enabled
         let finalWarrantyStartDate = product.warrentyStartDate;
         if (
-          (formData.useCustomDate === true ||
-            formData.useCustomDate === 'true') &&
+          (formData.useCustomDate === true || formData.useCustomDate === 'true') &&
           formData.customDate
         ) {
-          // Use custom date for warranty start date
           finalWarrantyStartDate = new Date(formData.customDate)
             .toISOString()
             .split('T')[0];
-          console.log(
-            `📅 Auto-setting warranty start date for ${product.brandName} - ${product.series} to custom date: ${finalWarrantyStartDate}`
-          );
-          console.log(
-            `📅 Original warranty start date was: ${product.warrentyStartDate}`
-          );
         }
 
         return {
@@ -284,16 +334,21 @@ export async function POST(req: NextRequest) {
           warrentyCode: product.warrentyCode ? product.warrentyCode.trim() : '',
           warrentyStartDate: finalWarrantyStartDate,
           warrentyEndDate: warrantyEndDate,
-          totalPrice: totalPrice,
+          warrentyDuration: product.warrentyDuration || '',
+          totalPrice: product.totalPrice,
           batteryDetails: product.batteryDetails,
         };
       }),
-      createdDate:
-        (formData.useCustomDate === true ||
-          formData.useCustomDate === 'true') &&
-        formData.customDate
-          ? new Date(formData.customDate)
-          : new Date(),
+      
+      // Use calculated amounts from validation
+      subtotal: validatedInvoiceData.subtotal,
+      taxAmount: validatedInvoiceData.taxAmount,
+      totalAmount: validatedInvoiceData.totalAmount,
+      remainingAmount: validatedInvoiceData.remainingAmount,
+      paymentStatus: validatedInvoiceData.paymentStatus,
+      status: 'active',
+      
+      createdDate: validatedInvoiceData.createdDate,
     };
 
     // Debug the final createdDate
@@ -336,8 +391,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Calculate remaining amount
-    const totalProductAmount = getAllSum(invoice.products, 'totalPrice') || 0;
+    // Calculate remaining amount using InvoiceDataUtil
+    const calculation = InvoiceDataUtil.calculateAmounts(invoice.products, invoice.receivedAmount);
+    const totalProductAmount = calculation.totalAmount;
 
     // 🔒 VALIDATION: Ensure totalProductAmount is always a valid number
     if (isNaN(totalProductAmount) || totalProductAmount < 0) {
@@ -411,6 +467,13 @@ export async function POST(req: NextRequest) {
     // Calculate remaining amount
     invoice.remainingAmount =
       totalProductAmount - receivedAmount - batteriesRate;
+
+    // Debug the calculation
+    console.log('💰 Invoice Creation Debug:');
+    console.log('  totalProductAmount:', totalProductAmount);
+    console.log('  receivedAmount:', receivedAmount);
+    console.log('  batteriesRate:', batteriesRate);
+    console.log('  calculated remainingAmount:', invoice.remainingAmount);
 
     // 🔒 VALIDATION: Ensure remainingAmount is a valid number
     if (isNaN(invoice.remainingAmount)) {
@@ -592,7 +655,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 🔒 VALIDATION: Ensure customer contact is not empty (accepts "-" as valid)
-    if (invoice.customerContactNumber.trim() === '') {
+    if (!invoice.customerContactNumber || invoice.customerContactNumber.trim() === '') {
       throw new Error(
         'Customer contact number cannot be empty in invoice object'
       );
@@ -623,8 +686,9 @@ export async function POST(req: NextRequest) {
       }
 
       if (
-        typeof product.quantity !== 'string' ||
-        parseInt(product.quantity) <= 0
+        (typeof product.quantity !== 'number' && typeof product.quantity !== 'string') ||
+        (typeof product.quantity === 'string' && (isNaN(parseInt(product.quantity)) || parseInt(product.quantity) <= 0)) ||
+        (typeof product.quantity === 'number' && (isNaN(product.quantity) || product.quantity <= 0))
       ) {
         throw new Error(
           `Invalid product quantity in invoice object: ${product.quantity}`
@@ -646,6 +710,92 @@ export async function POST(req: NextRequest) {
       invoice.paymentStatus = 'paid';
     } else {
       invoice.paymentStatus = 'partial';
+    }
+
+    // 🔒 VALIDATION: Ensure warranty codes are valid when provided
+    for (const product of formData.productDetail) {
+      // Check if product is battery tonic (distilled water) - skip warranty validation
+      const isBatteryTonic =
+        product.series &&
+        (product.series.toLowerCase().includes('tonic') ||
+          product.series.toLowerCase().includes('ml') ||
+          (product.series.toLowerCase().includes('battery') &&
+            product.series.toLowerCase().includes('water')) ||
+          product.series.toLowerCase().includes('distilled'));
+
+      // Skip warranty validation for battery tonic
+      if (isBatteryTonic) {
+        continue;
+      }
+
+      if (product.warrentyCode && product.warrentyCode.trim() !== '') {
+        const warrantyCode = product.warrentyCode.trim();
+        if (warrantyCode.length < 3) {
+          return NextResponse.json(
+            {
+              error: `Warranty code for ${product.brandName} - ${product.series} must be at least 3 characters long`,
+              showToast: true,
+            },
+            { status: 400 }
+          );
+        }
+
+        // Ensure warranty start date is provided when warranty code is set
+        if (
+          !product.warrentyStartDate ||
+          product.warrentyStartDate.trim() === ''
+        ) {
+          return NextResponse.json(
+            {
+              error: `Warranty start date is required for ${product.brandName} - ${product.series} when warranty code is provided`,
+              showToast: true,
+            },
+            { status: 400 }
+          );
+        }
+
+        // Ensure warranty duration is provided when warranty code is set
+        if (
+          !product.warrentyDuration ||
+          product.warrentyDuration.toString().trim() === ''
+        ) {
+          return NextResponse.json(
+            {
+              error: `Warranty duration is required for ${product.brandName} - ${product.series} when warranty code is provided`,
+              showToast: true,
+            },
+            { status: 400 }
+          );
+        }
+
+        // Ensure warranty start date is a valid date
+        const warrantyStartDate = new Date(product.warrentyStartDate);
+        if (isNaN(warrantyStartDate.getTime())) {
+          return NextResponse.json(
+            {
+              error: `Invalid warranty start date for ${product.brandName} - ${product.series}: ${product.warrentyStartDate}`,
+              showToast: true,
+            },
+            { status: 400 }
+          );
+        }
+
+        // Ensure warranty duration is a valid number
+        const warrantyDuration = parseInt(product.warrentyDuration.toString());
+        if (
+          isNaN(warrantyDuration) ||
+          warrantyDuration <= 0 ||
+          warrantyDuration > 120
+        ) {
+          return NextResponse.json(
+            {
+              error: `Invalid warranty duration for ${product.brandName} - ${product.series}: ${product.warrentyDuration}. Must be between 1 and 120 months.`,
+              showToast: true,
+            },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     // 🔒 VALIDATION: Ensure customer information is provided (any text but not empty)
@@ -749,7 +899,7 @@ export async function POST(req: NextRequest) {
             }
           : {}),
         'seriesStock.series': {
-          $regex: buildTokenRegex(seriesName),
+          $regex: `^${escapeRegex(seriesName)}$`,
           $options: 'i',
         },
       } as any;
@@ -760,7 +910,7 @@ export async function POST(req: NextRequest) {
       if (!stockExists) {
         const fallbackQuery = {
           'seriesStock.series': {
-            $regex: buildTokenRegex(seriesName),
+            $regex: `^${escapeRegex(seriesName)}$`,
             $options: 'i',
           },
         } as any;
@@ -788,13 +938,16 @@ export async function POST(req: NextRequest) {
 
       // Validate stock availability
       const stockData = stockExists as any;
-      const tokenPattern = new RegExp(buildTokenRegex(seriesName), 'i');
       const currentStock = stockData.seriesStock?.find((item: any) => {
         const s = String(item.series || '');
+        // Prioritize exact match first
+        if (s === seriesName) return true;
+        // Use symbol normalization for matching
+        if (normalizeSeriesForMatching(s) === normalizeSeriesForMatching(seriesName)) return true;
+        // Fall back to existing normalized matching
         return (
           normalizeSeries(s) === normalizeSeries(seriesName) || 
-          normalizeText(s) === normalizeText(seriesName) || 
-          tokenPattern.test(s)
+          normalizeText(s) === normalizeText(seriesName)
         );
       });
       if (!currentStock) {
@@ -874,7 +1027,8 @@ export async function POST(req: NextRequest) {
     console.log('💼 Inserting sales record...');
 
     // 🔒 VALIDATION: Ensure sales record data is valid
-    const salesTotalAmount = getAllSum(invoice.products, 'totalPrice');
+    const salesCalculation = InvoiceDataUtil.calculateAmounts(invoice.products);
+    const salesTotalAmount = salesCalculation.totalAmount;
     if (isNaN(salesTotalAmount) || salesTotalAmount <= 0) {
       throw new Error(`Invalid sales total amount: ${salesTotalAmount}`);
     }
@@ -945,6 +1099,23 @@ export async function POST(req: NextRequest) {
     // Note: Stock validation removed - stock updates are handled later in the process
 
     console.log('✅ Invoice created successfully');
+    
+    // Revalidate cache to show new invoice data
+    revalidatePath('/invoice');
+    revalidatePath('/dashboard/invoices');
+    revalidatePath('/dashboard/customers');
+    revalidatePath('/api/invoice');
+    revalidatePath('/api/invoice/[id]', 'page');
+    revalidatePath('/api/customers/[customerId]/invoices', 'page');
+    
+    // Revalidate stock data to reflect stock changes
+    revalidatePath('/stock');
+    revalidatePath('/dashboard/stock');
+    revalidatePath('/api/stock');
+    revalidatePath('/api/stock/[brand]', 'page');
+    
+    console.log('✅ Stock cache revalidated');
+    
     return NextResponse.json({ message: 'Invoice created successfully' });
   } catch (err: any) {
     console.error('❌ Error creating invoice:', err);
@@ -987,24 +1158,71 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    const invoiceId = new ObjectId(id);
-    const invoice: any = await executeOperation('invoices', 'findOne', {
-      _id: invoiceId,
-    });
+    // 🔒 VALIDATION: Validate ID
+    if (!id) {
+      return NextResponse.json(
+        {
+          error: 'Invoice ID is required.',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Debug: Log the ID format
+    console.log('🔍 API Payment Debug - ID:', id);
+    console.log('🔍 API Payment Debug - ID type:', typeof id);
+    console.log('🔍 API Payment Debug - ID length:', id.length);
+
+    let invoiceId;
+    let invoice;
+    
+    try {
+      // Try to create ObjectId first
+      invoiceId = new ObjectId(id);
+      invoice = await executeOperation('invoices', 'findOne', {
+        _id: invoiceId,
+      });
+    } catch (error) {
+      // If ObjectId creation fails, try searching by string ID
+      console.log('⚠️ ObjectId creation failed, trying string ID search');
+      invoice = await executeOperation('invoices', 'findOne', {
+        id: id,
+      });
+    }
+
+    if (!invoice) {
+      return NextResponse.json(
+        {
+          error: `Invoice not found with ID: ${id}`,
+        },
+        { status: 404 }
+      );
+    }
 
     if (
       typeof invoice === 'object' &&
       invoice !== null &&
       'remainingAmount' in invoice
     ) {
-      const remainingAmount = parseFloat(invoice.remainingAmount) || 0;
+      // For payment calculations, use the existing values from database
+      const currentRemainingAmount = parseFloat(invoice.remainingAmount) || 0;
+      const currentReceivedAmount = parseFloat(invoice.receivedAmount) || 0;
       const paymentAmount = parseFloat(additionalPayment) || 0;
-
-      // 🔒 VALIDATION: Ensure payment amount doesn't exceed remaining amount
-      if (paymentAmount > remainingAmount) {
+      
+      // Debug logging
+      console.log('🔍 Payment Debug:', {
+        invoiceNo: invoice.invoiceNo,
+        currentRemainingAmount,
+        currentReceivedAmount,
+        paymentAmount,
+        additionalPaymentArray: invoice.additionalPayment
+      });
+      
+      // Validate payment amount doesn't exceed remaining amount
+      if (paymentAmount > currentRemainingAmount) {
         return NextResponse.json(
           {
-            error: `Payment amount (${paymentAmount}) cannot exceed remaining amount (${remainingAmount})`,
+            error: `Payment amount (${paymentAmount}) cannot exceed remaining amount (${currentRemainingAmount})`,
           },
           { status: 400 }
         );
@@ -1016,15 +1234,53 @@ export async function PATCH(req: NextRequest) {
         paymentMethod: paymentMethod,
       };
 
-      const updatedInvoice = {
+      const newRemainingAmount = currentRemainingAmount - paymentAmount;
+      
+      console.log('📝 Update Values:', {
+        newRemainingAmount,
+        newPayment
+      });
+
+      const updatedInvoice: any = {
         ...invoice,
         additionalPayment: [...(invoice.additionalPayment || []), newPayment],
-        remainingAmount: remainingAmount - paymentAmount,
+        // Don't change receivedAmount - it's the initial amount received at invoice creation
+        remainingAmount: newRemainingAmount,
       };
 
-      await executeOperation('invoices', 'updateOne', updatedInvoice);
+      // Update payment status based on new remaining amount
+      if (newRemainingAmount <= 0) {
+        updatedInvoice.paymentStatus = 'paid';
+        updatedInvoice.remainingAmount = 0;
+      } else if (currentReceivedAmount > 0) {
+        updatedInvoice.paymentStatus = 'partial';
+        updatedInvoice.remainingAmount = newRemainingAmount;
+      } else {
+        updatedInvoice.paymentStatus = 'pending';
+        updatedInvoice.remainingAmount = newRemainingAmount;
+      }
 
-      return NextResponse.json({ message: 'Invoice updated successfully' });
+      // Update the invoice in the database
+      const updateResult = await executeOperation('invoices', 'updateOne', {
+        ...updatedInvoice,
+        ...(invoiceId ? { _id: invoiceId } : { id: id })
+      });
+
+      // Revalidate cache to show updated invoice data
+      revalidatePath('/invoice');
+      revalidatePath('/dashboard/invoices');
+      revalidatePath('/dashboard/customers');
+      revalidatePath('/api/invoice');
+      revalidatePath('/api/invoice/[id]');
+      revalidatePath('/api/customers/[customerId]/invoices');
+
+      return NextResponse.json({ 
+        message: 'Invoice updated successfully',
+        additionalPayment: updatedInvoice.additionalPayment,
+        remainingAmount: updatedInvoice.remainingAmount,
+        paymentStatus: updatedInvoice.paymentStatus,
+        receivedAmount: updatedInvoice.receivedAmount
+      });
     } else {
       return NextResponse.json({ error: 'Invalid Invoice' }, { status: 400 });
     }
@@ -1034,186 +1290,224 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  try {
-    const { id } = await req.json();
+try {
+const { id } = await req.json();
 
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Invoice ID is required' },
-        { status: 400 }
-      );
-    }
+if (!id) {
+return NextResponse.json(
+{ error: 'Invoice ID is required' },
+{ status: 400 }
+);
+}
 
-    const invoiceId = new ObjectId(id);
+const invoiceId = new ObjectId(id);
 
-    // 1. First, get the invoice details before deleting
-    const invoice: any = await executeOperation('invoices', 'findOne', {
-      _id: invoiceId,
-    });
+const invoice: any = await executeOperation('invoices', 'findOne', {
+_id: invoiceId,
+});
 
-    if (!invoice) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-    }
+if (!invoice) {
+return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+}
 
-    console.log(
-      '🗑️ Starting complete invoice deletion for:',
-      invoice.invoiceNo
-    );
-    console.log('📋 Invoice details:', {
-      customerName: invoice.customerName,
-      totalProducts: invoice.products?.length || 0,
-      totalAmount: invoice.remainingAmount,
-      paymentMethod: invoice.paymentMethod,
-    });
+log.invoice('Starting complete invoice deletion', invoice.invoiceNo);
+log.invoice('Invoice details', {
+customerName: invoice.customerName,
+totalProducts: invoice.products?.length || 0,
+totalAmount: invoice.totalAmount,
+paymentMethod: invoice.paymentMethod,
+isConsolidated: !!(invoice.consolidatedFrom && invoice.consolidatedFrom.length > 0),
+consolidatedFrom: invoice.consolidatedFrom,
+});
 
-    // 2. Preserve warranty data before deletion (for warranty lookups)
-    if (invoice.products && Array.isArray(invoice.products)) {
-      console.log('🔧 Preserving warranty data...');
-      for (const product of invoice.products) {
-        if (product.warrentyCode) {
+// 2. Preserve warranty data before deletion
+if (invoice.products && Array.isArray(invoice.products)) {
+log.invoice('Preserving warranty data...');
+for (const product of invoice.products) {
+if (product.warrentyCode) {
+try {
+await executeOperation('warrantyHistory', 'insertOne', {
+warrentyCode: product.warrentyCode ? product.warrentyCode.trim() : '',
+customerName: invoice.customerName,
+customerContactNumber: invoice.customerContactNumber,
+customerAddress: invoice.customerAddress,
+productDetails: {
+brandName: product.brandName,
+series: product.series,
+warrentyStartDate: product.warrentyStartDate,
+warrentyEndDate: product.warrentyEndDate,
+warrentyDuration: product.warrentyDuration,
+},
+originalInvoiceNo: invoice.invoiceNo,
+originalInvoiceId: invoice._id,
+deletedAt: new Date(),
+deletionReason: 'Invoice deleted by user',
+});
+log.invoice(`Warranty data preserved for: ${product.warrentyCode}`);
+} catch (warrantyError) {
+log.error(`Failed to preserve warranty data for ${product.warrentyCode}:`, warrantyError);
+}
+}
+}
+}
+
+    // 3. Reverse stock changes
+    const isConsolidated = !!(invoice.consolidatedFrom && invoice.consolidatedFrom.length > 0);
+
+    if (isConsolidated) {
+      log.stock('CONSOLIDATED INVOICE: Restoring stock for NEW products only...');
+      log.stock(`This invoice was created by consolidating ${invoice.consolidatedFrom?.length} invoices`);
+      log.warning('Original invoices were already voided during consolidation (no stock changes)');
+      log.stock('Only NEW products added during consolidation should have stock restored');
+
+      if (invoice.products && Array.isArray(invoice.products)) {
+        log.stock('Restoring stock for new products in consolidated invoice...');
+        for (const product of invoice.products) {
+          if (product.isChargingService || product.isScrapBattery) {
+            log.stock(`Skipping stock restoration for service: ${product.productName || product.series}`);
+            continue;
+          }
+
+          const seriesName = product.batteryDetails?.name || product.series || '';
+          const isLegacyScrap =
+            seriesName.toLowerCase().includes('scrap') ||
+            (product.brandName && product.brandName.toLowerCase().includes('scrap'));
+
+          if (isLegacyScrap) {
+            log.stock(`Skipping stock restoration for legacy scrap: ${seriesName}`);
+            continue;
+          }
+
+          log.stock(`Restoring stock for consolidated invoice product: ${product.brandName} - ${product.series}`);
+          log.debug('Quantity to restore', product.quantity);
+
           try {
-            await executeOperation('warrantyHistory', 'insertOne', {
-              warrentyCode: product.warrentyCode
-                ? product.warrentyCode.trim()
-                : '',
-              customerName: invoice.customerName,
-              customerContactNumber: invoice.customerContactNumber,
-              customerAddress: invoice.customerAddress,
-              productDetails: {
+            const { connectToMongoDB } = await import('@/app/libs/connectToMongoDB');
+            const db = await connectToMongoDB();
+
+            if (!db) {
+              throw new Error('Database connection failed');
+            }
+
+            const stockUpdateResult = await db.collection('stock').updateOne(
+              {
                 brandName: product.brandName,
-                series: product.series,
-                warrentyStartDate: product.warrentyStartDate,
-                warrentyEndDate: product.warrentyEndDate,
-                warrentyDuration: product.warrentyDuration,
+                'seriesStock.series': product.series,
               },
-              originalInvoiceNo: invoice.invoiceNo,
-              originalInvoiceId: invoice._id,
-              deletedAt: new Date(),
-              deletionReason: 'Invoice deleted by user',
+              {
+                $inc: {
+                  'seriesStock.$.inStock': parseInt(product.quantity) || 1,
+                  'seriesStock.$.soldCount': -(parseInt(product.quantity) || 1),
+                },
+              }
+            );
+
+            log.database('Stock update result', stockUpdateResult);
+
+            if (stockUpdateResult.modifiedCount > 0) {
+              log.success(`Stock restored for consolidated invoice product: ${product.brandName} - ${product.series}`);
+            } else {
+              log.warning(`Stock restore failed for consolidated invoice product: ${product.brandName} - ${product.series} (no matching stock found)`);
+            }
+          } catch (stockError) {
+            log.error(`Error restoring stock for consolidated invoice product ${product.brandName} - ${product.series}:`, stockError);
+          }
+        }
+      }
+    } else {
+      log.stock('NORMAL INVOICE: Reversing stock changes...');
+      if (invoice.products && Array.isArray(invoice.products)) {
+        for (const product of invoice.products) {
+          if (product.isChargingService || product.isScrapBattery) {
+            log.stock(`Skipping stock restoration for service: ${product.productName || product.series}`);
+            continue;
+          }
+
+          const seriesName = product.batteryDetails?.name || product.series || '';
+          const isLegacyScrap =
+            seriesName.toLowerCase().includes('scrap') ||
+            (product.brandName && product.brandName.toLowerCase().includes('scrap'));
+
+          if (isLegacyScrap) {
+            log.stock(`Skipping stock restoration for legacy scrap: ${seriesName}`);
+            continue;
+          }
+
+          const quantity = parseInt(product.quantity) || 1;
+          log.stock(`Restoring stock for ${seriesName}: +${quantity} units`);
+          log.debug('Product series', product.series);
+          log.debug('Product batteryDetails.name', product.batteryDetails?.name);
+
+          try {
+            const restoreResult = await executeOperation('stock', 'restoreStockFromInvoice', {
+              series: seriesName,
+              quantity: String(quantity),
             });
-            console.log(
-              `✅ Warranty data preserved for: ${product.warrentyCode}`
-            );
-          } catch (warrantyError) {
-            console.warn(
-              `⚠️ Failed to preserve warranty data for ${product.warrentyCode}:`,
-              warrantyError
-            );
+            log.success(`Stock restored for ${seriesName}:`, restoreResult);
+          } catch (stockError: any) {
+            log.error(`Failed to restore stock for ${seriesName}:`, stockError);
+            log.warning('Stock restoration failed but continuing with invoice deletion');
           }
         }
       }
     }
 
-    // 3. Reverse stock changes (restore quantities)
-    if (invoice.products && Array.isArray(invoice.products)) {
-      console.log('📦 Reversing stock changes...');
-      for (const product of invoice.products) {
-        // Skip stock restoration for charging service/scrap battery products
-        if (product.isChargingService || product.isScrapBattery) {
-          console.log(
-            `⏭️ Skipping stock restoration for service: ${product.productName || product.series}`
-          );
-          continue;
-        }
-
-        // Handle legacy scrap battery invoices by checking series name patterns
-        const seriesName = product.batteryDetails?.name || product.series || '';
-        const isLegacyScrap =
-          seriesName.toLowerCase().includes('scrap') ||
-          (product.brandName &&
-            product.brandName.toLowerCase().includes('scrap'));
-
-        if (isLegacyScrap) {
-          console.log(
-            `⏭️ Skipping stock restoration for legacy scrap: ${seriesName}`
-          );
-          continue;
-        }
-
-        const quantity = product.quantity;
-
-        console.log(`🔄 Restoring stock for ${seriesName}: +${quantity} units`);
-
-        try {
-          // Restore stock quantities (increase inStock, decrease soldCount)
-          await executeOperation('stock', 'restoreStockFromInvoice', {
-            series: seriesName,
-            quantity: parseInt(quantity) || 0,
-          });
-          console.log(`✅ Stock restored for ${seriesName}`);
-        } catch (stockError: any) {
-          console.error(
-            `❌ Failed to restore stock for ${seriesName}:`,
-            stockError
-          );
-          // Don't throw error for stock restoration failures - log and continue
-          console.warn(
-            `⚠️ Stock restoration failed but continuing with invoice deletion`
-          );
-        }
-      }
-    }
-
     // 4. Delete the sales record
-    console.log('💼 Deleting sales record...');
+    log.info('Deleting sales record...');
     try {
       await executeOperation('sales', 'deleteOne', {
         invoiceId: invoice.invoiceNo,
       });
-      console.log('✅ Sales record deleted');
+      log.success('Sales record deleted');
     } catch (salesError: any) {
-      console.error('❌ Failed to delete sales record:', salesError);
+      log.error('Failed to delete sales record:', salesError);
       throw new Error(`Failed to delete sales record: ${salesError.message}`);
     }
 
-    // 5. Archive invoice data for audit purposes
-    console.log('📁 Archiving invoice data...');
+    // 5. Archive the invoice data
+    log.info('Archiving invoice data...');
     try {
-      await executeOperation('archivedInvoices', 'insertOne', {
-        originalInvoice: invoice,
-        deletedAt: new Date(),
-        deletionReason: 'Invoice deleted by user',
+      await executeOperation('invoiceArchive', 'insertOne', {
+        ...invoice,
+        archivedAt: new Date(),
+        archivedBy: 'system',
         originalId: invoice._id,
-        invoiceNo: invoice.invoiceNo,
       });
-      console.log('✅ Invoice data archived');
+      log.success('Invoice data archived');
     } catch (archiveError) {
-      console.warn('⚠️ Failed to archive invoice data:', archiveError);
-      // Don't fail the deletion if archiving fails
+      log.warning('Failed to archive invoice data:', archiveError);
     }
 
     // 6. Delete the invoice
-    console.log('🗑️ Deleting main invoice record...');
+    log.info('Deleting main invoice record...');
     try {
       await executeOperation('invoices', 'deleteOne', {
         _id: invoiceId,
       });
-      console.log('✅ Main invoice record deleted');
-    } catch (invoiceError: any) {
-      console.error('❌ Failed to delete invoice:', invoiceError);
-      throw new Error(`Failed to delete invoice: ${invoiceError.message}`);
+      log.success('Main invoice record deleted');
+    } catch (deleteError: any) {
+      log.error('Failed to delete main invoice record:', deleteError);
+      throw new Error(`Failed to delete invoice: ${deleteError.message}`);
     }
 
-    console.log('🎉 Complete invoice deletion successful:', invoice.invoiceNo);
+    log.success(`Complete invoice deletion successful: ${invoice.invoiceNo}`);
+
+    // Revalidate cache to show updated invoice list
+    revalidatePath('/invoice');
+    revalidatePath('/dashboard/invoices');
+    revalidatePath('/dashboard/customers');
+    revalidatePath(`/api/customers/${invoice.customerId}/invoices`);
 
     return NextResponse.json({
-      message: 'Invoice completely deleted and all related data reverted',
-      deletedInvoiceNo: invoice.invoiceNo,
-      actionsCompleted: [
-        'Warranty data preserved',
-        'Stock quantities restored',
-        'Sales record deleted',
-        'Invoice data archived',
-        'Main invoice deleted',
-      ],
+      success: true,
+      message: 'Invoice deleted successfully',
+      invoiceNo: invoice.invoiceNo,
     });
-  } catch (err: any) {
-    console.error('❌ Error during invoice deletion:', err);
+
+  } catch (error: any) {
+    log.error('Error during invoice deletion:', error);
     return NextResponse.json(
-      {
-        error: err.message,
-        details: 'Invoice deletion failed. Please check the logs for details.',
-      },
+      { error: error.message || 'Failed to delete invoice' },
       { status: 500 }
     );
   }

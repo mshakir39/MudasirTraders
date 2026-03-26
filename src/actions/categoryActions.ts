@@ -9,6 +9,36 @@ interface ActionResponse<T> {
   error?: string;
 }
 
+export async function getCategories(): Promise<ActionResponse<ICategory[]>> {
+  try {
+    const categories = await executeOperation('categories', 'findAll');
+    return { success: true, data: Array.isArray(categories) ? categories : [] };
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch categories' };
+  }
+}
+
+export async function getCategory(id: string): Promise<ActionResponse<ICategory>> {
+  try {
+    const category = await executeOperation('categories', 'findById', { _id: id });
+    return { success: true, data: category as ICategory };
+  } catch (error) {
+    console.error('Error fetching category:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch category' };
+  }
+}
+
+export async function getStoreDetail(): Promise<ActionResponse<any[]>> {
+  try {
+    const storeDetail = await executeOperation('storeDetail', 'findAll');
+    return { success: true, data: Array.isArray(storeDetail) ? storeDetail : [] };
+  } catch (error) {
+    console.error('Error fetching store detail:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch store detail' };
+  }
+}
+
 interface BatteryData {
   name: string;
   plate: string;

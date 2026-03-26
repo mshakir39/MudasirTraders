@@ -132,6 +132,42 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       },
     },
     {
+      label: 'LAST 3 MONTHS',
+      value: 'last3months',
+      getRange: () => {
+        const end = new Date();
+        const start = new Date();
+        start.setMonth(end.getMonth() - 3);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return [start, end];
+      },
+    },
+    {
+      label: 'LAST 6 MONTHS',
+      value: 'last6months',
+      getRange: () => {
+        const end = new Date();
+        const start = new Date();
+        start.setMonth(end.getMonth() - 6);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return [start, end];
+      },
+    },
+    {
+      label: 'LAST 12 MONTHS',
+      value: 'last12months',
+      getRange: () => {
+        const end = new Date();
+        const start = new Date();
+        start.setMonth(end.getMonth() - 12);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return [start, end];
+      },
+    },
+    {
       label: 'CURRENT MONTH',
       value: 'currentMonth',
       getRange: () => {
@@ -145,6 +181,16 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           59,
           59
         );
+        return [start, end];
+      },
+    },
+    {
+      label: 'LAST YEAR',
+      value: 'lastYear',
+      getRange: () => {
+        const now = new Date();
+        const start = new Date(now.getFullYear() - 1, 0, 1, 0, 0, 0);
+        const end = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
         return [start, end];
       },
     },
@@ -165,31 +211,21 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   useEffect(() => {
     if (!hasInitialized.current) {
       hasInitialized.current = true;
-      // DO NOT notify parent on mount - let the dashboard handle initial load
-      // onDateChange({
-      //   start: currentRange[0],
-      //   end: currentRange[1],
-      // });
     }
-  }, []); // EMPTY dependency array - runs once
+  }, []);
 
   // Handle custom date selection from Flatpickr
   const handleCustomDateChange = useCallback(
     (selectedDates: Date[]) => {
       if (selectedDates.length === 2) {
         const [start, end] = selectedDates;
-        // Ensure proper time settings
         start.setHours(0, 0, 0, 0);
         end.setHours(23, 59, 59, 999);
 
         setCurrentRange([start, end]);
-        setSelectedRange(''); // Clear preset selection
+        setSelectedRange('');
 
-        // Notify parent immediately
-        onDateChange({
-          start,
-          end,
-        });
+        onDateChange({ start, end });
       }
     },
     [onDateChange]
@@ -201,20 +237,20 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     setSelectedRange(range.label);
     setCurrentRange([start, end]);
 
-    // Update Flatpickr to reflect the new dates
     if (flatpickrRef.current?.flatpickr) {
       flatpickrRef.current.flatpickr.setDate([start, end], true);
     }
 
-    // Notify parent immediately
-    onDateChange({
-      start,
-      end,
-    });
+    onDateChange({ start, end });
 
-    // Close dropdown
-    setTimeout(() => setShowDropdown(false), 100);
+    setTimeout(() => closeDropdown(), 100);
   };
+
+  // Centralised close — ALWAYS removes body class regardless of how dropdown closes
+  const closeDropdown = useCallback(() => {
+    setShowDropdown(false);
+    document.body.classList.remove('date-picker-open');
+  }, []);
 
   // Click outside handler
   useEffect(() => {
@@ -223,7 +259,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
-        setShowDropdown(false);
+        closeDropdown();
       }
     };
 
@@ -232,11 +268,22 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       return () =>
         document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showDropdown]);
+  }, [showDropdown, closeDropdown]);
 
-  // UI handlers
+  // Cleanup body class on unmount
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('date-picker-open');
+    };
+  }, []);
+
   const toggleDropdown = () => {
-    setShowDropdown((prev) => !prev);
+    if (showDropdown) {
+      closeDropdown();
+    } else {
+      setShowDropdown(true);
+      document.body.classList.add('date-picker-open');
+    }
   };
 
   const toggleInput = useCallback((e: React.MouseEvent) => {
@@ -244,7 +291,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     setShowInput((prev) => !prev);
   }, []);
 
-  // Flatpickr options - stable configuration
+  // Flatpickr options — removed `static: true` to avoid z-index conflicts
   const flatpickrOptions = {
     mode: 'range' as const,
     dateFormat: 'd.m.Y',
@@ -252,78 +299,117 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     onChange: handleCustomDateChange,
     minDate: '2000-01-01',
     maxDate: new Date(),
-    static: true,
+    // ✅ REMOVED: static: true — this was causing the calendar to render inside
+    // the dropdown's stacking context, making it fight with chart z-indexes.
+    onOpen: (_: Date[], __: string, instance: any) => {
+      if (instance.calendarContainer) {
+        instance.calendarContainer.style.zIndex = '999999';
+        // Use fixed positioning so it escapes any parent stacking context
+        instance.calendarContainer.style.position = 'fixed';
+      }
+    },
+    onClose: (_: Date[], __: string, instance: any) => {
+      if (instance.calendarContainer) {
+        instance.calendarContainer.style.zIndex = '';
+        instance.calendarContainer.style.position = '';
+      }
+    },
   };
 
   return (
-    <div className={`relative w-fit ${className}`} ref={containerRef}>
+    // ✅ KEY FIX: `isolation: isolate` creates a new stacking context so this
+    // component always renders on top regardless of chart z-indexes in siblings.
+    <div
+      className={`relative w-fit ${className}`}
+      ref={containerRef}
+      style={{ isolation: 'isolate' }}
+    >
       <div
-        className='inline-flex cursor-pointer items-center gap-2 rounded-md border border-[#e5e7eb] bg-white px-4 py-2 transition-colors hover:bg-gray-50'
+        className='inline-flex cursor-pointer items-center gap-2 rounded-md border border-secondary-200 bg-white px-4 py-2 transition-colors hover:bg-secondary-50'
         onClick={toggleDropdown}
       >
-        <IoCalendarOutline className='h-5 w-5 text-gray-500' />
-        <span className='text-sm text-gray-600'>{displayValue}</span>
+        <IoCalendarOutline className='h-5 w-5 text-secondary-500' />
+        <span className='text-sm text-secondary-600'>{displayValue}</span>
       </div>
 
       {showDropdown && (
-        <div className='absolute top-full z-[100] mt-2 w-64 overflow-visible rounded-lg border border-gray-200 bg-white shadow-lg'>
-          <div className='p-4'>
-            <div className='mb-4 flex items-center justify-between'>
-              <h3 className='font-medium text-gray-700'>
-                Filter by date range
-              </h3>
-              <button
-                onClick={toggleInput}
-                className='rounded-full bg-blue-500 p-1 transition-colors hover:bg-blue-600'
-                type='button'
-              >
-                {showInput ? (
-                  <IoIosArrowUp className='h-4 w-4 text-white' />
-                ) : (
-                  <IoIosArrowDown className='h-4 w-4 text-white' />
-                )}
-              </button>
-            </div>
+        <>
+          {/* Backdrop: closes dropdown on outside click, pointer-events:none so it 
+              doesn't block the dropdown panel itself. Charts are disabled via the
+              body.date-picker-open CSS class (add to globals.css — see below). */}
+          <div
+            className='fixed inset-0 date-picker-backdrop'
+            style={{ zIndex: 99998, pointerEvents: 'none' }}
+          />
 
-            {/* Custom Date Input */}
-            {showInput && (
-              <div className='relative mb-4'>
-                <Flatpickr
-                  ref={flatpickrRef}
-                  options={flatpickrOptions}
-                  value={currentRange}
-                  className='block w-full rounded-lg bg-gray-50 py-2 pl-3 pr-10 text-sm text-gray-600 transition-colors focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500'
-                />
-                <IoCalendarOutline className='pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400' />
-              </div>
-            )}
-
-            {/* Preset Ranges */}
-            <div className='space-y-1'>
-              {presetRanges.map((range) => (
+          {/*
+           * ✅ KEY FIXES for the dropdown panel:
+           *  1. `position: relative` + high z-index so it sits above the backdrop
+           *  2. `pointerEvents: 'all'` explicitly re-enables clicks inside
+           *  3. Removed Tailwind z-index classes — inline styles take priority
+           */}
+          <div
+            className='absolute top-full mt-2 w-64 overflow-visible rounded-lg border border-secondary-200 bg-white shadow-lg'
+            style={{ zIndex: 99999, position: 'absolute', pointerEvents: 'all' }}
+          >
+            <div className='p-4'>
+              <div className='mb-4 flex items-center justify-between'>
+                <h3 className='font-medium text-secondary-700'>
+                  Filter by date range
+                </h3>
                 <button
-                  key={range.value}
-                  onClick={() => handlePresetSelect(range)}
-                  className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-blue-50 ${
-                    selectedRange === range.label
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700'
-                  }`}
+                  onClick={toggleInput}
+                  className='rounded-full bg-primary-500 p-1 transition-colors hover:bg-primary-600'
                   type='button'
                 >
-                  <RiFilter2Fill
-                    className={`h-4 w-4 flex-shrink-0 ${
-                      selectedRange === range.label
-                        ? 'text-blue-500'
-                        : 'text-gray-400'
-                    }`}
-                  />
-                  <span className='text-sm font-medium'>{range.label}</span>
+                  {showInput ? (
+                    <IoIosArrowUp className='h-4 w-4 text-white' />
+                  ) : (
+                    <IoIosArrowDown className='h-4 w-4 text-white' />
+                  )}
                 </button>
-              ))}
+              </div>
+
+              {/* Custom Date Input */}
+              {showInput && (
+                <div className='relative mb-4'>
+                  <Flatpickr
+                    ref={flatpickrRef}
+                    options={flatpickrOptions}
+                    value={currentRange}
+                    className='block w-full rounded-lg bg-secondary-50 py-2 pl-3 pr-10 text-sm text-secondary-600 transition-colors focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary-500'
+                  />
+                  <IoCalendarOutline className='pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-secondary-400' />
+                </div>
+              )}
+
+              {/* Preset Ranges */}
+              <div className='space-y-1'>
+                {presetRanges.map((range) => (
+                  <button
+                    key={range.value}
+                    onClick={() => handlePresetSelect(range)}
+                    className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors hover:bg-primary-50 ${
+                      selectedRange === range.label
+                        ? 'bg-primary-50 text-primary-700'
+                        : 'text-secondary-700'
+                    }`}
+                    type='button'
+                  >
+                    <RiFilter2Fill
+                      className={`h-4 w-4 flex-shrink-0 ${
+                        selectedRange === range.label
+                          ? 'text-primary-500'
+                          : 'text-secondary-400'
+                      }`}
+                    />
+                    <span className='text-sm font-medium'>{range.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

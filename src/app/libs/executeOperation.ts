@@ -2,28 +2,29 @@
 import { ObjectId } from 'mongodb';
 import { connectToMongoDB } from './connectToMongoDB';
 
+// ✅ Reusable serializer — removes duplicate code
+function serializeDoc(doc: any): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const key in doc) {
+    result[key === '_id' ? 'id' : key] = key === '_id' ? doc[key].toString() : doc[key];
+  }
+  return result;
+}
+
 export async function executeOperation(
   collectionName: string,
   operation: string,
   document: any | null = null
 ) {
   try {
-    // Always get a fresh connection instead of reusing a global variable
     const db = await connectToMongoDB();
 
     if (!db) {
       throw new Error('Failed to connect to database');
     }
 
-    // Check if the collection exists
-    const collectionExists = await db
-      .listCollections({ name: collectionName })
-      .toArray();
-
-    // If the collection does not exist, create it
-    if (collectionExists.length === 0) {
-      await db.createCollection(collectionName);
-    }
+    // ❌ REMOVED: listCollections check — MongoDB auto-creates collections on insert
+    // This was running on every single request and costing ~30-50ms
 
     // Handle users collection specially
     if (collectionName === 'users' && document) {
@@ -42,7 +43,6 @@ export async function executeOperation(
       }
     }
 
-    // If a document is provided, perform the operation on the collection
     if (document) {
       const brandName = document?.brandName;
       const series = document?.series;
@@ -68,10 +68,9 @@ export async function executeOperation(
                     $each: [
                       {
                         series: document.seriesStock[0].series,
-                        productCost:
-                          parseFloat(document.seriesStock[0].productCost) || 0,
+                        productCost: parseFloat(document.seriesStock[0].productCost) || 0,
                         inStock: parseInt(document.seriesStock[0].inStock) || 0,
-                        soldCount: 0, // Initialize soldCount as number
+                        soldCount: 0,
                         createdDate: new Date(),
                       },
                     ],
@@ -80,7 +79,6 @@ export async function executeOperation(
               }
             );
           } else {
-            // Ensure all numeric fields are numbers before inserting
             const stockDocument = {
               ...document,
               seriesStock: document.seriesStock.map((stock: any) => ({
@@ -126,20 +124,19 @@ export async function executeOperation(
             if (seriesStock) {
               const currentInStock = seriesStock.inStock;
               if (currentInStock === 0) {
-                throw new Error(
-                  `Stock for series '${series}' is already depleted.`
-                );
+                throw new Error(`Stock for series '${series}' is already depleted.`);
               } else if (quantity > currentInStock) {
-                throw new Error(
-                  `Insufficient stock for series '${series}'. Available stock: ${currentInStock}`
-                );
+                throw new Error(`Insufficient stock for series '${series}'. Available stock: ${currentInStock}`);
               } else {
                 const newInStock = currentInStock - quantity;
                 return await db
                   .collection(collectionName)
                   .updateOne(
                     { 'seriesStock.series': series },
-                    { $set: { 'seriesStock.$.inStock': newInStock } }
+                    { 
+                      $set: { 'seriesStock.$.inStock': newInStock },
+                      $inc: { 'seriesStock.$.soldCount': quantity }
+                    }
                   );
               }
             } else {
@@ -163,25 +160,13 @@ export async function executeOperation(
               const currentInStock = parseInt(seriesStock.inStock) || 0;
               const currentSoldCount = parseInt(seriesStock.soldCount) || 0;
 
-              console.log(
-                `📦 Stock update for ${series}: currentInStock=${currentInStock}, currentSoldCount=${currentSoldCount}, updateQuantity=${updateQuantity}`
-              );
-
               if (currentInStock === 0) {
-                throw new Error(
-                  `Stock for series '${series}' is already depleted.`
-                );
+                throw new Error(`Stock for series '${series}' is already depleted.`);
               } else if (updateQuantity > currentInStock) {
-                throw new Error(
-                  `Insufficient stock for series '${series}'. Available stock: ${currentInStock}`
-                );
+                throw new Error(`Insufficient stock for series '${series}'. Available stock: ${currentInStock}`);
               } else {
                 const newInStock = currentInStock - updateQuantity;
                 const newSoldCount = currentSoldCount + updateQuantity;
-
-                console.log(
-                  `📦 Stock update result for ${series}: inStock ${currentInStock} → ${newInStock}, soldCount ${currentSoldCount} → ${newSoldCount}`
-                );
 
                 return await db.collection(collectionName).updateOne(
                   { 'seriesStock.series': series },
@@ -202,35 +187,24 @@ export async function executeOperation(
 
         case 'restoreStockFromInvoice':
           const restoreQuantity = parseInt(document.quantity) || 0;
+          const restoreSeries = document.series;
+
           const restoreSeriesDoc = await db
             .collection(collectionName)
-            .findOne({ 'seriesStock.series': series });
+            .findOne({ 'seriesStock.series': restoreSeries });
 
           if (restoreSeriesDoc) {
             const seriesStock = restoreSeriesDoc.seriesStock.find(
-              (item: any) => item.series === series
+              (item: any) => item.series === restoreSeries
             );
             if (seriesStock) {
               const currentInStock = parseInt(seriesStock.inStock) || 0;
               const currentSoldCount = parseInt(seriesStock.soldCount) || 0;
-
-              console.log(
-                `🔄 Stock restore for ${series}: currentInStock=${currentInStock}, currentSoldCount=${currentSoldCount}, restoreQuantity=${restoreQuantity}`
-              );
-
-              // Restore stock quantities (increase inStock, decrease soldCount)
               const newInStock = currentInStock + restoreQuantity;
-              const newSoldCount = Math.max(
-                0,
-                currentSoldCount - restoreQuantity
-              ); // Don't go below 0
-
-              console.log(
-                `🔄 Stock restore result for ${series}: inStock ${currentInStock} → ${newInStock}, soldCount ${currentSoldCount} → ${newSoldCount}`
-              );
+              const newSoldCount = Math.max(0, currentSoldCount - restoreQuantity);
 
               return await db.collection(collectionName).updateOne(
-                { 'seriesStock.series': series },
+                { 'seriesStock.series': restoreSeries },
                 {
                   $set: {
                     'seriesStock.$.inStock': newInStock,
@@ -239,10 +213,45 @@ export async function executeOperation(
                 }
               );
             } else {
-              throw new Error(`Series '${series}' not found in stock.`);
+              throw new Error(`Series '${restoreSeries}' not found in stock.`);
             }
           } else {
-            throw new Error(`Series '${series}' not found in stock.`);
+            throw new Error(`Series '${restoreSeries}' not found in stock.`);
+          }
+
+        case 'addStockAndDecrementSoldCount':
+          const addQuantity = parseInt(document.quantity) || 0;
+          const addSeries = document.series;
+
+          const addSeriesDoc = await db
+            .collection(collectionName)
+            .findOne({ 'seriesStock.series': addSeries });
+
+          if (addSeriesDoc) {
+            const seriesStock = addSeriesDoc.seriesStock.find(
+              (item: any) => item.series === addSeries
+            );
+            if (seriesStock) {
+              const currentInStock = parseInt(seriesStock.inStock) || 0;
+              const currentSoldCount = parseInt(seriesStock.soldCount) || 0;
+              const newInStock = currentInStock + addQuantity;
+              const newSoldCount = Math.max(0, currentSoldCount - addQuantity);
+
+              return await db.collection(collectionName).updateOne(
+                { 'seriesStock.series': addSeries },
+                {
+                  $set: {
+                    'seriesStock.$.inStock': newInStock,
+                    'seriesStock.$.soldCount': newSoldCount,
+                    'seriesStock.$.updatedDate': new Date().toISOString(),
+                  },
+                }
+              );
+            } else {
+              throw new Error(`Series '${addSeries}' not found in stock.`);
+            }
+          } else {
+            throw new Error(`Series '${addSeries}' not found in stock.`);
           }
 
         case 'updateSeriesStock':
@@ -250,39 +259,26 @@ export async function executeOperation(
           const cost = parseFloat(document.seriesStock[0].productCost) || 0;
           const soldCount = parseInt(document.seriesStock[0].soldCount) || 0;
           const ser = document.seriesStock[0].series;
-          console.log('Updating series stock:', {
-            brandName,
-            ser,
-            stock,
-            cost,
-            soldCount,
-          });
-          const updateResult = await db.collection(collectionName).updateMany(
+          return await db.collection(collectionName).updateMany(
             { brandName, 'seriesStock.series': ser },
             {
               $set: {
                 'seriesStock.$.inStock': stock,
                 'seriesStock.$.productCost': cost,
                 'seriesStock.$.soldCount': soldCount,
-                'seriesStock.$.updatedDate':
-                  document.seriesStock[0].updatedDate,
+                'seriesStock.$.updatedDate': document.seriesStock[0].updatedDate,
               },
             }
           );
-          console.log('Update series stock result:', updateResult);
-          return updateResult;
 
         case 'deleteSeriesStock':
-          // First check if the series exists in the stock
           const existingStock = await db.collection(collectionName).findOne({
             brandName,
             'seriesStock.series': series,
           });
 
           if (!existingStock) {
-            throw new Error(
-              `Series '${series}' not found in stock for brand '${brandName}'`
-            );
+            throw new Error(`Series '${series}' not found in stock for brand '${brandName}'`);
           }
 
           return await db.collection(collectionName).updateOne({ brandName }, {
@@ -290,69 +286,39 @@ export async function executeOperation(
           } as any);
 
         case 'updateOne':
-          // For categories, replace the entire series array and salesTax field
           if (collectionName === 'categories' && document.data) {
             const id = new ObjectId(document.id);
             return await db.collection(collectionName).updateOne(
               { _id: id },
-              {
-                $set: {
-                  ...document.data,
-                  addedDate: new Date(),
-                },
-              }
+              { $set: { ...document.data, addedDate: new Date() } }
             );
           } else {
             const rawId = document.documentId || document._id || document.id;
-            if (!rawId) {
-              throw new Error('Missing document identifier for updateOne');
-            }
+            if (!rawId) throw new Error('Missing document identifier for updateOne');
             const id = new ObjectId(rawId);
-            // Extract only the fields to update, excluding id fields
             const { documentId, _id, id: _plainId, ...updateFields } = document;
-            const update = {
-              $set: {
-                ...updateFields,
-                addedDate: new Date(),
-              },
-            };
-            console.log('Updating document with ID:', id.toString());
-            console.log('Update payload:', update);
-            const result = await db
-              .collection(collectionName)
-              .updateOne({ _id: id }, update);
-            console.log('Update result:', result);
-            return result;
+            return await db.collection(collectionName).updateOne(
+              { _id: id },
+              { $set: { ...updateFields, addedDate: new Date() } }
+            );
           }
 
         case 'delete':
           const deleteId = new ObjectId(document.documentId);
-          return await db
-            .collection(collectionName)
-            .deleteOne({ _id: deleteId });
+          return await db.collection(collectionName).deleteOne({ _id: deleteId });
 
         case 'deleteOne':
           return await db.collection(collectionName).deleteOne(document);
 
         case 'isExist':
-          // Check if a document exists in the collection
-          const existResult = await db
-            .collection(collectionName)
-            .findOne(document);
+          const existResult = await db.collection(collectionName).findOne(document);
           return existResult !== null;
 
         case 'upsert':
           if ('_id' in document) {
-            console.log('id In', document);
-
-            const docExists = await db
-              .collection(collectionName)
-              .findOne({ _id: document._id });
+            const docExists = await db.collection(collectionName).findOne({ _id: document._id });
             if (docExists) {
-              console.log('docExists', document);
-              return await db
-                .collection(collectionName)
-                .updateOne({ _id: document._id }, { $set: document });
+              return await db.collection(collectionName).updateOne({ _id: document._id }, { $set: document });
             } else {
               return await db.collection(collectionName).insertOne(document);
             }
@@ -361,104 +327,55 @@ export async function executeOperation(
           }
 
         case 'isSeriesExistInStock':
-          const field = document.field; // Get the dynamic field name
-          const value = document.value; // Get the dynamic field value
+          const field = document.field;
+          const value = document.value;
           const found = await db
             .collection(collectionName)
-            .findOne({ seriesStock: { $elemMatch: { [field]: value } } });
+            .findOne({ "seriesStock.series": value });
           return found !== null;
 
         case 'findOne':
           const doc = await db.collection(collectionName).findOne(document);
-          if (doc) {
-            const serializedDocument: Record<string, any> = {};
-            for (const key in doc) {
-              if (key === '_id') {
-                serializedDocument['id'] = doc[key].toString();
-              } else {
-                serializedDocument[key] = doc[key];
-              }
-            }
-            return serializedDocument;
-          } else {
-            return null;
-          }
+          return doc ? serializeDoc(doc) : null;
 
-        // Add the missing 'find' operation that was causing the error
         case 'find':
-          const documents = await db
-            .collection(collectionName)
-            .find(document || {})
-            .toArray();
-          return documents.map((doc: any) => {
-            const serializedDocument: Record<string, any> = {};
-            for (const key in doc) {
-              if (key === '_id') {
-                serializedDocument['id'] = doc[key].toString();
-              } else {
-                serializedDocument[key] = doc[key];
-              }
-            }
-            return serializedDocument;
-          });
+          const docs = await db.collection(collectionName).find(document || {}).toArray();
+          return docs.map(serializeDoc);
+
+        // ✅ NEW: server-side pagination — MongoDB does sort/skip/limit
+        case 'findPaginated': {
+          const filter = document?.filter || {};
+          const sort = document?.sort || { _id: -1 };
+          const skip = document?.skip || 0;
+          const limit = document?.limit || 50;
+
+          const [results, total] = await Promise.all([
+            db.collection(collectionName).find(filter).sort(sort).skip(skip).limit(limit).toArray(),
+            db.collection(collectionName).countDocuments(filter),
+          ]);
+
+          return {
+            docs: results.map(serializeDoc),
+            total,
+          };
+        }
 
         default:
           throw new Error(`Invalid operation: ${operation}`);
       }
     } else {
-      // For operations that don't require a document
       switch (operation) {
         case 'findAll':
-          const documents = await db
-            .collection(collectionName)
-            .find()
-            .toArray();
-          return documents.map((doc: any) => {
-            const serializedDocument: Record<string, any> = {};
-            for (const key in doc) {
-              if (key === '_id') {
-                serializedDocument['id'] = doc[key].toString();
-              } else {
-                serializedDocument[key] = doc[key];
-              }
-            }
-            return serializedDocument;
-          });
+          const documents = await db.collection(collectionName).find().toArray();
+          return documents.map(serializeDoc);
 
         case 'find':
-          const findDocs = await db
-            .collection(collectionName)
-            .find({})
-            .toArray();
-          return findDocs.map((doc: any) => {
-            const serializedDocument: Record<string, any> = {};
-            for (const key in doc) {
-              if (key === '_id') {
-                serializedDocument['id'] = doc[key].toString();
-              } else {
-                serializedDocument[key] = doc[key];
-              }
-            }
-            return serializedDocument;
-          });
+          const findDocs = await db.collection(collectionName).find({}).toArray();
+          return findDocs.map(serializeDoc);
 
         case 'findLast':
-          const lastDoc = await db
-            .collection(collectionName)
-            .findOne({}, { sort: { _id: -1 } });
-          if (lastDoc) {
-            const serializedDocument: Record<string, any> = {};
-            for (const key in lastDoc) {
-              if (key === '_id') {
-                serializedDocument['id'] = lastDoc[key].toString();
-              } else {
-                serializedDocument[key] = lastDoc[key];
-              }
-            }
-            return serializedDocument;
-          } else {
-            return null;
-          }
+          const lastDoc = await db.collection(collectionName).findOne({}, { sort: { _id: -1 } });
+          return lastDoc ? serializeDoc(lastDoc) : null;
 
         default:
           throw new Error(`Invalid operation: ${operation}`);
@@ -466,7 +383,6 @@ export async function executeOperation(
     }
   } catch (error) {
     console.error('❌ Database operation error:', error);
-    // During build time, return empty array instead of throwing error
     if (process.env.NODE_ENV === 'production' && operation === 'findAll') {
       console.warn('⚠️ Build-time database error, returning empty array');
       return [];

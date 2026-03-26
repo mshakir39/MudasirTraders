@@ -85,11 +85,7 @@ export interface DeleteStockParams {
 
 export interface StockLayoutProps {
   categories: ICategory[];
-  stock: {
-    id: number;
-    brandName: string;
-    seriesStock: StockBatteryData[];
-  }[];
+  // Stock is now fetched via Jotai atoms instead of props
 }
 // ============================================================
 // DEALER INTERFACES
@@ -399,6 +395,21 @@ export enum DisputeStatus {
   UNDER_REVIEW = 'under_review',
   RESOLVED = 'resolved',
   REJECTED = 'rejected',
+}
+
+// NEW: Invoice status enum
+export enum InvoiceStatus {
+  ACTIVE = 'active',
+  VOIDED = 'voided',
+  DELETED = 'deleted',
+  ARCHIVED = 'archived',
+}
+
+// NEW: Invoice payment status enum
+export enum InvoicePaymentStatus {
+  PENDING = 'pending',
+  PAID = 'paid',
+  PARTIAL = 'partial',
 }
 
 export enum AttachmentType {

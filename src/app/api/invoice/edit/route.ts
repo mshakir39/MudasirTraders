@@ -2,8 +2,10 @@
 import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 import { executeOperation } from '@/app/libs/executeOperation';
 import { getAllSum } from '@/utils/getTotalSum';
+import { InvoiceDataUtil } from '@/utils/invoiceDataUtil';
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 
 // Track processing invoices to prevent duplicates
 const processingInvoices = new Set<string>();
@@ -64,7 +66,7 @@ export async function PATCH(req: NextRequest) {
     console.log('📋 Original invoice:', {
       invoiceNo: originalInvoice.invoiceNo,
       productsCount: originalInvoice.products?.length || 0,
-      totalAmount: getAllSum(originalInvoice.products, 'totalPrice'),
+      totalAmount: InvoiceDataUtil.calculateAmounts(originalInvoice.products || []).totalAmount,
     });
 
     // 2. Get current stock levels for validation
@@ -289,7 +291,8 @@ export async function PATCH(req: NextRequest) {
     });
 
     // Calculate financial values
-    const totalProductAmount = getAllSum(updatedProducts, 'totalPrice') || 0;
+    const calculation = InvoiceDataUtil.calculateAmounts(updatedProducts, formData.receivedAmount);
+    const totalProductAmount = calculation.totalAmount;
 
     let receivedAmount = 0;
     if (
@@ -322,13 +325,16 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Calculate remaining amount
-    const remainingAmount = totalProductAmount - receivedAmount - batteriesRate;
+    const additionalPayments = (originalInvoice.additionalPayment || []).reduce((sum: number, payment: any) => sum + (payment.amount || 0), 0);
+    let remainingAmount = totalProductAmount - receivedAmount - batteriesRate - additionalPayments;
 
     // Set payment status based on remaining amount
     let paymentStatus = 'partial';
-    if (remainingAmount === 0) {
+    const totalReceived = receivedAmount + batteriesRate + additionalPayments;
+    if (totalReceived >= totalProductAmount) {
       paymentStatus = 'paid';
-    } else if (receivedAmount === 0 && batteriesRate === 0) {
+      remainingAmount = 0; // Ensure remaining amount is never negative
+    } else if (totalReceived === 0) {
       paymentStatus = 'pending';
     }
 
@@ -404,7 +410,8 @@ export async function PATCH(req: NextRequest) {
 
     // 9. Update corresponding sales record
     console.log('💼 Updating sales record...');
-    const salesTotalAmount = getAllSum(updatedProducts, 'totalPrice');
+    const salesCalculation = InvoiceDataUtil.calculateAmounts(updatedProducts);
+    const salesTotalAmount = salesCalculation.totalAmount;
     const updatedSalesRecord = {
       invoiceId: originalInvoice.invoiceNo,
       date: updatedInvoice.createdDate,
@@ -466,12 +473,29 @@ export async function PATCH(req: NextRequest) {
       originalInvoice.invoiceNo
     );
 
+    // Revalidate cache to show updated invoice data
+    revalidatePath('/dashboard/invoices');
+    revalidatePath('/invoice');
+    revalidatePath('/dashboard/customers');
+    revalidatePath('/api/invoice');
+    revalidatePath('/api/invoice/[id]');
+    revalidatePath('/api/customers/[customerId]/invoices');
+    
+    // Revalidate stock data to reflect stock changes
+    revalidatePath('/stock');
+    revalidatePath('/dashboard/stock');
+    revalidatePath('/api/stock');
+    revalidatePath('/api/stock/[brand]');
+    
+    console.log('✅ Stock cache revalidated');
+
     return NextResponse.json({
       message: 'Invoice updated successfully',
       updatedInvoice: {
         invoiceNo: originalInvoice.invoiceNo,
         totalAmount: totalProductAmount,
         paymentStatus,
+        remainingAmount,
         productsCount: updatedProducts.length,
       },
     });

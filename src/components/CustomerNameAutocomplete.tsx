@@ -7,12 +7,17 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import { getAllInvoices } from '@/getData/getInvoices';
+import { useAtom } from 'jotai';
+import { invoicesAtom } from '@/store/sharedAtoms';
 
 interface CustomerInfo {
   name: string;
   address?: string;
   contactNumber?: string;
+}
+
+interface CustomerInfoWithMatch extends CustomerInfo {
+  matchType: 'name' | 'phone' | 'address';
 }
 
 interface CustomerNameAutocompleteProps {
@@ -40,82 +45,87 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
   minLength,
   maxLength,
 }) => {
-  const [suggestions, setSuggestions] = useState<CustomerInfo[]>([]);
+  const [suggestions, setSuggestions] = useState<CustomerInfoWithMatch[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [allCustomerInfo, setAllCustomerInfo] = useState<CustomerInfo[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  
+  // Get invoices from Jotai store
+  const [invoices] = useAtom(invoicesAtom);
 
-  // Fetch all customer information from invoice data
-  useEffect(() => {
-    const fetchCustomerInfo = async () => {
-      try {
-        setIsLoading(true);
-        const invoices = await getAllInvoices();
+  // Process customer data from invoices in Jotai store
+  const processCustomerData = useCallback(() => {
+    if (!Array.isArray(invoices) || invoices.length === 0) {
+      setAllCustomerInfo([]);
+      return;
+    }
+    
+    // Process customer data
+    const customerMap = new Map<string, any>();
+    
+    invoices.forEach((invoice: any) => {
+      const customerName = invoice.customerName;
+      const contactNumber = invoice.customerContactNumber;
+      
+      if (
+        customerName &&
+        customerName.trim() !== ''
+        // ✅ Allow walk-in customers with "-" or similar
+      ) {
+        const uniqueKey =
+          contactNumber && contactNumber.trim() !== '' && contactNumber !== '-'
+            ? contactNumber
+            : customerName;
 
-        // Ensure invoices is an array
-        if (Array.isArray(invoices)) {
-          // Create a map to store unique customers by mobile number
-          const customerMap = new Map<string, CustomerInfo>();
-
-          invoices.forEach((invoice: any) => {
-            const customerName = invoice.customerName;
-            const contactNumber = invoice.customerContactNumber;
-
-            if (
-              customerName &&
-              customerName.trim() !== '' &&
-              customerName !== '-'
-            ) {
-              // Use mobile number as unique identifier, fallback to name if no mobile
-              const uniqueKey =
-                contactNumber && contactNumber.trim() !== ''
-                  ? contactNumber
-                  : customerName;
-
-              // Use the most recent invoice data for each customer
-              if (
-                !customerMap.has(uniqueKey) ||
-                new Date(invoice.createdDate) >
-                  new Date(customerMap.get(uniqueKey)?.name || '')
-              ) {
-                customerMap.set(uniqueKey, {
-                  name: customerName,
-                  address: invoice.customerAddress || '',
-                  contactNumber: contactNumber || '',
-                });
-              }
-            }
+        if (
+          !customerMap.has(uniqueKey) ||
+          new Date(invoice.createdDate) >
+            new Date(customerMap.get(uniqueKey)?.createdDate || '')
+        ) {
+          customerMap.set(uniqueKey, {
+            name: customerName,
+            address: invoice.customerAddress || '',
+            contactNumber: contactNumber || '',
+            createdDate: invoice.createdDate,
           });
-
-          // Convert map to array and sort by name
-          const customerInfoArray = Array.from(customerMap.values()).sort(
-            (a, b) => a.name.localeCompare(b.name)
-          );
-
-          setAllCustomerInfo(customerInfoArray);
-        } else {
-          setAllCustomerInfo([]);
         }
-      } catch (error) {
-        setAllCustomerInfo([]);
-      } finally {
-        setIsLoading(false);
       }
-    };
+    });
 
-    fetchCustomerInfo();
-  }, []);
+    const customerInfoArray = Array.from(customerMap.values()).sort(
+      (a, b) => a.name.localeCompare(b.name)
+    );
+    
+    setAllCustomerInfo(customerInfoArray);
+  }, [invoices]);
+
+  // Process customer data whenever invoices change
+  useEffect(() => {
+    processCustomerData();
+  }, [processCustomerData]);
 
   // Memoize filtered suggestions to prevent unnecessary re-renders
   const filteredSuggestions = useMemo(() => {
     if (value && value.length >= 2 && !readOnly) {
-      return allCustomerInfo
-        .filter((customer) =>
-          customer.name.toLowerCase().includes(value.toLowerCase())
-        )
-        .slice(0, 10); // Limit to 10 suggestions
+      const searchValue = value.toLowerCase();
+      const matches: CustomerInfoWithMatch[] = [];
+      
+      allCustomerInfo.forEach((customer) => {
+        const nameMatch = customer.name && customer.name.toLowerCase().includes(searchValue);
+        const phoneMatch = customer.contactNumber && customer.contactNumber.includes(searchValue);
+        const addressMatch = customer.address && customer.address.toLowerCase().includes(searchValue);
+        
+        if (nameMatch) {
+          matches.push({ ...customer, matchType: 'name' });
+        } else if (phoneMatch) {
+          matches.push({ ...customer, matchType: 'phone' });
+        } else if (addressMatch) {
+          matches.push({ ...customer, matchType: 'address' });
+        }
+      });
+      
+      return matches.slice(0, 10); // Limit to 10 suggestions
     }
     return [];
   }, [value, allCustomerInfo, readOnly]);
@@ -239,12 +249,6 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
             readOnly ? 'cursor-not-allowed bg-gray-100' : 'bg-white'
           }`}
         />
-
-        {isLoading && (
-          <div className='absolute right-3 top-1/2 -translate-y-1/2 transform'>
-            <div className='h-4 w-4 animate-spin rounded-full border-b-2 border-blue-500'></div>
-          </div>
-        )}
       </div>
 
       {/* Suggestions dropdown */}
@@ -261,6 +265,9 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
             >
               <div className='text-sm font-medium text-gray-900'>
                 {customer.name}
+                {customer.matchType === 'name' && (
+                  <span className='ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded'>Name Match</span>
+                )}
               </div>
               {customer.address && (
                 <div className='mt-1 flex items-center gap-1 text-xs text-gray-600'>
@@ -276,6 +283,9 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
                     />
                   </svg>
                   {customer.address}
+                  {customer.matchType === 'address' && (
+                    <span className='ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded'>Address Match</span>
+                  )}
                 </div>
               )}
               {customer.contactNumber && (
@@ -288,6 +298,9 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
                     <path d='M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z' />
                   </svg>
                   {customer.contactNumber}
+                  {customer.matchType === 'phone' && (
+                    <span className='ml-2 text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded'>Phone Match</span>
+                  )}
                 </div>
               )}
             </div>

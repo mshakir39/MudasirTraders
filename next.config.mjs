@@ -99,10 +99,9 @@ const nextConfig = {
 
     return config;
   },
-
+  turbopack: {},
   // Optimize bundle analyzer and experimental features
   experimental: {
-    turbo: false,
     caseSensitiveRoutes: false,
     optimizePackageImports: [
       'react',

@@ -37,35 +37,27 @@ export async function createDealerBill(data: CreateDealerBillData) {
     const existingBills = Array.isArray(existingBillsResult)
       ? existingBillsResult
       : [];
-    console.log('Found existing bills for dealer:', existingBills.length);
-    console.log(
-      'Existing bills:',
-      existingBills.map((b) => ({
-        id: b._id?.toString(),
-        isCurrent: b.isCurrent,
-      }))
-    );
 
     // If there are existing bills, set all of them as non-current
     if (existingBills.length > 0) {
-      console.log('Processing existing bills:', existingBills);
       for (const bill of existingBills) {
         const billId = bill._id?.toString() || bill.id?.toString();
         if (billId) {
-          console.log(`Updating bill ${billId} to non-current`);
-          console.log('Bill object:', bill);
           const updateResult = await executeOperation(
             'dealerBills',
             'updateOne',
             {
-              documentId: billId,
-              isCurrent: false,
-              updatedAt: new Date(),
+              filter: { _id: billId },
+              update: {
+                $set: {
+                  isCurrent: false,
+                  updatedAt: new Date(),
+                },
+              },
             }
           );
-          console.log(`Update result:`, updateResult);
         } else {
-          console.log('Bill without valid ID found:', bill);
+          // Bill without valid ID found
         }
       }
     }
@@ -111,7 +103,6 @@ export async function createDealerBill(data: CreateDealerBillData) {
     const result = await executeOperation('dealerBills', 'insertOne', billData);
     return { success: true, data: result };
   } catch (error: any) {
-    console.error('createDealerBill error:', error);
     return { success: false, error: error.message };
   }
 }

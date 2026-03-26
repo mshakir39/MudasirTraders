@@ -14,13 +14,14 @@ const Table: React.FC<TableProps<any>> = ({ data, columns, footerData }) => {
   return (
     <table className='w-full border-collapse'>
       <thead>
-        <tr className='bg-[#021B3B] text-white'>
+        <tr className='bg-sidebar-gradient text-white'>
           {columns?.map((column, index) => (
             <th key={index} className='p-4 text-lg font-bold'>
               {column.label}
             </th>
           ))}
         </tr>
+        
       </thead>
       <tbody>
         {data?.map((row, rowIndex) => (
@@ -46,8 +47,8 @@ const Table: React.FC<TableProps<any>> = ({ data, columns, footerData }) => {
   {Array(columns?.length - 2).fill(null).map(() => (
     <td key={Math.random()} />
   ))}
-  <td className="p-4 text-lg font-bold bg-[#021B3B]  ">Subtotal</td>
-  <td className="p-4 text-lg font-bold bg-[#021B3B]">{footerData.totalPrice || 0}</td>
+  <td className="p-4 text-lg font-bold bg-sidebar-gradient  ">Subtotal</td>
+  <td className="p-4 text-lg font-bold bg-sidebar-gradient">{footerData.totalPrice || 0}</td>
 </tr> */}
       </tfoot>
     </table>

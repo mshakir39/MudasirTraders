@@ -10,11 +10,15 @@ interface CustomerData {
 
 export async function createCustomer(data: CustomerData) {
   try {
-    const result = await executeOperation('customers', 'insertOne', {
+    const customerDocument = {
       ...data,
       createdAt: new Date(),
-    });
-    return { success: true, data: result };
+    };
+    
+    await executeOperation('customers', 'insertOne', customerDocument);
+    
+    // Return the customer document that was inserted
+    return { success: true, data: customerDocument };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

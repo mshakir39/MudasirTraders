@@ -1,17 +1,19 @@
+// src/app/dashboard/sales/page.tsx
+// Use new FSD structure - preserve all functionality
+
 import { getSales } from '@/actions/salesActions';
-import SalesLayout from '@/layouts/salesLayout';
 import SalesErrorBoundary from '@/components/sales/SalesErrorBoundary';
+import SalesManagementPage from '@/pages/SalesManagementPage';
 import { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic'; // React 19: Better for real-time data
-export const revalidate = 0; // React 19: No caching for latest sales data
+export const dynamic = 'force-dynamic'; // Better for real-time data
+export const revalidate = 60; // Cache for 1 minute
 
 export const metadata: Metadata = {
   title: 'Sales | Mudasir Traders',
   description: 'Manage your sales and track revenue',
 };
 
-// React 19: Enhanced server component with better error handling
 async function getSalesData() {
   try {
     const salesResult = await getSales();
@@ -21,7 +23,8 @@ async function getSalesData() {
       return [];
     }
 
-    return salesResult.data || [];
+    // Ensure we always return an array
+    return Array.isArray(salesResult.data) ? salesResult.data : [];
   } catch (error) {
     console.error('Error loading sales data:', error);
     return [];
@@ -32,13 +35,8 @@ export default async function SalesPage() {
   const sales = await getSalesData();
 
   return (
-    // React 19: Error boundary for better error handling
     <SalesErrorBoundary>
-      <SalesLayout
-        sales={sales as any[]}
-        // React 19: Pass server-side timestamp for cache invalidation
-        serverTimestamp={Date.now()}
-      />
+      <SalesManagementPage initialSales={sales} />
     </SalesErrorBoundary>
   );
 }

@@ -1,0 +1,1544 @@
+{
+  "metadata": {
+    "generatedDate": "2026-03-26T11:49:11.805Z",
+    "source": "actual_sales_database",
+    "totalProducts": 170,
+    "totalUnitsSold": 1139,
+    "totalRevenue": 19227152,
+    "totalTransactions": 953,
+    "accuracy": "100%",
+    "description": "Exact sold counts extracted directly from sales database"
+  },
+  "soldCounts": [
+    {
+      "name": "OSAKA HT 115 PLUS A",
+      "soldCount": 63,
+      "totalRevenue": 848200,
+      "transactions": 53,
+      "averagePrice": 13463,
+      "firstSale": "2025-07-28T08:14:35.356Z",
+      "lastSale": "2026-03-26T05:09:46.649Z"
+    },
+    {
+      "name": "OSAKA HT 200",
+      "soldCount": 62,
+      "totalRevenue": 1524200,
+      "transactions": 51,
+      "averagePrice": 24584,
+      "firstSale": "2025-07-29T15:04:51.302Z",
+      "lastSale": "2026-03-26T09:17:19.204Z"
+    },
+    {
+      "name": "OZKAA MA-120",
+      "soldCount": 41,
+      "totalRevenue": 575730,
+      "transactions": 37,
+      "averagePrice": 14042,
+      "firstSale": "2025-07-28T11:38:38.485Z",
+      "lastSale": "2026-03-24T11:21:57.671Z"
+    },
+    {
+      "name": "FUJIKA FJ 115 PLUS R/L",
+      "soldCount": 35,
+      "totalRevenue": 420500,
+      "transactions": 21,
+      "averagePrice": 12014,
+      "firstSale": "2026-02-08T14:12:07.422Z",
+      "lastSale": "2026-03-26T05:14:14.782Z"
+    },
+    {
+      "name": "AGS WS 150",
+      "soldCount": 31,
+      "totalRevenue": 699902,
+      "transactions": 28,
+      "averagePrice": 22577,
+      "firstSale": "2025-07-30T06:12:40.751Z",
+      "lastSale": "2026-03-23T08:02:00.891Z"
+    },
+    {
+      "name": "OZKAA MA-60",
+      "soldCount": 29,
+      "totalRevenue": 208620,
+      "transactions": 28,
+      "averagePrice": 7194,
+      "firstSale": "2025-11-20T08:44:20.972Z",
+      "lastSale": "2026-03-15T14:58:29.776Z"
+    },
+    {
+      "name": "FUJIKA FJ 200",
+      "soldCount": 28,
+      "totalRevenue": 673300,
+      "transactions": 25,
+      "averagePrice": 24046,
+      "firstSale": "2025-10-05T13:05:45.551Z",
+      "lastSale": "2026-03-25T09:11:34.452Z"
+    },
+    {
+      "name": "OZKAA MA-55",
+      "soldCount": 27,
+      "totalRevenue": 163050,
+      "transactions": 24,
+      "averagePrice": 6039,
+      "firstSale": "2025-08-02T05:51:29.592Z",
+      "lastSale": "2026-03-14T06:16:58.116Z"
+    },
+    {
+      "name": "OSAKA HT 145",
+      "soldCount": 24,
+      "totalRevenue": 469020,
+      "transactions": 19,
+      "averagePrice": 19543,
+      "firstSale": "2025-08-31T05:47:13.452Z",
+      "lastSale": "2026-03-19T15:01:34.943Z"
+    },
+    {
+      "name": "OSAKA HT 135",
+      "soldCount": 23,
+      "totalRevenue": 425380,
+      "transactions": 20,
+      "averagePrice": 18495,
+      "firstSale": "2025-08-02T07:40:30.852Z",
+      "lastSale": "2026-03-14T12:51:38.129Z"
+    },
+    {
+      "name": "OZKAA MA-110",
+      "soldCount": 21,
+      "totalRevenue": 271100,
+      "transactions": 21,
+      "averagePrice": 12910,
+      "firstSale": "2025-07-28T06:02:23.778Z",
+      "lastSale": "2026-03-25T14:06:33.333Z"
+    },
+    {
+      "name": "OSAKA HT 230",
+      "soldCount": 21,
+      "totalRevenue": 593200,
+      "transactions": 17,
+      "averagePrice": 28248,
+      "firstSale": "2025-07-30T10:01:07.041Z",
+      "lastSale": "2026-03-18T04:42:29.955Z"
+    },
+    {
+      "name": "OZKAA MA-65",
+      "soldCount": 20,
+      "totalRevenue": 173860,
+      "transactions": 19,
+      "averagePrice": 8693,
+      "firstSale": "2025-08-02T03:57:18.750Z",
+      "lastSale": "2026-02-17T12:05:14.372Z"
+    },
+    {
+      "name": "OZKAA MA-155",
+      "soldCount": 20,
+      "totalRevenue": 423000,
+      "transactions": 19,
+      "averagePrice": 21150,
+      "firstSale": "2025-08-11T05:32:34.066Z",
+      "lastSale": "2026-03-24T06:20:48.737Z"
+    },
+    {
+      "name": "OSAKA HT 55 R/L",
+      "soldCount": 19,
+      "totalRevenue": 154100,
+      "transactions": 19,
+      "averagePrice": 8111,
+      "firstSale": "2025-07-28T05:44:52.229Z",
+      "lastSale": "2026-02-10T12:39:22.255Z"
+    },
+    {
+      "name": "OSAKA HT 160",
+      "soldCount": 16,
+      "totalRevenue": 357400,
+      "transactions": 11,
+      "averagePrice": 22338,
+      "firstSale": "2025-08-20T09:56:54.325Z",
+      "lastSale": "2026-03-19T15:01:34.943Z"
+    },
+    {
+      "name": "AGS SP 100 R",
+      "soldCount": 15,
+      "totalRevenue": 217120,
+      "transactions": 13,
+      "averagePrice": 14475,
+      "firstSale": "2025-08-12T03:55:04.880Z",
+      "lastSale": "2026-03-26T08:52:44.984Z"
+    },
+    {
+      "name": "FUJIKA FJ 135",
+      "soldCount": 15,
+      "totalRevenue": 258300,
+      "transactions": 11,
+      "averagePrice": 17220,
+      "firstSale": "2025-12-14T14:26:27.638Z",
+      "lastSale": "2026-03-23T10:33:29.728Z"
+    },
+    {
+      "name": "AGS WS 115",
+      "soldCount": 14,
+      "totalRevenue": 262600,
+      "transactions": 14,
+      "averagePrice": 18757,
+      "firstSale": "2025-09-04T07:08:24.154Z",
+      "lastSale": "2026-03-25T10:05:09.089Z"
+    },
+    {
+      "name": "FUJIKA FJ 145",
+      "soldCount": 14,
+      "totalRevenue": 264100,
+      "transactions": 13,
+      "averagePrice": 18864,
+      "firstSale": "2026-02-19T05:25:34.136Z",
+      "lastSale": "2026-03-25T11:10:16.356Z"
+    },
+    {
+      "name": "OZKAA MA-220",
+      "soldCount": 13,
+      "totalRevenue": 355000,
+      "transactions": 11,
+      "averagePrice": 27308,
+      "firstSale": "2025-07-29T06:29:35.840Z",
+      "lastSale": "2026-02-03T10:31:01.821Z"
+    },
+    {
+      "name": "AGS WS 195",
+      "soldCount": 13,
+      "totalRevenue": 374400,
+      "transactions": 12,
+      "averagePrice": 28800,
+      "firstSale": "2025-07-31T05:42:40.150Z",
+      "lastSale": "2026-03-26T09:51:39.230Z"
+    },
+    {
+      "name": "AGS SP 50 L",
+      "soldCount": 13,
+      "totalRevenue": 124400,
+      "transactions": 12,
+      "averagePrice": 9569,
+      "firstSale": "2025-08-07T07:00:24.191Z",
+      "lastSale": "2026-03-09T09:09:20.329Z"
+    },
+    {
+      "name": "AGS MF 50 R/L",
+      "soldCount": 12,
+      "totalRevenue": 124000,
+      "transactions": 12,
+      "averagePrice": 10333,
+      "firstSale": "2025-07-28T06:09:48.378Z",
+      "lastSale": "2026-02-02T10:43:12.724Z"
+    },
+    {
+      "name": "OSAKA MF 55 R/L",
+      "soldCount": 12,
+      "totalRevenue": 109970,
+      "transactions": 12,
+      "averagePrice": 9164,
+      "firstSale": "2025-08-12T07:23:41.372Z",
+      "lastSale": "2026-02-18T10:46:10.697Z"
+    },
+    {
+      "name": "AGS SP Tall 1800",
+      "soldCount": 12,
+      "totalRevenue": 453500,
+      "transactions": 7,
+      "averagePrice": 37792,
+      "firstSale": "2025-10-01T13:09:24.918Z",
+      "lastSale": "2026-03-24T08:07:43.084Z"
+    },
+    {
+      "name": "OSAKA HT 70 R/L THIN/THICK",
+      "soldCount": 12,
+      "totalRevenue": 118300,
+      "transactions": 12,
+      "averagePrice": 9858,
+      "firstSale": "2025-10-20T06:42:22.761Z",
+      "lastSale": "2026-03-25T11:18:27.988Z"
+    },
+    {
+      "name": "AGS WS 100",
+      "soldCount": 11,
+      "totalRevenue": 146050,
+      "transactions": 11,
+      "averagePrice": 13277,
+      "firstSale": "2025-07-29T14:12:41.527Z",
+      "lastSale": "2026-03-03T14:52:18.972Z"
+    },
+    {
+      "name": "OZKAA MA-145",
+      "soldCount": 11,
+      "totalRevenue": 217500,
+      "transactions": 10,
+      "averagePrice": 19773,
+      "firstSale": "2025-07-31T09:37:43.412Z",
+      "lastSale": "2026-02-07T04:49:10.704Z"
+    },
+    {
+      "name": "AGS WS 180",
+      "soldCount": 11,
+      "totalRevenue": 297100,
+      "transactions": 10,
+      "averagePrice": 27009,
+      "firstSale": "2025-08-02T14:05:39.298Z",
+      "lastSale": "2026-03-17T12:44:48.762Z"
+    },
+    {
+      "name": "FUJIKA FJ 160",
+      "soldCount": 11,
+      "totalRevenue": 239900,
+      "transactions": 8,
+      "averagePrice": 21809,
+      "firstSale": "2025-11-13T07:38:10.920Z",
+      "lastSale": "2026-03-24T08:17:21.452Z"
+    },
+    {
+      "name": "AGS WS 135",
+      "soldCount": 10,
+      "totalRevenue": 211800,
+      "transactions": 9,
+      "averagePrice": 21180,
+      "firstSale": "2025-08-12T11:20:49.664Z",
+      "lastSale": "2026-03-23T12:52:36.144Z"
+    },
+    {
+      "name": "AGS SP Tall 1200",
+      "soldCount": 10,
+      "totalRevenue": 290500,
+      "transactions": 8,
+      "averagePrice": 29050,
+      "firstSale": "2025-08-17T10:25:49.780Z",
+      "lastSale": "2026-03-09T07:54:48.463Z"
+    },
+    {
+      "name": "LAVA P100",
+      "soldCount": 10,
+      "totalRevenue": 114700,
+      "transactions": 10,
+      "averagePrice": 11470,
+      "firstSale": "2025-08-21T04:57:36.891Z",
+      "lastSale": "2026-03-19T08:38:06.666Z"
+    },
+    {
+      "name": "LAVA P65",
+      "soldCount": 10,
+      "totalRevenue": 84100,
+      "transactions": 10,
+      "averagePrice": 8410,
+      "firstSale": "2025-08-30T06:38:16.495Z",
+      "lastSale": "2025-11-20T14:43:14.895Z"
+    },
+    {
+      "name": "AGS SP 150",
+      "soldCount": 10,
+      "totalRevenue": 250600,
+      "transactions": 9,
+      "averagePrice": 25060,
+      "firstSale": "2025-10-03T07:09:24.680Z",
+      "lastSale": "2026-03-23T09:36:37.618Z"
+    },
+    {
+      "name": "LAVA P120",
+      "soldCount": 9,
+      "totalRevenue": 124000,
+      "transactions": 9,
+      "averagePrice": 13778,
+      "firstSale": "2025-08-21T04:55:44.795Z",
+      "lastSale": "2026-01-18T06:45:30.564Z"
+    },
+    {
+      "name": "FUJIKA FJ 125 Z R/L",
+      "soldCount": 9,
+      "totalRevenue": 138300,
+      "transactions": 7,
+      "averagePrice": 15367,
+      "firstSale": "2026-03-01T06:11:08.163Z",
+      "lastSale": "2026-03-19T15:01:34.943Z"
+    },
+    {
+      "name": "OZKAA TUBULAR MA-3000",
+      "soldCount": 8,
+      "totalRevenue": 391000,
+      "transactions": 5,
+      "averagePrice": 48875,
+      "firstSale": "2025-07-30T06:30:23.955Z",
+      "lastSale": "2026-03-13T07:22:41.706Z"
+    },
+    {
+      "name": "FUJIKA FJ 55 R/L",
+      "soldCount": 8,
+      "totalRevenue": 59100,
+      "transactions": 8,
+      "averagePrice": 7388,
+      "firstSale": "2025-08-03T10:00:14.777Z",
+      "lastSale": "2026-03-14T11:24:20.087Z"
+    },
+    {
+      "name": "OZKAA MF-65 L",
+      "soldCount": 8,
+      "totalRevenue": 80300,
+      "transactions": 8,
+      "averagePrice": 10038,
+      "firstSale": "2025-08-07T11:22:15.883Z",
+      "lastSale": "2026-02-03T08:18:56.182Z"
+    },
+    {
+      "name": "EXIDE 6X130",
+      "soldCount": 8,
+      "totalRevenue": 150300,
+      "transactions": 7,
+      "averagePrice": 18788,
+      "firstSale": "2025-08-30T06:45:15.321Z",
+      "lastSale": "2026-03-03T03:47:36.791Z"
+    },
+    {
+      "name": "OSAKA HT 60 R/L",
+      "soldCount": 8,
+      "totalRevenue": 64900,
+      "transactions": 7,
+      "averagePrice": 8113,
+      "firstSale": "2025-10-29T05:00:19.961Z",
+      "lastSale": "2026-03-17T06:40:50.331Z"
+    },
+    {
+      "name": "FUJIKA FJ 70 R/L THIN/THICK",
+      "soldCount": 8,
+      "totalRevenue": 72550,
+      "transactions": 7,
+      "averagePrice": 9069,
+      "firstSale": "2026-03-01T04:58:56.714Z",
+      "lastSale": "2026-03-19T10:28:33.677Z"
+    },
+    {
+      "name": "FUJIKA FJ 230",
+      "soldCount": 8,
+      "totalRevenue": 231950,
+      "transactions": 7,
+      "averagePrice": 28994,
+      "firstSale": "2026-03-12T15:41:38.654Z",
+      "lastSale": "2026-03-24T03:52:04.231Z"
+    },
+    {
+      "name": "AGS WS 55 R",
+      "soldCount": 7,
+      "totalRevenue": 62300,
+      "transactions": 7,
+      "averagePrice": 8900,
+      "firstSale": "2025-08-03T07:42:41.219Z",
+      "lastSale": "2026-03-10T07:26:42.549Z"
+    },
+    {
+      "name": "OSAKA HT Solar 50",
+      "soldCount": 7,
+      "totalRevenue": 37950,
+      "transactions": 7,
+      "averagePrice": 5421,
+      "firstSale": "2025-08-07T06:48:12.158Z",
+      "lastSale": "2026-03-26T05:09:46.649Z"
+    },
+    {
+      "name": "AGS MF 60 L",
+      "soldCount": 7,
+      "totalRevenue": 79600,
+      "transactions": 6,
+      "averagePrice": 11371,
+      "firstSale": "2025-08-14T07:23:30.926Z",
+      "lastSale": "2026-03-18T09:07:52.970Z"
+    },
+    {
+      "name": "LAVA MF75",
+      "soldCount": 7,
+      "totalRevenue": 83100,
+      "transactions": 7,
+      "averagePrice": 11871,
+      "firstSale": "2025-08-23T06:09:30.442Z",
+      "lastSale": "2026-03-01T08:38:25.720Z"
+    },
+    {
+      "name": "OZKAA MA-165",
+      "soldCount": 7,
+      "totalRevenue": 161000,
+      "transactions": 7,
+      "averagePrice": 23000,
+      "firstSale": "2025-08-23T09:10:55.775Z",
+      "lastSale": "2026-03-15T04:04:21.019Z"
+    },
+    {
+      "name": "OSAKA HT 155",
+      "soldCount": 7,
+      "totalRevenue": 153800,
+      "transactions": 7,
+      "averagePrice": 21971,
+      "firstSale": "2025-09-20T11:24:40.783Z",
+      "lastSale": "2026-03-15T07:37:02.153Z"
+    },
+    {
+      "name": "LAVA P60",
+      "soldCount": 7,
+      "totalRevenue": 52500,
+      "transactions": 7,
+      "averagePrice": 7500,
+      "firstSale": "2025-10-01T13:22:25.987Z",
+      "lastSale": "2025-11-09T11:18:41.634Z"
+    },
+    {
+      "name": "OSAKA MF 70 R/L (Thin/Thick Pole)",
+      "soldCount": 7,
+      "totalRevenue": 80300,
+      "transactions": 7,
+      "averagePrice": 11471,
+      "firstSale": "2025-11-06T01:40:00.000Z",
+      "lastSale": "2026-03-19T11:24:40.661Z"
+    },
+    {
+      "name": "FUJIKA FJ 60 R/L",
+      "soldCount": 7,
+      "totalRevenue": 51400,
+      "transactions": 5,
+      "averagePrice": 7343,
+      "firstSale": "2026-02-25T11:17:52.554Z",
+      "lastSale": "2026-03-14T07:11:37.667Z"
+    },
+    {
+      "name": "PHOENIX XP110 R",
+      "soldCount": 7,
+      "totalRevenue": 91900,
+      "transactions": 4,
+      "averagePrice": 13129,
+      "firstSale": "2026-02-28T03:50:24.806Z",
+      "lastSale": "2026-03-16T12:03:59.266Z"
+    },
+    {
+      "name": "PHOENIX EXT-140",
+      "soldCount": 6,
+      "totalRevenue": 117500,
+      "transactions": 6,
+      "averagePrice": 19583,
+      "firstSale": "2025-08-05T06:38:26.139Z",
+      "lastSale": "2026-03-18T13:43:43.772Z"
+    },
+    {
+      "name": "AGS WS 220",
+      "soldCount": 6,
+      "totalRevenue": 186000,
+      "transactions": 6,
+      "averagePrice": 31000,
+      "firstSale": "2025-08-14T04:05:42.340Z",
+      "lastSale": "2026-02-15T12:21:56.041Z"
+    },
+    {
+      "name": "EXIDE HP60",
+      "soldCount": 6,
+      "totalRevenue": 60800,
+      "transactions": 6,
+      "averagePrice": 10133,
+      "firstSale": "2025-08-17T08:02:31.001Z",
+      "lastSale": "2026-02-12T09:57:24.992Z"
+    },
+    {
+      "name": "OSAKA HT CR 65 R/L",
+      "soldCount": 6,
+      "totalRevenue": 55000,
+      "transactions": 5,
+      "averagePrice": 9167,
+      "firstSale": "2025-11-02T06:41:01.577Z",
+      "lastSale": "2026-03-15T04:00:12.270Z"
+    },
+    {
+      "name": "PHOENIX XP220N-S",
+      "soldCount": 6,
+      "totalRevenue": 169600,
+      "transactions": 5,
+      "averagePrice": 28267,
+      "firstSale": "2025-11-06T15:56:13.154Z",
+      "lastSale": "2026-03-24T12:03:17.732Z"
+    },
+    {
+      "name": "POWER PLUS PMF60",
+      "soldCount": 6,
+      "totalRevenue": 47900,
+      "transactions": 6,
+      "averagePrice": 7983,
+      "firstSale": "2025-12-09T12:49:05.605Z",
+      "lastSale": "2026-03-14T14:48:59.027Z"
+    },
+    {
+      "name": "POWER PLUS PS120-S",
+      "soldCount": 6,
+      "totalRevenue": 76000,
+      "transactions": 6,
+      "averagePrice": 12667,
+      "firstSale": "2026-02-09T06:38:22.465Z",
+      "lastSale": "2026-03-20T04:42:01.084Z"
+    },
+    {
+      "name": "PHOENIX XP100 R",
+      "soldCount": 5,
+      "totalRevenue": 71800,
+      "transactions": 5,
+      "averagePrice": 14360,
+      "firstSale": "2025-07-30T09:20:54.279Z",
+      "lastSale": "2026-01-11T11:55:32.088Z"
+    },
+    {
+      "name": "EXIDE HP150",
+      "soldCount": 5,
+      "totalRevenue": 108000,
+      "transactions": 5,
+      "averagePrice": 21600,
+      "firstSale": "2025-08-11T13:35:49.168Z",
+      "lastSale": "2026-03-20T05:47:30.772Z"
+    },
+    {
+      "name": "OZKAA MF-85 (THICK POLE)",
+      "soldCount": 5,
+      "totalRevenue": 62700,
+      "transactions": 5,
+      "averagePrice": 12540,
+      "firstSale": "2025-08-18T07:55:27.669Z",
+      "lastSale": "2026-01-10T13:31:54.870Z"
+    },
+    {
+      "name": "LAVA P150",
+      "soldCount": 5,
+      "totalRevenue": 90000,
+      "transactions": 5,
+      "averagePrice": 18000,
+      "firstSale": "2025-10-09T09:35:22.993Z",
+      "lastSale": "2025-11-21T11:46:04.286Z"
+    },
+    {
+      "name": "OSAKA HT55",
+      "soldCount": 5,
+      "totalRevenue": 34400,
+      "transactions": 5,
+      "averagePrice": 6880,
+      "firstSale": "2025-12-03T09:30:10.285Z",
+      "lastSale": "2025-12-27T13:49:31.224Z"
+    },
+    {
+      "name": "POWER PLUS MF65-P",
+      "soldCount": 5,
+      "totalRevenue": 48000,
+      "transactions": 5,
+      "averagePrice": 9600,
+      "firstSale": "2025-12-13T08:29:47.075Z",
+      "lastSale": "2026-03-20T08:19:07.632Z"
+    },
+    {
+      "name": "AGS SP 200",
+      "soldCount": 5,
+      "totalRevenue": 155500,
+      "transactions": 4,
+      "averagePrice": 31100,
+      "firstSale": "2026-01-06T07:11:53.022Z",
+      "lastSale": "2026-03-15T05:57:36.194Z"
+    },
+    {
+      "name": "FUJIKA FJ SOLAR 100",
+      "soldCount": 5,
+      "totalRevenue": 56700,
+      "transactions": 4,
+      "averagePrice": 11340,
+      "firstSale": "2026-03-03T14:52:18.972Z",
+      "lastSale": "2026-03-26T04:50:57.761Z"
+    },
+    {
+      "name": "EXIDE MF-65 L/R",
+      "soldCount": 4,
+      "totalRevenue": 46000,
+      "transactions": 4,
+      "averagePrice": 11500,
+      "firstSale": "2025-07-30T07:29:30.204Z",
+      "lastSale": "2025-11-20T08:07:08.603Z"
+    },
+    {
+      "name": "OSAKA MF 70 R/L (ThinThick Pole)",
+      "soldCount": 4,
+      "totalRevenue": 46500,
+      "transactions": 4,
+      "averagePrice": 11625,
+      "firstSale": "2025-08-02T13:41:21.977Z",
+      "lastSale": "2026-03-10T05:17:09.006Z"
+    },
+    {
+      "name": "EXIDE N135",
+      "soldCount": 4,
+      "totalRevenue": 82200,
+      "transactions": 4,
+      "averagePrice": 20550,
+      "firstSale": "2025-08-09T06:18:04.229Z",
+      "lastSale": "2026-01-14T11:42:03.535Z"
+    },
+    {
+      "name": "PHOENIX UGS135",
+      "soldCount": 4,
+      "totalRevenue": 85200,
+      "transactions": 1,
+      "averagePrice": 21300,
+      "firstSale": "2025-08-09T08:15:34.934Z",
+      "lastSale": "2025-08-09T08:15:34.934Z"
+    },
+    {
+      "name": "PHOENIX EXT-130",
+      "soldCount": 4,
+      "totalRevenue": 76900,
+      "transactions": 3,
+      "averagePrice": 19225,
+      "firstSale": "2025-08-26T09:22:55.792Z",
+      "lastSale": "2026-02-11T11:29:35.251Z"
+    },
+    {
+      "name": "OZKAA MA-200",
+      "soldCount": 4,
+      "totalRevenue": 99700,
+      "transactions": 4,
+      "averagePrice": 24925,
+      "firstSale": "2025-08-31T05:54:35.438Z",
+      "lastSale": "2025-11-17T06:41:35.149Z"
+    },
+    {
+      "name": "EXIDE HP200",
+      "soldCount": 4,
+      "totalRevenue": 106250,
+      "transactions": 4,
+      "averagePrice": 26563,
+      "firstSale": "2025-11-05T09:53:22.457Z",
+      "lastSale": "2026-02-28T14:58:52.259Z"
+    },
+    {
+      "name": "LAVA P130",
+      "soldCount": 4,
+      "totalRevenue": 68400,
+      "transactions": 4,
+      "averagePrice": 17100,
+      "firstSale": "2025-11-12T12:18:41.086Z",
+      "lastSale": "2026-01-30T13:36:20.625Z"
+    },
+    {
+      "name": "OSAKA HT 125Z R/L",
+      "soldCount": 4,
+      "totalRevenue": 65700,
+      "transactions": 4,
+      "averagePrice": 16425,
+      "firstSale": "2025-11-22T08:18:22.142Z",
+      "lastSale": "2026-02-24T11:54:56.521Z"
+    },
+    {
+      "name": "AGS BATTERY TONIC 1000 ML",
+      "soldCount": 4,
+      "totalRevenue": 1600,
+      "transactions": 2,
+      "averagePrice": 400,
+      "firstSale": "2025-12-01T11:27:24.073Z",
+      "lastSale": "2025-12-29T11:07:33.175Z"
+    },
+    {
+      "name": "POWER PLUS PS55-S",
+      "soldCount": 4,
+      "totalRevenue": 20200,
+      "transactions": 4,
+      "averagePrice": 5050,
+      "firstSale": "2026-01-29T07:11:53.762Z",
+      "lastSale": "2026-01-31T11:48:34.536Z"
+    },
+    {
+      "name": "AGS SP 250",
+      "soldCount": 4,
+      "totalRevenue": 162500,
+      "transactions": 3,
+      "averagePrice": 40625,
+      "firstSale": "2026-01-31T09:19:15.755Z",
+      "lastSale": "2026-03-15T15:29:35.111Z"
+    },
+    {
+      "name": "POWER PLUS P60L-S",
+      "soldCount": 4,
+      "totalRevenue": 25200,
+      "transactions": 4,
+      "averagePrice": 6300,
+      "firstSale": "2026-02-14T13:02:19.044Z",
+      "lastSale": "2026-02-23T11:07:43.054Z"
+    },
+    {
+      "name": "FUJIKA FJ MF 60 R/L",
+      "soldCount": 4,
+      "totalRevenue": 33100,
+      "transactions": 4,
+      "averagePrice": 8275,
+      "firstSale": "2026-02-22T10:39:38.400Z",
+      "lastSale": "2026-03-26T07:21:30.772Z"
+    },
+    {
+      "name": "FUJIKA FJ Solar 50",
+      "soldCount": 4,
+      "totalRevenue": 20300,
+      "transactions": 4,
+      "averagePrice": 5075,
+      "firstSale": "2026-03-10T09:46:01.002Z",
+      "lastSale": "2026-03-20T07:40:04.506Z"
+    },
+    {
+      "name": "FUJIKA FJT 1800",
+      "soldCount": 4,
+      "totalRevenue": 143500,
+      "transactions": 3,
+      "averagePrice": 35875,
+      "firstSale": "2026-03-16T04:54:58.072Z",
+      "lastSale": "2026-03-26T08:05:49.003Z"
+    },
+    {
+      "name": "OSAKA Tubular HT 2500",
+      "soldCount": 4,
+      "totalRevenue": 202000,
+      "transactions": 1,
+      "averagePrice": 50500,
+      "firstSale": "2026-03-25T10:36:00.455Z",
+      "lastSale": "2026-03-25T10:36:00.455Z"
+    },
+    {
+      "name": "AGS WS 165",
+      "soldCount": 3,
+      "totalRevenue": 78000,
+      "transactions": 2,
+      "averagePrice": 26000,
+      "firstSale": "2025-08-03T07:15:37.493Z",
+      "lastSale": "2026-02-01T09:32:11.533Z"
+    },
+    {
+      "name": "OZKAA MA-235",
+      "soldCount": 3,
+      "totalRevenue": 88500,
+      "transactions": 3,
+      "averagePrice": 29500,
+      "firstSale": "2025-08-03T07:56:35.364Z",
+      "lastSale": "2025-12-02T11:53:49.128Z"
+    },
+    {
+      "name": "AGS WS 50",
+      "soldCount": 3,
+      "totalRevenue": 23700,
+      "transactions": 3,
+      "averagePrice": 7900,
+      "firstSale": "2025-08-08T05:55:00.723Z",
+      "lastSale": "2026-02-01T05:53:10.197Z"
+    },
+    {
+      "name": "EXIDE SOLAR 115",
+      "soldCount": 3,
+      "totalRevenue": 40200,
+      "transactions": 3,
+      "averagePrice": 13400,
+      "firstSale": "2025-08-09T04:26:53.924Z",
+      "lastSale": "2026-03-03T05:25:06.776Z"
+    },
+    {
+      "name": "AGS SP 180",
+      "soldCount": 3,
+      "totalRevenue": 87000,
+      "transactions": 3,
+      "averagePrice": 29000,
+      "firstSale": "2025-08-18T11:46:19.906Z",
+      "lastSale": "2025-10-09T09:37:00.517Z"
+    },
+    {
+      "name": "LAVA MF65",
+      "soldCount": 3,
+      "totalRevenue": 29000,
+      "transactions": 3,
+      "averagePrice": 9667,
+      "firstSale": "2025-08-21T05:55:45.792Z",
+      "lastSale": "2025-10-05T10:05:04.351Z"
+    },
+    {
+      "name": "OZKAA MA-175",
+      "soldCount": 3,
+      "totalRevenue": 68700,
+      "transactions": 3,
+      "averagePrice": 22900,
+      "firstSale": "2025-09-30T11:13:06.568Z",
+      "lastSale": "2026-01-13T06:59:40.663Z"
+    },
+    {
+      "name": "AGS MF 100 L",
+      "soldCount": 3,
+      "totalRevenue": 63500,
+      "transactions": 3,
+      "averagePrice": 21167,
+      "firstSale": "2025-11-27T07:08:31.877Z",
+      "lastSale": "2026-01-01T10:47:12.683Z"
+    },
+    {
+      "name": "POWER PLUS P65L-S",
+      "soldCount": 3,
+      "totalRevenue": 24200,
+      "transactions": 3,
+      "averagePrice": 8067,
+      "firstSale": "2026-02-02T11:10:48.587Z",
+      "lastSale": "2026-03-11T10:20:46.267Z"
+    },
+    {
+      "name": "PHOENIX XP200",
+      "soldCount": 3,
+      "totalRevenue": 76000,
+      "transactions": 3,
+      "averagePrice": 25333,
+      "firstSale": "2026-02-15T13:33:46.143Z",
+      "lastSale": "2026-03-25T09:20:15.042Z"
+    },
+    {
+      "name": "AGS ACE MF 75",
+      "soldCount": 2,
+      "totalRevenue": 26300,
+      "transactions": 2,
+      "averagePrice": 13150,
+      "firstSale": "2025-07-28T12:11:41.391Z",
+      "lastSale": "2025-11-16T05:27:11.183Z"
+    },
+    {
+      "name": "OZKAA MA-135",
+      "soldCount": 2,
+      "totalRevenue": 39500,
+      "transactions": 2,
+      "averagePrice": 19750,
+      "firstSale": "2025-07-29T06:24:54.433Z",
+      "lastSale": "2025-09-28T12:30:05.406Z"
+    },
+    {
+      "name": "EXIDE N100",
+      "soldCount": 2,
+      "totalRevenue": 27500,
+      "transactions": 2,
+      "averagePrice": 13750,
+      "firstSale": "2025-08-07T07:21:01.577Z",
+      "lastSale": "2026-02-16T10:29:07.396Z"
+    },
+    {
+      "name": "EXIDE N105",
+      "soldCount": 2,
+      "totalRevenue": 32500,
+      "transactions": 1,
+      "averagePrice": 16250,
+      "firstSale": "2025-08-16T11:08:39.239Z",
+      "lastSale": "2025-08-16T11:08:39.239Z"
+    },
+    {
+      "name": "AGS WS 70",
+      "soldCount": 2,
+      "totalRevenue": 24000,
+      "transactions": 1,
+      "averagePrice": 12000,
+      "firstSale": "2025-09-13T11:45:31.659Z",
+      "lastSale": "2025-09-13T11:45:31.659Z"
+    },
+    {
+      "name": "PHOENIX XP150",
+      "soldCount": 2,
+      "totalRevenue": 46300,
+      "transactions": 2,
+      "averagePrice": 23150,
+      "firstSale": "2025-09-22T07:44:36.509Z",
+      "lastSale": "2025-10-21T08:11:35.587Z"
+    },
+    {
+      "name": "PHOENIX XP70 R/L",
+      "soldCount": 2,
+      "totalRevenue": 21500,
+      "transactions": 2,
+      "averagePrice": 10750,
+      "firstSale": "2025-10-29T09:08:52.228Z",
+      "lastSale": "2025-12-24T10:07:33.163Z"
+    },
+    {
+      "name": "PHOENIX XP180R Plus",
+      "soldCount": 2,
+      "totalRevenue": 53800,
+      "transactions": 2,
+      "averagePrice": 26900,
+      "firstSale": "2025-11-19T11:39:03.905Z",
+      "lastSale": "2025-11-20T13:57:39.475Z"
+    },
+    {
+      "name": "AGS GL 65",
+      "soldCount": 2,
+      "totalRevenue": 17700,
+      "transactions": 1,
+      "averagePrice": 8850,
+      "firstSale": "2025-12-01T11:27:24.073Z",
+      "lastSale": "2025-12-01T11:27:24.073Z"
+    },
+    {
+      "name": "OZKAA MF-75 L",
+      "soldCount": 2,
+      "totalRevenue": 21950,
+      "transactions": 2,
+      "averagePrice": 10975,
+      "firstSale": "2025-12-10T06:35:57.420Z",
+      "lastSale": "2026-02-19T10:22:51.331Z"
+    },
+    {
+      "name": "TOTAL TP-160",
+      "soldCount": 2,
+      "totalRevenue": 44000,
+      "transactions": 2,
+      "averagePrice": 22000,
+      "firstSale": "2026-01-06T09:15:43.398Z",
+      "lastSale": "2026-01-13T10:04:14.385Z"
+    },
+    {
+      "name": "POWER PLUS MF75L-P",
+      "soldCount": 2,
+      "totalRevenue": 24000,
+      "transactions": 2,
+      "averagePrice": 12000,
+      "firstSale": "2026-01-14T06:36:40.481Z",
+      "lastSale": "2026-02-17T03:10:23.098Z"
+    },
+    {
+      "name": "PHOENIX 165",
+      "soldCount": 2,
+      "totalRevenue": 45000,
+      "transactions": 1,
+      "averagePrice": 22500,
+      "firstSale": "2026-01-15T08:13:31.348Z",
+      "lastSale": "2026-01-15T08:13:31.348Z"
+    },
+    {
+      "name": "EXIDE MF-50 R/L",
+      "soldCount": 2,
+      "totalRevenue": 17500,
+      "transactions": 2,
+      "averagePrice": 8750,
+      "firstSale": "2026-01-24T09:59:55.457Z",
+      "lastSale": "2026-01-26T14:34:43.453Z"
+    },
+    {
+      "name": "PHOENIX XP165N-S",
+      "soldCount": 2,
+      "totalRevenue": 45500,
+      "transactions": 2,
+      "averagePrice": 22750,
+      "firstSale": "2026-01-25T14:26:04.140Z",
+      "lastSale": "2026-03-18T11:18:44.323Z"
+    },
+    {
+      "name": "OSAKA 200",
+      "soldCount": 2,
+      "totalRevenue": 46600,
+      "transactions": 2,
+      "averagePrice": 23300,
+      "firstSale": "2026-01-26T07:07:45.091Z",
+      "lastSale": "2026-03-08T07:32:37.389Z"
+    },
+    {
+      "name": "PHOENIX UGS190",
+      "soldCount": 2,
+      "totalRevenue": 53500,
+      "transactions": 2,
+      "averagePrice": 26750,
+      "firstSale": "2026-01-27T05:47:28.159Z",
+      "lastSale": "2026-03-12T15:54:44.403Z"
+    },
+    {
+      "name": "POWER PLUS P220N-S",
+      "soldCount": 2,
+      "totalRevenue": 49000,
+      "transactions": 2,
+      "averagePrice": 24500,
+      "firstSale": "2026-02-11T08:29:08.211Z",
+      "lastSale": "2026-02-11T11:39:44.284Z"
+    },
+    {
+      "name": "POWER PLUS P200N-S",
+      "soldCount": 2,
+      "totalRevenue": 48000,
+      "transactions": 2,
+      "averagePrice": 24000,
+      "firstSale": "2026-02-16T05:08:33.873Z",
+      "lastSale": "2026-03-09T12:34:04.928Z"
+    },
+    {
+      "name": "Charging Service FUJIKA200",
+      "soldCount": 2,
+      "totalRevenue": 1500,
+      "transactions": 2,
+      "averagePrice": 750,
+      "firstSale": "2026-03-05T05:06:54.077Z",
+      "lastSale": "2026-03-05T05:06:54.077Z"
+    },
+    {
+      "name": "FUJIKA FJ 155",
+      "soldCount": 2,
+      "totalRevenue": 41500,
+      "transactions": 2,
+      "averagePrice": 20750,
+      "firstSale": "2026-03-08T04:19:12.142Z",
+      "lastSale": "2026-03-26T10:17:19.244Z"
+    },
+    {
+      "name": "PHOENIX EXT-135",
+      "soldCount": 2,
+      "totalRevenue": 36600,
+      "transactions": 1,
+      "averagePrice": 18300,
+      "firstSale": "2026-03-16T12:03:59.266Z",
+      "lastSale": "2026-03-16T12:03:59.266Z"
+    },
+    {
+      "name": "PHOENIX UGS235",
+      "soldCount": 2,
+      "totalRevenue": 61600,
+      "transactions": 1,
+      "averagePrice": 30800,
+      "firstSale": "2026-03-18T10:23:09.560Z",
+      "lastSale": "2026-03-18T10:23:09.560Z"
+    },
+    {
+      "name": "PHOENIX XP230",
+      "soldCount": 1,
+      "totalRevenue": 40000,
+      "transactions": 1,
+      "averagePrice": 40000,
+      "firstSale": "2025-08-03T08:53:04.439Z",
+      "lastSale": "2025-08-03T08:53:04.439Z"
+    },
+    {
+      "name": "AGS N125",
+      "soldCount": 1,
+      "totalRevenue": 23500,
+      "transactions": 1,
+      "averagePrice": 23500,
+      "firstSale": "2025-08-06T14:40:06.103Z",
+      "lastSale": "2025-08-06T14:40:06.103Z"
+    },
+    {
+      "name": "PHOENIX XP50+ R/L",
+      "soldCount": 1,
+      "totalRevenue": 9500,
+      "transactions": 1,
+      "averagePrice": 9500,
+      "firstSale": "2025-08-11T06:03:10.692Z",
+      "lastSale": "2025-08-11T06:03:10.692Z"
+    },
+    {
+      "name": "PHOENIX UGS155",
+      "soldCount": 1,
+      "totalRevenue": 23500,
+      "transactions": 1,
+      "averagePrice": 23500,
+      "firstSale": "2025-08-16T10:32:59.739Z",
+      "lastSale": "2025-08-16T10:32:59.739Z"
+    },
+    {
+      "name": "PHOENIX XP110 R/L",
+      "soldCount": 1,
+      "totalRevenue": 18000,
+      "transactions": 1,
+      "averagePrice": 18000,
+      "firstSale": "2025-08-18T12:02:48.901Z",
+      "lastSale": "2025-08-18T12:02:48.901Z"
+    },
+    {
+      "name": "AGS HB 65",
+      "soldCount": 1,
+      "totalRevenue": 13000,
+      "transactions": 1,
+      "averagePrice": 13000,
+      "firstSale": "2025-08-30T06:37:05.336Z",
+      "lastSale": "2025-08-30T06:37:05.336Z"
+    },
+    {
+      "name": "AGS WS 80 L",
+      "soldCount": 1,
+      "totalRevenue": 13000,
+      "transactions": 1,
+      "averagePrice": 13000,
+      "firstSale": "2025-09-13T12:11:11.350Z",
+      "lastSale": "2025-09-13T12:11:11.350Z"
+    },
+    {
+      "name": "EXIDE N150",
+      "soldCount": 1,
+      "totalRevenue": 23500,
+      "transactions": 1,
+      "averagePrice": 23500,
+      "firstSale": "2025-09-20T04:54:06.049Z",
+      "lastSale": "2025-09-20T04:54:06.049Z"
+    },
+    {
+      "name": "EXIDE CN65L",
+      "soldCount": 1,
+      "totalRevenue": 10000,
+      "transactions": 1,
+      "averagePrice": 10000,
+      "firstSale": "2025-10-04T06:33:20.416Z",
+      "lastSale": "2025-10-04T06:33:20.416Z"
+    },
+    {
+      "name": "AGS WS 45 R",
+      "soldCount": 1,
+      "totalRevenue": 6200,
+      "transactions": 1,
+      "averagePrice": 6200,
+      "firstSale": "2025-10-20T09:25:04.038Z",
+      "lastSale": "2025-10-20T09:25:04.038Z"
+    },
+    {
+      "name": "Battery Tonic Battery tonic",
+      "soldCount": 1,
+      "totalRevenue": 150,
+      "transactions": 1,
+      "averagePrice": 150,
+      "firstSale": "2025-10-25T15:31:53.462Z",
+      "lastSale": "2025-10-25T15:31:53.462Z"
+    },
+    {
+      "name": "4G G-50L",
+      "soldCount": 1,
+      "totalRevenue": 8000,
+      "transactions": 1,
+      "averagePrice": 8000,
+      "firstSale": "2025-10-29T10:42:29.184Z",
+      "lastSale": "2025-10-29T10:42:29.184Z"
+    },
+    {
+      "name": "PHOENIX TX-2500",
+      "soldCount": 1,
+      "totalRevenue": 49000,
+      "transactions": 1,
+      "averagePrice": 49000,
+      "firstSale": "2025-10-29T11:04:41.843Z",
+      "lastSale": "2025-10-29T11:04:41.843Z"
+    },
+    {
+      "name": "PHOENIX XP70 L",
+      "soldCount": 1,
+      "totalRevenue": 10500,
+      "transactions": 1,
+      "averagePrice": 10500,
+      "firstSale": "2025-11-10T08:36:07.612Z",
+      "lastSale": "2025-11-10T08:36:07.612Z"
+    },
+    {
+      "name": "PHOENIX UGS55",
+      "soldCount": 1,
+      "totalRevenue": 8000,
+      "transactions": 1,
+      "averagePrice": 8000,
+      "firstSale": "2025-11-21T11:58:27.119Z",
+      "lastSale": "2025-11-21T11:58:27.119Z"
+    },
+    {
+      "name": "4G G110",
+      "soldCount": 1,
+      "totalRevenue": 12700,
+      "transactions": 1,
+      "averagePrice": 12700,
+      "firstSale": "2025-11-27T09:45:58.895Z",
+      "lastSale": "2025-11-27T09:45:58.895Z"
+    },
+    {
+      "name": "4G G200",
+      "soldCount": 1,
+      "totalRevenue": 23500,
+      "transactions": 1,
+      "averagePrice": 23500,
+      "firstSale": "2025-12-17T05:30:58.222Z",
+      "lastSale": "2025-12-17T05:30:58.222Z"
+    },
+    {
+      "name": "PHOENIX Euromax 70",
+      "soldCount": 1,
+      "totalRevenue": 12000,
+      "transactions": 1,
+      "averagePrice": 12000,
+      "firstSale": "2025-12-20T10:00:33.415Z",
+      "lastSale": "2025-12-20T10:00:33.415Z"
+    },
+    {
+      "name": "OSAKA 65",
+      "soldCount": 1,
+      "totalRevenue": 9000,
+      "transactions": 1,
+      "averagePrice": 9000,
+      "firstSale": "2025-12-20T14:07:39.470Z",
+      "lastSale": "2025-12-20T14:07:39.470Z"
+    },
+    {
+      "name": "PHOENIX XP60",
+      "soldCount": 1,
+      "totalRevenue": 7800,
+      "transactions": 1,
+      "averagePrice": 7800,
+      "firstSale": "2026-01-13T09:31:16.090Z",
+      "lastSale": "2026-01-13T09:31:16.090Z"
+    },
+    {
+      "name": "OSAKA HT 50 R/L",
+      "soldCount": 1,
+      "totalRevenue": 12000,
+      "transactions": 1,
+      "averagePrice": 12000,
+      "firstSale": "2026-01-26T11:17:01.660Z",
+      "lastSale": "2026-01-26T11:17:01.660Z"
+    },
+    {
+      "name": "OZKAA 165",
+      "soldCount": 1,
+      "totalRevenue": 22000,
+      "transactions": 1,
+      "averagePrice": 22000,
+      "firstSale": "2026-01-27T12:52:04.256Z",
+      "lastSale": "2026-01-27T12:52:04.256Z"
+    },
+    {
+      "name": "PHOENIX XP110",
+      "soldCount": 1,
+      "totalRevenue": 12900,
+      "transactions": 1,
+      "averagePrice": 12900,
+      "firstSale": "2026-01-31T12:19:31.095Z",
+      "lastSale": "2026-01-31T12:19:31.095Z"
+    },
+    {
+      "name": "POWER PLUS PT1200",
+      "soldCount": 1,
+      "totalRevenue": 15300,
+      "transactions": 1,
+      "averagePrice": 15300,
+      "firstSale": "2026-02-01T07:43:14.241Z",
+      "lastSale": "2026-02-01T07:43:14.241Z"
+    },
+    {
+      "name": "AGS 195",
+      "soldCount": 1,
+      "totalRevenue": 28300,
+      "transactions": 1,
+      "averagePrice": 28300,
+      "firstSale": "2026-02-02T14:42:01.174Z",
+      "lastSale": "2026-02-02T14:42:01.174Z"
+    },
+    {
+      "name": "PHOENIX 21",
+      "soldCount": 1,
+      "totalRevenue": 29000,
+      "transactions": 1,
+      "averagePrice": 29000,
+      "firstSale": "2026-02-19T09:32:18.437Z",
+      "lastSale": "2026-02-19T09:32:18.437Z"
+    },
+    {
+      "name": "OSAKA HT1000PROMAX",
+      "soldCount": 1,
+      "totalRevenue": 15500,
+      "transactions": 1,
+      "averagePrice": 15500,
+      "firstSale": "2026-02-19T11:41:12.196Z",
+      "lastSale": "2026-02-19T11:41:12.196Z"
+    },
+    {
+      "name": "4G G155",
+      "soldCount": 1,
+      "totalRevenue": 22000,
+      "transactions": 1,
+      "averagePrice": 22000,
+      "firstSale": "2026-02-23T07:36:17.009Z",
+      "lastSale": "2026-02-23T07:36:17.009Z"
+    },
+    {
+      "name": "Charging Service fujika 180",
+      "soldCount": 1,
+      "totalRevenue": 700,
+      "transactions": 1,
+      "averagePrice": 700,
+      "firstSale": "2026-03-01T05:58:28.335Z",
+      "lastSale": "2026-03-01T05:58:28.335Z"
+    },
+    {
+      "name": "Charging Service OSAKA HT200 =2",
+      "soldCount": 1,
+      "totalRevenue": 1500,
+      "transactions": 1,
+      "averagePrice": 1500,
+      "firstSale": "2026-03-01T08:39:41.367Z",
+      "lastSale": "2026-03-01T08:39:41.367Z"
+    },
+    {
+      "name": "Charging Service mfdin65",
+      "soldCount": 1,
+      "totalRevenue": 300,
+      "transactions": 1,
+      "averagePrice": 300,
+      "firstSale": "2026-03-02T11:18:19.133Z",
+      "lastSale": "2026-03-02T11:18:19.133Z"
+    },
+    {
+      "name": "Charging Service exide 50l",
+      "soldCount": 1,
+      "totalRevenue": 250,
+      "transactions": 1,
+      "averagePrice": 250,
+      "firstSale": "2026-03-03T04:32:20.823Z",
+      "lastSale": "2026-03-03T04:32:20.823Z"
+    },
+    {
+      "name": "OSAKA HT 130",
+      "soldCount": 1,
+      "totalRevenue": 16000,
+      "transactions": 1,
+      "averagePrice": 16000,
+      "firstSale": "2026-03-03T09:46:23.238Z",
+      "lastSale": "2026-03-03T09:46:23.238Z"
+    },
+    {
+      "name": "Charging Service agssp100",
+      "soldCount": 1,
+      "totalRevenue": 400,
+      "transactions": 1,
+      "averagePrice": 400,
+      "firstSale": "2026-03-04T05:36:58.207Z",
+      "lastSale": "2026-03-04T05:36:58.207Z"
+    },
+    {
+      "name": "Charging Service OSAKA 145",
+      "soldCount": 1,
+      "totalRevenue": 600,
+      "transactions": 1,
+      "averagePrice": 600,
+      "firstSale": "2026-03-05T05:05:56.619Z",
+      "lastSale": "2026-03-05T05:05:56.619Z"
+    },
+    {
+      "name": "Charging Service OZKAA60",
+      "soldCount": 1,
+      "totalRevenue": 200,
+      "transactions": 1,
+      "averagePrice": 200,
+      "firstSale": "2026-03-05T05:07:32.817Z",
+      "lastSale": "2026-03-05T05:07:32.817Z"
+    },
+    {
+      "name": "Charging Service osaka160",
+      "soldCount": 1,
+      "totalRevenue": 700,
+      "transactions": 1,
+      "averagePrice": 700,
+      "firstSale": "2026-03-06T04:32:05.323Z",
+      "lastSale": "2026-03-06T04:32:05.323Z"
+    },
+    {
+      "name": "Charging Service osaka50",
+      "soldCount": 1,
+      "totalRevenue": 200,
+      "transactions": 1,
+      "averagePrice": 200,
+      "firstSale": "2026-03-06T06:07:47.598Z",
+      "lastSale": "2026-03-06T06:07:47.598Z"
+    },
+    {
+      "name": "Charging Service phoneix 1800",
+      "soldCount": 1,
+      "totalRevenue": 1000,
+      "transactions": 1,
+      "averagePrice": 1000,
+      "firstSale": "2026-03-07T12:17:36.286Z",
+      "lastSale": "2026-03-07T12:17:36.286Z"
+    },
+    {
+      "name": "Charging Service osaka70",
+      "soldCount": 1,
+      "totalRevenue": 200,
+      "transactions": 1,
+      "averagePrice": 200,
+      "firstSale": "2026-03-09T09:00:13.125Z",
+      "lastSale": "2026-03-09T09:00:13.125Z"
+    },
+    {
+      "name": "FUJIKA FJ MF 70 R/L (Thin/Thick Pole)",
+      "soldCount": 1,
+      "totalRevenue": 11500,
+      "transactions": 1,
+      "averagePrice": 11500,
+      "firstSale": "2026-03-11T09:03:43.907Z",
+      "lastSale": "2026-03-11T09:03:43.907Z"
+    },
+    {
+      "name": "Charging Service ozkaa120",
+      "soldCount": 1,
+      "totalRevenue": 300,
+      "transactions": 1,
+      "averagePrice": 300,
+      "firstSale": "2026-03-11T12:48:08.147Z",
+      "lastSale": "2026-03-11T12:48:08.147Z"
+    },
+    {
+      "name": "Charging Service fujika70",
+      "soldCount": 1,
+      "totalRevenue": 200,
+      "transactions": 1,
+      "averagePrice": 200,
+      "firstSale": "2026-03-11T14:39:42.109Z",
+      "lastSale": "2026-03-11T14:39:42.109Z"
+    },
+    {
+      "name": "Charging Service fujika55",
+      "soldCount": 1,
+      "totalRevenue": 200,
+      "transactions": 1,
+      "averagePrice": 200,
+      "firstSale": "2026-03-12T06:40:45.570Z",
+      "lastSale": "2026-03-12T06:40:45.570Z"
+    },
+    {
+      "name": "Charging Service total110",
+      "soldCount": 1,
+      "totalRevenue": 500,
+      "transactions": 1,
+      "averagePrice": 500,
+      "firstSale": "2026-03-12T07:08:46.772Z",
+      "lastSale": "2026-03-12T07:08:46.772Z"
+    },
+    {
+      "name": "Charging Service ags",
+      "soldCount": 1,
+      "totalRevenue": 1000,
+      "transactions": 1,
+      "averagePrice": 1000,
+      "firstSale": "2026-03-12T14:16:15.886Z",
+      "lastSale": "2026-03-12T14:16:15.886Z"
+    },
+    {
+      "name": "Charging Service phoenix",
+      "soldCount": 1,
+      "totalRevenue": 500,
+      "transactions": 1,
+      "averagePrice": 500,
+      "firstSale": "2026-03-12T14:48:53.197Z",
+      "lastSale": "2026-03-12T14:48:53.197Z"
+    },
+    {
+      "name": "Charging Service ht110",
+      "soldCount": 1,
+      "totalRevenue": 1000,
+      "transactions": 1,
+      "averagePrice": 1000,
+      "firstSale": "2026-03-15T07:21:29.211Z",
+      "lastSale": "2026-03-15T07:21:29.211Z"
+    },
+    {
+      "name": "Charging Service gx200",
+      "soldCount": 1,
+      "totalRevenue": 1000,
+      "transactions": 1,
+      "averagePrice": 1000,
+      "firstSale": "2026-03-15T10:08:46.346Z",
+      "lastSale": "2026-03-15T10:08:46.346Z"
+    },
+    {
+      "name": "FUJIKA FJ 150",
+      "soldCount": 1,
+      "totalRevenue": 21000,
+      "transactions": 1,
+      "averagePrice": 21000,
+      "firstSale": "2026-03-24T13:28:03.872Z",
+      "lastSale": "2026-03-24T13:28:03.872Z"
+    }
+  ]
+}

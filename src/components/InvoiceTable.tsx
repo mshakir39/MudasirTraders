@@ -58,7 +58,7 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({
       <div className='hidden overflow-x-auto lg:block'>
         <table className='w-full border-collapse'>
           <thead>
-            <tr className='bg-[#021B3B] text-white'>
+            <tr className='bg-dark-900 text-white'>
               {columns?.map((column, index) => (
                 <th
                   key={index}

@@ -35,17 +35,17 @@ const DealerCard: React.FC<DealerCardProps> = ({
     <div className='rounded-lg bg-white p-6 shadow-md'>
       <div className='mb-4 flex items-start justify-between'>
         <div className='flex-1'>
-          <h3 className='text-lg font-semibold text-gray-900'>
+          <h3 className='text-lg font-semibold text-secondary-900'>
             {dealer.dealerName}
           </h3>
-          <p className='text-sm text-gray-500'>
+          <p className='text-sm text-secondary-500'>
             {dealer.businessType || 'Supplier'}
           </p>
           <div
             className={`mt-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
               dealer.isActive
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
+                ? 'bg-success-100 text-success-800'
+                : 'bg-error-100 text-error-800'
             }`}
           >
             {dealer.isActive ? 'Active' : 'Inactive'}
@@ -56,19 +56,19 @@ const DealerCard: React.FC<DealerCardProps> = ({
       <div className='mb-4 space-y-2'>
         {dealer.contactPerson && (
           <div className='flex justify-between'>
-            <span className='text-sm text-gray-600'>Contact:</span>
+            <span className='text-sm text-secondary-600'>Contact:</span>
             <span className='text-sm font-medium'>{dealer.contactPerson}</span>
           </div>
         )}
         {dealer.phone && (
           <div className='flex justify-between'>
-            <span className='text-sm text-gray-600'>Phone:</span>
+            <span className='text-sm text-secondary-600'>Phone:</span>
             <span className='text-sm font-medium'>{dealer.phone}</span>
           </div>
         )}
         {dealer.email && (
           <div className='flex justify-between'>
-            <span className='text-sm text-gray-600'>Email:</span>
+            <span className='text-sm text-secondary-600'>Email:</span>
             <span className='text-sm font-medium'>{dealer.email}</span>
           </div>
         )}
@@ -77,11 +77,11 @@ const DealerCard: React.FC<DealerCardProps> = ({
       {/* Last Payment Date */}
       <div className='mb-4'>
         <div className='flex justify-between'>
-          <span className='text-sm text-gray-600'>Last Payment:</span>
+          <span className='text-sm text-secondary-600'>Last Payment:</span>
           <span className='text-sm font-medium'>{dealer.lastPaymentDate}</span>
         </div>
         <div className='mt-2 flex justify-between'>
-          <span className='text-sm text-gray-600'>First Payment:</span>
+          <span className='text-sm text-secondary-600'>First Payment:</span>
           <span className='text-sm font-medium'>{dealer.firstPaymentDate}</span>
         </div>
       </div>
@@ -90,19 +90,19 @@ const DealerCard: React.FC<DealerCardProps> = ({
       {dealer.currentBillId && (
         <div className='mb-4 border-t pt-4'>
           <div className='mb-2 flex items-center gap-2'>
-            <FaFileInvoice className='text-blue-600' />
-            <span className='text-sm font-semibold text-gray-900'>
+            <FaFileInvoice className='text-primary-600' />
+            <span className='text-sm font-semibold text-secondary-900'>
               Current Bill
             </span>
             {dealer.isOverdue && (
-              <span className='rounded-full bg-red-100 px-2 py-1 text-xs text-red-800'>
+              <span className='rounded-full bg-error-100 px-2 py-1 text-xs text-error-800'>
                 Overdue
               </span>
             )}
           </div>
           <div className='space-y-1 text-sm'>
             <div className='flex justify-between'>
-              <span className='text-gray-600'>Bill Amount:</span>
+              <span className='text-secondary-600'>Bill Amount:</span>
               <span className='font-medium'>
                 Rs{' '}
                 {(dealer.currentBillAmount || 0).toLocaleString('en-PK', {
@@ -111,8 +111,8 @@ const DealerCard: React.FC<DealerCardProps> = ({
               </span>
             </div>
             <div className='flex justify-between'>
-              <span className='text-gray-600'>Outstanding:</span>
-              <span className='font-medium text-red-600'>
+              <span className='text-secondary-600'>Outstanding:</span>
+              <span className='font-medium' style={{ color: '#dc2626' }}>
                 Rs{' '}
                 {(dealer.currentBillOutstanding || 0).toLocaleString('en-PK', {
                   maximumFractionDigits: 0,
@@ -121,7 +121,7 @@ const DealerCard: React.FC<DealerCardProps> = ({
             </div>
             {dealer.currentBillDueDate && (
               <div className='flex justify-between'>
-                <span className='text-gray-600'>Due Date:</span>
+                <span className='text-secondary-600'>Due Date:</span>
                 <span className='font-medium'>{dealer.currentBillDueDate}</span>
               </div>
             )}
@@ -133,8 +133,8 @@ const DealerCard: React.FC<DealerCardProps> = ({
       <div className='mb-4 border-t pt-4'>
         <div className='mb-3 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
-            <FaMoneyBillWave className='text-blue-600' />
-            <span className='text-sm font-semibold text-gray-900'>
+            <FaMoneyBillWave className='text-primary-600' />
+            <span className='text-sm font-semibold text-secondary-900'>
               Bills Summary
             </span>
           </div>
@@ -144,43 +144,43 @@ const DealerCard: React.FC<DealerCardProps> = ({
               text='Add Bill'
               icon={<FaPlus />}
               onClick={() => onAddBill(dealer)}
-              className='px-2 py-1 text-xs !text-green-600 hover:!bg-green-50'
+              className='px-2 py-1 text-xs !text-success-600 hover:!bg-success-50'
             />
             <Button
               variant='outline'
               text='Add Payment'
               icon={<FaCreditCard />}
               onClick={() => onAddPayment(dealer)}
-              className='px-2 py-1 text-xs !text-purple-600 hover:!bg-purple-50'
+              className='px-2 py-1 text-xs !text-accent-600 hover:!bg-accent-50'
             />
             <Button
               variant='outline'
               text='View Details'
               icon={<FaFileInvoice />}
               onClick={() => onViewDetails(dealer)}
-              className='px-2 py-1 text-xs !text-blue-600 hover:!bg-blue-50'
+              className='px-2 py-1 text-xs !text-primary-600 hover:!bg-primary-50'
             />
           </div>
         </div>
         <div className='grid grid-cols-3 gap-2 text-center'>
-          <div className='rounded bg-gray-50 p-2'>
-            <div className='text-xs text-gray-500'>Total Bills</div>
-            <div className='text-sm font-semibold text-gray-900'>
+          <div className='rounded bg-secondary-50 p-2'>
+            <div className='text-xs text-secondary-500'>Total Bills</div>
+            <div className='text-sm font-semibold text-secondary-900'>
               {dealer.totalBillsCount || 0}
             </div>
           </div>
-          <div className='rounded bg-green-50 p-2'>
-            <div className='text-xs text-gray-500'>Total Paid</div>
-            <div className='text-sm font-semibold text-green-600'>
+          <div className='rounded bg-success-50 p-2'>
+            <div className='text-xs text-secondary-500'>Total Paid</div>
+            <div className='text-sm font-semibold' style={{ color: '#059669' }}>
               Rs{' '}
               {(dealer.totalPaidAllTime || 0).toLocaleString('en-PK', {
                 maximumFractionDigits: 0,
               })}
             </div>
           </div>
-          <div className='rounded bg-red-50 p-2'>
-            <div className='text-xs text-gray-500'>Outstanding</div>
-            <div className='text-sm font-semibold text-red-600'>
+          <div className='rounded bg-error-50 p-2'>
+            <div className='text-xs text-secondary-500'>Outstanding</div>
+            <div className='text-sm font-semibold' style={{ color: '#dc2626' }}>
               Rs{' '}
               {(dealer.currentBillOutstanding || 0).toLocaleString('en-PK', {
                 maximumFractionDigits: 0,
@@ -205,8 +205,8 @@ const DealerCard: React.FC<DealerCardProps> = ({
           onClick={() => onToggleStatus(dealer)}
           className={`px-3 py-2 text-xs ${
             dealer.isActive
-              ? '!text-orange-600 hover:!bg-orange-50'
-              : '!text-green-600 hover:!bg-green-50'
+              ? '!text-warning-600 hover:!bg-warning-50'
+              : '!text-success-600 hover:!bg-success-50'
           }`}
         />
         <Button
@@ -214,7 +214,7 @@ const DealerCard: React.FC<DealerCardProps> = ({
           text='Delete'
           icon={<FaTrash />}
           onClick={() => onDelete(dealer)}
-          className='px-3 py-2 text-xs !text-red-600 hover:!bg-red-50'
+          className='px-3 py-2 text-xs !text-error-600 hover:!bg-error-50'
         />
       </div>
     </div>

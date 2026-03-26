@@ -21,7 +21,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   iconColor,
   valueColor = 'text-gray-900',
 }) => (
-  <div className='rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md'>
+  <div className='rounded-xl bg-white p-6 shadow-md transition-shadow hover:shadow-md'>
     <div className='flex items-center justify-between'>
       <div>
         <p className='text-sm font-medium text-gray-600'>{title}</p>

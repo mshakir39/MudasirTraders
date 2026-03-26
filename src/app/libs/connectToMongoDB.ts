@@ -1,187 +1,124 @@
+// lib/connectToMongoDB.ts
 import { Db, MongoClient } from 'mongodb';
 
-interface MongoConnection {
-  client: MongoClient | null;
-  db: Db | null;
-  lastUsed: number;
-  isConnecting: boolean;
-}
+// ============================================================
+// Config
+// ============================================================
 
-let connection: MongoConnection = {
-  client: null,
-  db: null,
-  lastUsed: 0,
-  isConnecting: false,
-};
-
-const CONNECTION_TIMEOUT = 3 * 60 * 1000;
-const IDLE_TIMEOUT = 2 * 60 * 1000;
-let cleanupTimer: NodeJS.Timeout | null = null;
-let handlersAdded = false;
-
-function extractDbNameFromUri(uri: string): string | null {
-  try {
-    const match = uri.match(/\/([^/?]+)(?:\?|$)/);
-    return match ? match[1] : null;
-  } catch (error) {
-    console.warn('Could not extract database name from URI:', error);
-    return null;
-  }
-}
-
-const MONGODB_URI = process.env.MONGODB_URI;
-const MONGODB_DB =
-  process.env.MONGODB_DB ||
-  extractDbNameFromUri(MONGODB_URI!) ||
-  'batteryStore';
+const MONGODB_URI = process.env.MONGODB_URI!;
 
 if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable');
 }
 
-// Enhanced connection with pooling and caching
-export async function connectToMongoDB(): Promise<Db | null> {
-  // Return cached connection if available and not expired
-  if (connection.client && connection.db && !isConnectionExpired()) {
-    connection.lastUsed = Date.now();
-    return connection.db;
-  }
-
-  // Prevent multiple simultaneous connection attempts
-  if (connection.isConnecting) {
-    return new Promise((resolve) => {
-      const checkInterval = setInterval(() => {
-        if (!connection.isConnecting && connection.db) {
-          clearInterval(checkInterval);
-          resolve(connection.db);
-        }
-      }, 100);
-    });
-  }
-
-  connection.isConnecting = true;
-
+function extractDbNameFromUri(uri: string): string | null {
   try {
-    // During build time, return null to prevent connection attempts
-    if (
-      process.env.NEXT_PHASE === 'phase-production-build' ||
-      (process.env.NODE_ENV === 'production' &&
-        process.env.VERCEL_ENV === undefined)
-    ) {
-      console.log('🚫 Skipping MongoDB connection during build phase');
-      connection.isConnecting = false;
-      return null;
-    }
-
-    console.log('🔗 Connecting to MongoDB...');
-    const client = new MongoClient(MONGODB_URI!, {
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
-    });
-
-    await client.connect();
-    const db = client.db(MONGODB_DB!);
-
-    connection.client = client;
-    connection.db = db;
-    connection.lastUsed = Date.now();
-    connection.isConnecting = false;
-
-    // Setup cleanup handlers
-    if (!handlersAdded) {
-      setupCleanupHandlers();
-      handlersAdded = true;
-    }
-
-    console.log('✅ Connected to MongoDB successfully');
-    return db;
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
-    connection.isConnecting = false;
+    const match = uri.match(/\/([^/?]+)(?:\?|$)/);
+    return match ? match[1] : null;
+  } catch {
     return null;
   }
 }
 
-function isConnectionExpired(): boolean {
-  return Date.now() - connection.lastUsed > IDLE_TIMEOUT;
+const MONGODB_DB =
+  process.env.MONGODB_DB ||
+  extractDbNameFromUri(MONGODB_URI) ||
+  'batteryStore';
+
+// ============================================================
+// Global singleton — survives Next.js hot reloads in dev
+// ============================================================
+
+declare global {
+  var _mongoClient: MongoClient | undefined;
+  var _mongoDb: Db | undefined;
+  var _mongoConnecting: Promise<Db | null> | undefined;
 }
 
-function setupCleanupHandlers() {
-  const cleanup = async () => {
-    if (connection.client) {
-      try {
-        await connection.client.close();
-        console.log('🔌 MongoDB connection closed');
-      } catch (error) {
-        console.error('Error closing MongoDB connection:', error);
-      }
-      connection.client = null;
-      connection.db = null;
-    }
-  };
+// ============================================================
+// Main connect function
+// ============================================================
 
-  process.on('SIGINT', cleanup);
-  process.on('SIGTERM', cleanup);
-  process.on('beforeExit', cleanup);
-
-  // Setup idle timeout cleanup
-  if (cleanupTimer) {
-    clearInterval(cleanupTimer);
+export async function connectToMongoDB(): Promise<Db | null> {
+  // 1. Already connected — return immediately
+  if (global._mongoDb) {
+    return global._mongoDb;
   }
 
-  cleanupTimer = setInterval(() => {
-    if (connection.client && isConnectionExpired()) {
-      cleanup();
+  // 2. Connection in progress — wait for it instead of opening a second one
+  if (global._mongoConnecting) {
+    return global._mongoConnecting;
+  }
+
+  // 3. Skip during Next.js build
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('🚫 Skipping MongoDB connection during build phase');
+    return null;
+  }
+
+  // 4. Create new connection
+  global._mongoConnecting = (async () => {
+    try {
+      console.log('🔗 Connecting to MongoDB...');
+
+      const client = new MongoClient(MONGODB_URI, {
+        maxPoolSize: 10,
+        minPoolSize: 2,           // keep at least 2 connections warm
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        connectTimeoutMS: 10000,
+      });
+
+      await client.connect();
+      const db = client.db(MONGODB_DB);
+
+      // Ping to verify connection is actually alive
+      await db.command({ ping: 1 });
+
+      global._mongoClient = client;
+      global._mongoDb = db;
+      global._mongoConnecting = undefined;
+
+      console.log(`✅ MongoDB connected — db: ${MONGODB_DB}`);
+      return db;
+    } catch (error) {
+      console.error('❌ MongoDB connection error:', error);
+      global._mongoConnecting = undefined;
+      return null;
     }
-  }, CONNECTION_TIMEOUT);
+  })();
+
+  return global._mongoConnecting;
 }
 
-// Export connection for direct access if needed
-export { connection as mongoConnection };
+// ============================================================
+// Utilities
+// ============================================================
 
-// Export database name for other modules
-export { MONGODB_DB };
+export async function closeMongoConnection(): Promise<void> {
+  if (global._mongoClient) {
+    try {
+      await global._mongoClient.close();
+      console.log('🔌 MongoDB connection closed');
+    } catch (error) {
+      console.error('Error closing MongoDB connection:', error);
+    } finally {
+      global._mongoClient = undefined;
+      global._mongoDb = undefined;
+      global._mongoConnecting = undefined;
+    }
+  }
+}
 
-// Export utility functions
 export function getConnectionStats() {
   return {
-    isConnected: !!connection.client && !!connection.db,
-    lastUsed: connection.lastUsed,
-    timeSinceLastUsed: connection.lastUsed
-      ? Date.now() - connection.lastUsed
-      : 0,
-    isConnecting: connection.isConnecting,
+    isConnected: !!global._mongoDb,
+    isConnecting: !!global._mongoConnecting,
   };
 }
 
 export function isBuildMode(): boolean {
-  return (
-    process.env.NEXT_PHASE === 'phase-production-build' ||
-    (process.env.NODE_ENV === 'production' &&
-      process.env.VERCEL_ENV === undefined)
-  );
+  return process.env.NEXT_PHASE === 'phase-production-build';
 }
 
-export async function closeMongoConnection() {
-  const cleanup = async () => {
-    if (connection.client) {
-      try {
-        await connection.client.close();
-        console.log('🔌 MongoDB connection closed');
-      } catch (error) {
-        console.error('Error closing MongoDB connection:', error);
-      }
-      connection.client = null;
-      connection.db = null;
-    }
-  };
-
-  if (cleanupTimer) {
-    clearInterval(cleanupTimer);
-    cleanupTimer = null;
-  }
-
-  await cleanup();
-}
+export { MONGODB_DB };

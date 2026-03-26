@@ -1,60 +1,58 @@
 'use server';
-import { executeOperation } from '@/app/libs/executeOperation';
+import { 
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  getCategory,
+  appendSeriesToCategory
+} from '@/actions/categoryActions';
 
 export async function GET() {
   try {
-    const categories = await executeOperation('categories', 'find', {});
-    return Response.json(categories);
+    const result = await getCategories();
+    return Response.json(result);
   } catch (err: any) {
     return Response.json({ error: err.message }, { status: 500 });
   }
 }
 
 export async function POST(req: any, res: any) {
-  const { series, brandName } = await req.json();
   try {
-    // Only check if brand exists since we're sending all series at once
-    const isBrandExists = await executeOperation('categories', 'isExist', {
-      brandName: brandName,
-    });
-
-    if (isBrandExists) {
-      return Response.json({ error: 'Brand already exists' });
-    }
-
-    // Insert new category with all series
-    await executeOperation('categories', 'insertOne', {
-      series: series,
-      brandName: brandName,
-    });
-
-    return Response.json({
-      success: true,
-      message: `Brand ${brandName} with ${series.length} series added successfully`,
-    });
+    const body = await req.json();
+    const result = await createCategory(body);
+    return Response.json(result);
   } catch (err: any) {
-    return Response.json({
-      success: false,
-      error: err.message,
-    });
+    return Response.json({ error: err.message }, { status: 500 });
   }
 }
 
-export async function PATCH(req: any, res: any) {
-  const { id, data } = await req.json();
+export async function PUT(req: any, res: any) {
   try {
-    if (!id || !data) {
-      return Response.json({ error: 'Missing id or data' }, { status: 400 });
+    const { id, ...data } = await req.json();
+    
+    if (!id) {
+      return Response.json({ error: 'Category ID is required' }, { status: 400 });
     }
-    await executeOperation('categories', 'updateOne', {
-      id,
-      data,
-    });
-    return Response.json({
-      success: true,
-      message: 'Category updated successfully',
-    });
+    
+    const result = await updateCategory(id, data);
+    return Response.json(result);
   } catch (err: any) {
-    return Response.json({ success: false, error: err.message });
+    return Response.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: any, res: any) {
+  try {
+    const { id } = await req.json();
+    
+    if (!id) {
+      return Response.json({ error: 'Category ID is required' }, { status: 400 });
+    }
+    
+    const result = await deleteCategory(id);
+    return Response.json(result);
+  } catch (err: any) {
+    return Response.json({ error: err.message }, { status: 500 });
   }
 }

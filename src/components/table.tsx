@@ -139,7 +139,6 @@ export const Table = <TData extends Record<string, any>>({
 
         return searchText.includes(query);
       } catch (error) {
-        console.error('Search filter error:', error);
         return true;
       }
     },
@@ -253,7 +252,7 @@ export const Table = <TData extends Record<string, any>>({
     <div className={`flex w-full flex-col ${tableParentClassName}`}>
       {/* Header with Search and Button */}
       {(enableSearch || showButton || stockCost !== undefined) && (
-        <div className='mt-6 flex items-center justify-between gap-4'>
+        <div className={`mt-6 flex items-center ${enableSearch ? 'justify-between' : 'justify-end'} gap-4`}>
           {enableSearch && (
             <div className={`w-80 ${searchParentClassName}`}>
               <SearchField

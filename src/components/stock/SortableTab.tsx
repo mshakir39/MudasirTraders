@@ -31,8 +31,8 @@ export function SortableTab({ category, isActive, onClick }: SortableTabProps) {
         relative flex flex-shrink-0 cursor-pointer select-none items-center whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-all duration-200
         ${
           isActive
-            ? 'border-blue-500 bg-blue-50 text-blue-600'
-            : 'border-transparent text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+            ? 'border-primary-500 bg-primary-50 text-primary-600'
+            : 'border-transparent text-secondary-500 hover:bg-secondary-50 hover:text-secondary-700'
         }
         ${isDragging ? 'z-10 rotate-2 scale-105 opacity-50' : ''}
       `}
@@ -41,11 +41,11 @@ export function SortableTab({ category, isActive, onClick }: SortableTabProps) {
       <div
         {...attributes}
         {...listeners}
-        className='mr-2 cursor-move rounded p-1 hover:bg-gray-200'
+        className='mr-2 cursor-move rounded p-1 hover:bg-secondary-200'
         title='Drag to reorder'
       >
         <svg
-          className='h-3 w-3 text-gray-400'
+          className='h-3 w-3 text-secondary-400'
           fill='currentColor'
           viewBox='0 0 20 20'
         >
@@ -56,7 +56,7 @@ export function SortableTab({ category, isActive, onClick }: SortableTabProps) {
       <span className='flex-1 text-center'>{category.brandName || ''}</span>
 
       {isDragging && (
-        <div className='absolute inset-0 rounded-t-md bg-blue-100 opacity-50' />
+        <div className='absolute inset-0 rounded-t-md bg-primary-100 opacity-50' />
       )}
     </div>
   );

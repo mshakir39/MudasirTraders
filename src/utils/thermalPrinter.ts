@@ -15,6 +15,10 @@ interface PrinterData {
   additionalPayment?: any[];
   batteriesCountAndWeight?: string;
   batteriesRate?: string;
+  // Consolidation fields for consolidated invoices
+  consolidatedFrom?: string[];
+  consolidatedInvoiceNumbers?: string[];
+  previousAmounts?: number[];
 }
 
 class ThermalPrinter {
@@ -152,7 +156,7 @@ ${receiptContent}
 
     // Header
     content += `<div style="text-align: center; font-size: 14px; font-weight: 900; margin-bottom: 5px;">INVOICE</div>`;
-    content += `<div style="text-align: center; font-size: 13px; font-weight: 700; margin-bottom: 5px;">INV-${data.invoiceNo}</div>`;
+    content += `<div style="text-align: center; font-size: 13px; font-weight: 700; margin-bottom: 5px;">#${data.invoiceNo}</div>`;
     content += line('=');
 
     // Company info - Use HTML div for larger font with logo
@@ -255,12 +259,29 @@ ${receiptContent}
     
     // Create totals row with less right alignment
     const totalLabel = 'TOTAL'.padEnd(descWidth);
-    const qtyTotal = String(totalQuantity).padStart(qtyWidth + 1); // Reduce to 1 extra space
+    const qtyTotal = String(totalQuantity).padStart(qtyWidth + 4); // Reduce to 1 extra space
     const rateEmpty = ''.padStart(rateWidth);
     const totalAmount = String(grandTotal).padStart(totalWidth); // Move 1 space to the left
     
     // Match the exact structure: ${no} ${description} ${qty} ${rate} ${total}
-    content += `   ${totalLabel} ${qtyTotal} ${rateEmpty} ${totalAmount}\n`;
+    content += `${totalLabel} ${qtyTotal} ${rateEmpty} ${totalAmount}\n`;
+
+    // Consolidation details for consolidated invoices
+    if (data.consolidatedFrom && data.consolidatedFrom.length > 0 && data.previousAmounts && data.previousAmounts.length > 0) {
+
+      
+      // Calculate total consolidated amount
+      
+      
+      // Show individual consolidated invoices
+      data.previousAmounts.forEach((amount: number, index: number) => {
+        const invoiceId = data.consolidatedFrom?.[index];
+        const invoiceNo = data.consolidatedInvoiceNumbers?.[index] || `INV-${invoiceId?.slice(-6) || 'N/A'}`;
+        content += createRow(`#${invoiceNo}`, `Rs ${amount}`);
+      });
+      
+
+    }
 
     // Batteries count and weight (if available)
     if (data.batteriesCountAndWeight && data.batteriesRate) {
@@ -268,6 +289,23 @@ ${receiptContent}
         data.batteriesCountAndWeight,
         `Rs ${data.batteriesRate}`
       );
+    }
+
+    // Calculate correct remaining amount for consolidated invoices
+    let actualRemaining = data.remainingAmount;
+    if (data.consolidatedFrom && data.consolidatedFrom.length > 0 && data.previousAmounts && data.previousAmounts.length > 0) {
+      // For consolidated invoices, calculate remaining amount properly
+      const consolidatedAmount = data.previousAmounts.reduce((sum: number, amount: number) => sum + amount, 0);
+      const newItemsAmount = data.products?.reduce((sum: number, product: any) => sum + (product.totalPrice || 0), 0) || 0;
+      const totalAmount = consolidatedAmount + newItemsAmount;
+      
+      const initialReceived = Number(data.receivedAmount) || 0;
+      const additionalPayments = data.additionalPayment || [];
+      const batteriesRate = Number(data.batteriesRate) || 0;
+      const totalAdditionalReceived = additionalPayments.reduce((sum: number, payment: any) => sum + Number(payment.amount), 0);
+      const totalReceived = initialReceived + totalAdditionalReceived;
+      
+      actualRemaining = totalAmount - totalReceived - batteriesRate;
     }
 
     // Payment details
@@ -280,7 +318,7 @@ ${receiptContent}
       data.additionalPayment.forEach((payment: any) => {
         const paymentDate = convertDate(payment.addedDate).dateTime;
         const paymentMethod = payment.paymentMethod
-          ? ` (${payment.paymentMethod.join(' + ')})`
+          ? ` (${payment.paymentMethod.join(' + ')})` 
           : '';
         
         // Create the full text and wrap it if needed
@@ -303,16 +341,16 @@ ${receiptContent}
       });
     }
 
-    if (data.remainingAmount > 0) {
-      content += createRow('BALANCE:', `Rs ${data.remainingAmount}`);
+    if (actualRemaining > 0) {
+      content += createRow('BALANCE:', `Rs ${actualRemaining}`);
     }
 
     // Final total line
     content += line('=');
-    if (data.remainingAmount === 0) {
+    if (actualRemaining === 0) {
       content += createRow('TOTAL:', 'PAID');
     } else {
-      content += createRow('TOTAL REMAINING:', `Rs ${data.remainingAmount}`);
+      content += createRow('TOTAL REMAINING:', `Rs ${actualRemaining}`);
     }
 
     // Payment method

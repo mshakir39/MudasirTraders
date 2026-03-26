@@ -51,7 +51,6 @@ export default function DebugInfo() {
           onClick={() => {
             document.cookie =
               'dashboard-unlocked=true; path=/; max-age=1800; SameSite=Lax';
-            console.log('Manually set cookie');
           }}
           className='rounded bg-green-600 px-2 py-1 text-xs'
         >
@@ -62,7 +61,6 @@ export default function DebugInfo() {
           onClick={() => {
             document.cookie =
               'dashboard-unlocked=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
-            console.log('Manually cleared cookie');
           }}
           className='ml-2 rounded bg-red-600 px-2 py-1 text-xs'
         >

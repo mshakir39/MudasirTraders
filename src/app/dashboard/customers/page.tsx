@@ -1,43 +1,43 @@
-import { Metadata } from 'next';
-import CustomersLayout from '@/layouts/customersLayout';
-import { getCustomers } from '@/getData/getCustomers';
+// src/app/dashboard/customers/page.tsx
+// Use new FSD structure - preserve all functionality
+
+'use client';
+
+import { CustomerManagement } from '@/features/customer-management';
 import CustomersErrorBoundary from '@/components/customers/CustomersErrorBoundary';
+import CustomerInvoicesModal from '@/components/customer/CustomerInvoicesModal';
+import { Customer } from '@/features/customer-management/entities/customer/model/types';
+import { useState } from 'react';
 
-export const dynamic = 'force-dynamic'; // React 19: Better for real-time data
-export const revalidate = 0; // React 19: No caching for latest customer data
+// Client Component to handle event handlers
+export default function CustomersPage() {
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [isInvoicesModalOpen, setIsInvoicesModalOpen] = useState(false);
 
-export const metadata: Metadata = {
-  title: 'Customers | Mudasir Traders',
-  description: 'Manage your customers and their information',
-};
+  const handleViewInvoices = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setIsInvoicesModalOpen(true);
+  };
 
-// React 19: Enhanced server component with better error handling
-async function getCustomersData() {
-  try {
-    const customers = await getCustomers();
-
-    if (!Array.isArray(customers)) {
-      console.error('Invalid customers data format');
-      return [];
-    }
-
-    return customers;
-  } catch (error) {
-    console.error('Error loading customers:', error);
-    return [];
-  }
-}
-
-export default async function CustomersPage() {
-  const customers = await getCustomersData();
+  const handleCloseInvoicesModal = () => {
+    setIsInvoicesModalOpen(false);
+    setSelectedCustomer(null);
+  };
 
   return (
     <CustomersErrorBoundary>
-      <CustomersLayout
-        customers={customers}
-        // React 19: Pass server-side timestamp for cache invalidation
-        serverTimestamp={Date.now()}
+      <CustomerManagement 
+        onViewInvoices={handleViewInvoices}
       />
+      
+      {/* Customer Invoices Modal */}
+      {selectedCustomer && (
+        <CustomerInvoicesModal
+          isOpen={isInvoicesModalOpen}
+          onClose={handleCloseInvoicesModal}
+          customer={selectedCustomer}
+        />
+      )}
     </CustomersErrorBoundary>
   );
 }

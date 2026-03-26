@@ -23,18 +23,26 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .bg-sidebar-gradient {
+    background: linear-gradient(135deg, #4287f5 0%, #021b3b 100%) !important;
+  }
 }
 
+/* Sidebar base styles */
+#sidebar,
+div[id='sidebar'] {
+  background: linear-gradient(135deg, #4287f5 0%, #021b3b 100%) !important;
+}
+
+/* Force sidebar icons white */
+.sidebarItem svg {
+  color: white !important;
+}
+
+/* Sidebar hover state */
 .sidebarItem:hover {
-  background-color: #5b4eea;
-}
-
-.sidebarItem:hover svg {
-  color: white;
-}
-
-.sidebarItem:hover span {
-  color: white;
+  background: rgba(255, 255, 255, 0.15) !important;
 }
 
 input[type='number']::-webkit-inner-spin-button,
@@ -62,7 +70,8 @@ input[type='number'] {
   padding-bottom: 5rem !important;
 }
 
-/* Hide buttons only during PDF generation, not in preview */
 .print-hide {
-  /* Keep buttons visible in preview */
+  /* Keep buttons visible in preview - rule intentionally left for future use */
 }
+
+

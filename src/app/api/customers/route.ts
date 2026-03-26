@@ -1,10 +1,15 @@
-import { executeOperation } from '@/app/libs/executeOperation';
 import { NextRequest, NextResponse } from 'next/server';
+import { 
+  getCustomers,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer
+} from '@/actions/customerActions';
 
 export async function GET(req: NextRequest) {
   try {
-    const customers = await executeOperation('customers', 'findAll');
-    return NextResponse.json(customers);
+    const result = await getCustomers();
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error('Error fetching customers:', error);
     return NextResponse.json(
@@ -31,24 +36,58 @@ export async function POST(req: NextRequest) {
       phoneNumber,
       address: address || '',
       email: email || '',
-      createdAt: new Date(),
     };
 
-    const result = await executeOperation(
-      'customers',
-      'insertOne',
-      customerData
-    );
-
-    return NextResponse.json({
-      success: true,
-      message: 'Customer added successfully',
-      data: result,
-    });
+    const result = await createCustomer(customerData);
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error('Error creating customer:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to create customer' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const { id, ...data } = await req.json();
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Customer ID is required' },
+        { status: 400 }
+      );
+    }
+    
+    const result = await updateCustomer(id, data);
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('Error updating customer:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to update customer' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { id } = await req.json();
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Customer ID is required' },
+        { status: 400 }
+      );
+    }
+    
+    const result = await deleteCustomer(id);
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('Error deleting customer:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to delete customer' },
       { status: 500 }
     );
   }

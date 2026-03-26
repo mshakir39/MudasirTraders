@@ -387,7 +387,7 @@ export default function MeetupsPage() {
         {/* Upload Section */}
         <div className='mx-auto max-w-4xl'>
           <div className='rounded-xl bg-white p-8 shadow-lg'>
-            <h3 className='mb-6 text-2xl font-bold text-gray-900'>
+            <h3 className='mb-6 text-2xl font-bold text-secondary-900'>
               Upload Images
             </h3>
 

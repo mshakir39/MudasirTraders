@@ -32,10 +32,10 @@ const DealerStats: React.FC<DealerStatsProps> = ({
   return (
     <div className='mb-8'>
       {/* Date Range Filter */}
-      <div className='mb-6 rounded-lg border border-gray-200 bg-white p-4'>
+      <div className='mb-6 rounded-lg border border-secondary-200 bg-white p-4'>
         <div className='flex flex-wrap items-center gap-4'>
           <div className='min-w-[200px] flex-1'>
-            <label className='mb-2 block text-sm font-medium text-gray-700'>
+            <label className='mb-2 block text-sm font-medium text-secondary-700'>
               Start Date
             </label>
             <input
@@ -45,11 +45,11 @@ const DealerStats: React.FC<DealerStatsProps> = ({
                 // This will be handled by parent component
                 null
               }
-              className='block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500'
+              className='block w-full rounded-md border border-secondary-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500'
             />
           </div>
           <div className='min-w-[200px] flex-1'>
-            <label className='mb-2 block text-sm font-medium text-gray-700'>
+            <label className='mb-2 block text-sm font-medium text-secondary-700'>
               End Date
             </label>
             <input
@@ -59,7 +59,7 @@ const DealerStats: React.FC<DealerStatsProps> = ({
                 // This will be handled by parent component
                 null
               }
-              className='block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500'
+              className='block w-full rounded-md border border-secondary-300 px-3 py-2 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500'
             />
           </div>
           <div className='mt-6 flex items-center'>
@@ -72,7 +72,7 @@ const DealerStats: React.FC<DealerStatsProps> = ({
           </div>
         </div>
         {(dateRange.startDate || dateRange.endDate) && (
-          <div className='mt-3 text-sm text-gray-600'>
+          <div className='mt-3 text-sm text-secondary-600'>
             Showing statistics for:
             {dateRange.startDate &&
               ` from ${new Date(dateRange.startDate).toLocaleString('en-US', {
@@ -96,72 +96,72 @@ const DealerStats: React.FC<DealerStatsProps> = ({
 
       {/* Overall Statistics */}
       <div className='grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6'>
-        <div className='rounded-lg border border-gray-200 bg-white p-4'>
+        <div className='rounded-lg border border-secondary-200 bg-white p-4'>
           <div className='flex items-center'>
-            <FaUserFriends className='mr-2 text-blue-600' />
+            <FaUserFriends className='mr-2' style={{ color: '#4287f5' }} />
             <div>
-              <div className='text-xs text-gray-500'>Total Dealers</div>
-              <div className='text-lg font-semibold text-gray-900'>
+              <div className='text-xs text-secondary-500'>Total Dealers</div>
+              <div className='text-lg font-semibold text-secondary-900'>
                 {overallStats.totalDealers.toLocaleString()}
               </div>
             </div>
           </div>
         </div>
 
-        <div className='rounded-lg border border-gray-200 bg-white p-4'>
+        <div className='rounded-lg border border-secondary-200 bg-white p-4'>
           <div className='flex items-center'>
-            <FaToggleOn className='mr-2 text-green-600' />
+            <FaToggleOn className='mr-2' style={{ color: '#059669' }} />
             <div>
-              <div className='text-xs text-gray-500'>Active</div>
-              <div className='text-lg font-semibold text-green-600'>
+              <div className='text-xs text-secondary-500'>Active</div>
+              <div className='text-lg font-semibold' style={{ color: '#059669' }}>
                 {overallStats.activeDealers.toLocaleString()}
               </div>
             </div>
           </div>
         </div>
 
-        <div className='rounded-lg border border-gray-200 bg-white p-4'>
+        <div className='rounded-lg border border-secondary-200 bg-white p-4'>
           <div className='flex items-center'>
-            <FaToggleOff className='mr-2 text-orange-600' />
+            <FaToggleOff className='mr-2' style={{ color: '#fbcc5e' }} />
             <div>
-              <div className='text-xs text-gray-500'>Inactive</div>
-              <div className='text-lg font-semibold text-orange-600'>
+              <div className='text-xs text-secondary-500'>Inactive</div>
+              <div className='text-lg font-semibold' style={{ color: '#fbcc5e' }}>
                 {overallStats.inactiveDealers.toLocaleString()}
               </div>
             </div>
           </div>
         </div>
 
-        <div className='rounded-lg border border-gray-200 bg-white p-4'>
+        <div className='rounded-lg border border-secondary-200 bg-white p-4'>
           <div className='flex items-center'>
-            <FaFileInvoice className='mr-2 text-purple-600' />
+            <FaFileInvoice className='mr-2' style={{ color: '#0284c7' }} />
             <div>
-              <div className='text-xs text-gray-500'>Total Bills</div>
-              <div className='text-lg font-semibold text-purple-600'>
+              <div className='text-xs text-secondary-500'>Total Bills</div>
+              <div className='text-lg font-semibold' style={{ color: '#0284c7' }}>
                 {overallStats.totalBills.toLocaleString()}
               </div>
             </div>
           </div>
         </div>
 
-        <div className='rounded-lg border border-gray-200 bg-white p-4'>
+        <div className='rounded-lg border border-secondary-200 bg-white p-4'>
           <div className='flex items-center'>
-            <FaMoneyBillWave className='mr-2 text-green-600' />
+            <FaMoneyBillWave className='mr-2' style={{ color: '#059669' }} />
             <div>
-              <div className='text-xs text-gray-500'>Total Paid</div>
-              <div className='text-lg font-semibold text-green-600'>
+              <div className='text-xs text-secondary-500'>Total Paid</div>
+              <div className='text-lg font-semibold' style={{ color: '#059669' }}>
                 Rs {overallStats.totalPaid.toLocaleString()}
               </div>
             </div>
           </div>
         </div>
 
-        <div className='rounded-lg border border-gray-200 bg-white p-4'>
+        <div className='rounded-lg border border-secondary-200 bg-white p-4'>
           <div className='flex items-center'>
-            <FaMoneyBillWave className='mr-2 text-red-600' />
+            <FaMoneyBillWave className='mr-2' style={{ color: '#dc2626' }} />
             <div>
-              <div className='text-xs text-gray-500'>Outstanding</div>
-              <div className='text-lg font-semibold text-red-600'>
+              <div className='text-xs text-secondary-500'>Outstanding</div>
+              <div className='text-lg font-semibold' style={{ color: '#dc2626' }}>
                 Rs {overallStats.totalOutstanding.toLocaleString()}
               </div>
             </div>

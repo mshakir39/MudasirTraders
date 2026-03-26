@@ -13,7 +13,7 @@ function GoogleSignIn() {
   return (
     <button
       type='button'
-      className='group inline-flex w-full max-w-xs items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+      className='group inline-flex w-full max-w-xs items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
       onClick={handleSignIn}
     >
       <svg

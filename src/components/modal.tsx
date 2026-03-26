@@ -32,52 +32,35 @@ const Modal: FunctionComponent<ModalProps> = ({
   size = 'medium',
   dynamicHeight = false,
 }) => {
-  const handleClose = () => {
-    if (onClose && !preventBackdropClose) {
-      onClose();
-    }
-  };
-
-  // Force close function that bypasses preventBackdropClose
-  const handleForceClose = () => {
-    if (onClose) {
-      onClose();
-    }
-  };
-
-  const defaultPanelClass = `transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all ${sizeClasses[size]}`;
-
+  const defaultPanelClass = `w-full ${sizeClasses[size]} rounded-lg shadow-2xl  bg-white`;
   const heightClass = dynamicHeight ? '' : 'max-h-[90vh]';
 
   return (
-    <Dialog
-      open={isOpen}
-      onClose={preventBackdropClose ? () => {} : onClose || (() => {})}
-      className='relative z-50'
-    >
+    <Dialog open={isOpen} onClose={preventBackdropClose ? () => {} : (onClose || (() => {}))} className="relative z-50">
       {/* The backdrop, rendered as a fixed sibling to the panel container */}
-      <div className='fixed inset-0 bg-black/30' aria-hidden='true' />
-
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+      
       {/* Full-screen container to center the panel */}
-      <div className='fixed inset-0 overflow-y-auto'>
-        {/* Container that centers the panel and handles responsive sizing */}
-        <div className='flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8'>
-          {/* The actual dialog panel with responsive sizing */}
-          <Dialog.Panel
-            className={`${defaultPanelClass} ${dialogPanelClass || ''} ${heightClass} w-full ${dynamicHeight ? 'overflow-y-auto' : 'overflow-y-auto'}`}
-          >
-            {/* Always include DialogTitle for accessibility */}
-            <Dialog.Title className='sr-only'>{title || 'Modal'}</Dialog.Title>
-            {title && (
-              <div className='sticky top-0 z-10 border-b border-gray-200 bg-gray-50 bg-opacity-95 px-4 py-3 backdrop-blur-sm sm:px-6 sm:py-4'>
-                <h3 className='text-base font-medium leading-5 text-gray-900 sm:text-lg sm:leading-6'>
-                  {title}
-                </h3>
-              </div>
-            )}
-            <div className={`${parentClass || 'p-4 sm:p-6'}`}>{children}</div>
-          </Dialog.Panel>
-        </div>
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        {/* The actual dialog panel */}
+        <Dialog.Panel className={`${defaultPanelClass} ${dialogPanelClass || ''} ${heightClass}`}>
+          {/* Header */}
+          {title && (
+            <div
+              className="border-b border-gray-200 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-8 shadow-lg"
+              style={{background: 'linear-gradient(to right, rgb(30, 58, 138), rgb(29, 78, 216), rgb(37, 99, 235))'}}
+            >
+              <Dialog.Title className='text-base font-bold leading-5 text-white sm:text-xl sm:leading-6 drop-shadow-lg' style={{color: 'white !important'}}>
+                {title}
+              </Dialog.Title>
+            </div>
+          )}
+          
+          {/* Content */}
+          <div className={`${parentClass || 'p-4 sm:p-6'} ${dynamicHeight ? 'overflow-y-auto' : 'overflow-y-auto'}`}>
+            {children}
+          </div>
+        </Dialog.Panel>
       </div>
     </Dialog>
   );

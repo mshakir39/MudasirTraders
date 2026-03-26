@@ -71,12 +71,6 @@ Questions? Call us at:
 
   const handleWhatsAppClick = async () => {
     try {
-      // Debug: Log the invoice data structure
-      console.log('Invoice data for WhatsApp:', invoiceData);
-      console.log(
-        'Invoice ID:',
-        invoiceData._id || invoiceData.id || 'No ID found'
-      );
 
       // Generate PDF and get it as base64 or blob
       const invoiceModal = document.querySelector(
@@ -127,7 +121,7 @@ Questions? Call us at:
     >
       <FaWhatsapp
         size={size}
-        color='#25D366'
+        color='var(--color-whatsapp)'
         style={{
           transition: 'all 0.3s ease',
         }}

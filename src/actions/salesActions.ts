@@ -111,7 +111,6 @@ export async function getSalesByDateRange(startDate: Date, endDate: Date) {
 
     return { success: true, data: filteredSales };
   } catch (error: any) {
-    console.error('Error fetching sales by date range:', error);
     return { success: false, error: error.message };
   }
 }
@@ -134,7 +133,6 @@ export async function getSalesByCustomer(customerName: string) {
 
     return { success: true, data: filteredSales };
   } catch (error: any) {
-    console.error('Error fetching sales by customer:', error);
     return { success: false, error: error.message };
   }
 }

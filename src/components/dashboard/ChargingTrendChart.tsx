@@ -69,7 +69,7 @@ export const ChargingTrendChart: React.FC<ChargingTrendChartProps> = ({
 
       <ResponsiveContainer width='100%' height={300}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray='3 3' stroke='#e5e7eb' />
+          <CartesianGrid strokeDasharray='3 3' stroke='var(--color-gray-200)' />
           <XAxis
             dataKey='date'
             tick={{ fontSize: 12 }}
@@ -96,17 +96,17 @@ export const ChargingTrendChart: React.FC<ChargingTrendChartProps> = ({
             yAxisId='revenue'
             type='monotone'
             dataKey='chargingRevenue'
-            stroke='#10b981'
+            stroke='var(--color-success-500)'
             strokeWidth={2}
-            dot={{ fill: '#10b981', r: 4 }}
+            dot={{ fill: 'var(--color-success-500)', r: 4 }}
           />
           <Line
             yAxisId='services'
             type='monotone'
             dataKey='chargingServices'
-            stroke='#3b82f6'
+            stroke='var(--color-primary-500)'
             strokeWidth={2}
-            dot={{ fill: '#3b82f6', r: 4 }}
+            dot={{ fill: 'var(--color-primary-500)', r: 4 }}
           />
         </LineChart>
       </ResponsiveContainer>

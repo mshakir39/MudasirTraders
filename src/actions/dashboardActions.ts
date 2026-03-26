@@ -306,6 +306,147 @@ export async function unlockDashboard() {
   redirect('/');
 }
 
+export async function calculateProfitForDateRange(startDate: Date, endDate: Date) {
+  try {
+    const { connectToMongoDB } = require('@/app/libs/connectToMongoDB');
+    const db = await connectToMongoDB();
+    if (!db) {
+      throw new Error('Failed to connect to database');
+    }
+
+    // Get sales for date range
+    const salesCollection = db.collection('sales');
+    const sales = await salesCollection
+      .find({
+        $or: [
+          { date: { $gte: startDate, $lte: endDate } },
+          { createdAt: { $gte: startDate, $lte: endDate } },
+          { saleDate: { $gte: startDate, $lte: endDate } }
+        ]
+      })
+      .toArray();
+
+    // Get stock history collection
+    const stockHistoryCollection = db.collection('stockHistory');
+
+    let totalRevenue = 0;
+    let totalCost = 0;
+    let totalProfit = 0;
+    let profitDetails = [];
+
+    // Calculate profit for each sale
+    for (const sale of sales) {
+      const saleDate = new Date(sale.date || sale.createdAt || sale.saleDate);
+      
+      // Skip charging services and scrap batteries
+      if (sale.isChargingService || sale.isScrapBattery) {
+        continue;
+      }
+      
+      // Process each product in the sale
+      if (sale.products && Array.isArray(sale.products)) {
+        for (const product of sale.products) {
+          const brandName = product.brandName;
+          const series = product.series;
+          const quantity = Number(product.quantity) || 0;
+          const sellingPrice = Number(product.productPrice) || 0;
+
+          // Skip invalid products
+          if (!brandName || !series || quantity === 0 || sellingPrice === 0) {
+            continue;
+          }
+
+          // Get historical cost for this sale date
+          const historicalCost = await getHistoricalCost(
+            stockHistoryCollection,
+            brandName,
+            series,
+            saleDate
+          );
+
+          const saleRevenue = sellingPrice * quantity;
+          const saleCost = historicalCost * quantity;
+          const saleProfit = saleRevenue - saleCost;
+
+          totalRevenue += saleRevenue;
+          totalCost += saleCost;
+          totalProfit += saleProfit;
+
+          profitDetails.push({
+            saleDate,
+            brandName,
+            series,
+            quantity,
+            sellingPrice,
+            historicalCost,
+            saleRevenue,
+            saleCost,
+            saleProfit
+          });
+        }
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        totalRevenue,
+        totalCost,
+        totalProfit,
+        profitMargin: totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0,
+        saleCount: sales.length,
+        profitDetails
+      }
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+async function getHistoricalCost(
+  stockHistoryCollection: any,
+  brandName: string,
+  series: string,
+  saleDate: Date
+): Promise<number> {
+  try {
+    // Find the most recent stock history entry before or on the sale date
+    const historyEntry = await stockHistoryCollection
+      .find({
+        brandName,
+        series,
+        historyDate: { $lte: saleDate }
+      })
+      .sort({ historyDate: -1 })
+      .limit(1)
+      .toArray();
+
+    if (historyEntry.length > 0) {
+      // Return the cost from that historical entry
+      return Number(historyEntry[0].newCost) || 0;
+    }
+
+    // If no history found, try to get current stock cost as fallback
+    const { connectToMongoDB } = require('@/app/libs/connectToMongoDB');
+    const db = await connectToMongoDB();
+    const stockCollection = db.collection('stock');
+    
+    const currentStock = await stockCollection.findOne({
+      brandName
+    });
+
+    if (currentStock && currentStock.seriesStock) {
+      const seriesData = currentStock.seriesStock.find((s: any) => s.series === series);
+      return Number(seriesData?.productCost) || 0;
+    }
+
+    return 0;
+  } catch (error) {
+    console.error('Error getting historical cost:', error);
+    return 0;
+  }
+}
+
 export async function lockDashboard() {
   const cookieStore = await cookies();
   cookieStore.delete('dashboard-unlocked');

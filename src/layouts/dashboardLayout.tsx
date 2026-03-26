@@ -65,6 +65,13 @@ const InventoryByBrandChartLazy = dynamic<InventoryByBrandChartProps>(
     ),
   { ssr: false, loading: () => null }
 );
+const ProfitAnalysisLazy = dynamic(
+  () =>
+    import('@/components/dashboard/ProfitAnalysis').then(
+      (m) => m.default
+    ),
+  { ssr: false, loading: () => null }
+);
 import { lockDashboard } from '@/actions/dashboardActions';
 
 interface DateRange {
@@ -331,37 +338,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   };
 
   return (
-    <div className='min-h-screen bg-gray-50 p-6'>
+    <div className='min-h-screen p-0 py-6 md:p-6'>
       <DashboardHeader onLock={handleLockDashboard} />
 
       <AlertsBanner alerts={stats.alerts} />
 
       {/* Quick Analytics Section */}
-      <div className='mb-8 rounded-xl border border-gray-200 bg-white p-4 shadow-sm'>
-        <h3 className='mb-4 text-lg font-semibold text-gray-900'>
+      <div className='mb-8 rounded-xl   bg-white p-4 shadow-sm'>
+        <h3 className='mb-4 text-lg font-semibold text-secondary-900'>
           Quick Analytics
         </h3>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <Link
             href='/dashboard/charging-analytics'
-            className={`flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-3 transition-colors ${
+            className={`flex items-center gap-2 rounded-lg border border-secondary-300 px-4 py-3 transition-colors ${
               pathname === '/dashboard/charging-analytics'
-                ? 'bg-purple-100 text-purple-800'
-                : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                ? 'bg-accent-100 text-accent-800'
+                : 'bg-accent-50 text-accent-700 hover:bg-accent-100'
             }`}
           >
-            <MdElectricalServices className='h-5 w-5' />
+            <MdElectricalServices className='h-5 w-5' style={{ color: '#0ea5e9' }} />
             <span className='font-medium'>Charging Analytics</span>
           </Link>
           <Link
             href='/dashboard'
-            className={`flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-3 transition-colors ${
+            className={`flex items-center gap-2 rounded-lg border border-secondary-300 px-4 py-3 transition-colors ${
               pathname === '/dashboard'
-                ? 'bg-blue-100 text-blue-800'
-                : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                ? 'bg-primary-100 text-primary-800'
+                : 'bg-primary-50 text-primary-700 hover:bg-primary-100'
             }`}
           >
-            <MdDashboard className='h-5 w-5' />
+            <MdDashboard className='h-5 w-5' style={{ color: '#4287f5' }} />
             <span className='font-medium'>Main Dashboard</span>
           </Link>
         </div>
@@ -379,7 +386,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       <StatsGrid stats={stats} revenueDateRange={revenueDateRange} />
 
       {/* Charts Section */}
-      <div className='mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2'>
+      <div className='mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:min-h-[500px]'>
         <TopSellingProductsLazy
           products={stats.topSellingProducts}
           dateRange={topProductsDateRange}
@@ -394,6 +401,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Inventory by Brand Chart */}
       <div className='mb-8'>
         <InventoryByBrandChartLazy data={chartData.inventoryByBrand} />
+      </div>
+
+      {/* Profit Analysis Section */}
+      <div className='mb-8'>
+        <ProfitAnalysisLazy />
       </div>
     </div>
   );

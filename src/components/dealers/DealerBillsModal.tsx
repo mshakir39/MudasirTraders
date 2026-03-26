@@ -111,9 +111,7 @@ const DealerBillsModal: React.FC<DealerBillsModalProps> = ({
         // replacementReason: latestOriginalBill ? 'new_invoice' : undefined,
       };
 
-      console.log('Sending bill payload:', billPayload);
       const response = await POST('api/dealer-bills', billPayload);
-      console.log('Bill creation response:', response);
 
       if (response.error) {
         // Rollback: Delete uploaded image from Cloudinary
@@ -126,13 +124,10 @@ const DealerBillsModal: React.FC<DealerBillsModalProps> = ({
             body: JSON.stringify({ publicId: uploadData.publicId }),
           });
           if (deleteResponse.ok) {
-            console.log('Rollback: Image deleted from Cloudinary');
+            // Image deleted from Cloudinary
           }
         } catch (rollbackError) {
-          console.error(
-            'Rollback failed: Could not delete image',
-            rollbackError
-          );
+          // Rollback failed: Could not delete image
         }
 
         toast.error(response.error);
@@ -306,16 +301,7 @@ const DealerBillsModal: React.FC<DealerBillsModalProps> = ({
       ) : (
         <div className='space-y-4'>
           {bills
-            .filter((bill) => {
-              const shouldShow = !showCurrentOnly || bill.isCurrent;
-              console.log('Filtering bill:', {
-                billId: bill.id?.slice(-8),
-                isCurrent: bill.isCurrent,
-                showCurrentOnly: showCurrentOnly,
-                shouldShow: shouldShow,
-              });
-              return shouldShow;
-            })
+            .filter((bill) => !showCurrentOnly || bill.isCurrent)
             .map((bill) => (
               <div
                 key={bill.id}
@@ -517,16 +503,7 @@ const DealerBillsModal: React.FC<DealerBillsModalProps> = ({
       {/* All Payments Section */}
       {bills.length > 1 &&
         bills
-          .filter((bill) => {
-            const shouldInclude = !showCurrentOnly || bill.isCurrent;
-            console.log('All Payments filter:', {
-              billId: bill.id?.slice(-8),
-              isCurrent: bill.isCurrent,
-              showCurrentOnly: showCurrentOnly,
-              shouldInclude: shouldInclude,
-            });
-            return shouldInclude;
-          })
+          .filter((bill) => !showCurrentOnly || bill.isCurrent)
           .some((bill: any) => bill.payments?.length > 0) && (
           <div className='mt-8'>
             <h3 className='mb-4 text-lg font-semibold text-gray-900'>
@@ -534,16 +511,7 @@ const DealerBillsModal: React.FC<DealerBillsModalProps> = ({
             </h3>
             <div className='space-y-3'>
               {bills
-                .filter((bill) => {
-                  const shouldInclude = !showCurrentOnly || bill.isCurrent;
-                  console.log('Payment list filter:', {
-                    billId: bill.id?.slice(-8),
-                    isCurrent: bill.isCurrent,
-                    showCurrentOnly: showCurrentOnly,
-                    shouldInclude: shouldInclude,
-                  });
-                  return shouldInclude;
-                })
+                .filter((bill) => !showCurrentOnly || bill.isCurrent)
                 .flatMap(
                   (bill: any) =>
                     bill.payments?.map((payment: any) => ({

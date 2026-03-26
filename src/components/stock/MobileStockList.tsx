@@ -22,7 +22,7 @@ export function MobileStockList({
   if (!tableData || tableData.length === 0) {
     return (
       <div className='p-8 text-center'>
-        <div className='mb-2 text-gray-400'>
+        <div className='mb-2 text-secondary-400'>
           <svg
             className='mx-auto h-12 w-12'
             fill='none'
@@ -37,10 +37,10 @@ export function MobileStockList({
             />
           </svg>
         </div>
-        <h3 className='mb-1 text-sm font-medium text-gray-900'>
+        <h3 className='mb-1 text-sm font-medium text-secondary-900'>
           No stock items
         </h3>
-        <p className='text-sm text-gray-500'>
+        <p className='text-sm text-secondary-500'>
           Get started by adding your first stock item.
         </p>
       </div>
@@ -48,15 +48,15 @@ export function MobileStockList({
   }
 
   return (
-    <div className='divide-y divide-gray-200'>
+    <div className='divide-y divide-secondary-200'>
       {tableData.map((row, index) => (
         <div key={index} className='p-4'>
           <div className='flex items-center justify-between'>
             <div className='flex-1'>
-              <h3 className='text-sm font-medium text-gray-900'>
+              <h3 className='text-sm font-medium text-secondary-900'>
                 {row.series}
               </h3>
-              <div className='mt-1 flex items-center gap-4 text-xs text-gray-500'>
+              <div className='mt-1 flex items-center gap-4 text-xs text-secondary-500'>
                 <span>Stock: {row.inStock}</span>
                 <span>
                   Cost: PKR {Number(row.productCost)?.toLocaleString()}
@@ -66,7 +66,7 @@ export function MobileStockList({
             <div className='flex items-center gap-2'>
               <button
                 onClick={() => onEdit(row)}
-                className='touch-manipulation rounded-lg bg-gray-100 p-2 text-gray-600 hover:bg-gray-200'
+                className='touch-manipulation rounded-lg bg-primary-50 p-2 text-primary-600 hover:bg-primary-100'
               >
                 <svg
                   className='h-4 w-4'
@@ -84,7 +84,7 @@ export function MobileStockList({
               </button>
               <button
                 onClick={() => onHistory(currentBrandName, row.series)}
-                className='touch-manipulation rounded-lg bg-blue-100 p-2 text-blue-600 hover:bg-blue-200'
+                className='touch-manipulation rounded-lg bg-accent-50 p-2 text-accent-600 hover:bg-accent-100'
                 title='View History'
               >
                 <FaHistory className='h-4 w-4' />

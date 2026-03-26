@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Modal from '@/components/modal';
-import InvoiceGrid from '@/components/invoice/InvoiceGrid';
-import ProductDetailModal from '@/components/invoice/ProductDetailModal';
-import EditInvoiceModal from '@/components/invoice/EditInvoiceModal';
-import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal';
+import { InvoicePreviewModal } from '@/features/invoice-management/ui/components';
+import { CustomerInvoiceDataGrid } from '@/features/customer-management';
+import ProductDetailModal from '@/components/archive/ProductDetailModal';
+import EditInvoiceModal from '@/components/archive/EditInvoiceModal';
 import { toast } from 'react-toastify';
 import { PATCH } from '@/utils/api';
-import { useAccordionData } from '@/components/invoice/useAccordionData';
+import { useAccordionData } from '@/features/invoice-management/lib/useAccordionData';
 
 interface CustomerInvoicesModalProps {
   isOpen: boolean;
@@ -78,22 +78,46 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
     }
   };
 
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/invoice/${invoiceId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        toast.success('Invoice deleted successfully');
+        await fetchCustomerInvoices();
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData.error || 'Failed to delete invoice');
+      }
+    } catch (error) {
+      toast.error('Failed to delete invoice');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCloseSubModal = () => {
     setIsSubModalOpen(false);
     setSubModalType('');
     setModalData(null);
   };
-
   // Calculate summary statistics
   const totalInvoices = customerInvoices.length;
   const totalAmount = customerInvoices.reduce((sum, invoice) => {
-    const invoiceTotal =
-      invoice.products?.reduce(
-        (productSum: number, product: any) =>
-          productSum + (product.totalPrice || 0),
-        0
-      ) || 0;
-    return sum + invoiceTotal;
+    // Calculate total from products (same logic as data table)
+    const productTotal = invoice.products?.reduce(
+      (sum: number, product: any) => {
+        // Try different possible price fields - prioritize productPrice
+        const productPrice = product.productPrice || product.totalPrice || product.price || 0;
+        const quantity = product.quantity || 1;
+        return sum + (Number(productPrice) * Number(quantity));
+      },
+      0
+    ) || 0;
+    return sum + productTotal;
   }, 0);
   const totalRemaining = customerInvoices.reduce(
     (sum, invoice) => sum + (invoice.remainingAmount || 0),
@@ -128,7 +152,11 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
               <div>
                 <span className='font-medium text-gray-600'>Total Amount:</span>
                 <div className='text-lg font-bold text-green-600'>
-                  Rs {totalAmount.toLocaleString()}
+                  Rs {Number(totalAmount || 0).toLocaleString()}
+                  {/* Debug: Show raw value */}
+                  <span className='text-xs text-gray-500 ml-2'>
+                    (raw: {totalAmount})
+                  </span>
                 </div>
               </div>
               <div>
@@ -158,30 +186,24 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
               <div className='text-gray-500'>Loading customer invoices...</div>
             </div>
           ) : (
-            <InvoiceGrid
+            <CustomerInvoiceDataGrid
               invoices={customerInvoices}
-              onCreateInvoice={() => {}}
-              showCreateButton={false}
-              onViewProducts={(data) => {
-                setModalData(data);
-                setSubModalType('productDetail');
-                setIsSubModalOpen(true);
-              }}
-              onPreview={(data) => {
+              onPreview={(data: any) => {
                 setModalData(data);
                 setSubModalType('preview');
                 setIsSubModalOpen(true);
               }}
-              onEditInvoice={(data) => {
+              onEditInvoice={(data: any) => {
                 setModalData(data);
-                setSubModalType('editInvoice');
+                setSubModalType('edit');
                 setIsSubModalOpen(true);
               }}
-              onAddPayment={(data) => {
-                setModalData({ ...data, isPaymentOnly: true });
-                setSubModalType('addPayment');
+              onAddPayment={(data: any) => {
+                setModalData(data);
+                setSubModalType('payment');
                 setIsSubModalOpen(true);
               }}
+              onDeleteInvoice={handleDeleteInvoice}
             />
           )}
 

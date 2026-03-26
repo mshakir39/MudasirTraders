@@ -54,7 +54,7 @@ const RsuiteTable: React.FC<Props<any>> = ({
             value={search}
             onChange={handleSearch}
           />
-          <FaSearch className='absolute bottom-3 right-3 text-[#5b4eea]' />
+          <FaSearch className='absolute bottom-3 right-3 text-primary-500' />
         </div>
         {showButton && (
           <Button

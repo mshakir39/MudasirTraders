@@ -49,8 +49,8 @@ const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
             <div
               className={`flex h-5 w-5 cursor-pointer items-center justify-center rounded border-2 transition-colors ${
                 isChecked
-                  ? 'border-blue-600 bg-blue-600 text-white'
-                  : 'border-gray-300 bg-white hover:border-blue-400'
+                  ? 'border-blue-900 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 text-white'
+                  : 'border-gray-300 bg-white hover:border-blue-600'
               }`}
             >
               {isChecked && (

@@ -106,12 +106,15 @@ const SalesDataGrid: React.FC<SalesDataGridProps> = ({
   );
 
   return (
-    <div className='rounded-lg border border-gray-200 bg-white'>
+    <div className='rounded-lg  bg-white'>
       <Table
         data={filteredSales}
         columns={columns}
         enableSearch={true}
         searchPlaceholder='Search sales...'
+        enableRowVirtualization={true}
+        tableBodyHeight={600}
+        minVisibleRows={15}
       />
     </div>
   );

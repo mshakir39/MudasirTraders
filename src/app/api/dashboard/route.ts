@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 import { NextRequest } from 'next/server';
+import logger from '@/utils/logger';
 
 interface SeriesStockItem {
   series: string;
@@ -26,15 +27,50 @@ const toNumber = (value: any): number => {
 const validateSoldCount = (soldCount: any): number => {
   const num = toNumber(soldCount);
   if (num < 0) {
-    console.warn(`⚠️ Negative soldCount detected: ${soldCount}, setting to 0`);
+    logger.warning(`⚠️ Negative soldCount detected: ${soldCount}, setting to 0`);
     return 0;
   }
   return num;
 };
 
+// Series normalization function for consistent matching
+const normalizeSeriesForMatching = (series: string): string => {
+  return String(series || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')     // Normalize multiple spaces to single space
+    .replace(/\s*\(\s*/g, ' (') // Add space before opening parenthesis
+    .replace(/\s*\)\s*/g, ') ') // Add space after closing parenthesis
+    .replace(/\s*\/\s*/g, '/') // Fix spaces around slashes
+    .replace(/\s+/g, ' ')     // Clean up any new multiple spaces
+    .replace(/thin\/thick/g, 'thinthick') // Handle Thin/Thick vs ThinThick
+    .replace(/\s+/g, ' ')     // Clean up any new multiple spaces
+    .trim();
+};
+
+// Enhanced normalization for sales data (handles brand prefix)
+const normalizeSalesSeries = (brandName: string, series: string): string => {
+  let cleanSeries = series;
+  
+  // Remove brand prefix if present
+  if (brandName && cleanSeries.toLowerCase().startsWith(brandName.toLowerCase())) {
+    cleanSeries = cleanSeries.substring(brandName.length).trim();
+  }
+  
+  return String(cleanSeries || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')     // Normalize multiple spaces to single space
+    .replace(/\s*\(\s*/g, ' (') // Add space before opening parenthesis
+    .replace(/\s*\)\s*/g, ') ') // Add space after closing parenthesis
+    .replace(/\s*\/\s*/g, '/') // Fix spaces around slashes
+    .replace(/\s+/g, ' ')     // Clean up any new multiple spaces
+    .replace(/thin\/thick/g, 'thinthick') // Handle Thin/Thick vs ThinThick
+    .replace(/\s+/g, ' ')     // Clean up any new multiple spaces
+    .trim();
+};
+
 // Helper function to verify sales-stock synchronization
 const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
-  console.log('🔍 Starting sales-stock sync verification...');
+  logger.debug('🔍 Starting sales-stock sync verification...');
 
   const syncIssues: any[] = [];
   const syncSummary = {
@@ -50,12 +86,16 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
   stockData.forEach((stockDoc) => {
     if (stockDoc.seriesStock && Array.isArray(stockDoc.seriesStock)) {
       stockDoc.seriesStock.forEach((series: any) => {
-        const key = `${stockDoc.brandName}-${series.series}`;
-        stockMap.set(key, {
+        const normalizedSeries = normalizeSeriesForMatching(series.series);
+        const normalizedKey = `${stockDoc.brandName}-${normalizedSeries}`;
+        
+        // Store only normalized key to avoid duplicates
+        stockMap.set(normalizedKey, {
           brandName: stockDoc.brandName,
           series: series.series,
           stockSoldCount: validateSoldCount(series.soldCount),
           inStock: toNumber(series.inStock),
+          normalizedSeries: normalizedSeries,
         });
       });
     }
@@ -71,13 +111,15 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
         const series = product.series || product.batteryDetails?.name || '';
 
         if (brandName && series) {
-          const key = `${brandName}-${series}`;
+          const normalizedSeries = normalizeSalesSeries(brandName, series);
+          const normalizedKey = `${brandName}-${normalizedSeries}`;
           const quantity = toNumber(product.quantity);
 
-          if (salesMap.has(key)) {
-            salesMap.set(key, salesMap.get(key) + quantity);
+          // Store only normalized key to avoid duplicates
+          if (salesMap.has(normalizedKey)) {
+            salesMap.set(normalizedKey, salesMap.get(normalizedKey) + quantity);
           } else {
-            salesMap.set(key, quantity);
+            salesMap.set(normalizedKey, quantity);
           }
         }
       });
@@ -85,15 +127,17 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
   });
 
   // Compare stock soldCount with actual sales
-  stockMap.forEach((stockItem, key) => {
+  stockMap.forEach((stockItem, normalizedKey) => {
     syncSummary.totalProducts++;
-    const actualSales = salesMap.get(key) || 0;
+    
+    // Use normalized key directly since we only store normalized keys
+    const actualSales = salesMap.get(normalizedKey) || 0;
     const stockSoldCount = stockItem.stockSoldCount;
 
     if (Math.abs(actualSales - stockSoldCount) > 0) {
       syncSummary.mismatchedProducts++;
       syncIssues.push({
-        product: key,
+        product: normalizedKey,
         brandName: stockItem.brandName,
         series: stockItem.series,
         stockSoldCount,
@@ -106,20 +150,23 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
             : 'Stock overcounted',
       });
 
-      console.log(
-        `❌ Sync issue: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}, Diff: ${actualSales - stockSoldCount}`
+      logger.warning(
+        `❌ Sync issue: ${normalizedKey} - Sold Count: ${stockSoldCount}, Sales: ${actualSales}, Diff: ${actualSales - stockSoldCount}`
       );
     } else {
       syncSummary.syncedProducts++;
-      console.log(
-        `✅ Synced: ${key} - Stock: ${stockSoldCount}, Sales: ${actualSales}`
+      logger.success(
+        `✅ Synced: ${normalizedKey} - Sold Count: ${stockSoldCount}, Sales: ${actualSales}`
       );
     }
   });
 
   // Check for products in sales but not in stock
   salesMap.forEach((salesCount, key) => {
-    if (!stockMap.has(key)) {
+    // Use only normalized keys for consistent matching
+    const stockItem = stockMap.get(key);
+    
+    if (!stockItem) {
       syncSummary.missingInStock++;
       syncIssues.push({
         product: key,
@@ -128,7 +175,7 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
         difference: salesCount,
         issue: 'Product in sales but missing from stock',
       });
-      console.log(`❌ Missing in stock: ${key} - Sales: ${salesCount}`);
+      logger.warning(`❌ Missing in stock: ${key} - Sales: ${salesCount}`);
     }
   });
 
@@ -146,14 +193,14 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
         inStock: stockItem.inStock,
         issue: 'Product in stock with soldCount but no sales records',
       });
-      console.log(
+      logger.warning(
         `❌ Missing in sales: ${key} - Stock soldCount: ${stockItem.stockSoldCount}`
       );
     }
   });
 
-  console.log('📊 Sales-Stock Sync Summary:', syncSummary);
-  console.log(`🔍 Found ${syncIssues.length} sync issues`);
+  logger.info('📊 Sales-Stock Sync Summary', syncSummary);
+  logger.info(`🔍 Found ${syncIssues.length} sync issues`);
 
   return {
     syncSummary,
@@ -164,10 +211,10 @@ const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔄 Starting dashboard data fetch...');
+    logger.info('🔄 Starting dashboard data fetch...');
     const db = await connectToMongoDB();
     if (!db) {
-      console.error('❌ Failed to connect to MongoDB');
+      logger.error('❌ Failed to connect to MongoDB');
       return NextResponse.json(
         { error: 'Database connection failed' },
         { status: 500 }
@@ -183,20 +230,58 @@ export async function GET(request: NextRequest) {
     const salesTrendStart = searchParams.get('salesTrendStart');
     const salesTrendEnd = searchParams.get('salesTrendEnd');
 
-    console.log('✅ Connected to MongoDB, fetching essential data...');
+    logger.success('✅ Connected to MongoDB, fetching essential data...');
 
     // Fetch collections
-    const [stockDocs, salesDocs, invoicesDocs, customers] = await Promise.all([
+    const [initialStockDocs, salesDocs, invoicesDocs, customers] = await Promise.all([
       db.collection('stock').find().toArray(),
       db.collection('sales').find().toArray(),
       db.collection('invoices').find().toArray(),
       db.collection('customers').find().toArray(),
     ]);
 
-    const stock = stockDocs as unknown as StockItem[];
+    let stockDocs = initialStockDocs;
+    let stock = stockDocs as unknown as StockItem[];
 
     // VERIFY SALES-STOCK SYNCHRONIZATION
-    const syncVerification = verifySalesStockSync(salesDocs, stock);
+    let syncVerification = verifySalesStockSync(salesDocs, stock);
+    let reconciliationResult: any = null;
+
+    if (syncVerification.syncIssues.length > 0) {
+      try {
+        const origin = request.nextUrl.origin;
+        const fixResponse = await fetch(`${origin}/api/dashboard/fix-sync`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          cache: 'no-store',
+        });
+
+        if (fixResponse.ok) {
+          reconciliationResult = await fixResponse.json();
+
+          if (reconciliationResult?.updated > 0) {
+            logger.info(
+              `🔧 Reconciled ${reconciliationResult.updated} stock records. Refreshing dashboard data...`
+            );
+
+            stockDocs = await db.collection('stock').find().toArray();
+            stock = stockDocs as unknown as StockItem[];
+            syncVerification = verifySalesStockSync(salesDocs, stock);
+          } else {
+            logger.info('ℹ️ Fix-sync API returned no updates.');
+          }
+        } else {
+          const errorText = await fixResponse.text();
+          logger.error(
+            `❌ Failed to reconcile stock via fix-sync API. Status: ${fixResponse.status}. Body: ${errorText}`
+          );
+        }
+      } catch (error) {
+        logger.error('❌ Error calling fix-sync API:', error);
+      }
+    }
 
     // INVENTORY METRICS
     let totalProducts = 0;
@@ -318,20 +403,20 @@ export async function GET(request: NextRequest) {
         })
       : [];
 
-    console.log(
+    logger.debug(
       `📅 Top products date range: ${topProductsDateRange!.start.toISOString()} to ${topProductsDateRange!.end.toISOString()}`
     );
-    console.log(
+    logger.debug(
       `📊 Total sales in date range: ${filteredSalesForTopProducts.length}`
     );
-    console.log(
+    logger.debug(
       `📊 Total sales with products: ${filteredSalesForTopProducts.filter((sale) => Array.isArray(sale.products) && sale.products.length > 0).length}`
     );
 
     // Debug sales data structure
     if (filteredSalesForTopProducts.length > 0) {
       const sampleSale = filteredSalesForTopProducts[0];
-      console.log('📊 Sample sale structure:', {
+      logger.debug('📊 Sample sale structure:', {
         customerName: sampleSale.customerName,
         date: sampleSale.date,
         productsCount: sampleSale.products?.length || 0,
@@ -358,15 +443,18 @@ export async function GET(request: NextRequest) {
 
           // Only count if we have valid brand and series
           if (brandName && series && series !== 'Unknown') {
-            const key = `${brandName}-${series}`;
+            const normalizedSeries = normalizeSalesSeries(brandName, series);
+            const normalizedKey = `${brandName}-${normalizedSeries}`;
             const quantity = toNumber(product.quantity);
-            actualSalesCount[key] = (actualSalesCount[key] || 0) + quantity;
+            
+            // Store only normalized key to avoid duplicates
+            actualSalesCount[normalizedKey] = (actualSalesCount[normalizedKey] || 0) + quantity;
 
-            console.log(
-              `📊 Sales count for ${key}: ${quantity} (total: ${actualSalesCount[key]})`
+            logger.debug(
+              `📊 Sales count for ${brandName}-${series}: ${quantity} (total: ${actualSalesCount[normalizedKey]})`
             );
           } else {
-            console.log(
+            logger.warning(
               `⚠️ Skipping invalid product: brandName="${brandName}", series="${series}"`
             );
           }
@@ -374,22 +462,22 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log('📊 Sales count summary:');
+    logger.debug('📊 Sales count summary:');
     const salesKeys = Object.keys(actualSalesCount);
-    console.log(`📊 Total unique products sold: ${salesKeys.length}`);
+    logger.debug(`📊 Total unique products sold: ${salesKeys.length}`);
     salesKeys.slice(0, 10).forEach((key) => {
-      console.log(`📊 ${key}: ${actualSalesCount[key]} units sold`);
+      logger.debug(`📊 ${key}: ${actualSalesCount[key]} units sold`);
     });
 
-    console.log('📦 Stock data structure check:');
-    console.log(`📦 Total stock documents: ${stock.length}`);
+    logger.debug('📦 Stock data structure check:');
+    logger.debug(`📦 Total stock documents: ${stock.length}`);
     stock.slice(0, 3).forEach((doc, index) => {
-      console.log(
+      logger.debug(
         `📦 Stock doc ${index + 1}: brandName="${doc.brandName}", seriesStock count: ${doc.seriesStock?.length || 0}`
       );
       if (doc.seriesStock && doc.seriesStock.length > 0) {
         doc.seriesStock.slice(0, 2).forEach((series, sIndex) => {
-          console.log(
+          logger.debug(
             `  Series ${sIndex + 1}: series="${series.series}", inStock=${series.inStock}, soldCount=${series.soldCount}`
           );
         });
@@ -403,11 +491,14 @@ export async function GET(request: NextRequest) {
       const documentSales = document.seriesStock
         .map((series) => {
           const seriesName = series.series || 'Unknown';
-          const key = `${documentBrandName}-${seriesName}`;
-          const actualSoldCount = actualSalesCount[key] || 0;
+          const normalizedSeries = normalizeSalesSeries(documentBrandName, seriesName);
+          const normalizedKey = `${documentBrandName}-${normalizedSeries}`;
+          
+          // Use only normalized key for consistent matching
+          const actualSoldCount = actualSalesCount[normalizedKey] || 0;
 
-          console.log(
-            `🔍 Checking stock item: ${key}, actualSoldCount: ${actualSoldCount}, inStock: ${toNumber(series.inStock)}`
+          logger.debug(
+            `🔍 Checking stock item: ${seriesName}, normalizedKey: ${normalizedKey}, actualSoldCount: ${actualSoldCount}, inStock: ${toNumber(series.inStock)}`
           );
 
           // Use calculated sales for date range, but fall back to stock soldCount if needed
@@ -418,8 +509,8 @@ export async function GET(request: NextRequest) {
           const finalSoldCount =
             dateRangeSoldCount > 0 ? dateRangeSoldCount : stockSoldCount;
 
-          console.log(
-            `🔍 Stock item ${key}: stockSoldCount=${stockSoldCount}, dateRangeSoldCount=${dateRangeSoldCount}, finalSoldCount=${finalSoldCount}`
+          logger.debug(
+            `🔍 Stock item ${seriesName}: stockSoldCount=${stockSoldCount}, dateRangeSoldCount=${dateRangeSoldCount}, finalSoldCount=${finalSoldCount}`
           );
 
           // Only include products that have been sold in the date range OR have historical sales
@@ -442,19 +533,16 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.soldCount - a.soldCount)
       .slice(0, 5);
 
-    console.log(
-      '🏆 Top selling products (date range + fallback to historical):'
-    );
+    logger.debug('🏆 Top selling products (date range + fallback to historical):');
 
-    console.log(
-      '🏆 Top selling products calculated:',
-      topSellingProducts.length
+    logger.debug(
+      `🏆 Top selling products calculated: ${topSellingProducts.length}`
     );
     topSellingProducts.forEach((product, index) => {
       const dataSource = product.isDateRangeData
         ? '📅 Date Range'
         : '📊 Historical';
-      console.log(
+      logger.debug(
         `  ${index + 1}. ${product.brandName} ${product.series}: ${product.soldCount} sold, ${product.inStock} in stock (${dataSource})`
       );
     });
@@ -541,6 +629,7 @@ export async function GET(request: NextRequest) {
       salesTrend,
       inventoryByBrand,
       syncVerification, // Add sync verification data
+      reconciliationResult,
       alerts: {
         lowStock: lowStockCount,
         outOfStock: outOfStockCount,
@@ -554,7 +643,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(dashboardStats);
   } catch (error) {
-    console.error('❌ Error in dashboard route:', error);
+    logger.error('❌ Error in dashboard route:', error);
     return NextResponse.json(
       { error: 'Failed to fetch dashboard statistics' },
       { status: 500 }

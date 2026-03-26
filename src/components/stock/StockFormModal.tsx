@@ -72,7 +72,7 @@ export function StockFormModal({
                 onChange={onSeriesChange}
                 placeholder='Search series...'
                 className='w-full'
-                disabled={!isAdd}
+                disabled={false}  // Enable for both add and edit modes
                 showPrices={false}
               />
             </div>

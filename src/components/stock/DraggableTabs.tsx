@@ -60,7 +60,7 @@ export function DraggableTabs({
         items={categories.map((cat) => cat.brandName)}
         strategy={horizontalListSortingStrategy}
       >
-        <div className='flex overflow-x-auto border-b border-gray-200'>
+        <div className='flex overflow-x-auto border-b border-secondary-200'>
           {categories.map((category) => (
             <SortableTab
               key={category.brandName}

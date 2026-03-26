@@ -117,7 +117,6 @@ export async function updateStock(data: StockData) {
       ],
     });
 
-    console.log('Update stock result:', result);
     return { success: true, data: result };
   } catch (error: any) {
     console.error('Update stock error:', error);
@@ -274,12 +273,16 @@ export async function getStock() {
 
 export async function getStockHistory(brandName: string, series?: string) {
   try {
+    console.log('🔍 getStockHistory called with:', { brandName, series });
+    
     const { ObjectId } = require('mongodb');
     const db = await connectToMongoDB();
     if (!db) {
+      console.log('❌ Failed to connect to database');
       throw new Error('Failed to connect to database');
     }
 
+    console.log('✅ Connected to database');
     const historyCollection = db.collection('stockHistory');
 
     // Build query based on parameters
@@ -287,11 +290,15 @@ export async function getStockHistory(brandName: string, series?: string) {
     if (series) {
       query.series = series;
     }
+    console.log('📋 Query:', query);
 
     const rawHistory = await historyCollection
       .find(query)
       .sort({ historyDate: -1 })
       .toArray();
+    
+    console.log('📊 Raw history count:', rawHistory.length);
+    console.log('📋 Raw history sample:', rawHistory.slice(0, 2));
 
     // Transform the raw data into the expected format
     const history = rawHistory.map((entry) => ({
@@ -304,13 +311,13 @@ export async function getStockHistory(brandName: string, series?: string) {
       oldCost: entry.oldCost,
       newCost: entry.newCost,
       costDifference: entry.costDifference,
-      historyDate: new Date(entry.historyDate),
-      createdAt: entry.createdAt ? new Date(entry.createdAt) : undefined,
-      updatedAt: entry.updatedAt ? new Date(entry.updatedAt) : undefined,
-    })) as StockHistoryEntry[];
+      historyDate: entry.historyDate,
+    }));
 
-    return { success: true, data: history };
+    console.log('✅ Transformed history:', history);
+    return history;
   } catch (error: any) {
+    console.error('❌ getStockHistory error:', error);
     return { success: false, error: error.message };
   }
 }

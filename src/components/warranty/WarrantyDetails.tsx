@@ -22,6 +22,7 @@ const formatDate = (dateString: string): string => {
 };
 
 const WarrantyDetails: React.FC<WarrantyDetailsProps> = ({ warranty }) => {
+  
   const startDate = new Date(warranty.warrentyStartDate);
   const endDate = isValid(startDate) ? new Date(startDate) : new Date();
 

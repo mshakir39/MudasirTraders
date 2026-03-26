@@ -513,9 +513,9 @@ const DealerBillsPage: React.FC = () => {
   }
 
   return (
-    <div className='p-6'>
+    <div className='p-0 py-6 md:p-6'>
       <div className='mb-6 flex items-center justify-between'>
-        <h1 className='text-2xl font-bold text-gray-900'>
+        <h1 className='text-2xl font-bold text-secondary-900'>
           Dealer Bills{getDealerName()}
         </h1>
         <Button

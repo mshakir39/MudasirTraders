@@ -28,17 +28,18 @@ const Accordion = ({
   return (
     <div className='py-0 '>
       <button
-        className='relative flex w-full items-center justify-between rounded-md bg-[#5b4eea] px-1 py-2 text-sm font-medium text-white transition duration-300 ease-in-out'
+        className='relative flex w-full items-center justify-between rounded-md px-1 py-2 text-sm font-medium text-white transition duration-300 ease-in-out'
+        style={{
+          background: 'linear-gradient(to right, rgb(30, 58, 138), rgb(29, 78, 216), rgb(37, 99, 235))',
+          boxShadow:
+            'rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px',
+        }}
         aria-expanded={expandedAccordionIndex === index}
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
 
           handleAccordionClick(index);
-        }}
-        style={{
-          boxShadow:
-            'rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px',
         }}
       >
         <PiMinusSquare
@@ -52,7 +53,7 @@ const Accordion = ({
         />
 
         <FiPlusSquare
-          className={`absolute left-[-23px] top-[45%]  z-20 cursor-pointer text-[#4eea6b] ${addIconClass} -translate-y-1/2 translate-x-1/2 transform`}
+          className={`absolute left-[-23px] top-[45%]  z-20 cursor-pointer text-[var(--color-success-400)] ${addIconClass} -translate-y-1/2 translate-x-1/2 transform`}
           onClick={(event) => {
             event.stopPropagation();
             event.preventDefault();

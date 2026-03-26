@@ -171,7 +171,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
 
             {/* Right Totals */}
             <div className='space-y-2 text-sm'>
-              <div className='flex justify-between bg-[#021B3B] p-3 text-white'>
+              <div className='flex justify-between bg-sidebar-gradient p-3 text-white'>
                 <span>SubTotal</span>
                 <span>Rs {getAllSum(invoice?.products, 'totalPrice')}</span>
               </div>
@@ -202,7 +202,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                 );
               })}
 
-              <div className='mt-2 flex justify-between bg-[#021B3B] p-3 text-white'>
+              <div className='mt-2 flex justify-between bg-sidebar-gradient p-3 text-white'>
                 <span>
                   {invoice?.remainingAmount === 0 ? 'Total' : 'Remaining'}
                 </span>

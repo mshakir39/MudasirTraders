@@ -316,10 +316,10 @@ const DealersPage: React.FC = () => {
       <div className='flex min-h-screen flex-col items-center justify-center space-y-4'>
         <LoadingSpinner size='lg' />
         <div className='text-center'>
-          <h2 className='text-lg font-medium text-gray-900'>
+          <h2 className='text-lg font-medium text-secondary-900'>
             Loading Dealers...
           </h2>
-          <p className='mt-1 text-sm text-gray-500'>
+          <p className='mt-1 text-sm text-secondary-500'>
             Please wait while we fetch your dealer data
           </p>
         </div>
@@ -328,9 +328,9 @@ const DealersPage: React.FC = () => {
   }
 
   return (
-    <div className='p-6'>
+    <div className='p-0 py-6 md:p-6'>
       <div className='mb-6 flex items-center justify-between'>
-        <h1 className='text-2xl font-bold text-gray-900'>Dealers</h1>
+        <h1 className='text-2xl font-bold text-secondary-900'>Dealers</h1>
         <Button
           variant='fill'
           text='Add New Dealer'
@@ -350,7 +350,7 @@ const DealersPage: React.FC = () => {
 
       {dealers.length === 0 ? (
         <div className='py-12 text-center'>
-          <div className='mx-auto mb-4 h-12 w-12 text-gray-400'>
+          <div className='mx-auto mb-4 h-12 w-12 text-secondary-400'>
             <svg fill='none' viewBox='0 0 24 24' stroke='currentColor'>
               <path
                 strokeLinecap='round'
@@ -360,10 +360,10 @@ const DealersPage: React.FC = () => {
               />
             </svg>
           </div>
-          <h3 className='mb-2 text-lg font-medium text-gray-900'>
+          <h3 className='mb-2 text-lg font-medium text-secondary-900'>
             No dealers yet
           </h3>
-          <p className='text-gray-500'>
+          <p className='text-secondary-500'>
             Start by adding your first dealer using the &ldquo;Add New
             Dealer&rdquo; button above
           </p>

@@ -22,10 +22,23 @@ const SearchField: React.FC<SearchFieldProps> = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className='w-full rounded-lg bg-white py-3 pl-12 pr-4 text-gray-700 placeholder-gray-400 outline-none transition-all duration-200 shadow-sm border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+          className='w-full rounded-lg bg-white py-3 pl-12 pr-4 outline-none transition-all duration-200 shadow-sm'
+          style={{
+            color: '#2563eb',
+            borderColor: '#dbeafe',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = '#3d79e6';
+            e.target.style.boxShadow = '0 0 0 3px rgba(59, 121, 230, 0.1), 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)';
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = '#dbeafe';
+            e.target.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)';
+          }}
         />
         <div className='pointer-events-none absolute inset-y-0 left-4 flex items-center'>
-          <FaSearch className='h-4 w-4 text-gray-400' />
+          <FaSearch className='h-4 w-4' style={{ color: '#60a5fa' }} />
         </div>
       </div>
     </div>
