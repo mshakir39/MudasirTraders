@@ -324,6 +324,19 @@ ${receiptContent}
       const totalReceived = initialReceived + totalAdditionalReceived;
 
       actualRemaining = totalAmount - totalReceived - batteriesRate;
+    } else {
+      // For regular invoices, also subtract additional payments and battery rate
+      const grandTotal = getAllSum(data.products, 'totalPrice');
+      const initialReceived = Number(data.receivedAmount) || 0;
+      const additionalPayments = data.additionalPayment || [];
+      const batteriesRate = Number(data.batteriesRate) || 0;
+      const totalAdditionalReceived = additionalPayments.reduce(
+        (sum: number, payment: any) => sum + Number(payment.amount),
+        0
+      );
+      const totalReceived = initialReceived + totalAdditionalReceived;
+
+      actualRemaining = grandTotal - totalReceived - batteriesRate;
     }
 
     // Payment details
