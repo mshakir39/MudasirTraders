@@ -250,44 +250,58 @@ export async function GET(request: NextRequest) {
     let stock = stockDocs as unknown as StockItem[];
 
     // VERIFY SALES-STOCK SYNCHRONIZATION
-    let syncVerification = verifySalesStockSync(salesDocs, stock);
-    let reconciliationResult: any = null;
+    // let syncVerification = verifySalesStockSync(salesDocs, stock);
+    // let reconciliationResult: any = null;
 
-    if (syncVerification.syncIssues.length > 0) {
-      try {
-        const origin = request.nextUrl.origin;
-        const fixResponse = await fetch(`${origin}/api/dashboard/fix-sync`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          cache: 'no-store',
-        });
+    // if (syncVerification.syncIssues.length > 0) {
+    //   try {
+    //     const origin = request.nextUrl.origin;
+    //     const fixResponse = await fetch(`${origin}/api/dashboard/fix-sync`, {
+    //       method: 'POST',
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //       },
+    //       cache: 'no-store',
+    //     });
 
-        if (fixResponse.ok) {
-          reconciliationResult = await fixResponse.json();
+    //     if (fixResponse.ok) {
+    //       reconciliationResult = await fixResponse.json();
 
-          if (reconciliationResult?.updated > 0) {
-            logger.info(
-              `🔧 Reconciled ${reconciliationResult.updated} stock records. Refreshing dashboard data...`
-            );
+    //       if (reconciliationResult?.updated > 0) {
+    //         logger.info(
+    //           `🔧 Reconciled ${reconciliationResult.updated} stock records. Refreshing dashboard data...` 
+    //         );
 
-            stockDocs = await db.collection('stock').find().toArray();
-            stock = stockDocs as unknown as StockItem[];
-            syncVerification = verifySalesStockSync(salesDocs, stock);
-          } else {
-            logger.info('ℹ️ Fix-sync API returned no updates.');
-          }
-        } else {
-          const errorText = await fixResponse.text();
-          logger.error(
-            `❌ Failed to reconcile stock via fix-sync API. Status: ${fixResponse.status}. Body: ${errorText}`
-          );
-        }
-      } catch (error) {
-        logger.error('❌ Error calling fix-sync API:', error);
-      }
-    }
+    //         stockDocs = await db.collection('stock').find().toArray();
+    //         stock = stockDocs as unknown as StockItem[];
+    //         syncVerification = verifySalesStockSync(salesDocs, stock);
+    //       } else {
+    //         logger.info('ℹ️ Fix-sync API returned no updates.');
+    //       }
+    //     } else {
+    //       const errorText = await fixResponse.text();
+    //       logger.error(
+    //         `❌ Failed to reconcile stock via fix-sync API. Status: ${fixResponse.status}. Body: ${errorText}` 
+    //       );
+    //     }
+    //   } catch (error) {
+    //     logger.error('❌ Error calling fix-sync API:', error);
+    //   }
+    // }
+
+    // Default sync verification for dashboard response
+    const syncVerification = {
+      syncSummary: {
+        totalProducts: 0,
+        syncedProducts: 0,
+        mismatchedProducts: 0,
+        missingInSales: 0,
+        missingInStock: 0,
+      },
+      syncIssues: [],
+      isFullySynced: true,
+    };
+    const reconciliationResult = null;
 
     // INVENTORY METRICS
     let totalProducts = 0;

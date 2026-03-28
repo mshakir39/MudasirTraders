@@ -94,14 +94,16 @@ export const InvoiceGridActions: React.FC<InvoiceGridActionsProps> = ({
               <FaFileInvoice className='text-green-600' />
               Preview
             </div>
-            <div
-              className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-              onClick={() => handleAction('edit')}
-            >
-              <FaEdit className='text-indigo-600' />
-              Edit
-            </div>
-            {invoice.paymentStatus !== 'paid' && (
+            {invoice.status !== 'voided' && (
+              <div
+                className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                onClick={() => handleAction('edit')}
+              >
+                <FaEdit className='text-indigo-600' />
+                Edit
+              </div>
+            )}
+            {invoice.paymentStatus !== 'paid' && invoice.status !== 'voided' && (
               <div
                 className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
                 onClick={() => handleAction('payment')}
