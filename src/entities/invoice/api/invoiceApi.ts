@@ -40,6 +40,11 @@ export class InvoiceApi {
 
       // Payment status filter
       if (filter.paymentStatus && filter.paymentStatus !== 'all') {
+        // Exclude voided invoices when filtering for partial payment status
+        if (filter.paymentStatus === 'partial' && invoice.status === 'voided') {
+          return false;
+        }
+
         // Calculate actual payment status dynamically
         const total = invoice.totalAmount || 0;
         const received = invoice.receivedAmount || 0;
