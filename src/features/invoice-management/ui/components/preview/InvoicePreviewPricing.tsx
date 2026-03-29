@@ -6,8 +6,7 @@
 import React from 'react';
 import { getAllSum } from '@/utils/getTotalSum';
 import { convertDate } from '@/utils/convertTime';
-import { Invoice, InvoiceUtils } from '@/entities/invoice/model/types';
-import { FaLink } from 'react-icons/fa';
+import { formatCurrency } from '@/utils/formatters';  
 
 interface InvoicePreviewPricingProps {
   data: any;
@@ -66,7 +65,7 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
           SubTotal
         </span>
         <span className='text-sm font-bold md:text-base lg:text-lg'>
-          Rs {getAllSum(data?.products, 'totalPrice')}
+          {formatCurrency(getAllSum(data?.products, 'totalPrice'))}
         </span>
       </div>
 
@@ -86,8 +85,7 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
                         #{invoiceNo}
                       </span>
                       <span className='font-bold text-purple-900'>
-                        Rs{' '}
-                        {data?.previousAmounts?.[index]?.toLocaleString() || 0}
+                        {formatCurrency(data?.previousAmounts?.[index] || 0)}
                       </span>
                     </div>
                   )
@@ -99,7 +97,7 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
                       #INV-{id.slice(-6)}
                     </span>
                     <span className='font-bold text-purple-900'>
-                      Rs {data?.previousAmounts?.[index]?.toLocaleString() || 0}
+                      {formatCurrency(data?.previousAmounts?.[index] || 0)}
                     </span>
                   </div>
                 ))}
@@ -113,7 +111,7 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
             {data?.batteriesCountAndWeight || 'Old Battery'}
           </span>
           <span className='text-xs font-bold md:text-sm'>
-            - Rs {data?.batteriesRate}
+            - {formatCurrency(data?.batteriesRate)}
           </span>
         </div>
       )}
@@ -134,7 +132,7 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
             Received:
           </span>
           <span className='text-xs font-bold md:text-sm'>
-            - Rs {data?.receivedAmount}
+            - {formatCurrency(data?.receivedAmount)}
           </span>
         </div>
       )}
@@ -153,7 +151,7 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
                   : ''}
               </span>
               <span className='text-xs font-bold md:text-sm'>
-                - Rs {payment?.amount}
+                - {formatCurrency(payment?.amount)}
               </span>
             </div>
           ))}
@@ -167,7 +165,7 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
           {actualRemaining === 0 ? 'Total' : 'Balance Due'}
         </span>
         <span className='text-sm font-bold md:text-base lg:text-lg'>
-          {actualRemaining === 0 ? 'PAID' : `Rs ${actualRemaining}`}
+          {actualRemaining === 0 ? 'PAID' : formatCurrency(actualRemaining)}
         </span>
       </div>
     </div>

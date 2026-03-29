@@ -9,6 +9,7 @@ import { Invoice } from '@/entities/invoice';
 import { InvoiceGridActions } from './grid/InvoiceGridActions';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import Table from '@/components/table';
+import { formatCurrency } from '@/utils/formatters';
 
 interface InvoiceDataTableProps {
   invoices: Invoice[];
@@ -83,7 +84,7 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
       {
         accessorKey: 'totalAmount',
         header: 'Total Amount',
-        cell: ({ row }) => `Rs ${row.original.totalAmount}`,
+        cell: ({ row }) => formatCurrency(row.original.totalAmount),
       },
       {
         accessorKey: 'paymentDetails',
@@ -127,11 +128,11 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
           const paymentLines = [];
 
           if (initialReceived > 0) {
-            paymentLines.push(`Rs ${initialReceived}`);
+            paymentLines.push(formatCurrency(initialReceived));
           }
 
           if (batteriesRate > 0) {
-            paymentLines.push(`Old Battery: Rs ${batteriesRate}`);
+            paymentLines.push(`Old Battery: ${formatCurrency(batteriesRate)}`);
           }
 
           additionalPayments.forEach((payment: any) => {
@@ -142,7 +143,7 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
             paymentLines.push(
               <div key={payment.id || Math.random()}>
                 <span className='font-medium text-gray-900'>
-                  Rs {payment.amount}
+                  {formatCurrency(payment.amount)}
                 </span>
                 {dateStr && (
                   <span className='ml-1 text-xs text-gray-500'>
@@ -160,7 +161,7 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
               ))}
               {actualRemaining > 0 && (
                 <div className='text-xs text-red-600'>
-                  Due: Rs {actualRemaining}
+                  Due: {formatCurrency(actualRemaining)}
                 </div>
               )}
             </div>

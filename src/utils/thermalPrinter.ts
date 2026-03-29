@@ -354,7 +354,7 @@ ${receiptContent}
 
         // Create the full text and wrap it if needed
         const fullText = `Received ${paymentDate}${paymentMethod}:`;
-        const rightText = `Rs ${payment.amount}`;
+        const rightText = `${payment.amount}`;
 
         // Check if text needs wrapping
         if (fullText.length > 25) {

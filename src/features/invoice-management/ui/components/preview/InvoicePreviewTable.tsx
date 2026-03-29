@@ -4,7 +4,7 @@
 'use client';
 
 import React from 'react';
-import { removeParentheses } from '@/utils/formatters';
+import { removeParentheses, formatCurrency } from '@/utils/formatters';
 import { getAllSum } from '@/utils/getTotalSum';
 import BasicTable from '@/components/basicTable';
 
@@ -25,8 +25,8 @@ const columns = [
     },
   },
   { label: 'Qty', renderCell: (item: any) => item.quantity },
-  { label: 'Price', renderCell: (item: any) => 'Rs ' + item.productPrice },
-  { label: 'Total', renderCell: (item: any) => 'Rs ' + item.totalPrice },
+  { label: 'Price', renderCell: (item: any) => formatCurrency(item.productPrice) },
+  { label: 'Total', renderCell: (item: any) => formatCurrency(item.totalPrice) },
 ];
 
 export const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({
@@ -37,7 +37,7 @@ export const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({
     Name: 'Total',
     Qty: getAllSum(data?.products, 'quantity'),
     Price: '',
-    Total: 'Rs ' + getAllSum(data?.products, 'totalPrice'),
+    Total: formatCurrency(getAllSum(data?.products, 'totalPrice')),
   };
 
   return (

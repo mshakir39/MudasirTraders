@@ -1,18 +1,18 @@
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-IN', {
+  return new Intl.NumberFormat('en-PK', {
     style: 'currency',
-    currency: 'INR',
+    currency: 'PKR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
 }
 
 export function formatNumber(num: number): string {
-  return new Intl.NumberFormat('en-IN').format(num);
+  return new Intl.NumberFormat('en-PK').format(num);
 }
 
 export function formatPercentage(value: number): string {
-  return new Intl.NumberFormat('en-IN', {
+  return new Intl.NumberFormat('en-PK', {
     style: 'percent',
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
@@ -20,7 +20,7 @@ export function formatPercentage(value: number): string {
 }
 
 export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-IN', {
+  return new Intl.DateTimeFormat('en-PK', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

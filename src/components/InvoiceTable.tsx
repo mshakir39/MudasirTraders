@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatCurrency } from '@/utils/formatters';
 
 interface InvoiceTableProps<T> {
   data: T[];
@@ -18,7 +19,7 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({
   const modifiedFooterData = {
     ...footerData,
     Amount: footerData['Amount']
-      ? footerData['Amount'].replace('Rs', 'Rs\u00A0')
+      ? footerData['Amount'].replace('Rs', formatCurrency(0).split('0')[0])
       : footerData['Amount'],
   };
 
@@ -37,7 +38,7 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({
                   Item #{rowIndex + 1}
                 </span>
                 <span className='font-bold text-gray-800'>
-                  Rs {row.totalPrice}
+                  {formatCurrency(row.totalPrice)}
                 </span>
               </div>
               <div className='text-sm text-gray-700'>
@@ -46,7 +47,7 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({
                 </div>
                 <div className='text-gray-600'>Qty: {row.quantity}</div>
                 <div className='text-gray-600'>
-                  Price: Rs {row.productPrice}
+                  Price: {formatCurrency(row.productPrice)}
                 </div>
               </div>
             </div>
