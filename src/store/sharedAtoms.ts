@@ -155,12 +155,18 @@ export const invoicesErrorAtom = atom<string | null>(null);
 
 // Action atoms for invoices
 export const fetchInvoicesAtom = atom(null, async (get, set) => {
+  console.log('🔄 fetchInvoicesAtom: Starting to fetch invoices...');
   set(invoicesLoadingAtom, true);
   set(invoicesErrorAtom, null);
 
   try {
+    console.log('🔄 fetchInvoicesAtom: Making API call to /api/invoices');
     const response = await fetch('/api/invoices');
     const result = await response.json();
+    
+    console.log('🔄 fetchInvoicesAtom: API response:', result);
+    console.log('🔄 fetchInvoicesAtom: Response success:', result.success);
+    console.log('🔄 fetchInvoicesAtom: Data length:', result.data?.length || 0);
 
     if (result.success && result.data) {
       // Transform invoice data to match expected structure
@@ -254,18 +260,22 @@ export const fetchInvoicesAtom = atom(null, async (get, set) => {
           return dateB - dateA;
         });
 
+      console.log('🔄 fetchInvoicesAtom: Setting invoices atom with', transformedInvoices.length, 'items');
       set(invoicesAtom, transformedInvoices);
     } else {
+      console.log('🔄 fetchInvoicesAtom: API returned error -', result.error);
       set(invoicesAtom, []);
       set(invoicesErrorAtom, result.error || 'Failed to fetch invoices');
     }
   } catch (error) {
+    console.error('🔄 fetchInvoicesAtom: Exception caught:', error);
     set(
       invoicesErrorAtom,
       error instanceof Error ? error.message : 'Failed to fetch invoices'
     );
     set(invoicesAtom, []);
   } finally {
+    console.log('🔄 fetchInvoicesAtom: Finished fetching, setting loading to false');
     set(invoicesLoadingAtom, false);
   }
 });

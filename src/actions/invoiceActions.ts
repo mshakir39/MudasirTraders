@@ -152,7 +152,7 @@ export async function getInvoices() {
   try {
     const result = (await executeOperation('invoices', 'findPaginated', {
       filter: {},
-      sort: { createdAt: -1 },
+      sort: { createdDate: -1 },
       skip: 0,
       limit: 1000, // hard cap — adjust if needed
     })) as { docs: any[]; total: number };

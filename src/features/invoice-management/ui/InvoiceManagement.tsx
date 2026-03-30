@@ -249,11 +249,20 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
         // Call API to create invoice using entity pattern
         const createdInvoice = await InvoiceApi.create(newInvoice);
 
-        // Add to local state
-        setInvoices((prev) => [createdInvoice, ...prev]);
+        console.log('🔍 Debug - Created Invoice:', createdInvoice);
+        console.log('🔍 Debug - Current invoices length:', invoices.length);
+
+        // Add to local state (optimistic update)
+        setInvoices((prev) => {
+          const updated = [createdInvoice, ...prev];
+          console.log('🔍 Debug - Updated invoices length:', updated.length);
+          return updated;
+        });
 
         // Refresh global invoice state
+        console.log('🔄 Fetching invoices from server...');
         await fetchInvoices();
+        console.log('✅ Fetch invoices completed');
 
         // Also refresh stock state in case invoice contained stock items
         await fetchStock();
