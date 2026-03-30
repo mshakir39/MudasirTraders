@@ -27,6 +27,18 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
   const columns = useMemo<ColumnDef<Sale>[]>(
     () => [
       {
+        accessorKey: 'invoiceId',
+        header: 'Invoice #',
+        cell: ({ row }) => {
+          const invoiceId = (row.original as any).invoiceId;
+          return (
+            <span className='font-mono font-medium text-blue-700'>
+              {invoiceId}
+            </span>
+          );
+        },
+      },
+      {
         accessorKey: 'date',
         header: 'Date',
         cell: ({ row }) => {
@@ -119,6 +131,33 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
           return (
             <span className='font-semibold text-green-600'>
               Rs {Number(amount).toLocaleString()}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'totalCost',
+        header: 'Total Cost',
+        cell: ({ row }) => {
+          const sale = row.original as any;
+          const cost = Number(sale.totalCost) || 0;
+          return (
+            <span className='font-medium text-orange-600'>
+              Rs {cost.toLocaleString()}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'totalProfit',
+        header: 'Total Profit',
+        cell: ({ row }) => {
+          const sale = row.original as any;
+          const profit = Number(sale.totalProfit) || 0;
+          const profitColor = profit > 0 ? 'text-green-600' : profit < 0 ? 'text-red-600' : 'text-gray-600';
+          return (
+            <span className={`font-bold ${profitColor}`}>
+              Rs {profit.toLocaleString()}
             </span>
           );
         },
