@@ -54,7 +54,7 @@ const Accordion = ({
         />
 
         <FiPlusSquare
-          className={`absolute left-[-23px] top-[45%]  z-20 cursor-pointer text-[var(--color-success-400)] ${addIconClass} -translate-y-1/2 translate-x-1/2 transform`}
+          className={`absolute left-[-23px] top-[45%]  z-20 cursor-pointer text-green-500 ${addIconClass} -translate-y-1/2 translate-x-1/2 transform`}
           onClick={(event) => {
             event.stopPropagation();
             event.preventDefault();
