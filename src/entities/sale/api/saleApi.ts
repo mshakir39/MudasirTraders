@@ -147,9 +147,10 @@ export class SaleApi {
       errors.push('Customer name is required');
     }
 
-    if (!sale.customerContactNumber?.trim()) {
-      errors.push('Customer contact number is required');
-    }
+    // Phone number validation removed - any value is acceptable
+    // if (!sale.customerContactNumber?.trim()) {
+    //   errors.push('Customer contact number is required');
+    // }
 
     if (!sale.products || sale.products.length === 0) {
       errors.push('At least one product is required');

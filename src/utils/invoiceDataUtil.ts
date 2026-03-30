@@ -165,14 +165,11 @@ export class InvoiceDataUtil {
       cleanedData.customerName = data.customerName.trim();
     }
 
-    // Validate customer contact number
-    if (
-      !data.customerContactNumber ||
-      data.customerContactNumber.trim() === ''
-    ) {
-      errors.push('Customer contact number is required');
-    } else {
+    // Validate customer contact number - now optional
+    if (data.customerContactNumber && data.customerContactNumber.trim() !== '') {
       cleanedData.customerContactNumber = data.customerContactNumber.trim();
+    } else {
+      cleanedData.customerContactNumber = ''; // Allow empty phone number
     }
 
     // Validate customer address

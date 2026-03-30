@@ -26,10 +26,10 @@ export async function POST(request: NextRequest) {
       vehicleNo, // Add vehicle number
     } = body;
 
-    // Required fields validation
-    if (!customerName || !customerPhone) {
+    // Required fields validation - phone number removed
+    if (!customerName) {
       return NextResponse.json(
-        { error: 'Customer name and phone are required' },
+        { error: 'Customer name is required' },
         { status: 400 }
       );
     }

@@ -198,7 +198,6 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
         label='Contact Number'
         name='customerContactNumber'
         value={invoiceData?.customerContactNumber || ''}
-        pattern='[0-9+\-\s]+'
         maxLength={20}
         onChange={onChange}
         readOnly={
@@ -207,7 +206,7 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
         placeholder={
           invoiceData?.customerType === 'Regular' && !invoiceData?.customerId
             ? 'Select a customer above'
-            : 'Enter phone number or use "-" if not provided'
+            : 'Enter phone number (optional)'
         }
       />
 

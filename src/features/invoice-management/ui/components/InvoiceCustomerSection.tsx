@@ -230,7 +230,7 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
       {/* Customer Contact Number */}
       <div>
         <label className='mb-1 block text-sm font-medium text-gray-700'>
-          Phone Number *
+          Phone Number
         </label>
         <input
           type='tel'
@@ -242,8 +242,6 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
             })
           }
           className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-          required
-          minLength={1}
           readOnly={
             invoiceData.customerType === 'Regular Customer' &&
             !!invoiceData.clientId
@@ -253,7 +251,7 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
             invoiceData.customerType === 'Regular Customer' &&
             !invoiceData.clientId
               ? 'Select a customer above'
-              : 'Enter phone number or use "-" if not provided'
+              : 'Enter phone number (optional)'
           }
         />
       </div>

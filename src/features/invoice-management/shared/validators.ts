@@ -10,20 +10,7 @@ export const validateCustomerInfo = (invoiceData: InvoiceFormData): boolean => {
     return false;
   }
 
-  if (!invoiceData.customerContactNumber?.trim()) {
-    toast.error('Please enter customer contact number');
-    return false;
-  }
-
-  // Allow "-" as valid phone number for walk-in customers
-  if (invoiceData.customerContactNumber.trim() !== '-') {
-    const cleanPhone = invoiceData.customerContactNumber.replace(/\D/g, '');
-    if (cleanPhone.length < 10 || cleanPhone.length > 15) {
-      toast.error('Invalid phone number format');
-      return false;
-    }
-  }
-
+  // Phone number validation removed - any value is acceptable
   return true;
 };
 

@@ -712,15 +712,15 @@ export async function POST(req: NextRequest) {
       throw new Error('Customer name cannot be empty in invoice object');
     }
 
-    // 🔒 VALIDATION: Ensure customer contact is not empty (accepts "-" as valid)
-    if (
-      !invoice.customerContactNumber ||
-      invoice.customerContactNumber.trim() === ''
-    ) {
-      throw new Error(
-        'Customer contact number cannot be empty in invoice object'
-      );
-    }
+    // Phone number validation removed - any value is acceptable
+    // if (
+    //   !invoice.customerContactNumber ||
+    //   invoice.customerContactNumber.trim() === ''
+    // ) {
+    //   throw new Error(
+    //     'Customer contact number cannot be empty in invoice object'
+    //   );
+    // }
 
     // 🔒 VALIDATION: Ensure products array is properly structured
     for (const product of invoice.products) {
@@ -880,14 +880,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (
-      !formData.customerContactNumber ||
-      formData.customerContactNumber.trim() === ''
-    ) {
-      throw new Error(
-        'Customer contact number is required. Please enter a number (e.g., "03123456789", "Not provided", "Walk-in customer", "-")'
-      );
-    }
+    // Phone number validation removed - any value is acceptable
+    // if (
+    //   !formData.customerContactNumber ||
+    //   formData.customerContactNumber.trim() === ''
+    // ) {
+    //   throw new Error(
+    //     'Customer contact number is required. Please enter a number (e.g., "03123456789", "Not provided", "Walk-in customer", "-")'
+    //   );
+    // }
 
     // 🔒 VALIDATION: Ensure products are provided
     if (
