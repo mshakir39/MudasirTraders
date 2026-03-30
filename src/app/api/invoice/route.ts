@@ -278,7 +278,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Create an invoice document using validated data
-    const invoice = {
+    const invoice: any = {
       invoiceNo: nextInvoiceNumber,
       customerName: validatedInvoiceData.customerName,
       customerAddress: validatedInvoiceData.customerAddress,
@@ -293,7 +293,24 @@ export async function POST(req: NextRequest) {
       receivedAmount: validatedInvoiceData.receivedAmount,
       isPayLater: formData?.paymentMethod?.includes('Pay Later') || false,
 
-      products: (validatedInvoiceData.products || []).map((product: any) => {
+      products: await Promise.all((validatedInvoiceData.products || []).map(async (product: any) => {
+        // Get current cost from stock for profit calculation
+        let currentCost = 0;
+        try {
+          const stockItem = await executeOperation('stock', 'findOne', {
+            brandName: product.brandName
+          }) as any;
+          
+          if (stockItem && Array.isArray(stockItem.seriesStock)) {
+            const seriesData = stockItem.seriesStock.find(
+              (s: any) => s.series === product.series
+            );
+            currentCost = Number(seriesData?.productCost) || 0;
+          }
+        } catch (error) {
+          console.warn(`Could not fetch cost for ${product.brandName} ${product.series}:`, error);
+        }
+
         // Calculate warranty end date if warranty code is provided
         let warrantyEndDate = product.warrentyEndDate;
 
@@ -335,10 +352,14 @@ export async function POST(req: NextRequest) {
             .split('T')[0];
         }
 
+        const productProfit = Number(product.totalPrice) - (currentCost * Number(product.quantity));
+
         return {
           brandName: product.brandName,
           series: product.series,
           productPrice: product.productPrice,
+          costPrice: currentCost, // ← NEW: Cost at time of sale
+          profit: productProfit, // ← NEW: Profit per product
           quantity: product.quantity,
           isChargingService: !!product.isChargingService,
           isScrapBattery: !!product.isScrapBattery,
@@ -349,7 +370,7 @@ export async function POST(req: NextRequest) {
           totalPrice: product.totalPrice,
           batteryDetails: product.batteryDetails,
         };
-      }),
+      })),
 
       // Use calculated amounts from validation
       subtotal: validatedInvoiceData.subtotal,
@@ -361,6 +382,25 @@ export async function POST(req: NextRequest) {
 
       createdDate: validatedInvoiceData.createdDate,
     };
+
+    // Calculate total cost and profit for the invoice
+    const totalCost = invoice.products.reduce((sum: number, product: any) => {
+      return sum + (product.costPrice * Number(product.quantity));
+    }, 0);
+    
+    const totalProfit = invoice.products.reduce((sum: number, product: any) => {
+      return sum + (product.profit || 0);
+    }, 0);
+
+    // Add cost fields to invoice
+    invoice.totalCost = totalCost;       // ← NEW: Total cost for this invoice
+    invoice.totalProfit = totalProfit;   // ← NEW: Total profit for this invoice
+
+    // Debug the cost calculation
+    console.log('💰 COST CALCULATION DEBUG:');
+    console.log(`   Total Cost: Rs ${totalCost.toLocaleString()}`);
+    console.log(`   Total Profit: Rs ${totalProfit.toLocaleString()}`);
+    console.log(`   Invoice fields before save:`, Object.keys(invoice));
 
     // Debug the final createdDate
     console.log('📅 Final createdDate:', invoice.createdDate);
@@ -1045,6 +1085,12 @@ export async function POST(req: NextRequest) {
 
     // Insert the invoice into the database
     console.log('📄 Inserting invoice into database...');
+    console.log('🔍 FINAL INVOICE CHECK:');
+    console.log(`   totalCost: ${invoice.totalCost}`);
+    console.log(`   totalProfit: ${invoice.totalProfit}`);
+    console.log(`   products[0].costPrice: ${invoice.products?.[0]?.costPrice}`);
+    console.log(`   products[0].profit: ${invoice.products?.[0]?.profit}`);
+    
     const invoiceResult = await executeOperation(
       'invoices',
       'insertOne',
@@ -1080,7 +1126,17 @@ export async function POST(req: NextRequest) {
       isScrapBattery:
         invoice.products?.some((product: any) => product.isScrapBattery) ||
         false,
+      // Add cost fields from invoice
+      totalCost: invoice.totalCost,         // ← NEW: Total cost from invoice
+      totalProfit: invoice.totalProfit,       // ← NEW: Total profit from invoice
     };
+
+    // Debug the sales record
+    console.log('🔍 FINAL SALES RECORD CHECK:');
+    console.log(`   salesRecord.totalCost: ${salesRecord.totalCost}`);
+    console.log(`   salesRecord.totalProfit: ${salesRecord.totalProfit}`);
+    console.log(`   salesRecord.products[0].costPrice: ${salesRecord.products[0]?.costPrice}`);
+    console.log(`   salesRecord.products[0].profit: ${salesRecord.products[0]?.profit}`);
 
     // 🔒 VALIDATION: Ensure sales record has required fields
     if (

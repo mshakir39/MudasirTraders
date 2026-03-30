@@ -384,32 +384,17 @@ export async function GET(request: NextRequest) {
       0
     );
 
-    // PROFIT CALCULATION (NEW!)
-    // Build a lookup for stock cost per (brand+series)
-    const stockCostLookup: Record<string, number> = {};
-    stock.forEach((stockItem) => {
-      const brand = stockItem.brandName || '';
-      if (Array.isArray(stockItem.seriesStock)) {
-        stockItem.seriesStock.forEach((series) => {
-          const key = `${brand}|||${series.series}`;
-          stockCostLookup[key] = toNumber(series.productCost);
-        });
-      }
-    });
-    // Calculate total cost for products sold in period
+    // PROFIT CALCULATION (SIMPLE - USING STORED COSTS)
+    // Calculate total cost and profit using stored values from sales data
     const totalCost = filteredSalesForRevenue.reduce((sum, sale) => {
-      if (!Array.isArray(sale.products)) return sum;
-      const saleCost = sale.products.reduce((prodSum, product) => {
-        const key = `${product.brandName || ''}|||${product.series || ''}`;
-        const unitCost = stockCostLookup[key] || 0;
-        const qty = toNumber(product.quantity);
-        return prodSum + unitCost * qty;
-      }, 0);
-      return sum + saleCost;
+      return sum + toNumber(sale.totalCost || 0); // ← Use stored totalCost
     }, 0);
-    const totalProfit = totalRevenue - totalCost;
-    const profitMargin =
-      totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    
+    const totalProfit = filteredSalesForRevenue.reduce((sum, sale) => {
+      return sum + toNumber(sale.totalProfit || 0); // ← Use stored totalProfit
+    }, 0);
+    
+    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
     // TOP PRODUCTS
     const filteredSalesForTopProducts = Array.isArray(salesDocs)
