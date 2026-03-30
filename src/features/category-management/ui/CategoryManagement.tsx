@@ -14,7 +14,7 @@ import { unstable_noStore } from 'next/cache';
 import { useAtom } from 'jotai';
 import { toast } from 'react-toastify';
 import { CategoryWithBatteryData, BatteryData } from '@/types/category';
-import { categoriesAtom, fetchCategoriesAtom } from '@/store/sharedAtoms';
+import { categoriesAtom, fetchCategoriesAtom, brandsAtom, fetchBrandsAtom } from '@/store/sharedAtoms';
 import { useCategoryActions } from '@/features/category-management/lib/useCategoryActions';
 import { CategoryTable } from '@/features/category-management/shared/ui/components/CategoryTable';
 import { BatteryList } from '@/features/category-management';
@@ -51,11 +51,12 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
   const [isEditingGlobalSalesTax, setIsEditingGlobalSalesTax] =
     useState<boolean>(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState<boolean>(false);
-  const [brands, setBrands] = useState<IBrand[]>(initialBrands);
+  const [brands, setBrands] = useAtom(brandsAtom);
 
   // Global state management
   const [categories, setCategories] = useAtom(categoriesAtom);
   const fetchCategories = useAtom(fetchCategoriesAtom)[1];
+  const fetchBrands = useAtom(fetchBrandsAtom)[1];
 
   // React 19: Optimistic updates for category operations
   const [optimisticCategories, addOptimisticCategory] = useOptimistic(
@@ -146,7 +147,10 @@ export const CategoryManagement: React.FC<CategoryManagementProps> = ({
     if (!categories || categories.length === 0) {
       fetchCategories();
     }
-  }, [categories, fetchCategories]);
+    if (!brands || brands.length === 0) {
+      fetchBrands();
+    }
+  }, [categories, fetchCategories, brands, fetchBrands]);
 
   const handleRefreshCategories = useCallback(async () => {
     await fetchCategories();
