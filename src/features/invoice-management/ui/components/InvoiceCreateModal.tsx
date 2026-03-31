@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
+import { useAtom } from 'jotai';
 import Modal from '@/components/modal';
 import {
   InvoiceForm,
@@ -24,6 +25,15 @@ import {
 } from '../../shared/transformers';
 import { PendingInvoice } from '@/entities/invoice/model/types';
 import { FaExclamationTriangle } from 'react-icons/fa';
+import {
+  saveInvoiceCreationStateAtom,
+  restoreInvoiceCreationStateAtom,
+  activeInvoiceCreationIdAtom,
+  invoiceCreationStatesAtom,
+  showCreateInvoiceModalAtom,
+  deleteInvoiceCreationStateAtom,
+  InvoiceCreationState
+} from '@/store/sharedAtoms';
 
 interface InvoiceCreateModalProps {
   isOpen: boolean;
@@ -44,6 +54,14 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
   customers,
   stock,
 }) => {
+  // State management atoms
+  const [, saveState] = useAtom(saveInvoiceCreationStateAtom);
+  const [, restoreState] = useAtom(restoreInvoiceCreationStateAtom);
+  const [activeStateId, setActiveStateId] = useAtom(activeInvoiceCreationIdAtom);
+  const [savedStates] = useAtom(invoiceCreationStatesAtom);
+  const [, setShowCreateModal] = useAtom(showCreateInvoiceModalAtom);
+  const [, deleteState] = useAtom(deleteInvoiceCreationStateAtom);
+
   // NEW: Add pending invoices state with debouncing
   const [pendingInvoices, setPendingInvoices] = useState<PendingInvoice[]>([]);
   const [isLoadingPending, setIsLoadingPending] = useState(false);
@@ -63,7 +81,28 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
 
   // Use custom hooks for form and accordion logic
   const { invoiceData, setInvoiceData, handleSubmit } = useInvoiceForm({
-    onSubmit,
+    onSubmit: async (data: InvoiceFormData) => {
+      try {
+        // Call the original onSubmit function
+        await onSubmit(data);
+        
+        // After successful submission, cleanup and close
+        // Remove the saved state since invoice was successfully created
+        if (activeStateId) {
+          deleteState(activeStateId);
+        }
+        
+        // Clear active state and close modal
+        setActiveStateId(null);
+        setShowCreateModal(false);
+        onClose();
+      } catch (error) {
+        // If submission fails, don't close the modal
+        console.error('Invoice creation failed:', error);
+        // The error handling is already done in the parent component
+        // Just don't close the modal so user can try again
+      }
+    },
   });
 
   const { expandedAccordionIndex, handleAccordionClick } = useAccordionLogic(
@@ -71,6 +110,65 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
     accordionMethods,
     invoiceData
   );
+
+  // Restore saved state when active state ID changes
+  useEffect(() => {
+    if (activeStateId) {
+      const savedState = savedStates.find((s: InvoiceCreationState) => s.id === activeStateId);
+      if (savedState) {
+        // Restore invoice data
+        setInvoiceData({
+          customerName: savedState.customerName,
+          customerAddress: savedState.customerAddress,
+          customerContactNumber: savedState.customerContactNumber,
+          customerType: savedState.customerType as 'Regular Customer' | 'WalkIn Customer',
+          products: savedState.products || [],
+          subtotal: savedState.subtotal || 0,
+          taxAmount: savedState.taxAmount || 0,
+          totalAmount: savedState.totalAmount || 0,
+          receivedAmount: savedState.receivedAmount || 0,
+          remainingAmount: savedState.remainingAmount || 0,
+          paymentMethod: savedState.paymentMethod,
+          paymentStatus: savedState.paymentStatus as 'pending' | 'paid' | 'partial',
+          batteriesCountAndWeight: savedState.batteriesCountAndWeight,
+          batteriesRate: savedState.batteriesRate,
+          notes: savedState.notes,
+          // Additional fields from InvoiceFormData
+          invoiceNo: savedState.invoiceNo,
+          clientId: savedState.clientId,
+          useCustomDate: savedState.useCustomDate,
+          customDate: savedState.customDate,
+          dueDate: savedState.dueDate,
+          isChargingService: savedState.isChargingService,
+          chargingServices: savedState.chargingServices,
+        });
+
+        // Restore products in accordion from saved state
+        if (savedState.products && savedState.products.length > 0) {
+          // Convert saved products back to accordion format
+          const restoredAccordionData: { [key: number]: any } = {};
+          
+          savedState.products.forEach((product, index) => {
+            restoredAccordionData[index] = {
+              brandName: product.brandName || '',
+              series: product.series || '',
+              productPrice: String(product.productPrice || 0),
+              quantity: String(product.quantity || 1),
+              warrentyStartDate: product.warrentyStartDate || '',
+              warrentyEndDate: product.warrentyEndDate || '',
+              warrentyCode: product.warrentyCode || '',
+              warrentyDuration: product.warrentyDuration || '',
+              noWarranty: product.noWarranty || false,
+              seriesOption: [], // Will be populated based on brand selection
+              batteryDetails: product.batteryDetails,
+            };
+          });
+          
+          setAccordionData(restoredAccordionData);
+        }
+      }
+    }
+  }, [activeStateId, savedStates, setInvoiceData, setAccordionData]);
 
   // NEW: Fetch pending invoices with debouncing
   const fetchPendingInvoices = useCallback(async (customerName: string) => {
@@ -143,6 +241,51 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
       grandTotal,
     };
   };
+
+  // Save current state and close modal
+  const handleSaveAndClose = useCallback(() => {
+    // Get current products from accordion
+    const transformedProducts = transformAccordionData(accordionData);
+    
+    // Create state object to save
+    const stateToSave: Omit<InvoiceCreationState, 'id' | 'createdAt'> = {
+      customerName: invoiceData.customerName || '',
+      customerAddress: invoiceData.customerAddress || '',
+      customerContactNumber: invoiceData.customerContactNumber || '',
+      customerType: invoiceData.customerType || 'Regular Customer',
+      vehicleNo: '', // Not in InvoiceFormData anymore
+      paymentMethod: invoiceData.paymentMethod || ['Cash'],
+      batteriesCountAndWeight: invoiceData.batteriesCountAndWeight || '',
+      batteriesRate: invoiceData.batteriesRate || 0,
+      receivedAmount: invoiceData.receivedAmount || 0,
+      isPayLater: false, // Not in InvoiceFormData anymore
+      products: transformedProducts,
+      subtotal: invoiceData.subtotal || 0,
+      taxAmount: invoiceData.taxAmount || 0,
+      totalAmount: invoiceData.totalAmount || 0,
+      remainingAmount: invoiceData.remainingAmount || 0,
+      paymentStatus: invoiceData.paymentStatus || 'pending',
+      notes: invoiceData.notes,
+      // Additional fields from InvoiceFormData
+      invoiceNo: invoiceData.invoiceNo,
+      clientId: invoiceData.clientId,
+      useCustomDate: invoiceData.useCustomDate,
+      customDate: invoiceData.customDate,
+      dueDate: invoiceData.dueDate,
+      isChargingService: invoiceData.isChargingService,
+      chargingServices: invoiceData.chargingServices,
+    };
+
+    // Save state - this will either create new or update existing based on activeStateId
+    saveState(stateToSave);
+    
+    // Clear the active state and close modal
+    setActiveStateId(null);
+    setShowCreateModal(false);
+    
+    // Also call the original onClose for any additional cleanup
+    onClose();
+  }, [invoiceData, accordionData, saveState, setShowCreateModal, onClose, activeStateId, setActiveStateId]);
 
   // Handle form submission with transformed data
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -252,8 +395,13 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
 
           // Show success message to user
           toast.success(
-            `Successfully consolidated ${pendingInvoices.length} invoices into new invoice #${consolidationResult.data?.newInvoice?.invoiceNumber?.slice(-6)}`
+            `Successfully consolidated ${pendingInvoices.length} invoices into new invoice #${consolidationResult.data?.newInvoice?.invoiceNumber?.slice(-6)}` 
           );
+
+          // Remove the saved state since invoice was successfully created
+          if (activeStateId) {
+            deleteState(activeStateId);
+          }
 
           // Refresh invoices and stock (same as normal invoice creation)
           console.log('🔄 Refreshing invoices after consolidation...');
@@ -275,7 +423,9 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
             // Don't fail the consolidation if refresh fails
           }
 
-          // Close modal and reset form
+          // Clear active state and close modal
+          setActiveStateId(null);
+          setShowCreateModal(false);
           onClose();
           return;
         } else {
@@ -346,7 +496,7 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleSaveAndClose} // Save state instead of just closing
       title='Create New Invoice'
       size='large'
       dialogPanelClass='w-full max-w-6xl'
@@ -356,7 +506,7 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
         setInvoiceData={setInvoiceData}
         isLoading={isLoading}
         onSubmit={handleFormSubmit}
-        onCancel={onClose}
+        onCancel={handleSaveAndClose} // Save state instead of just closing
       >
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
           <div className='flex h-full flex-col'>

@@ -4,6 +4,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useAtom } from 'jotai';
 import {
   Invoice,
   InvoiceModalState,
@@ -15,6 +16,7 @@ import { default as InvoicePreviewModal } from './InvoicePreviewModal';
 import { InvoiceEditModal } from './index';
 // Import the new smaller modal components
 import { InvoiceCreateModal, InvoicePaymentModal } from './index';
+import { showCreateInvoiceModalAtom } from '@/store/sharedAtoms';
 
 interface InvoiceModalsProps {
   modalState: InvoiceModalState;
@@ -48,22 +50,15 @@ export const InvoiceModals: React.FC<InvoiceModalsProps> = ({
   accordionMethods = null,
   accordionData = {},
 }) => {
+  // Use the new state management for create modal
+  const [showCreateModal] = useAtom(showCreateInvoiceModalAtom);
+
   // No need for useInvoiceForm hook since new modals handle their own state
   const renderModalContent = () => {
     switch (modalState.type) {
       case 'create':
-        // Use the new InvoiceCreateModal for full create functionality
-        return (
-          <InvoiceCreateModal
-            isOpen={modalState.isOpen}
-            onClose={onClose}
-            onSubmit={onCreateInvoice}
-            isLoading={isLoading}
-            categories={categories}
-            customers={customers}
-            stock={stock}
-          />
-        );
+        // Create modal is now handled directly in InvoiceManagement component
+        return null;
 
       case 'edit':
         // Use the existing EditInvoiceModal for full edit functionality

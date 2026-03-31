@@ -23,6 +23,8 @@ import {
   InvoiceModals,
   InvoiceDeleteModal,
 } from './components';
+import { FloatingInvoiceButton } from '@/components/FloatingInvoiceButton';
+import InvoiceCreateModal from './components/InvoiceCreateModal';
 import {
   categoriesAtom,
   stockAtom,
@@ -31,6 +33,8 @@ import {
   fetchStockAtom,
   setInvoicesAtom,
   setStockAtom,
+  showCreateInvoiceModalAtom,
+  startNewInvoiceCreationAtom
 } from '@/store/sharedAtoms';
 
 interface InvoiceManagementProps {
@@ -53,6 +57,7 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
   const fetchStock = useSetAtom(fetchStockAtom);
   const setGlobalInvoices = useSetAtom(setInvoicesAtom);
   const updateGlobalStock = useSetAtom(setStockAtom);
+  const [showCreateModal] = useAtom(showCreateInvoiceModalAtom);
 
   // Show loading state if data is not yet available
   const isDataReady =
@@ -574,13 +579,27 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
         onUpdateInvoice={handleUpdateInvoice}
         onAddPayment={handleAddPayment}
         categories={categories}
+        customers={customers}
         stock={stock}
         isLoading={loading}
-        customers={customers}
-        brandOptions={brandOptions}
-        accordionMethods={accordionMethods}
         accordionData={accordionData}
       />
+
+      {/* New state-aware create modal */}
+      <InvoiceCreateModal
+        isOpen={showCreateModal}
+        onClose={() => {
+          // This will trigger the save and close functionality in the modal itself
+          // The modal's handleSaveAndClose will handle saving state and closing
+        }}
+        onSubmit={handleCreateInvoice}
+        isLoading={loading}
+        categories={categories}
+        customers={customers}
+        stock={stock}
+      />
+
+      <FloatingInvoiceButton />
 
       <InvoiceDeleteModal
         isOpen={deleteModal.isOpen}
