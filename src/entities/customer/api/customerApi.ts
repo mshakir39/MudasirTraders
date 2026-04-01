@@ -50,6 +50,7 @@ export class CustomerApi {
       ) {
         return {
           _id: `temp-${Date.now()}`,
+          id: `temp-${Date.now()}`,
           customerName: result.data.customerName,
           phoneNumber: result.data.phoneNumber,
           address: result.data.address || '',
@@ -64,6 +65,7 @@ export class CustomerApi {
       // Fallback to constructed customer object
       return {
         _id: `temp-${Date.now()}`,
+        id: `temp-${Date.now()}`,
         customerName: customerData.customerName,
         phoneNumber: customerData.phoneNumber,
         address: customerData.address,
