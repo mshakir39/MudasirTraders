@@ -70,7 +70,7 @@ const Modal: FunctionComponent<ModalProps> = ({
 
           {/* Content */}
           <div
-            className={`${parentClass || 'p-4 sm:p-6'} ${dynamicHeight ? 'overflow-y-auto' : 'overflow-y-auto'}`}
+            className={`${parentClass || 'px-4 sm:px-6'} ${dynamicHeight ? 'overflow-y-auto' : 'overflow-y-auto'}`}
           >
             {children}
           </div>

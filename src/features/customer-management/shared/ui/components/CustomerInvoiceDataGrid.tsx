@@ -25,6 +25,8 @@ interface CustomerInvoice {
   createdDate: string;
   remainingAmount: number;
   paymentStatus: string;
+  status: string;
+  totalAmount: number;
   addedDate: string;
   additionalPayment: any[];
 }

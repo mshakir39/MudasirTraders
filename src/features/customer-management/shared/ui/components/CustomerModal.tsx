@@ -36,6 +36,8 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
     email: '',
   });
 
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   // Update form data when initialData changes
   React.useEffect(() => {
     if (initialData) {
@@ -55,6 +57,15 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
     }
   }, [initialData]);
 
+  const resetForm = () => {
+    setFormData({
+      customerName: '',
+      phoneNumber: '',
+      address: '',
+      email: '',
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -66,26 +77,22 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
       return;
     }
 
-    const success = await onSubmit(formData);
-    if (success) {
-      setFormData({
-        customerName: '',
-        phoneNumber: '',
-        address: '',
-        email: '',
-      });
-      onClose();
+    setIsSubmitting(true);
+    
+    try {
+      const success = await onSubmit(formData);
+      if (success) {
+        resetForm();
+        onClose();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
-    if (!isLoading) {
-      setFormData({
-        customerName: '',
-        phoneNumber: '',
-        address: '',
-        email: '',
-      });
+    if (!isLoading && !isSubmitting) {
+      resetForm();
       onClose();
     }
   };
@@ -158,14 +165,17 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
             type='submit'
             variant='fill'
             text={
-              isLoading
+              isSubmitting
                 ? 'Saving...'
-                : initialData
-                  ? 'Update Customer'
-                  : 'Create Customer'
+                : isLoading
+                  ? 'Loading...'
+                  : initialData
+                    ? 'Update Customer'
+                    : 'Create Customer'
             }
             disabled={
               isLoading ||
+              isSubmitting ||
               !formData.customerName.trim() ||
               !formData.phoneNumber.trim() ||
               !formData.address.trim()

@@ -3,12 +3,13 @@ import { executeOperation } from '@/app/libs/executeOperation';
 import { ObjectId } from 'mongodb';
 
 // Place this at the top level, outside of GET
-function isCustomerWithName(val: unknown): val is { customerName: string } {
+function isCustomerWithName(val: unknown): val is { customerName: string; phoneNumber: string } {
   return (
     !!val &&
     typeof val === 'object' &&
     !Array.isArray(val) &&
-    Object.prototype.hasOwnProperty.call(val, 'customerName')
+    Object.prototype.hasOwnProperty.call(val, 'customerName') &&
+    Object.prototype.hasOwnProperty.call(val, 'phoneNumber')
   );
 }
 
@@ -88,17 +89,23 @@ export async function GET(
     // Filter invoices for this customer
     const customerInvoices = Array.isArray(allInvoices)
       ? allInvoices.filter((invoice: any) => {
-          // Try multiple matching strategies
-          return (
-            (invoice.customerId === customerIdValue ||
-              invoice.customerId === customerId ||
-              invoice.customerId?.toString() === customerId ||
-              invoice.clientName ===
-                (isCustomerWithName(customer)
-                  ? customer.customerName
-                  : undefined)) &&
-            invoice.customerType === 'Regular'
-          );
+          // Use the type guard to safely access customer properties
+          if (isCustomerWithName(customer)) {
+            // Match by customer name (primary method)
+            const customerNameMatch = invoice.customerName === customer.customerName;
+            
+            // Also match by phone number as backup
+            const phoneMatch = invoice.customerContactNumber === customer.phoneNumber;
+            
+            // Remove the restrictive customerType filter or make it more flexible
+            const customerTypeMatch = !invoice.customerType || 
+              invoice.customerType === 'Regular' || 
+              invoice.customerType === 'Regular Customer' ||
+              invoice.customerType === 'WalkIn Customer';
+            
+            return customerNameMatch && phoneMatch && customerTypeMatch;
+          }
+          return false;
         })
       : [];
 

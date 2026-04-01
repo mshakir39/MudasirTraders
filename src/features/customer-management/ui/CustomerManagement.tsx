@@ -14,6 +14,7 @@ import { customersAtom, fetchCustomersAtom } from '@/store/sharedAtoms';
 import { useCustomerActions } from '@/features/customer-management/lib/useCustomerActions';
 import { CustomerTable } from '@/features/customer-management/shared/ui/components/CustomerTable';
 import { CustomerModal } from '@/features/customer-management/shared/ui/components/CustomerModal';
+import CustomerDeleteModal from '@/components/customer/CustomerDeleteModal';
 import Input from '@/components/customInput';
 import Button from '@/components/button';
 import { FaPlus } from 'react-icons/fa';
@@ -35,6 +36,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null
   );
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const [customers, setCustomers] = useAtom(customersAtom);
@@ -56,6 +59,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     createCustomer,
     updateCustomer,
     deleteCustomer,
+    isCreating,
+    isDeleting,
   } = useCustomerActions({
     customers,
     onCustomersChange: setCustomers,
@@ -92,10 +97,27 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     setSelectedCustomer(null);
   }, []);
 
+  const handleDeleteCustomer = useCallback((customer: Customer) => {
+    setCustomerToDelete(customer);
+    setIsDeleteModalOpen(true);
+  }, []);
+
+  const handleCloseDeleteModal = useCallback(() => {
+    setIsDeleteModalOpen(false);
+    setCustomerToDelete(null);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (customerToDelete) {
+      await deleteCustomer(customerToDelete);
+      handleCloseDeleteModal();
+    }
+  }, [customerToDelete, deleteCustomer, handleCloseDeleteModal]);
+
   const handleModalSubmit = useCallback(
     async (data: CustomerFormData) => {
       if (selectedCustomer) {
-        return await updateCustomer(selectedCustomer._id, data);
+        return await updateCustomer(selectedCustomer.id || '', data);
       } else {
         return await createCustomer(data);
       }
@@ -112,7 +134,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         customers={filteredCustomers}
         onViewInvoices={onViewInvoices}
         onEditCustomer={handleEditCustomer}
-        onDeleteCustomer={deleteCustomer}
+        onDeleteCustomer={handleDeleteCustomer}
         onAddCustomer={handleCreateCustomer}
         loading={false}
         className='mt-4'
@@ -123,8 +145,18 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSubmit={handleModalSubmit}
+        isLoading={isCreating}
         initialData={selectedCustomer}
         title={selectedCustomer ? 'Edit Customer' : 'Add Customer'}
+      />
+
+      {/* Customer Delete Modal */}
+      <CustomerDeleteModal
+        isOpen={isDeleteModalOpen}
+        isLoading={isDeleting}
+        customerToDelete={customerToDelete}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

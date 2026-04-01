@@ -26,6 +26,8 @@ interface CustomerInvoice {
   createdDate: string;
   remainingAmount: number;
   paymentStatus: string;
+  status: string;
+  totalAmount: number;
   addedDate: string;
   additionalPayment: any[];
 }
@@ -123,9 +125,10 @@ export const CustomerInvoiceDataTable: React.FC<
           // Total paid amount
           const totalPaid = received + totalAdditional;
 
-          // Calculate payment progress
+          // Calculate payment progress - use the actual invoice total amount
+          const invoiceTotal = invoice.totalAmount || productTotal;
           const paymentProgress =
-            productTotal > 0 ? (totalPaid / productTotal) * 100 : 0;
+            invoiceTotal > 0 ? (totalPaid / invoiceTotal) * 100 : 0;
           const isPayLater = invoice.isPayLater || received === 0;
 
           return (
@@ -173,16 +176,24 @@ export const CustomerInvoiceDataTable: React.FC<
           const invoice = row.original;
           const remaining = invoice.remainingAmount || 0;
           const isPaid = remaining === 0;
+          const isVoided = invoice.status === 'voided';
+
+          let statusText = 'Pending';
+          let statusClass = 'bg-yellow-100 text-yellow-800';
+
+          if (isVoided) {
+            statusText = 'Voided';
+            statusClass = 'bg-red-100 text-red-800';
+          } else if (isPaid) {
+            statusText = 'Paid';
+            statusClass = 'bg-green-100 text-green-800';
+          }
 
           return (
             <span
-              className={`rounded-full px-2 py-1 text-xs font-medium ${
-                isPaid
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}
+              className={`rounded-full px-2 py-1 text-xs font-medium ${statusClass}`}
             >
-              {isPaid ? 'Paid' : 'Pending'}
+              {statusText}
             </span>
           );
         },
@@ -192,6 +203,8 @@ export const CustomerInvoiceDataTable: React.FC<
         header: 'Actions',
         cell: ({ row }) => {
           const invoice = row.original;
+          const isVoided = invoice.status === 'voided';
+
           return (
             <div className='flex items-center gap-2'>
               <button
@@ -202,15 +215,7 @@ export const CustomerInvoiceDataTable: React.FC<
               >
                 <FaEye />
               </button>
-              <button
-                onClick={() => onEditInvoice(invoice)}
-                className='p-2'
-                style={{ color: '#0284c7' }}
-                title='Edit Invoice'
-              >
-                <FaEdit />
-              </button>
-              {(invoice.remainingAmount || 0) > 0 && (
+              {!isVoided && (invoice.remainingAmount || 0) > 0 && (
                 <button
                   onClick={() => onAddPayment(invoice)}
                   className='p-2'

@@ -2,7 +2,8 @@
 // Customer entity types and interfaces
 
 export interface Customer {
-  _id: string;
+  _id?: string;
+  id: string;
   customerName: string;
   phoneNumber: string;
   address: string;

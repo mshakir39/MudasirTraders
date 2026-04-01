@@ -104,9 +104,12 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
     setSubModalType('');
     setModalData(null);
   };
-  // Calculate summary statistics
-  const totalInvoices = customerInvoices.length;
-  const totalAmount = customerInvoices.reduce((sum, invoice) => {
+  // Filter out voided invoices for calculations
+  const activeInvoices = customerInvoices.filter(invoice => invoice.status !== 'voided');
+  
+  // Calculate summary statistics using only active invoices
+  const totalInvoices = activeInvoices.length;
+  const totalAmount = activeInvoices.reduce((sum, invoice) => {
     // Calculate total from products (same logic as data table)
     const productTotal =
       invoice.products?.reduce((sum: number, product: any) => {
@@ -118,13 +121,16 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
       }, 0) || 0;
     return sum + productTotal;
   }, 0);
-  const totalRemaining = customerInvoices.reduce(
+  const totalRemaining = activeInvoices.reduce(
     (sum, invoice) => sum + (invoice.remainingAmount || 0),
     0
   );
-  const paidInvoices = customerInvoices.filter(
+  const paidInvoices = activeInvoices.filter(
     (invoice) => (invoice.remainingAmount || 0) === 0
   ).length;
+  
+  // Count voided invoices separately
+  const voidedInvoices = customerInvoices.filter(invoice => invoice.status === 'voided').length;
 
   return (
     <div>
@@ -136,44 +142,30 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
         dialogPanelClass='!w-[95%] !max-w-7xl'
         preventBackdropClose={isSubModalOpen} // Prevent closing when sub-modal is open
       >
-        <div className='mt-4'>
+        <div className='mt-4 max-h-[80vh] overflow-y-auto'>
           {/* Customer Summary */}
-          <div className='mb-6 rounded-lg bg-gray-50 p-4'>
-            <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
-              <div>
-                <span className='font-medium text-gray-600'>
-                  Total Invoices:
-                </span>
-                <div className='text-lg font-bold text-blue-600'>
-                  {totalInvoices}
+          <div className='mb-4 rounded-lg bg-gray-50 px-4 py-3 sticky top-0 z-10'>
+            <div className='flex flex-wrap items-center justify-between gap-4 text-base'>
+              <div className='flex flex-wrap items-center gap-4 flex-1'>
+                <div className='flex-1 text-center'>
+                  <span className='font-medium text-gray-600'>Active:</span>
+                  <span className='ml-1 font-bold text-blue-600'>{totalInvoices}</span>
                 </div>
-              </div>
-              <div>
-                <span className='font-medium text-gray-600'>Total Amount:</span>
-                <div className='text-lg font-bold text-green-600'>
-                  Rs {Number(totalAmount || 0).toLocaleString()}
-                  {/* Debug: Show raw value */}
-                  <span className='ml-2 text-xs text-gray-500'>
-                    (raw: {totalAmount})
-                  </span>
+                <div className='flex-1 text-center'>
+                  <span className='font-medium text-gray-600'>Amount:</span>
+                  <span className='ml-1 font-bold text-green-600'>Rs {Number(totalAmount || 0).toLocaleString()}</span>
                 </div>
-              </div>
-              <div>
-                <span className='font-medium text-gray-600'>
-                  Total Remaining:
-                </span>
-                <div
-                  className={`text-lg font-bold ${totalRemaining > 0 ? 'text-red-600' : 'text-green-600'}`}
-                >
-                  Rs {totalRemaining.toLocaleString()}
+                <div className='flex-1 text-center'>
+                  <span className='font-medium text-gray-600'>Remaining:</span>
+                  <span className={`ml-1 font-bold ${totalRemaining > 0 ? 'text-red-600' : 'text-green-600'}`}>Rs {totalRemaining.toLocaleString()}</span>
                 </div>
-              </div>
-              <div>
-                <span className='font-medium text-gray-600'>
-                  Paid Invoices:
-                </span>
-                <div className='text-lg font-bold text-green-600'>
-                  {paidInvoices}/{totalInvoices}
+                <div className='flex-1 text-center'>
+                  <span className='font-medium text-gray-600'>Paid:</span>
+                  <span className='ml-1 font-bold text-green-600'>{paidInvoices}/{totalInvoices}</span>
+                </div>
+                <div className='flex-1 text-center'>
+                  <span className='font-medium text-gray-600'>Voided:</span>
+                  <span className='ml-1 font-bold text-red-600'>{voidedInvoices}</span>
                 </div>
               </div>
             </div>

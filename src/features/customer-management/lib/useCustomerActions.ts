@@ -3,7 +3,7 @@
 
 'use client';
 
-import { useCallback, useOptimistic, startTransition } from 'react';
+import { useCallback, useOptimistic, startTransition, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
   Customer,
@@ -23,6 +23,10 @@ export const useCustomerActions = ({
   onCustomersChange,
   onRefreshCustomers,
 }: UseCustomerActionsProps) => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // Optimistic updates for customer creation
   const [optimisticCustomers, addOptimisticCustomer] = useOptimistic(
     customers,
@@ -34,6 +38,13 @@ export const useCustomerActions = ({
 
   const createCustomer = useCallback(
     async (data: CustomerFormData) => {
+      // Prevent multiple creation attempts
+      if (isCreating) {
+        return false;
+      }
+
+      setIsCreating(true);
+      
       try {
         // Add optimistic update within transition
         startTransition(() => {
@@ -70,9 +81,11 @@ export const useCustomerActions = ({
       } catch (error) {
         toast.error('An error occurred while creating the customer');
         return false;
+      } finally {
+        setIsCreating(false);
       }
     },
-    [addOptimisticCustomer, onRefreshCustomers]
+    [addOptimisticCustomer, onRefreshCustomers, isCreating]
   );
 
   const updateCustomer = useCallback(
@@ -111,12 +124,12 @@ export const useCustomerActions = ({
 
   const deleteCustomer = useCallback(
     async (customer: Customer) => {
-      if (!customer._id) {
+      const customerId = customer.id || customer._id;
+      
+      if (!customerId) {
         toast.error('Cannot delete customer: ID is missing');
         return;
       }
-
-      if (!confirm('Are you sure you want to delete this customer?')) return;
 
       try {
         const response = await fetch('/api/customers', {
@@ -124,7 +137,7 @@ export const useCustomerActions = ({
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ id: customer._id }),
+          body: JSON.stringify({ id: customerId }),
         });
 
         const result = await response.json();
@@ -147,5 +160,8 @@ export const useCustomerActions = ({
     createCustomer,
     updateCustomer,
     deleteCustomer,
+    isCreating,
+    isUpdating,
+    isDeleting,
   };
 };
