@@ -162,6 +162,17 @@ export default function Footer({ onBrandClick }: FooterProps) {
         {/* Copyright */}
         <div className='mt-8 border-t border-gray-800 pt-8 text-center text-gray-400'>
           <p>&copy; 2026 Mudasir Traders. All rights reserved.</p>
+          <p className='mt-2'>
+            Made by{' '}
+            <a
+              href='https://muzamilshakir.com'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-blue-400 transition-colors hover:text-white'
+            >
+              Muzamil Shakir
+            </a>
+          </p>
         </div>
       </div>
     </footer>
