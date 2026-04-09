@@ -27,7 +27,8 @@ const WarrantyDetails: React.FC<WarrantyDetailsProps> = ({ warranty }) => {
 
   if (isValid(startDate)) {
     // Add months to start date (warranty duration is in months)
-    endDate.setMonth(endDate.getMonth() + warranty.warrentyDuration);
+    const duration = parseInt(String(warranty.warrentyDuration || 0));
+    endDate.setMonth(endDate.getMonth() + duration);
   }
 
   const now = new Date();

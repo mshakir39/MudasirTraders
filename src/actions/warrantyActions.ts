@@ -7,7 +7,8 @@ interface WarrantyData {
   brandName: string;
   series: string;
   warrentyStartDate: string;
-  warrentyDuration: number;
+  warrentyEndDate?: string;
+  warrentyDuration: number | string;  // Allow both to match DB schema
   warrentyCode: string;
   customerName: string;
   customerContactNumber: string;
@@ -102,12 +103,21 @@ export async function searchWarranty(
             // Found warranty code in invoice
 
             // React 19: Enhanced warranty data with additional fields
+            // Calculate warranty end date
+            const startDate = new Date(product.warrentyStartDate);
+            const endDate = new Date(startDate);
+            if (!isNaN(startDate.getTime())) {
+              const duration = parseInt(String(product.warrentyDuration || 0));
+              endDate.setMonth(endDate.getMonth() + duration);
+            }
+
             const warrantyData: WarrantyData = {
               productName: `${product.brandName} - ${product.series}`,
               brandName: product.brandName,
               series: product.series,
               warrentyStartDate: product.warrentyStartDate,
-              warrentyDuration: product.warrentyDuration || 6,
+              warrentyEndDate: endDate.toISOString(),
+              warrentyDuration: product.warrentyDuration || '',
               warrentyCode: product.warrentyCode,
               customerName: invoice.customerName,
               customerContactNumber: invoice.customerContactNumber,
@@ -143,12 +153,21 @@ export async function searchWarranty(
           ) {
             // Found warranty code in sale
 
+            // Calculate warranty end date
+            const startDate = new Date(product.warrentyStartDate);
+            const endDate = new Date(startDate);
+            if (!isNaN(startDate.getTime())) {
+              const duration = parseInt(String(product.warrentyDuration || 0));
+              endDate.setMonth(endDate.getMonth() + duration);
+            }
+
             const warrantyData: WarrantyData = {
               productName: `${product.brandName} - ${product.series}`,
               brandName: product.brandName,
               series: product.series,
               warrentyStartDate: product.warrentyStartDate,
-              warrentyDuration: product.warrentyDuration || 6,
+              warrentyEndDate: endDate.toISOString(),
+              warrentyDuration: product.warrentyDuration || '',
               warrentyCode: product.warrentyCode,
               customerName: sale.customerName,
               customerContactNumber: sale.customerContactNumber,
@@ -186,13 +205,22 @@ export async function searchWarranty(
             continue;
           }
 
+          // Calculate warranty end date
+          const startDate = new Date(warrantyRecord.productDetails.warrentyStartDate);
+          const endDate = new Date(startDate);
+          if (!isNaN(startDate.getTime())) {
+            const duration = parseInt(String(warrantyRecord.productDetails.warrentyDuration || 0));
+            endDate.setMonth(endDate.getMonth() + duration);
+          }
+
           const warrantyData: WarrantyData = {
             productName: `${warrantyRecord.productDetails.brandName} - ${warrantyRecord.productDetails.series}`,
             brandName: warrantyRecord.productDetails.brandName,
             series: warrantyRecord.productDetails.series,
             warrentyStartDate: warrantyRecord.productDetails.warrentyStartDate,
+            warrentyEndDate: endDate.toISOString(),
             warrentyDuration:
-              warrantyRecord.productDetails.warrentyDuration || 6,
+              warrantyRecord.productDetails.warrentyDuration || '',
             warrentyCode: warrantyRecord.warrentyCode,
             customerName: warrantyRecord.customerName,
             customerContactNumber: warrantyRecord.customerContactNumber,
