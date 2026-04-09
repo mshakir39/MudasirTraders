@@ -32,7 +32,7 @@ export async function searchWarranty(
   warrantyCode: string
 ): Promise<WarrantySearchResult> {
   try {
-    const trimmedWarrantyCode = warrantyCode.trim();
+    const trimmedWarrantyCode = warrantyCode.trim().toUpperCase();
 
     if (!trimmedWarrantyCode) {
       return { success: false, error: 'Warranty code is required' };
@@ -48,13 +48,16 @@ export async function searchWarranty(
     ): boolean => {
       if (!warrantyString || !searchCode) return false;
 
+      // Convert warranty string to uppercase for case-insensitive comparison
+      const normalizedWarrantyString = warrantyString.trim().toUpperCase();
+
       // First, try exact match (in case the search code is the complete warranty string)
-      if (warrantyString.trim() === searchCode.trim()) {
+      if (normalizedWarrantyString === searchCode.trim()) {
         return true;
       }
 
       // Split the warranty string by spaces OR commas and check if the search code exists
-      const codes = warrantyString
+      const codes = normalizedWarrantyString
         .split(/[\s,]+/)
         .filter((code) => code.length > 0);
 
