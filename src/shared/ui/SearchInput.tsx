@@ -11,6 +11,7 @@ interface SearchInputProps {
   name?: string;
   disabled?: boolean;
   className?: string;
+  autoComplete?: string;
 }
 
 export const SearchInput: React.FC<SearchInputProps> = ({
@@ -20,6 +21,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   name = 'search',
   disabled = false,
   className = '',
+  autoComplete = 'off',
 }) => {
   return (
     <div className={`flex-1 ${className}`}>
@@ -30,6 +32,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
+        autoComplete={autoComplete}
         className='w-full rounded-lg border border-secondary-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-secondary-100'
       />
     </div>
