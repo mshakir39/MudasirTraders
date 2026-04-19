@@ -6,6 +6,7 @@ import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import log from '@/utils/logger';
+import { addWarrantyCodes, removeWarrantyCodes } from '@/actions/warrantySync';
 
 // Escape user-provided text for use inside a RegExp
 function escapeRegex(input: string) {
@@ -1118,6 +1119,16 @@ export async function POST(req: NextRequest) {
       throw new Error('Failed to insert invoice into database');
     }
 
+    // Add warranty codes to lookup collection
+    await addWarrantyCodes(
+      invoice.products,
+      invoice.invoiceNo,
+      invoice.customerName,
+      invoice.customerContactNumber,
+      'invoice',
+      invoice.createdDate
+    );
+
     // Insert a sales record into the sales collection
     console.log('💼 Inserting sales record...');
 
@@ -1427,37 +1438,18 @@ export async function DELETE(req: NextRequest) {
       consolidatedFrom: invoice.consolidatedFrom,
     });
 
-    // 2. Preserve warranty data before deletion
+    // 2. Remove warranty data from warrantyHistory and lookup collections
     if (invoice.products && Array.isArray(invoice.products)) {
-      log.invoice('Preserving warranty data...');
+      log.invoice('Removing warranty data...');
       for (const product of invoice.products) {
         if (product.warrentyCode) {
           try {
-            await executeOperation('warrantyHistory', 'insertOne', {
-              warrentyCode: product.warrentyCode
-                ? product.warrentyCode.trim()
-                : '',
-              customerName: invoice.customerName,
-              customerContactNumber: invoice.customerContactNumber,
-              customerAddress: invoice.customerAddress,
-              productDetails: {
-                brandName: product.brandName,
-                series: product.series,
-                warrentyStartDate: product.warrentyStartDate,
-                warrentyEndDate: product.warrentyEndDate,
-                warrentyDuration: product.warrentyDuration,
-              },
+            await executeOperation('warrantyHistory', 'deleteMany', {
+              warrentyCode: product.warrentyCode.trim(),
               originalInvoiceNo: invoice.invoiceNo,
-              originalInvoiceId: invoice._id,
-              deletedAt: new Date(),
-              deletionReason: 'Invoice deleted by user',
             });
-            log.invoice(`Warranty data preserved for: ${product.warrentyCode}`);
           } catch (warrantyError) {
-            log.error(
-              `Failed to preserve warranty data for ${product.warrentyCode}:`,
-              warrantyError
-            );
+            log.warning('Failed to remove warranty data from history:', warrantyError);
           }
         }
       }
@@ -1644,6 +1636,9 @@ export async function DELETE(req: NextRequest) {
       log.error('Failed to delete main invoice record:', deleteError);
       throw new Error(`Failed to delete invoice: ${deleteError.message}`);
     }
+
+    // Remove warranty codes from lookup collection
+    await removeWarrantyCodes(invoice.invoiceNo);
 
     log.success(`Complete invoice deletion successful: ${invoice.invoiceNo}`);
 

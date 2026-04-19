@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import Table from '@/components/table';
 
@@ -11,6 +11,15 @@ const SalesDataGrid: React.FC<SalesDataGridProps> = ({
   filteredSales,
   onViewProducts,
 }) => {
+  const extraGlobalSearchText = useCallback((row: any) => {
+    const products = row.products || [];
+    const warrantyCodes = products
+      .map((p: any) => p.warrentyCode)
+      .filter(Boolean)
+      .join(' ');
+    return warrantyCodes;
+  }, []);
+
   const columns = useMemo<ColumnDef<any>[]>(
     () => [
       {
@@ -115,6 +124,7 @@ const SalesDataGrid: React.FC<SalesDataGridProps> = ({
         enableRowVirtualization={true}
         tableBodyHeight={600}
         minVisibleRows={15}
+        extraGlobalSearchText={extraGlobalSearchText}
       />
     </div>
   );

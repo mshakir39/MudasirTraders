@@ -39,173 +39,53 @@ export async function searchWarranty(
       return { success: false, error: 'Warranty code is required' };
     }
 
-    // React 19: Add search analytics (optional)
     const searchStartTime = Date.now();
 
-    // Helper function to check if a warranty code exists in a space or comma-separated string
-    const hasWarrantyCode = (
-      warrantyString: string,
-      searchCode: string
-    ): boolean => {
-      if (!warrantyString || !searchCode) return false;
+    // FAST PATH: Use warranty lookup collection with indexed search
+    const lookupResult = await executeOperation('warrantyLookup', 'findOne', {
+      warrentyCode: trimmedWarrantyCode,
+    });
 
-      // Convert warranty string to uppercase for case-insensitive comparison
-      const normalizedWarrantyString = warrantyString.trim().toUpperCase();
-
-      // First, try exact match (in case the search code is the complete warranty string)
-      if (normalizedWarrantyString === searchCode.trim()) {
-        return true;
+    if (lookupResult && typeof lookupResult === 'object' && 'warrentyCode' in lookupResult) {
+      // Calculate warranty end date
+      const startDate = new Date(lookupResult.warrentyStartDate);
+      const endDate = new Date(startDate);
+      if (!isNaN(startDate.getTime())) {
+        const duration = parseInt(String(lookupResult.warrentyDuration || 0));
+        endDate.setMonth(endDate.getMonth() + duration);
       }
 
-      // Split the warranty string by spaces OR commas and check if the search code exists
-      const codes = normalizedWarrantyString
-        .split(/[\s,]+/)
-        .filter((code) => code.length > 0);
+      const warrantyData: WarrantyData = {
+        productName: `${lookupResult.brandName} - ${lookupResult.series}`,
+        brandName: lookupResult.brandName,
+        series: lookupResult.series,
+        warrentyStartDate: lookupResult.warrentyStartDate,
+        warrentyEndDate: endDate.toISOString(),
+        warrentyDuration: lookupResult.warrentyDuration || '',
+        warrentyCode: lookupResult.warrentyCode,
+        customerName: lookupResult.customerName,
+        customerContactNumber: lookupResult.customerContactNumber,
+        invoiceNumber: lookupResult.invoiceNo,
+        saleDate: lookupResult.createdAt,
+        searchTimestamp: new Date().toISOString(),
+        searchDuration: Date.now() - searchStartTime,
+      };
 
-      // Check if the search code exists as a complete code in the array
-      const found = codes.includes(searchCode);
-
-      // If not found, try to match by combining adjacent codes
-      if (!found) {
-        for (let i = 0; i < codes.length - 1; i++) {
-          const combinedCode = `${codes[i]} ${codes[i + 1]}`;
-          if (combinedCode === searchCode) {
-            return true;
-          }
-        }
-      }
-
-      return found;
-    };
-
-    // Get all invoices and check each product's warranty code
-    const allInvoices = await executeOperation('invoices', 'find', {});
-
-    if (!allInvoices || !Array.isArray(allInvoices)) {
-      // No invoices found
-    } else {
-      for (const invoice of allInvoices) {
-        if (invoice.products && Array.isArray(invoice.products)) {
-          for (const product of invoice.products) {
-            if (product.warrentyCode) {
-            }
-          }
-        }
-      }
-      for (const invoice of allInvoices) {
-        if (!invoice.products || !Array.isArray(invoice.products)) continue;
-
-        for (const product of invoice.products) {
-          if (
-            product.warrentyCode &&
-            hasWarrantyCode(product.warrentyCode, trimmedWarrantyCode)
-          ) {
-            // Found warranty code in invoice
-
-            // React 19: Enhanced warranty data with additional fields
-            // Calculate warranty end date
-            const startDate = new Date(product.warrentyStartDate);
-            const endDate = new Date(startDate);
-            if (!isNaN(startDate.getTime())) {
-              const duration = parseInt(String(product.warrentyDuration || 0));
-              endDate.setMonth(endDate.getMonth() + duration);
-            }
-
-            const warrantyData: WarrantyData = {
-              productName: `${product.brandName} - ${product.series}`,
-              brandName: product.brandName,
-              series: product.series,
-              warrentyStartDate: product.warrentyStartDate,
-              warrentyEndDate: endDate.toISOString(),
-              warrentyDuration: product.warrentyDuration || '',
-              warrentyCode: product.warrentyCode,
-              customerName: invoice.customerName,
-              customerContactNumber: invoice.customerContactNumber,
-              invoiceNumber: invoice.invoiceNo,
-              saleDate:
-                invoice.createdAt ||
-                invoice.createdDate ||
-                new Date().toISOString(),
-              // React 19: Add search metadata
-              searchTimestamp: new Date().toISOString(),
-              searchDuration: Date.now() - searchStartTime,
-            };
-
-            return { success: true, data: warrantyData };
-          }
-        }
-      }
+      return { success: true, data: warrantyData, searchDuration: Date.now() - searchStartTime };
     }
 
-    // If not found in invoices, try sales collection
-    const allSales = await executeOperation('sales', 'find', {});
-
-    if (!allSales || !Array.isArray(allSales)) {
-      // No sales found
-    } else {
-      for (const sale of allSales) {
-        if (!sale.products || !Array.isArray(sale.products)) continue;
-
-        for (const product of sale.products) {
-          if (
-            product.warrentyCode &&
-            hasWarrantyCode(product.warrentyCode, trimmedWarrantyCode)
-          ) {
-            // Found warranty code in sale
-
-            // Calculate warranty end date
-            const startDate = new Date(product.warrentyStartDate);
-            const endDate = new Date(startDate);
-            if (!isNaN(startDate.getTime())) {
-              const duration = parseInt(String(product.warrentyDuration || 0));
-              endDate.setMonth(endDate.getMonth() + duration);
-            }
-
-            const warrantyData: WarrantyData = {
-              productName: `${product.brandName} - ${product.series}`,
-              brandName: product.brandName,
-              series: product.series,
-              warrentyStartDate: product.warrentyStartDate,
-              warrentyEndDate: endDate.toISOString(),
-              warrentyDuration: product.warrentyDuration || '',
-              warrentyCode: product.warrentyCode,
-              customerName: sale.customerName,
-              customerContactNumber: sale.customerContactNumber,
-              invoiceNumber: sale.invoiceId,
-              saleDate: sale.date,
-              // React 19: Add search metadata
-              searchTimestamp: new Date().toISOString(),
-              searchDuration: Date.now() - searchStartTime,
-            };
-
-            return { success: true, data: warrantyData };
-          }
-        }
-      }
-    }
-
-    // If not found in active collections, check warranty history (deleted invoices)
+    // FALLBACK: If not found in lookup, check warranty history (deleted invoices)
     const allWarrantyHistory = await executeOperation(
       'warrantyHistory',
       'find',
       {}
     );
 
-    if (!allWarrantyHistory || !Array.isArray(allWarrantyHistory)) {
-      // No warranty history found
-    } else {
+    if (allWarrantyHistory && Array.isArray(allWarrantyHistory)) {
       for (const warrantyRecord of allWarrantyHistory) {
-        if (
-          warrantyRecord.warrentyCode &&
-          hasWarrantyCode(warrantyRecord.warrentyCode, trimmedWarrantyCode)
-        ) {
-          // Found warranty code in warranty history
+        if (warrantyRecord.warrentyCode && warrantyRecord.warrentyCode.toUpperCase() === trimmedWarrantyCode) {
+          if (!warrantyRecord.productDetails) continue;
 
-          if (!warrantyRecord.productDetails) {
-            continue;
-          }
-
-          // Calculate warranty end date
           const startDate = new Date(warrantyRecord.productDetails.warrentyStartDate);
           const endDate = new Date(startDate);
           if (!isNaN(startDate.getTime())) {
@@ -219,32 +99,27 @@ export async function searchWarranty(
             series: warrantyRecord.productDetails.series,
             warrentyStartDate: warrantyRecord.productDetails.warrentyStartDate,
             warrentyEndDate: endDate.toISOString(),
-            warrentyDuration:
-              warrantyRecord.productDetails.warrentyDuration || '',
+            warrentyDuration: warrantyRecord.productDetails.warrentyDuration || '',
             warrentyCode: warrantyRecord.warrentyCode,
             customerName: warrantyRecord.customerName,
             customerContactNumber: warrantyRecord.customerContactNumber,
             invoiceNumber: warrantyRecord.originalInvoiceNo,
             saleDate: warrantyRecord.deletedAt || new Date().toISOString(),
-            isDeleted: true, // Flag to indicate this is from a deleted invoice
+            isDeleted: true,
             deletedAt: warrantyRecord.deletedAt,
-            // React 19: Add search metadata
             searchTimestamp: new Date().toISOString(),
             searchDuration: Date.now() - searchStartTime,
           };
 
-          return { success: true, data: warrantyData };
+          return { success: true, data: warrantyData, searchDuration: Date.now() - searchStartTime };
         }
       }
     }
 
-    // Enhanced logging with search performance
-    const totalSearchDuration = Date.now() - searchStartTime;
-
     return {
       success: false,
       error: 'Warranty code not found',
-      searchDuration: totalSearchDuration,
+      searchDuration: Date.now() - searchStartTime,
     };
   } catch (error: any) {
     return {

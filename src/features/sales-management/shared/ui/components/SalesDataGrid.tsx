@@ -3,7 +3,7 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import Table from '@/components/table';
 import { FaEye, FaTrash } from 'react-icons/fa';
@@ -24,6 +24,15 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
   isLoading = false,
   className = '',
 }) => {
+  const extraGlobalSearchText = useCallback((row: Sale) => {
+    const products = row.products || [];
+    const warrantyCodes = products
+      .map((p: any) => p.warrentyCode)
+      .filter(Boolean)
+      .join(' ');
+    return warrantyCodes;
+  }, []);
+
   const columns = useMemo<ColumnDef<Sale>[]>(
     () => [
       {
@@ -219,6 +228,7 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
         searchPlaceholder='Search sales...'
         showButton={false}
         emptyMessage='No sales found. Try adjusting your search or create a new sale.'
+        extraGlobalSearchText={extraGlobalSearchText}
       />
     </div>
   );

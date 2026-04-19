@@ -28,15 +28,21 @@ export function useStockColumns({
         header: 'Series',
         cell: ({ row }) => {
           const bd = row.original.batteryDetails;
+          const inStock = Number(row.original.inStock);
+          const isOutOfStock = inStock === 0;
           return bd ? (
             <div>
-              <div>{bd.name}</div>
-              <div className='text-xs text-secondary-500'>
+              <div className={isOutOfStock ? 'text-red-600 font-medium' : ''}>
+                {bd.name}
+              </div>
+              <div className={`text-xs ${isOutOfStock ? 'text-red-400' : 'text-secondary-500'}`}>
                 {bd.ah}AH{bd.type && `, ${bd.type}`}
               </div>
             </div>
           ) : (
-            row.original.series
+            <span className={isOutOfStock ? 'text-red-600 font-medium' : ''}>
+              {row.original.series}
+            </span>
           );
         },
       },
