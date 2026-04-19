@@ -1,6 +1,17 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useAtom, useSetAtom } from 'jotai';
 import { FaRobot } from 'react-icons/fa';
+import {
+  categoriesAtom,
+  stockAtom,
+  brandsAtom,
+  invoicesAtom,
+  fetchCategoriesAtom,
+  fetchStockAtom,
+  fetchBrandsAtom,
+  fetchInvoicesAtom,
+} from '@/store/sharedAtoms';
 
 const FloatingAIAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -9,6 +20,104 @@ const FloatingAIAssistant: React.FC = () => {
   >([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(false);
+
+  // Read store data
+  const [categories] = useAtom(categoriesAtom);
+  const [stock] = useAtom(stockAtom);
+  const [brands] = useAtom(brandsAtom);
+  const [invoices] = useAtom(invoicesAtom);
+
+  // Fetch actions
+  const fetchCategories = useSetAtom(fetchCategoriesAtom);
+  const fetchStock = useSetAtom(fetchStockAtom);
+  const fetchBrands = useSetAtom(fetchBrandsAtom);
+  const fetchInvoices = useSetAtom(fetchInvoicesAtom);
+
+  // Fetch data when AI assistant opens and data is missing
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const hasData = categories.length > 0 || stock.length > 0 || brands.length > 0 || invoices.length > 0;
+    if (hasData) {
+      console.log('✅ AI Assistant: Data already available');
+      return;
+    }
+
+    console.log('🔄 AI Assistant: Fetching data...');
+    setDataLoading(true);
+    Promise.all([
+      fetchCategories(),
+      fetchStock(),
+      fetchBrands(),
+      fetchInvoices(),
+    ]).then(() => {
+      console.log('✅ AI Assistant: Data fetched successfully');
+      setDataLoading(false);
+    }).catch((err) => {
+      console.error('❌ AI Assistant: Failed to fetch data', err);
+      setDataLoading(false);
+    });
+  }, [isOpen, categories.length, stock.length, brands.length, invoices.length, fetchCategories, fetchStock, fetchBrands, fetchInvoices]);
+
+  // Build compact store summary (only when data changes)
+  const storeData = useMemo(() => {
+    const summary: any = {};
+
+    if (categories.length > 0) {
+      summary.categories = categories.map((c: any) => c.name || c.categoryName || c._id).filter(Boolean);
+    }
+
+    if (brands.length > 0) {
+      summary.brands = brands.map((b: any) => b.name || b.brandName || b._id).filter(Boolean);
+    }
+
+    if (stock.length > 0) {
+      summary.stockSummary = {
+        totalProducts: stock.length,
+        items: stock.slice(0, 50).map((s: any) => ({
+          name: s.name || s.productName || '',
+          brand: s.brand || s.brandName || '',
+          qty: s.quantity ?? s.currentStock ?? s.stock ?? 0,
+          price: s.salePrice ?? s.price ?? 0,
+        })),
+      };
+    }
+
+    if (invoices.length > 0) {
+      const totalRevenue = invoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
+      const totalReceived = invoices.reduce((sum: number, inv: any) => sum + (inv.receivedAmount || 0), 0);
+      const totalPending = invoices.reduce((sum: number, inv: any) => sum + (inv.remainingAmount || 0), 0);
+      summary.invoiceSummary = {
+        totalInvoices: invoices.length,
+        totalRevenue,
+        totalReceived,
+        totalPending,
+        recentInvoices: invoices.slice(0, 10).map((inv: any) => ({
+          no: inv.invoiceNo,
+          customer: inv.customerName,
+          total: inv.totalAmount,
+          received: inv.receivedAmount,
+          remaining: inv.remainingAmount,
+          status: inv.paymentStatus,
+          date: inv.createdDate,
+        })),
+      };
+    }
+
+    const result = Object.keys(summary).length > 0 ? summary : undefined;
+    if (result) {
+      console.log('📦 FloatingAIAssistant: storeData built with', {
+        categories: result.categories?.length || 0,
+        brands: result.brands?.length || 0,
+        stockItems: result.stockSummary?.items?.length || 0,
+        invoices: result.invoiceSummary?.totalInvoices || 0,
+      });
+    } else {
+      console.log('⚠️ FloatingAIAssistant: storeData is empty - waiting for GlobalDataProvider');
+    }
+    return result;
+  }, [categories, brands, stock, invoices]);
 
   const handleSendMessage = async () => {
     if (!input.trim()) {
@@ -20,6 +129,11 @@ const FloatingAIAssistant: React.FC = () => {
     setInput('');
     setIsLoading(true);
 
+    // Debug: Check if storeData is available
+    if (!storeData) {
+      console.warn('⚠️ Sending message without storeData - AI will be slower');
+    }
+
     try {
       const response = await fetch('/api/ai-assistant', {
         method: 'POST',
@@ -29,6 +143,7 @@ const FloatingAIAssistant: React.FC = () => {
         body: JSON.stringify({
           message: input,
           history: messages,
+          storeData,
         }),
       });
 
@@ -81,7 +196,7 @@ const FloatingAIAssistant: React.FC = () => {
               <div>
                 <h3 className='font-semibold'>AI Assistant</h3>
                 <p className='text-xs text-blue-100'>
-                  Powered by Step-3.5-Flash (Free)
+                  Powered by AI
                 </p>
               </div>
             </div>
@@ -163,7 +278,7 @@ const FloatingAIAssistant: React.FC = () => {
             <div className='flex items-center gap-2'>
               <input
                 type='text'
-                placeholder='Ask about your business data...'
+                placeholder={dataLoading ? 'Loading data...' : 'Ask about your business data...'}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -172,16 +287,17 @@ const FloatingAIAssistant: React.FC = () => {
                     handleSendMessage();
                   }
                 }}
-                className='min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500'
+                disabled={isLoading || dataLoading}
+                className='min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
               />
               <button
                 onClick={() => {
                   handleSendMessage();
                 }}
-                disabled={isLoading}
+                disabled={isLoading || dataLoading || !input.trim()}
                 className='rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
               >
-                Send
+                {dataLoading ? 'Loading...' : isLoading ? 'Thinking...' : 'Send'}
               </button>
             </div>
           </div>

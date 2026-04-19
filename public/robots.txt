@@ -1,8 +1,9 @@
 User-agent: *
 Allow: /
 
-# Sitemap
+# Sitemaps
 Sitemap: https://mudasirtraders.com/sitemap.xml
+Sitemap: https://mudasirtraders.com/api/sitemap-images
 
 # Block common non-content paths
 Disallow: /api/

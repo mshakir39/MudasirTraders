@@ -46,8 +46,33 @@ export default function MeetupSection() {
 
   // If no images are returned from API, you can hide the section or show a message
   if (meetups.length === 0) return null;
+
+  // Generate structured data for SEO
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'ImageGallery',
+    name: 'Community Meetups - Mudasir Traders',
+    description: 'Community meetup events and customer appreciation ceremonies at Mudasir Traders battery shop in Dera Ghazi Khan',
+    url: 'https://mudasirtraders.com/app/meetups',
+    image: meetups.map((meetup) => ({
+      '@type': 'ImageObject',
+      url: meetup.url,
+      caption: meetup.title || 'Community Meetup event at Mudasir Traders',
+      description: 'Community engagement and customer appreciation event',
+      author: {
+        '@type': 'Organization',
+        name: 'Mudasir Traders',
+        url: 'https://mudasirtraders.com'
+      }
+    }))
+  };
+
   return (
     <div className='w-full bg-gray-50'>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <section className='py-24'>
         <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
           {/* Section Header */}
@@ -92,7 +117,7 @@ export default function MeetupSection() {
                     >
                       <Image
                         src={meetup.url}
-                        alt={meetup.title || 'Community Meetup'}
+                        alt={meetup.title ? `Community Meetup: ${meetup.title} at Mudasir Traders` : 'Community Meetup event at Mudasir Traders battery shop in Dera Ghazi Khan with customers and team'}
                         fill={true}
                         sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
                         className={`transition-transform duration-300 group-hover:scale-105 ${

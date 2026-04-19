@@ -435,14 +435,22 @@ export class InvoiceDataUtil {
       return false;
     }
 
-    // Include pending invoices regardless of amount
+    // Calculate actual remaining amount
+    const remainingAmount = invoice.remainingAmount || 
+      (invoice.totalAmount || 0) - (invoice.receivedAmount || 0);
+
+    // Exclude invoices with zero or negative remaining amount
+    if (remainingAmount <= 0) {
+      return false;
+    }
+
+    // Include pending invoices with remaining amount > 0
     if (invoice.paymentStatus === 'pending') {
       return true;
     }
 
     // For partial invoices, only include if remaining amount > 0
     if (invoice.paymentStatus === 'partial') {
-      const remainingAmount = invoice.remainingAmount || 0;
       return remainingAmount > 0;
     }
 
