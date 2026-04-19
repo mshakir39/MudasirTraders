@@ -25,8 +25,10 @@ export default function CustomersManagementPage({
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleViewInvoices = useCallback((customer: Customer) => {
+    console.log('handleViewInvoices called:', customer.customerName);
     setSelectedCustomer(customer);
     setIsInvoicesModalOpen(true);
+    console.log('State set: selectedCustomer and isInvoicesModalOpen');
   }, []);
 
   const handleCloseInvoicesModal = useCallback(() => {

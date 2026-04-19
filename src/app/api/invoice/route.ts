@@ -123,9 +123,24 @@ export async function POST(req: NextRequest) {
 
       // Prepare consolidation data
       const pendingInvoiceIds = pendingInvoices.map((inv: any) => inv.id);
-      const previousAmounts = pendingInvoices.map(
-        (inv: any) => inv.remainingAmount
-      );
+      const previousAmounts = pendingInvoices.map((inv: any) => {
+        // Calculate remaining amount dynamically (include additional payments)
+        const productTotal = (inv.products || []).reduce((sum: number, product: any) => {
+          if (product.isChargingService || product.isScrapBattery) {
+            return sum;
+          }
+          const price = product.productPrice || product.totalPrice || product.price || 0;
+          const qty = product.quantity || 1;
+          return sum + Number(price) * Number(qty);
+        }, 0);
+        const received = Number(inv.receivedAmount) || 0;
+        const batteriesRate = Number(inv.batteriesRate) || 0;
+        const additionalPayments = (inv.additionalPayment || []).reduce(
+          (sum: number, payment: any) => sum + Number(payment.amount || 0),
+          0
+        );
+        return productTotal - received - batteriesRate - additionalPayments;
+      });
 
       const consolidationData = {
         customerName: formData.customerName,

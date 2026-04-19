@@ -7,6 +7,10 @@ import EditInvoiceModal from '@/components/archive/EditInvoiceModal';
 import { toast } from 'react-toastify';
 import { PATCH } from '@/utils/api';
 import { useAccordionData } from '@/features/invoice-management/lib/useAccordionData';
+import { InvoiceDataUtil } from '@/utils/invoiceDataUtil';
+import { getCustomerPendingInvoices } from '@/actions/invoiceActions';
+import { useAtom } from 'jotai';
+import { invoicesAtom } from '@/store/sharedAtoms';
 
 interface CustomerInvoicesModalProps {
   isOpen: boolean;
@@ -24,6 +28,7 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
   stock = [],
 }) => {
   const { ...accordionMethods } = useAccordionData(categories, stock);
+  const [allInvoices = []] = useAtom(invoicesAtom);
 
   const brandOptions = categories.map((category) => ({
     label: category.brandName || '',
@@ -54,6 +59,11 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
     }
   }, [customer]);
 
+
+
+
+  
+  
   useEffect(() => {
     if (isOpen) {
       fetchCustomerInvoices();
@@ -107,24 +117,25 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
   // Filter out voided invoices for calculations
   const activeInvoices = customerInvoices.filter(invoice => invoice.status !== 'voided');
   
+  // Filter store's all invoices for this customer for totalAmount calculation
+  const customerStoreInvoices = allInvoices.filter(
+    (invoice: any) => invoice.customerName === customer.customerName && invoice.status === 'active'
+  );
+  
+  // Find latest invoice for remaining amount
+  const latestInvoice = activeInvoices.length > 0 
+    ? activeInvoices.reduce((latest: any, invoice: any) => 
+        new Date(invoice.createdAt) > new Date(latest.createdAt) ? invoice : latest
+      )
+    : null;
+  
   // Calculate summary statistics using only active invoices
   const totalInvoices = activeInvoices.length;
-  const totalAmount = activeInvoices.reduce((sum, invoice) => {
-    // Calculate total from products (same logic as data table)
-    const productTotal =
-      invoice.products?.reduce((sum: number, product: any) => {
-        // Try different possible price fields - prioritize productPrice
-        const productPrice =
-          product.productPrice || product.totalPrice || product.price || 0;
-        const quantity = product.quantity || 1;
-        return sum + Number(productPrice) * Number(quantity);
-      }, 0) || 0;
-    return sum + productTotal;
-  }, 0);
-  const totalRemaining = activeInvoices.reduce(
-    (sum, invoice) => sum + (invoice.remainingAmount || 0),
+  const totalAmount = customerStoreInvoices.reduce(
+    (sum: number, invoice: any) => sum + (invoice.totalAmount || 0),
     0
   );
+  const totalRemaining = latestInvoice ? (latestInvoice.remainingAmount || 0) : 0;
   const paidInvoices = activeInvoices.filter(
     (invoice) => (invoice.remainingAmount || 0) === 0
   ).length;
