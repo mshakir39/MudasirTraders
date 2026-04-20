@@ -165,6 +165,17 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
     return filtered;
   }, [invoices, filter]);
 
+  // Calculate sum of pending and partial payment amounts
+  const pendingPartialTotal = useMemo(() => {
+    if (filter.paymentStatus !== 'pending' && filter.paymentStatus !== 'partial') {
+      return 0;
+    }
+    return filteredInvoices.reduce((sum, invoice) => {
+      const remaining = invoice.remainingAmount || 0;
+      return sum + remaining;
+    }, 0);
+  }, [filteredInvoices, filter.paymentStatus]);
+
   // Handle opening modal
   const handleOpenModal = useCallback(
     (type: InvoiceModalType, data?: Invoice) => {
@@ -559,6 +570,7 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
         onEditInvoice={(invoice) => handleOpenModal('edit', invoice)}
         onAddPayment={(invoice) => handleOpenModal('payment', invoice)}
         onDeleteInvoice={handleDeleteInvoice}
+        pendingPartialTotal={pendingPartialTotal}
         onPreviewReplacement={(replacementInvoiceId) => {
           // Find the replacement invoice by ID and open preview modal
           const replacementInvoice = invoices.find(

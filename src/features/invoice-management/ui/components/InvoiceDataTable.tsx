@@ -20,6 +20,7 @@ interface InvoiceDataTableProps {
   onCreateInvoice?: () => void;
   onPreviewReplacement?: (replacementInvoiceId: string) => void;
   className?: string;
+  pendingPartialTotal?: number;
 }
 
 export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
@@ -31,6 +32,7 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
   onCreateInvoice,
   onPreviewReplacement,
   className = '',
+  pendingPartialTotal = 0,
 }) => {
   const columns = useMemo<ColumnDef<Invoice>[]>(
     () => [
@@ -294,6 +296,7 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
         showButton={!!onCreateInvoice}
         buttonTitle='Create Invoice'
         buttonOnClick={onCreateInvoice}
+        buttonExtraContent={pendingPartialTotal > 0 ? `Total: Rs ${pendingPartialTotal.toLocaleString()}` : undefined}
       />
     </div>
   );

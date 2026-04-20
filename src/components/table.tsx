@@ -24,6 +24,7 @@ interface TableProps<TData> {
   buttonOnClick?: () => void;
   buttonTitle?: string;
   showButton?: boolean;
+  buttonExtraContent?: string;
   secondaryButtonOnClick?: () => void;
   secondaryButtonTitle?: string;
   showSecondaryButton?: boolean;
@@ -54,6 +55,7 @@ export const Table = <TData extends Record<string, any>>({
   showButton,
   buttonTitle,
   buttonOnClick,
+  buttonExtraContent,
   showSecondaryButton,
   secondaryButtonTitle,
   secondaryButtonOnClick,
@@ -285,6 +287,11 @@ export const Table = <TData extends Record<string, any>>({
                 style={{ borderColor: '#dc2626', color: '#dc2626' }}
                 className='hover:bg-red-50'
               />
+            )}
+            {buttonExtraContent && (
+              <span className='text-sm font-medium text-gray-600 mr-2'>
+                {buttonExtraContent}
+              </span>
             )}
             {showButton && buttonOnClick && (
               <Button

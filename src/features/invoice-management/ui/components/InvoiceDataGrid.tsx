@@ -16,6 +16,7 @@ interface InvoiceDataGridProps {
   onDeleteInvoice: (invoiceId: string) => void;
   onPreviewReplacement?: (replacementInvoiceId: string) => void;
   className?: string;
+  pendingPartialTotal?: number;
 }
 
 export const InvoiceDataGrid: React.FC<InvoiceDataGridProps> = ({
@@ -27,6 +28,7 @@ export const InvoiceDataGrid: React.FC<InvoiceDataGridProps> = ({
   onDeleteInvoice,
   onPreviewReplacement,
   className = '',
+  pendingPartialTotal = 0,
 }) => {
   return (
     <div className={className}>
@@ -39,6 +41,7 @@ export const InvoiceDataGrid: React.FC<InvoiceDataGridProps> = ({
         onAddPayment={onAddPayment}
         onDeleteInvoice={onDeleteInvoice}
         onPreviewReplacement={onPreviewReplacement}
+        pendingPartialTotal={pendingPartialTotal}
       />
     </div>
   );
