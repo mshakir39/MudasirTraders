@@ -154,7 +154,6 @@ export async function getInvoices() {
       filter: {},
       sort: { createdDate: -1 },
       skip: 0,
-      limit: 1000, // hard cap — adjust if needed
     })) as { docs: any[]; total: number };
 
     const data = result.docs.map((invoice: any) => ({

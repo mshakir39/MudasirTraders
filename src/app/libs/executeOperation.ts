@@ -377,16 +377,20 @@ export async function executeOperation(
           const filter = document?.filter || {};
           const sort = document?.sort || { _id: -1 };
           const skip = document?.skip || 0;
-          const limit = document?.limit || 50;
+          const limit = document?.limit;
+
+          const query = db
+            .collection(collectionName)
+            .find(filter)
+            .sort(sort)
+            .skip(skip);
+
+          if (limit) {
+            query.limit(limit);
+          }
 
           const [results, total] = await Promise.all([
-            db
-              .collection(collectionName)
-              .find(filter)
-              .sort(sort)
-              .skip(skip)
-              .limit(limit)
-              .toArray(),
+            query.toArray(),
             db.collection(collectionName).countDocuments(filter),
           ]);
 
