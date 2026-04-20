@@ -65,10 +65,6 @@ const InventoryByBrandChartLazy = dynamic<InventoryByBrandChartProps>(
     ),
   { ssr: false, loading: () => null }
 );
-const ProfitAnalysisLazy = dynamic(
-  () => import('@/components/dashboard/ProfitAnalysis').then((m) => m.default),
-  { ssr: false, loading: () => null }
-);
 import { lockDashboard } from '@/actions/dashboardActions';
 
 interface DateRange {
@@ -401,11 +397,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Inventory by Brand Chart */}
       <div className='mb-8'>
         <InventoryByBrandChartLazy data={chartData.inventoryByBrand} />
-      </div>
-
-      {/* Profit Analysis Section */}
-      <div className='mb-8'>
-        <ProfitAnalysisLazy />
       </div>
     </div>
   );
