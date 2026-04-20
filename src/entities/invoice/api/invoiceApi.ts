@@ -58,7 +58,9 @@ export class InvoiceApi {
 
         // Use the same logic as the grid
         let actualStatus: 'pending' | 'partial' | 'paid';
-        if (totalReceived === 0) {
+        // Check if any actual payment was received (excluding battery rate)
+        const actualPaymentsReceived = received + additionalPayments;
+        if (actualPaymentsReceived === 0) {
           actualStatus = 'pending';
         } else if (actualRemaining > 0) {
           actualStatus = 'partial';

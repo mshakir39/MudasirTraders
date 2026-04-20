@@ -561,7 +561,50 @@ export async function GET(request: NextRequest) {
     // PENDING PAYMENTS
     const totalPending = Array.isArray(invoicesDocs)
       ? invoicesDocs.reduce((sum: number, invoice: any) => {
-          return sum + toNumber(invoice.remainingAmount);
+          // Exclude voided invoices
+          if (invoice.status === 'voided') {
+            return sum;
+          }
+
+          // Calculate totalAmount same as frontend (fetchInvoicesAtom)
+          const calculateTotalAmount = (): number => {
+            if (invoice.totalAmount && typeof invoice.totalAmount === 'number') {
+              return invoice.totalAmount;
+            }
+            if (invoice.products && Array.isArray(invoice.products)) {
+              return invoice.products.reduce((s: number, product: any) => {
+                return s + (typeof product.totalPrice === 'number' ? product.totalPrice : 0);
+              }, 0);
+            }
+            return toNumber(invoice.remainingAmount) + toNumber(invoice.receivedAmount);
+          };
+
+          const total = calculateTotalAmount();
+          const received = toNumber(invoice.receivedAmount);
+          const batteryRate = toNumber(invoice.batteriesRate);
+          const additionalPayments = (invoice.additionalPayment || []).reduce(
+            (s: number, payment: any) => s + toNumber(payment.amount),
+            0
+          );
+          const totalReceived = received + batteryRate + additionalPayments;
+          const actualRemaining = total - totalReceived;
+
+          // Only include pending or partial invoices
+          let actualStatus: 'pending' | 'partial' | 'paid';
+          // Check if any actual payment was received (excluding battery rate)
+          const actualPaymentsReceived = received + additionalPayments;
+          if (actualPaymentsReceived === 0) {
+            actualStatus = 'pending';
+          } else if (actualRemaining > 0) {
+            actualStatus = 'partial';
+          } else {
+            actualStatus = 'paid';
+          }
+
+          if (actualStatus === 'pending' || actualStatus === 'partial') {
+            return sum + Math.max(0, actualRemaining);
+          }
+          return sum;
         }, 0)
       : 0;
 

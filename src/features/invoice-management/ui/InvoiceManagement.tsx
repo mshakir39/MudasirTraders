@@ -171,8 +171,16 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
       return 0;
     }
     return filteredInvoices.reduce((sum, invoice) => {
-      const remaining = invoice.remainingAmount || 0;
-      return sum + remaining;
+      const total = invoice.totalAmount || 0;
+      const received = invoice.receivedAmount || 0;
+      const batteryRate = invoice.batteriesRate || 0;
+      const additionalPayments = (invoice.additionalPayment || []).reduce(
+        (s: number, payment: any) => s + (payment.amount || 0),
+        0
+      );
+      const totalReceived = received + batteryRate + additionalPayments;
+      const actualRemaining = Math.max(0, total - totalReceived);
+      return sum + actualRemaining;
     }, 0);
   }, [filteredInvoices, filter.paymentStatus]);
 
