@@ -41,7 +41,11 @@ export class InvoiceApi {
       // Payment status filter
       if (filter.paymentStatus && filter.paymentStatus !== 'all') {
         // Exclude voided invoices when filtering for partial or pending payment status
-        if ((filter.paymentStatus === 'partial' || filter.paymentStatus === 'pending') && invoice.status === 'voided') {
+        if (
+          (filter.paymentStatus === 'partial' ||
+            filter.paymentStatus === 'pending') &&
+          invoice.status === 'voided'
+        ) {
           return false;
         }
 

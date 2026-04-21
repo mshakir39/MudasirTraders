@@ -38,7 +38,11 @@ const FloatingAIAssistant: React.FC = () => {
   useEffect(() => {
     if (!isOpen) return;
 
-    const hasData = categories.length > 0 || stock.length > 0 || brands.length > 0 || invoices.length > 0;
+    const hasData =
+      categories.length > 0 ||
+      stock.length > 0 ||
+      brands.length > 0 ||
+      invoices.length > 0;
     if (hasData) {
       console.log('✅ AI Assistant: Data already available');
       return;
@@ -51,25 +55,41 @@ const FloatingAIAssistant: React.FC = () => {
       fetchStock(),
       fetchBrands(),
       fetchInvoices(),
-    ]).then(() => {
-      console.log('✅ AI Assistant: Data fetched successfully');
-      setDataLoading(false);
-    }).catch((err) => {
-      console.error('❌ AI Assistant: Failed to fetch data', err);
-      setDataLoading(false);
-    });
-  }, [isOpen, categories.length, stock.length, brands.length, invoices.length, fetchCategories, fetchStock, fetchBrands, fetchInvoices]);
+    ])
+      .then(() => {
+        console.log('✅ AI Assistant: Data fetched successfully');
+        setDataLoading(false);
+      })
+      .catch((err) => {
+        console.error('❌ AI Assistant: Failed to fetch data', err);
+        setDataLoading(false);
+      });
+  }, [
+    isOpen,
+    categories.length,
+    stock.length,
+    brands.length,
+    invoices.length,
+    fetchCategories,
+    fetchStock,
+    fetchBrands,
+    fetchInvoices,
+  ]);
 
   // Build compact store summary (only when data changes)
   const storeData = useMemo(() => {
     const summary: any = {};
 
     if (categories.length > 0) {
-      summary.categories = categories.map((c: any) => c.name || c.categoryName || c._id).filter(Boolean);
+      summary.categories = categories
+        .map((c: any) => c.name || c.categoryName || c._id)
+        .filter(Boolean);
     }
 
     if (brands.length > 0) {
-      summary.brands = brands.map((b: any) => b.name || b.brandName || b._id).filter(Boolean);
+      summary.brands = brands
+        .map((b: any) => b.name || b.brandName || b._id)
+        .filter(Boolean);
     }
 
     if (stock.length > 0) {
@@ -85,9 +105,18 @@ const FloatingAIAssistant: React.FC = () => {
     }
 
     if (invoices.length > 0) {
-      const totalRevenue = invoices.reduce((sum: number, inv: any) => sum + (inv.totalAmount || 0), 0);
-      const totalReceived = invoices.reduce((sum: number, inv: any) => sum + (inv.receivedAmount || 0), 0);
-      const totalPending = invoices.reduce((sum: number, inv: any) => sum + (inv.remainingAmount || 0), 0);
+      const totalRevenue = invoices.reduce(
+        (sum: number, inv: any) => sum + (inv.totalAmount || 0),
+        0
+      );
+      const totalReceived = invoices.reduce(
+        (sum: number, inv: any) => sum + (inv.receivedAmount || 0),
+        0
+      );
+      const totalPending = invoices.reduce(
+        (sum: number, inv: any) => sum + (inv.remainingAmount || 0),
+        0
+      );
       summary.invoiceSummary = {
         totalInvoices: invoices.length,
         totalRevenue,
@@ -114,7 +143,9 @@ const FloatingAIAssistant: React.FC = () => {
         invoices: result.invoiceSummary?.totalInvoices || 0,
       });
     } else {
-      console.log('⚠️ FloatingAIAssistant: storeData is empty - waiting for GlobalDataProvider');
+      console.log(
+        '⚠️ FloatingAIAssistant: storeData is empty - waiting for GlobalDataProvider'
+      );
     }
     return result;
   }, [categories, brands, stock, invoices]);
@@ -195,9 +226,7 @@ const FloatingAIAssistant: React.FC = () => {
               <FaRobot className='text-xl' />
               <div>
                 <h3 className='font-semibold'>AI Assistant</h3>
-                <p className='text-xs text-blue-100'>
-                  Powered by AI
-                </p>
+                <p className='text-xs text-blue-100'>Powered by AI</p>
               </div>
             </div>
             <button
@@ -278,7 +307,11 @@ const FloatingAIAssistant: React.FC = () => {
             <div className='flex items-center gap-2'>
               <input
                 type='text'
-                placeholder={dataLoading ? 'Loading data...' : 'Ask about your business data...'}
+                placeholder={
+                  dataLoading
+                    ? 'Loading data...'
+                    : 'Ask about your business data...'
+                }
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -288,7 +321,7 @@ const FloatingAIAssistant: React.FC = () => {
                   }
                 }}
                 disabled={isLoading || dataLoading}
-                className='min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
+                className='min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100'
               />
               <button
                 onClick={() => {
@@ -297,7 +330,11 @@ const FloatingAIAssistant: React.FC = () => {
                 disabled={isLoading || dataLoading || !input.trim()}
                 className='rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
               >
-                {dataLoading ? 'Loading...' : isLoading ? 'Thinking...' : 'Send'}
+                {dataLoading
+                  ? 'Loading...'
+                  : isLoading
+                    ? 'Thinking...'
+                    : 'Send'}
               </button>
             </div>
           </div>

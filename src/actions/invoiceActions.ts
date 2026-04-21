@@ -238,10 +238,13 @@ export async function getCustomerPendingInvoices(customerId: string) {
 
     if (isValidObjectId) {
       // First try to find customer by ID to get customerName
-      const customer = await executeOperation('customers', 'findOne', { _id: new ObjectId(customerId) });
-      customerName = (customer && typeof customer === 'object' && 'customerName' in customer)
-        ? (customer as any).customerName
-        : null;
+      const customer = await executeOperation('customers', 'findOne', {
+        _id: new ObjectId(customerId),
+      });
+      customerName =
+        customer && typeof customer === 'object' && 'customerName' in customer
+          ? (customer as any).customerName
+          : null;
     } else {
       // Not a valid ObjectId, treat it as customerName directly (walk-in customer)
       customerName = customerId;
@@ -258,7 +261,10 @@ export async function getCustomerPendingInvoices(customerId: string) {
       });
 
       // If no results and we have customerName, fall back to customerName
-      if ((!invoices || !Array.isArray(invoices) || invoices.length === 0) && customerName) {
+      if (
+        (!invoices || !Array.isArray(invoices) || invoices.length === 0) &&
+        customerName
+      ) {
         invoices = await executeOperation('invoices', 'find', {
           customerName: customerName,
           paymentStatus: { $in: ['pending', 'partial'] },
@@ -276,27 +282,28 @@ export async function getCustomerPendingInvoices(customerId: string) {
 
     // Process invoices to calculate correct totals and remaining amounts
     const processedInvoices = Array.isArray(invoices)
-      ? invoices.map((invoice: any) => {
-          // Use InvoiceDataUtil to calculate totals
-          const calculation = InvoiceDataUtil.calculateAmounts(
-            invoice.products || [],
-            invoice.receivedAmount
-          );
+      ? invoices
+          .map((invoice: any) => {
+            // Use InvoiceDataUtil to calculate totals
+            const calculation = InvoiceDataUtil.calculateAmounts(
+              invoice.products || [],
+              invoice.receivedAmount
+            );
 
-          const calculatedTotal = calculation.totalAmount;
-          const calculatedRemaining = calculation.remainingAmount;
+            const calculatedTotal = calculation.totalAmount;
+            const calculatedRemaining = calculation.remainingAmount;
 
-          // Only include if remaining amount is not zero (exclude fully paid invoices)
-          if (calculatedRemaining > 0) {
-            return {
-              ...invoice,
-              calculatedTotal,
-              calculatedRemaining,
-            };
-          }
-          return null;
-        })
-        .filter((invoice): invoice is any => invoice !== null)
+            // Only include if remaining amount is not zero (exclude fully paid invoices)
+            if (calculatedRemaining > 0) {
+              return {
+                ...invoice,
+                calculatedTotal,
+                calculatedRemaining,
+              };
+            }
+            return null;
+          })
+          .filter((invoice): invoice is any => invoice !== null)
       : [];
 
     // Filter out partial invoices with 0 total amount (ignore them) using utility
@@ -413,50 +420,56 @@ export async function createConsolidatedInvoice(
     const originalInvoice = pendingInvoices[0]; // Use first invoice for customer info only
 
     // Add cost calculation for new products (same logic as normal invoice)
-    const productsWithCost = await Promise.all(newProducts.map(async (product: InvoiceItem) => {
-      // Get current cost from stock for profit calculation
-      let currentCost = 0;
-      try {
-        const stockItem = await executeOperation('stock', 'findOne', {
-          brandName: product.brandName
-        }) as any;
-        
-        if (stockItem && stockItem.seriesStock) {
-          const seriesData = stockItem.seriesStock.find(
-            (s: any) => s.series === product.series
+    const productsWithCost = await Promise.all(
+      newProducts.map(async (product: InvoiceItem) => {
+        // Get current cost from stock for profit calculation
+        let currentCost = 0;
+        try {
+          const stockItem = (await executeOperation('stock', 'findOne', {
+            brandName: product.brandName,
+          })) as any;
+
+          if (stockItem && stockItem.seriesStock) {
+            const seriesData = stockItem.seriesStock.find(
+              (s: any) => s.series === product.series
+            );
+            currentCost = Number(seriesData?.productCost) || 0;
+          }
+        } catch (error) {
+          console.warn(
+            `Could not fetch cost for ${product.brandName} ${product.series}:`,
+            error
           );
-          currentCost = Number(seriesData?.productCost) || 0;
+          currentCost = Number(product.productPrice) || 0; // Fallback to product price
         }
-      } catch (error) {
-        console.warn(`Could not fetch cost for ${product.brandName} ${product.series}:`, error);
-        currentCost = Number(product.productPrice) || 0; // Fallback to product price
-      }
 
-      const productProfit = Number(product.totalPrice) - (currentCost * Number(product.quantity));
+        const productProfit =
+          Number(product.totalPrice) - currentCost * Number(product.quantity);
 
-      return {
-        brandName: product.brandName,
-        series: product.series,
-        productPrice: product.productPrice,
-        costPrice: currentCost, // ← NEW: Cost at time of sale
-        profit: productProfit, // ← NEW: Profit per product
-        quantity: product.quantity,
-        isChargingService: !!(product as any).isChargingService,
-        isScrapBattery: !!(product as any).isScrapBattery,
-        warrentyCode: product.warrentyCode ? product.warrentyCode.trim() : '',
-        warrentyStartDate: product.warrentyStartDate || '',
-        warrentyEndDate: product.warrentyEndDate || '',
-        warrentyDuration: product.warrentyDuration || '',
-        totalPrice: product.totalPrice,
-        batteryDetails: (product as any).batteryDetails,
-      };
-    }));
+        return {
+          brandName: product.brandName,
+          series: product.series,
+          productPrice: product.productPrice,
+          costPrice: currentCost, // ← NEW: Cost at time of sale
+          profit: productProfit, // ← NEW: Profit per product
+          quantity: product.quantity,
+          isChargingService: !!(product as any).isChargingService,
+          isScrapBattery: !!(product as any).isScrapBattery,
+          warrentyCode: product.warrentyCode ? product.warrentyCode.trim() : '',
+          warrentyStartDate: product.warrentyStartDate || '',
+          warrentyEndDate: product.warrentyEndDate || '',
+          warrentyDuration: product.warrentyDuration || '',
+          totalPrice: product.totalPrice,
+          batteryDetails: (product as any).batteryDetails,
+        };
+      })
+    );
 
     // Calculate total cost and profit for the invoice
     const totalCost = productsWithCost.reduce((sum: number, product: any) => {
-      return sum + (product.costPrice * Number(product.quantity));
+      return sum + product.costPrice * Number(product.quantity);
     }, 0);
-    
+
     const totalProfit = productsWithCost.reduce((sum: number, product: any) => {
       return sum + product.profit;
     }, 0);
@@ -464,7 +477,7 @@ export async function createConsolidatedInvoice(
     console.log('🔍 Debug - Cost calculation for consolidated invoice:', {
       totalCost,
       totalProfit,
-      productCount: productsWithCost.length
+      productCount: productsWithCost.length,
     });
 
     const newInvoice = {
@@ -502,8 +515,8 @@ export async function createConsolidatedInvoice(
       totalAmount: totalAmount,
 
       // NEW: Add cost fields to consolidated invoice
-      totalCost: totalCost,       // ← NEW: Total cost for this invoice
-      totalProfit: totalProfit,   // ← NEW: Total profit for this invoice
+      totalCost: totalCost, // ← NEW: Total cost for this invoice
+      totalProfit: totalProfit, // ← NEW: Total profit for this invoice
 
       // Calculate remaining amount and payment status using utility result
       remainingAmount: calculationResult.remainingAmount,
@@ -663,9 +676,12 @@ export async function createConsolidatedInvoice(
     );
 
     // Calculate sales total amount for new products only (NOT full consolidated amount)
-    const newProductsRevenue = productsWithCost.reduce((sum: number, product: any) => {
+    const newProductsRevenue = productsWithCost.reduce(
+      (sum: number, product: any) => {
         return sum + (Number(product.totalPrice || product.productPrice) || 0);
-    }, 0);
+      },
+      0
+    );
     const salesTotalAmount = newProductsRevenue; // ← FIXED: Only new products, not full amount
 
     // Validate sales total amount (same as normal invoice)
@@ -688,8 +704,8 @@ export async function createConsolidatedInvoice(
       isScrapBattery:
         newProducts?.some((product: any) => product.isScrapBattery) || false,
       // Add cost fields from invoice (same as normal invoice)
-      totalCost: newInvoice.totalCost,         // ← NEW: Total cost from invoice
-      totalProfit: newInvoice.totalProfit,       // ← NEW: Total profit from invoice
+      totalCost: newInvoice.totalCost, // ← NEW: Total cost from invoice
+      totalProfit: newInvoice.totalProfit, // ← NEW: Total profit from invoice
     };
 
     // 🔒 VALIDATION: Ensure sales record has required fields (same as normal invoice)

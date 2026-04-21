@@ -296,7 +296,11 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
         showButton={!!onCreateInvoice}
         buttonTitle='Create Invoice'
         buttonOnClick={onCreateInvoice}
-        buttonExtraContent={pendingPartialTotal > 0 ? `Total: Rs ${pendingPartialTotal.toLocaleString()}` : undefined}
+        buttonExtraContent={
+          pendingPartialTotal > 0
+            ? `Total: Rs ${pendingPartialTotal.toLocaleString()}`
+            : undefined
+        }
       />
     </div>
   );

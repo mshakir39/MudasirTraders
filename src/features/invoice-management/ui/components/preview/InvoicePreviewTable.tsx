@@ -25,8 +25,14 @@ const columns = [
     },
   },
   { label: 'Qty', renderCell: (item: any) => item.quantity },
-  { label: 'Price', renderCell: (item: any) => formatCurrency(item.productPrice) },
-  { label: 'Total', renderCell: (item: any) => formatCurrency(item.totalPrice) },
+  {
+    label: 'Price',
+    renderCell: (item: any) => formatCurrency(item.productPrice),
+  },
+  {
+    label: 'Total',
+    renderCell: (item: any) => formatCurrency(item.totalPrice),
+  },
 ];
 
 export const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({

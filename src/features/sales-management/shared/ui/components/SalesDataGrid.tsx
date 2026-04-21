@@ -163,7 +163,12 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
         cell: ({ row }) => {
           const sale = row.original as any;
           const profit = Number(sale.totalProfit) || 0;
-          const profitColor = profit > 0 ? 'text-green-600' : profit < 0 ? 'text-red-600' : 'text-gray-600';
+          const profitColor =
+            profit > 0
+              ? 'text-green-600'
+              : profit < 0
+                ? 'text-red-600'
+                : 'text-gray-600';
           return (
             <span className={`font-bold ${profitColor}`}>
               Rs {profit.toLocaleString()}

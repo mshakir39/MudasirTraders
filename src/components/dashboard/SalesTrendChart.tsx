@@ -69,12 +69,15 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({
 
   // Group data by month if date range is large (> 30 days)
   const groupedData = React.useMemo(() => {
-    const diffTime = Math.abs(dateRange.end.getTime() - dateRange.start.getTime());
+    const diffTime = Math.abs(
+      dateRange.end.getTime() - dateRange.start.getTime()
+    );
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
     // If date range is more than 31 days (approximately 1 month), group by month
     if (diffDays > 31) {
-      const monthGroups: Record<string, { sales: number; revenue: number }> = {};
+      const monthGroups: Record<string, { sales: number; revenue: number }> =
+        {};
 
       data.forEach((item, index) => {
         // Parse date - handle "Mon DD" format by adding year from date range
@@ -114,7 +117,10 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({
           date = new Date(item.date);
         }
 
-        const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const monthKey = date.toLocaleDateString('en-US', {
+          month: 'short',
+          year: 'numeric',
+        });
 
         if (!monthGroups[monthKey]) {
           monthGroups[monthKey] = { sales: 0, revenue: 0 };
@@ -124,16 +130,18 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({
         monthGroups[monthKey].revenue += item.revenue;
       });
 
-      const grouped = Object.entries(monthGroups).map(([date, values]) => ({
-        date,
-        sales: values.sales,
-        revenue: values.revenue,
-      })).sort((a, b) => {
-        // Sort chronologically by date (add day for proper parsing)
-        const dateA = new Date(`${a.date} 1`);
-        const dateB = new Date(`${b.date} 1`);
-        return dateA.getTime() - dateB.getTime();
-      });
+      const grouped = Object.entries(monthGroups)
+        .map(([date, values]) => ({
+          date,
+          sales: values.sales,
+          revenue: values.revenue,
+        }))
+        .sort((a, b) => {
+          // Sort chronologically by date (add day for proper parsing)
+          const dateA = new Date(`${a.date} 1`);
+          const dateB = new Date(`${b.date} 1`);
+          return dateA.getTime() - dateB.getTime();
+        });
 
       return grouped;
     }

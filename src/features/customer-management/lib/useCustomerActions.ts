@@ -44,7 +44,7 @@ export const useCustomerActions = ({
       }
 
       setIsCreating(true);
-      
+
       try {
         // Add optimistic update within transition
         startTransition(() => {
@@ -125,7 +125,7 @@ export const useCustomerActions = ({
   const deleteCustomer = useCallback(
     async (customer: Customer) => {
       const customerId = customer.id || customer._id;
-      
+
       if (!customerId) {
         toast.error('Cannot delete customer: ID is missing');
         return;

@@ -8,7 +8,7 @@ interface WarrantyData {
   series: string;
   warrentyStartDate: string;
   warrentyEndDate?: string;
-  warrentyDuration: number | string;  // Allow both to match DB schema
+  warrentyDuration: number | string; // Allow both to match DB schema
   warrentyCode: string;
   customerName: string;
   customerContactNumber: string;
@@ -46,7 +46,11 @@ export async function searchWarranty(
       warrentyCode: trimmedWarrantyCode,
     });
 
-    if (lookupResult && typeof lookupResult === 'object' && 'warrentyCode' in lookupResult) {
+    if (
+      lookupResult &&
+      typeof lookupResult === 'object' &&
+      'warrentyCode' in lookupResult
+    ) {
       // Calculate warranty end date
       const startDate = new Date(lookupResult.warrentyStartDate);
       const endDate = new Date(startDate);
@@ -71,7 +75,11 @@ export async function searchWarranty(
         searchDuration: Date.now() - searchStartTime,
       };
 
-      return { success: true, data: warrantyData, searchDuration: Date.now() - searchStartTime };
+      return {
+        success: true,
+        data: warrantyData,
+        searchDuration: Date.now() - searchStartTime,
+      };
     }
 
     // FALLBACK: If not found in lookup, check warranty history (deleted invoices)
@@ -83,13 +91,20 @@ export async function searchWarranty(
 
     if (allWarrantyHistory && Array.isArray(allWarrantyHistory)) {
       for (const warrantyRecord of allWarrantyHistory) {
-        if (warrantyRecord.warrentyCode && warrantyRecord.warrentyCode.toUpperCase() === trimmedWarrantyCode) {
+        if (
+          warrantyRecord.warrentyCode &&
+          warrantyRecord.warrentyCode.toUpperCase() === trimmedWarrantyCode
+        ) {
           if (!warrantyRecord.productDetails) continue;
 
-          const startDate = new Date(warrantyRecord.productDetails.warrentyStartDate);
+          const startDate = new Date(
+            warrantyRecord.productDetails.warrentyStartDate
+          );
           const endDate = new Date(startDate);
           if (!isNaN(startDate.getTime())) {
-            const duration = parseInt(String(warrantyRecord.productDetails.warrentyDuration || 0));
+            const duration = parseInt(
+              String(warrantyRecord.productDetails.warrentyDuration || 0)
+            );
             endDate.setMonth(endDate.getMonth() + duration);
           }
 
@@ -99,7 +114,8 @@ export async function searchWarranty(
             series: warrantyRecord.productDetails.series,
             warrentyStartDate: warrantyRecord.productDetails.warrentyStartDate,
             warrentyEndDate: endDate.toISOString(),
-            warrentyDuration: warrantyRecord.productDetails.warrentyDuration || '',
+            warrentyDuration:
+              warrantyRecord.productDetails.warrentyDuration || '',
             warrentyCode: warrantyRecord.warrentyCode,
             customerName: warrantyRecord.customerName,
             customerContactNumber: warrantyRecord.customerContactNumber,
@@ -111,7 +127,11 @@ export async function searchWarranty(
             searchDuration: Date.now() - searchStartTime,
           };
 
-          return { success: true, data: warrantyData, searchDuration: Date.now() - searchStartTime };
+          return {
+            success: true,
+            data: warrantyData,
+            searchDuration: Date.now() - searchStartTime,
+          };
         }
       }
     }

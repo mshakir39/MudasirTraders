@@ -311,55 +311,67 @@ export const activeInvoiceCreationIdAtom = atom<string | null>(null);
 export const showCreateInvoiceModalAtom = atom<boolean>(false);
 
 // Actions for invoice creation state management
-export const saveInvoiceCreationStateAtom = atom(null, (get, set, state: Omit<InvoiceCreationState, 'id' | 'createdAt'>) => {
-  const currentStates = get(invoiceCreationStatesAtom);
-  const activeId = get(activeInvoiceCreationIdAtom);
-  
-  if (activeId) {
-    // Update existing state
-    const updatedStates = currentStates.map(s => 
-      s.id === activeId 
-        ? { ...state, id: activeId, createdAt: s.createdAt } // Keep original createdAt
-        : s
-    );
-    set(invoiceCreationStatesAtom, updatedStates);
-  } else {
-    // Create new state
-    const newState: InvoiceCreationState = {
-      ...state,
-      id: Date.now().toString(), // Simple unique ID
-      createdAt: new Date(),
-    };
-    set(invoiceCreationStatesAtom, [...currentStates, newState]);
-  }
-  
-  set(showCreateInvoiceModalAtom, false);
-});
+export const saveInvoiceCreationStateAtom = atom(
+  null,
+  (get, set, state: Omit<InvoiceCreationState, 'id' | 'createdAt'>) => {
+    const currentStates = get(invoiceCreationStatesAtom);
+    const activeId = get(activeInvoiceCreationIdAtom);
 
-export const restoreInvoiceCreationStateAtom = atom(null, (get, set, id: string) => {
-  const states = get(invoiceCreationStatesAtom);
-  const state = states.find(s => s.id === id);
-  
-  if (state) {
-    set(activeInvoiceCreationIdAtom, id);
-    set(showCreateInvoiceModalAtom, true);
-    return state;
-  }
-  
-  return null;
-});
+    if (activeId) {
+      // Update existing state
+      const updatedStates = currentStates.map((s) =>
+        s.id === activeId
+          ? { ...state, id: activeId, createdAt: s.createdAt } // Keep original createdAt
+          : s
+      );
+      set(invoiceCreationStatesAtom, updatedStates);
+    } else {
+      // Create new state
+      const newState: InvoiceCreationState = {
+        ...state,
+        id: Date.now().toString(), // Simple unique ID
+        createdAt: new Date(),
+      };
+      set(invoiceCreationStatesAtom, [...currentStates, newState]);
+    }
 
-export const deleteInvoiceCreationStateAtom = atom(null, (get, set, id: string) => {
-  const currentStates = get(invoiceCreationStatesAtom);
-  set(invoiceCreationStatesAtom, currentStates.filter(s => s.id !== id));
-  
-  // If this was the active state, clear it
-  const activeId = get(activeInvoiceCreationIdAtom);
-  if (activeId === id) {
-    set(activeInvoiceCreationIdAtom, null);
     set(showCreateInvoiceModalAtom, false);
   }
-});
+);
+
+export const restoreInvoiceCreationStateAtom = atom(
+  null,
+  (get, set, id: string) => {
+    const states = get(invoiceCreationStatesAtom);
+    const state = states.find((s) => s.id === id);
+
+    if (state) {
+      set(activeInvoiceCreationIdAtom, id);
+      set(showCreateInvoiceModalAtom, true);
+      return state;
+    }
+
+    return null;
+  }
+);
+
+export const deleteInvoiceCreationStateAtom = atom(
+  null,
+  (get, set, id: string) => {
+    const currentStates = get(invoiceCreationStatesAtom);
+    set(
+      invoiceCreationStatesAtom,
+      currentStates.filter((s) => s.id !== id)
+    );
+
+    // If this was the active state, clear it
+    const activeId = get(activeInvoiceCreationIdAtom);
+    if (activeId === id) {
+      set(activeInvoiceCreationIdAtom, null);
+      set(showCreateInvoiceModalAtom, false);
+    }
+  }
+);
 
 export const clearAllInvoiceCreationStatesAtom = atom(null, (get, set) => {
   set(invoiceCreationStatesAtom, []);

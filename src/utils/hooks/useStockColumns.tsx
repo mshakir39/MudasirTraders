@@ -32,15 +32,17 @@ export function useStockColumns({
           const isOutOfStock = inStock === 0;
           return bd ? (
             <div>
-              <div className={isOutOfStock ? 'text-red-600 font-medium' : ''}>
+              <div className={isOutOfStock ? 'font-medium text-red-600' : ''}>
                 {bd.name}
               </div>
-              <div className={`text-xs ${isOutOfStock ? 'text-red-400' : 'text-secondary-500'}`}>
+              <div
+                className={`text-xs ${isOutOfStock ? 'text-red-400' : 'text-secondary-500'}`}
+              >
                 {bd.ah}AH{bd.type && `, ${bd.type}`}
               </div>
             </div>
           ) : (
-            <span className={isOutOfStock ? 'text-red-600 font-medium' : ''}>
+            <span className={isOutOfStock ? 'font-medium text-red-600' : ''}>
               {row.original.series}
             </span>
           );

@@ -6,7 +6,7 @@
 import React from 'react';
 import { getAllSum } from '@/utils/getTotalSum';
 import { convertDate } from '@/utils/convertTime';
-import { formatCurrency } from '@/utils/formatters';  
+import { formatCurrency } from '@/utils/formatters';
 
 interface InvoicePreviewPricingProps {
   data: any;
@@ -165,7 +165,9 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
           {actualRemaining === 0 ? 'Total' : 'Balance Due'}
         </span>
         <span className='text-sm font-bold md:text-base lg:text-lg'>
-          {actualRemaining === 0 ? 'PAID' : `Rs ${formatCurrency(actualRemaining)}`}
+          {actualRemaining === 0
+            ? 'PAID'
+            : `Rs ${formatCurrency(actualRemaining)}`}
         </span>
       </div>
     </div>

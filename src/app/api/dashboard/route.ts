@@ -269,7 +269,7 @@ export async function GET(request: NextRequest) {
 
     //       if (reconciliationResult?.updated > 0) {
     //         logger.info(
-    //           `🔧 Reconciled ${reconciliationResult.updated} stock records. Refreshing dashboard data...` 
+    //           `🔧 Reconciled ${reconciliationResult.updated} stock records. Refreshing dashboard data...`
     //         );
 
     //         stockDocs = await db.collection('stock').find().toArray();
@@ -281,7 +281,7 @@ export async function GET(request: NextRequest) {
     //     } else {
     //       const errorText = await fixResponse.text();
     //       logger.error(
-    //         `❌ Failed to reconcile stock via fix-sync API. Status: ${fixResponse.status}. Body: ${errorText}` 
+    //         `❌ Failed to reconcile stock via fix-sync API. Status: ${fixResponse.status}. Body: ${errorText}`
     //       );
     //     }
     //   } catch (error) {
@@ -389,12 +389,13 @@ export async function GET(request: NextRequest) {
     const totalCost = filteredSalesForRevenue.reduce((sum, sale) => {
       return sum + toNumber(sale.totalCost || 0); // ← Use stored totalCost
     }, 0);
-    
+
     const totalProfit = filteredSalesForRevenue.reduce((sum, sale) => {
       return sum + toNumber(sale.totalProfit || 0); // ← Use stored totalProfit
     }, 0);
-    
-    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+    const profitMargin =
+      totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
     // TOP PRODUCTS
     const filteredSalesForTopProducts = Array.isArray(salesDocs)
@@ -568,15 +569,26 @@ export async function GET(request: NextRequest) {
 
           // Calculate totalAmount same as frontend (fetchInvoicesAtom)
           const calculateTotalAmount = (): number => {
-            if (invoice.totalAmount && typeof invoice.totalAmount === 'number') {
+            if (
+              invoice.totalAmount &&
+              typeof invoice.totalAmount === 'number'
+            ) {
               return invoice.totalAmount;
             }
             if (invoice.products && Array.isArray(invoice.products)) {
               return invoice.products.reduce((s: number, product: any) => {
-                return s + (typeof product.totalPrice === 'number' ? product.totalPrice : 0);
+                return (
+                  s +
+                  (typeof product.totalPrice === 'number'
+                    ? product.totalPrice
+                    : 0)
+                );
               }, 0);
             }
-            return toNumber(invoice.remainingAmount) + toNumber(invoice.receivedAmount);
+            return (
+              toNumber(invoice.remainingAmount) +
+              toNumber(invoice.receivedAmount)
+            );
           };
 
           const total = calculateTotalAmount();

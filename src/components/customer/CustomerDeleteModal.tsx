@@ -42,7 +42,8 @@ export const CustomerDeleteModal: React.FC<CustomerDeleteModalProps> = ({
             Delete Customer
           </h3>
           <p className='text-sm text-gray-500'>
-            Are you sure you want to delete this customer? This action cannot be undone.
+            Are you sure you want to delete this customer? This action cannot be
+            undone.
           </p>
         </div>
 

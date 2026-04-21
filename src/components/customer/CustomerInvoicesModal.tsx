@@ -59,11 +59,6 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
     }
   }, [customer]);
 
-
-
-
-  
-  
   useEffect(() => {
     if (isOpen) {
       fetchCustomerInvoices();
@@ -115,33 +110,42 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
     setModalData(null);
   };
   // Filter out voided invoices for calculations
-  const activeInvoices = customerInvoices.filter(invoice => invoice.status !== 'voided');
-  
+  const activeInvoices = customerInvoices.filter(
+    (invoice) => invoice.status !== 'voided'
+  );
+
   // Filter store's all invoices for this customer for totalAmount calculation
   const customerStoreInvoices = allInvoices.filter(
-    (invoice: any) => invoice.customerName === customer.customerName && invoice.status === 'active'
+    (invoice: any) =>
+      invoice.customerName === customer.customerName &&
+      invoice.status === 'active'
   );
-  
+
   // Find latest invoice for remaining amount
-  const latestInvoice = activeInvoices.length > 0 
-    ? activeInvoices.reduce((latest: any, invoice: any) => 
-        new Date(invoice.createdAt) > new Date(latest.createdAt) ? invoice : latest
-      )
-    : null;
-  
+  const latestInvoice =
+    activeInvoices.length > 0
+      ? activeInvoices.reduce((latest: any, invoice: any) =>
+          new Date(invoice.createdAt) > new Date(latest.createdAt)
+            ? invoice
+            : latest
+        )
+      : null;
+
   // Calculate summary statistics using only active invoices
   const totalInvoices = activeInvoices.length;
   const totalAmount = customerStoreInvoices.reduce(
     (sum: number, invoice: any) => sum + (invoice.totalAmount || 0),
     0
   );
-  const totalRemaining = latestInvoice ? (latestInvoice.remainingAmount || 0) : 0;
+  const totalRemaining = latestInvoice ? latestInvoice.remainingAmount || 0 : 0;
   const paidInvoices = activeInvoices.filter(
     (invoice) => (invoice.remainingAmount || 0) === 0
   ).length;
-  
+
   // Count voided invoices separately
-  const voidedInvoices = customerInvoices.filter(invoice => invoice.status === 'voided').length;
+  const voidedInvoices = customerInvoices.filter(
+    (invoice) => invoice.status === 'voided'
+  ).length;
 
   return (
     <div>
@@ -155,28 +159,40 @@ const CustomerInvoicesModal: React.FC<CustomerInvoicesModalProps> = ({
       >
         <div className='mt-4 max-h-[80vh] overflow-y-auto'>
           {/* Customer Summary */}
-          <div className='mb-4 rounded-lg bg-gray-50 px-4 py-3 sticky top-0 z-10'>
+          <div className='sticky top-0 z-10 mb-4 rounded-lg bg-gray-50 px-4 py-3'>
             <div className='flex flex-wrap items-center justify-between gap-4 text-base'>
-              <div className='flex flex-wrap items-center gap-4 flex-1'>
+              <div className='flex flex-1 flex-wrap items-center gap-4'>
                 <div className='flex-1 text-center'>
                   <span className='font-medium text-gray-600'>Active:</span>
-                  <span className='ml-1 font-bold text-blue-600'>{totalInvoices}</span>
+                  <span className='ml-1 font-bold text-blue-600'>
+                    {totalInvoices}
+                  </span>
                 </div>
                 <div className='flex-1 text-center'>
                   <span className='font-medium text-gray-600'>Amount:</span>
-                  <span className='ml-1 font-bold text-green-600'>Rs {Number(totalAmount || 0).toLocaleString()}</span>
+                  <span className='ml-1 font-bold text-green-600'>
+                    Rs {Number(totalAmount || 0).toLocaleString()}
+                  </span>
                 </div>
                 <div className='flex-1 text-center'>
                   <span className='font-medium text-gray-600'>Remaining:</span>
-                  <span className={`ml-1 font-bold ${totalRemaining > 0 ? 'text-red-600' : 'text-green-600'}`}>Rs {totalRemaining.toLocaleString()}</span>
+                  <span
+                    className={`ml-1 font-bold ${totalRemaining > 0 ? 'text-red-600' : 'text-green-600'}`}
+                  >
+                    Rs {totalRemaining.toLocaleString()}
+                  </span>
                 </div>
                 <div className='flex-1 text-center'>
                   <span className='font-medium text-gray-600'>Paid:</span>
-                  <span className='ml-1 font-bold text-green-600'>{paidInvoices}/{totalInvoices}</span>
+                  <span className='ml-1 font-bold text-green-600'>
+                    {paidInvoices}/{totalInvoices}
+                  </span>
                 </div>
                 <div className='flex-1 text-center'>
                   <span className='font-medium text-gray-600'>Voided:</span>
-                  <span className='ml-1 font-bold text-red-600'>{voidedInvoices}</span>
+                  <span className='ml-1 font-bold text-red-600'>
+                    {voidedInvoices}
+                  </span>
                 </div>
               </div>
             </div>

@@ -103,15 +103,16 @@ export const InvoiceGridActions: React.FC<InvoiceGridActionsProps> = ({
                 Edit
               </div>
             )}
-            {invoice.paymentStatus !== 'paid' && invoice.status !== 'voided' && (
-              <div
-                className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                onClick={() => handleAction('payment')}
-              >
-                <FaMoneyBillWave className='text-yellow-600' />
-                Add Payment
-              </div>
-            )}
+            {invoice.paymentStatus !== 'paid' &&
+              invoice.status !== 'voided' && (
+                <div
+                  className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                  onClick={() => handleAction('payment')}
+                >
+                  <FaMoneyBillWave className='text-yellow-600' />
+                  Add Payment
+                </div>
+              )}
             <div
               className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
               onClick={() => handleAction('delete')}

@@ -12,7 +12,8 @@ export async function GET() {
     }
 
     // Fetch stock history data
-    const stockHistory = await db.collection('stockHistory')
+    const stockHistory = await db
+      .collection('stockHistory')
       .find({})
       .sort({ historyDate: 1 })
       .limit(1000) // Limit to prevent large responses
@@ -21,9 +22,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: stockHistory,
-      count: stockHistory.length
+      count: stockHistory.length,
     });
-
   } catch (error) {
     console.error('Error fetching stock history:', error);
     return NextResponse.json(

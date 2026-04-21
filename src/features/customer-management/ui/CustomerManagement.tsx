@@ -37,9 +37,13 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     null
   );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
-  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(
+    null
+  );
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'regular' | 'walkin'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'regular' | 'walkin'>(
+    'all'
+  );
 
   const [customers, setCustomers] = useAtom(customersAtom);
   const fetchCustomers = useAtom(fetchCustomersAtom)[1];
@@ -74,9 +78,9 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
     // Filter by customer type tab
     if (activeTab === 'regular') {
-      filtered = filtered.filter(c => c.customerType === 'Regular Customer');
+      filtered = filtered.filter((c) => c.customerType === 'Regular Customer');
     } else if (activeTab === 'walkin') {
-      filtered = filtered.filter(c => c.customerType === 'WalkIn Customer');
+      filtered = filtered.filter((c) => c.customerType === 'WalkIn Customer');
     }
 
     // Filter by search term
@@ -147,7 +151,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         <div className='flex rounded-lg bg-gray-100 p-1'>
           <button
             onClick={() => setActiveTab('all')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === 'all'
                 ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
@@ -157,7 +161,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('regular')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === 'regular'
                 ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
@@ -167,7 +171,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('walkin')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === 'walkin'
                 ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'

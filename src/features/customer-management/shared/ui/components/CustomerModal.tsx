@@ -78,7 +78,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const success = await onSubmit(formData);
       if (success) {

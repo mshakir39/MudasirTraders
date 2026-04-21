@@ -4,7 +4,16 @@ import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 
 export async function POST(request: NextRequest) {
   try {
-    const { invoiceNo, warrantyCode, customerName, customerContactNumber, brandName, series, warrentyStartDate, warrentyDuration } = await request.json();
+    const {
+      invoiceNo,
+      warrantyCode,
+      customerName,
+      customerContactNumber,
+      brandName,
+      series,
+      warrentyStartDate,
+      warrentyDuration,
+    } = await request.json();
 
     if (!invoiceNo || !warrantyCode) {
       return NextResponse.json(

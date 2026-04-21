@@ -462,7 +462,9 @@ async function callLLMWithTimeout(
 
       const status = e?.status || e?.response?.status;
       if (status === 429) {
-        console.warn(`⚠️ 429 rate-limited on ${model}, trying fallback... (attempt ${attempt + 1}/${MAX_LLM_RETRIES})`);
+        console.warn(
+          `⚠️ 429 rate-limited on ${model}, trying fallback... (attempt ${attempt + 1}/${MAX_LLM_RETRIES})`
+        );
         // Brief delay before retry
         await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
         continue;
@@ -502,7 +504,9 @@ async function runAgentLoop(
     console.log('⚠️ No store data received from frontend');
   }
   if (storeData) {
-    const parts: string[] = ['\n── LIVE APP DATA (from client store, use this FIRST before querying DB) ──'];
+    const parts: string[] = [
+      '\n── LIVE APP DATA (from client store, use this FIRST before querying DB) ──',
+    ];
     if (storeData.categories?.length) {
       parts.push(`Categories: ${storeData.categories.join(', ')}`);
     }
@@ -510,7 +514,9 @@ async function runAgentLoop(
       parts.push(`Brands: ${storeData.brands.join(', ')}`);
     }
     if (storeData.stockSummary) {
-      parts.push(`Total Products in Stock: ${storeData.stockSummary.totalProducts}`);
+      parts.push(
+        `Total Products in Stock: ${storeData.stockSummary.totalProducts}`
+      );
       if (storeData.stockSummary.items?.length) {
         const stockLines = storeData.stockSummary.items.map(
           (s: any) => `${s.brand} ${s.name}: qty=${s.qty}, price=Rs${s.price}`
@@ -520,10 +526,13 @@ async function runAgentLoop(
     }
     if (storeData.invoiceSummary) {
       const inv = storeData.invoiceSummary;
-      parts.push(`Invoices: ${inv.totalInvoices} total, Revenue=Rs${inv.totalRevenue?.toLocaleString('en-PK')}, Received=Rs${inv.totalReceived?.toLocaleString('en-PK')}, Pending=Rs${inv.totalPending?.toLocaleString('en-PK')}`);
+      parts.push(
+        `Invoices: ${inv.totalInvoices} total, Revenue=Rs${inv.totalRevenue?.toLocaleString('en-PK')}, Received=Rs${inv.totalReceived?.toLocaleString('en-PK')}, Pending=Rs${inv.totalPending?.toLocaleString('en-PK')}`
+      );
       if (inv.recentInvoices?.length) {
         const invLines = inv.recentInvoices.map(
-          (i: any) => `#${i.no} ${i.customer}: Rs${i.total} (${i.status}, remaining Rs${i.remaining})`
+          (i: any) =>
+            `#${i.no} ${i.customer}: Rs${i.total} (${i.status}, remaining Rs${i.remaining})`
         );
         parts.push('Recent Invoices:\n' + invLines.join('\n'));
       }
@@ -570,17 +579,24 @@ REMINDER: If the user's message uses Latin/English letters (even if the language
     try {
       const llmStart = Date.now();
       const response = await callLLMWithTimeout(messages, TOOLS);
-      console.log(`⏱️ LLM call #${iteration + 1} took ${Date.now() - llmStart}ms`);
+      console.log(
+        `⏱️ LLM call #${iteration + 1} took ${Date.now() - llmStart}ms`
+      );
 
       const message = response.choices[0].message;
       messages.push(message);
 
       if (!message.tool_calls || message.tool_calls.length === 0) {
-        console.log(`✅ LLM answered directly on iteration #${iteration + 1} (no tool calls)`);
+        console.log(
+          `✅ LLM answered directly on iteration #${iteration + 1} (no tool calls)`
+        );
         return message.content || 'No answer.';
       }
 
-      console.log(`🔧 LLM requested ${message.tool_calls.length} tool call(s) on iteration #${iteration + 1}:`, message.tool_calls.map((tc: any) => tc.function?.name));
+      console.log(
+        `🔧 LLM requested ${message.tool_calls.length} tool call(s) on iteration #${iteration + 1}:`,
+        message.tool_calls.map((tc: any) => tc.function?.name)
+      );
 
       // FIX #5: Execute tool calls in parallel instead of sequentially
       const toolResults = await Promise.all(
@@ -592,7 +608,10 @@ REMINDER: If the user's message uses Latin/English letters (even if the language
             try {
               args = JSON.parse(toolCall.function.arguments || '{}');
             } catch {
-              return { id: toolCall.id, result: 'Error: Invalid JSON arguments' };
+              return {
+                id: toolCall.id,
+                result: 'Error: Invalid JSON arguments',
+              };
             }
 
             let result = '';
@@ -608,7 +627,10 @@ REMINDER: If the user's message uses Latin/English letters (even if the language
                 result = await tool_list_collections(db);
                 break;
               case 'sample_collection':
-                result = await tool_sample_collection(db, args.collection || '');
+                result = await tool_sample_collection(
+                  db,
+                  args.collection || ''
+                );
                 break;
               case 'query_database':
                 result = await tool_query_db(
@@ -645,7 +667,8 @@ REMINDER: If the user's message uses Latin/English letters (even if the language
       if (hasError) {
         messages.push({
           role: 'system',
-          content: 'Query failed or empty. Re-check field names against schema and retry.',
+          content:
+            'Query failed or empty. Re-check field names against schema and retry.',
         });
       }
     } catch (e: any) {
@@ -700,9 +723,7 @@ export async function POST(request: NextRequest) {
 
     // FIX #7: Pre-warm schema cache in background (non-blocking for first request)
     if (!schemaCache) {
-      getSchemaCache(db).catch((e: any) =>
-        console.warn('Warm-up error:', e)
-      );
+      getSchemaCache(db).catch((e: any) => console.warn('Warm-up error:', e));
     }
 
     // FIX #9: Removed the date-range gate that blocked valid questions

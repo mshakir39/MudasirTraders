@@ -34,7 +34,7 @@ import {
   setInvoicesAtom,
   setStockAtom,
   showCreateInvoiceModalAtom,
-  startNewInvoiceCreationAtom
+  startNewInvoiceCreationAtom,
 } from '@/store/sharedAtoms';
 
 interface InvoiceManagementProps {
@@ -167,7 +167,10 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
 
   // Calculate sum of pending and partial payment amounts
   const pendingPartialTotal = useMemo(() => {
-    if (filter.paymentStatus !== 'pending' && filter.paymentStatus !== 'partial') {
+    if (
+      filter.paymentStatus !== 'pending' &&
+      filter.paymentStatus !== 'partial'
+    ) {
       return 0;
     }
     return filteredInvoices.reduce((sum, invoice) => {

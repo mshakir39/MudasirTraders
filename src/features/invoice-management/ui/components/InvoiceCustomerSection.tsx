@@ -56,7 +56,9 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
           customerAddress:
             matchingCustomer.address || invoiceData.customerAddress || '',
           customerContactNumber:
-            matchingCustomer.phoneNumber || invoiceData.customerContactNumber || '',
+            matchingCustomer.phoneNumber ||
+            invoiceData.customerContactNumber ||
+            '',
           clientId: matchingCustomer._id?.toString() || '',
         });
       } else {
@@ -78,7 +80,9 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
             ...invoiceData,
             customerName: customerName,
             customerAddress:
-              customerInvoice.customerAddress || invoiceData.customerAddress || '',
+              customerInvoice.customerAddress ||
+              invoiceData.customerAddress ||
+              '',
             customerContactNumber:
               customerInvoice.customerContactNumber ||
               invoiceData.customerContactNumber ||
@@ -174,8 +178,10 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
             key={invoiceData.customerType}
             className='mt-2'
             options={customers
-              .filter((customer) => 
-                !customer.customerType || customer.customerType === 'Regular Customer'
+              .filter(
+                (customer) =>
+                  !customer.customerType ||
+                  customer.customerType === 'Regular Customer'
               )
               .map((customer) => ({
                 label: customer.customerName,
@@ -221,7 +227,10 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
               if (matchingCustomer) {
                 setInvoiceData({
                   ...invoiceData,
-                  clientId: matchingCustomer.id?.toString() || matchingCustomer._id?.toString() || '',
+                  clientId:
+                    matchingCustomer.id?.toString() ||
+                    matchingCustomer._id?.toString() ||
+                    '',
                 });
               }
             }}

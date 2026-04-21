@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAtom } from 'jotai';
-import { 
-  invoiceCreationStatesAtom, 
+import {
+  invoiceCreationStatesAtom,
   restoreInvoiceCreationStateAtom,
   deleteInvoiceCreationStateAtom,
   clearAllInvoiceCreationStatesAtom,
-  startNewInvoiceCreationAtom
+  startNewInvoiceCreationAtom,
 } from '@/store/sharedAtoms';
 import { Plus, X, FileText, Trash2, Clock } from 'lucide-react';
 
@@ -15,7 +15,9 @@ interface FloatingInvoiceButtonProps {
   className?: string;
 }
 
-export const FloatingInvoiceButton: React.FC<FloatingInvoiceButtonProps> = ({ className = '' }) => {
+export const FloatingInvoiceButton: React.FC<FloatingInvoiceButtonProps> = ({
+  className = '',
+}) => {
   const [invoiceStates] = useAtom(invoiceCreationStatesAtom);
   const [, restoreState] = useAtom(restoreInvoiceCreationStateAtom);
   const [, deleteState] = useAtom(deleteInvoiceCreationStateAtom);
@@ -62,7 +64,10 @@ export const FloatingInvoiceButton: React.FC<FloatingInvoiceButtonProps> = ({ cl
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowDropdown(false);
       }
     };
@@ -78,17 +83,19 @@ export const FloatingInvoiceButton: React.FC<FloatingInvoiceButtonProps> = ({ cl
   }
 
   return (
-    <div className={`fixed bottom-24 right-6 z-50 ${className}`}> {/* Changed from bottom-6 to bottom-24 */}
-      <div className="relative" ref={dropdownRef}>
+    <div className={`fixed bottom-24 right-6 z-50 ${className}`}>
+      {' '}
+      {/* Changed from bottom-6 to bottom-24 */}
+      <div className='relative' ref={dropdownRef}>
         {/* Main button */}
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:scale-110 relative"
+          className='relative rounded-full bg-blue-600 p-4 text-white shadow-lg transition-all duration-200 hover:scale-110 hover:bg-blue-700'
           title={`Saved Invoices (${invoiceStates.length})`}
         >
           <FileText size={20} />
           {invoiceStates.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            <span className='absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white'>
               {invoiceStates.length}
             </span>
           )}
@@ -96,21 +103,21 @@ export const FloatingInvoiceButton: React.FC<FloatingInvoiceButtonProps> = ({ cl
 
         {/* Dropdown */}
         {showDropdown && (
-          <div className="absolute bottom-full right-0 mb-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 max-h-96 overflow-y-auto">
-            <div className="p-3 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-gray-800">Saved Invoices</h3>
-                <div className="flex items-center gap-2">
+          <div className='absolute bottom-full right-0 mb-2 max-h-96 w-80 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl'>
+            <div className='border-b border-gray-200 p-3'>
+              <div className='flex items-center justify-between'>
+                <h3 className='font-semibold text-gray-800'>Saved Invoices</h3>
+                <div className='flex items-center gap-2'>
                   <button
                     onClick={handleClearAll}
-                    className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                    title="Clear all saved invoices"
+                    className='rounded px-2 py-1 text-xs text-red-600 transition-colors hover:bg-red-50 hover:text-red-700'
+                    title='Clear all saved invoices'
                   >
                     Clear All
                   </button>
                   <button
                     onClick={() => setShowDropdown(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className='text-gray-400 hover:text-gray-600'
                   >
                     <X size={16} />
                   </button>
@@ -118,33 +125,34 @@ export const FloatingInvoiceButton: React.FC<FloatingInvoiceButtonProps> = ({ cl
               </div>
             </div>
 
-            <div className="max-h-80 overflow-y-auto">
+            <div className='max-h-80 overflow-y-auto'>
               {invoiceStates.map((state) => (
                 <div
                   key={state.id}
-                  className="p-3 hover:bg-gray-50 border-b border-gray-100 cursor-pointer group"
+                  className='group cursor-pointer border-b border-gray-100 p-3 hover:bg-gray-50'
                   onClick={() => handleRestore(state.id)}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <FileText size={14} className="text-blue-500" />
-                        <span className="font-medium text-gray-900 truncate">
+                  <div className='flex items-start justify-between'>
+                    <div className='min-w-0 flex-1'>
+                      <div className='mb-1 flex items-center gap-2'>
+                        <FileText size={14} className='text-blue-500' />
+                        <span className='truncate font-medium text-gray-900'>
                           {state.customerName || 'Unnamed Customer'}
                         </span>
                       </div>
-                      <div className="text-sm text-gray-600 mb-1">
-                        {state.products?.length || 0} products • Rs {state.totalAmount?.toLocaleString() || 0}
+                      <div className='mb-1 text-sm text-gray-600'>
+                        {state.products?.length || 0} products • Rs{' '}
+                        {state.totalAmount?.toLocaleString() || 0}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                      <div className='flex items-center gap-1 text-xs text-gray-400'>
                         <Clock size={12} />
                         {formatTime(state.createdAt)}
                       </div>
                     </div>
                     <button
                       onClick={(e) => handleDelete(state.id, e)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 p-1"
-                      title="Delete"
+                      className='p-1 text-red-500 opacity-0 transition-opacity hover:text-red-700 group-hover:opacity-100'
+                      title='Delete'
                     >
                       <Trash2 size={14} />
                     </button>
@@ -152,8 +160,7 @@ export const FloatingInvoiceButton: React.FC<FloatingInvoiceButtonProps> = ({ cl
                 </div>
               ))}
             </div>
-
-            </div>
+          </div>
         )}
       </div>
     </div>

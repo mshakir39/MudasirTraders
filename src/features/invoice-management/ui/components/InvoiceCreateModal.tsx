@@ -32,7 +32,7 @@ import {
   invoiceCreationStatesAtom,
   showCreateInvoiceModalAtom,
   deleteInvoiceCreationStateAtom,
-  InvoiceCreationState
+  InvoiceCreationState,
 } from '@/store/sharedAtoms';
 
 interface InvoiceCreateModalProps {
@@ -57,7 +57,9 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
   // State management atoms
   const [, saveState] = useAtom(saveInvoiceCreationStateAtom);
   const [, restoreState] = useAtom(restoreInvoiceCreationStateAtom);
-  const [activeStateId, setActiveStateId] = useAtom(activeInvoiceCreationIdAtom);
+  const [activeStateId, setActiveStateId] = useAtom(
+    activeInvoiceCreationIdAtom
+  );
   const [savedStates] = useAtom(invoiceCreationStatesAtom);
   const [, setShowCreateModal] = useAtom(showCreateInvoiceModalAtom);
   const [, deleteState] = useAtom(deleteInvoiceCreationStateAtom);
@@ -117,14 +119,18 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
   // Restore saved state when active state ID changes
   useEffect(() => {
     if (activeStateId) {
-      const savedState = savedStates.find((s: InvoiceCreationState) => s.id === activeStateId);
+      const savedState = savedStates.find(
+        (s: InvoiceCreationState) => s.id === activeStateId
+      );
       if (savedState) {
         // Restore invoice data
         setInvoiceData({
           customerName: savedState.customerName,
           customerAddress: savedState.customerAddress,
           customerContactNumber: savedState.customerContactNumber,
-          customerType: savedState.customerType as 'Regular Customer' | 'WalkIn Customer',
+          customerType: savedState.customerType as
+            | 'Regular Customer'
+            | 'WalkIn Customer',
           products: savedState.products || [],
           subtotal: savedState.subtotal || 0,
           taxAmount: savedState.taxAmount || 0,
@@ -132,7 +138,10 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
           receivedAmount: savedState.receivedAmount || 0,
           remainingAmount: savedState.remainingAmount || 0,
           paymentMethod: savedState.paymentMethod,
-          paymentStatus: savedState.paymentStatus as 'pending' | 'paid' | 'partial',
+          paymentStatus: savedState.paymentStatus as
+            | 'pending'
+            | 'paid'
+            | 'partial',
           batteriesCountAndWeight: savedState.batteriesCountAndWeight,
           batteriesRate: savedState.batteriesRate,
           notes: savedState.notes,
@@ -150,7 +159,7 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
         if (savedState.products && savedState.products.length > 0) {
           // Convert saved products back to accordion format
           const restoredAccordionData: { [key: number]: any } = {};
-          
+
           savedState.products.forEach((product, index) => {
             restoredAccordionData[index] = {
               brandName: product.brandName || '',
@@ -166,7 +175,7 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
               batteryDetails: product.batteryDetails,
             };
           });
-          
+
           setAccordionData(restoredAccordionData);
         }
       }
@@ -249,7 +258,7 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
   const handleSaveAndClose = useCallback(() => {
     // Get current products from accordion
     const transformedProducts = transformAccordionData(accordionData);
-    
+
     // Create state object to save
     const stateToSave: Omit<InvoiceCreationState, 'id' | 'createdAt'> = {
       customerName: invoiceData.customerName || '',
@@ -281,14 +290,22 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
 
     // Save state - this will either create new or update existing based on activeStateId
     saveState(stateToSave);
-    
+
     // Clear the active state and close modal
     setActiveStateId(null);
     setShowCreateModal(false);
-    
+
     // Also call the original onClose for any additional cleanup
     onClose();
-  }, [invoiceData, accordionData, saveState, setShowCreateModal, onClose, activeStateId, setActiveStateId]);
+  }, [
+    invoiceData,
+    accordionData,
+    saveState,
+    setShowCreateModal,
+    onClose,
+    activeStateId,
+    setActiveStateId,
+  ]);
 
   // Handle form submission with transformed data
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -398,7 +415,7 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
 
           // Show success message to user
           toast.success(
-            `Successfully consolidated ${pendingInvoices.length} invoices into new invoice #${consolidationResult.data?.newInvoice?.invoiceNumber?.slice(-6)}` 
+            `Successfully consolidated ${pendingInvoices.length} invoices into new invoice #${consolidationResult.data?.newInvoice?.invoiceNumber?.slice(-6)}`
           );
 
           // Remove the saved state since invoice was successfully created
@@ -477,7 +494,11 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
     // Use clientId if available (for both regular and walk-in customers), otherwise use customerName
     const searchId = invoiceData.clientId || invoiceData.customerName || '';
     debouncedFetchPendingInvoices(searchId);
-  }, [invoiceData.clientId, invoiceData.customerName, debouncedFetchPendingInvoices]);
+  }, [
+    invoiceData.clientId,
+    invoiceData.customerName,
+    debouncedFetchPendingInvoices,
+  ]);
 
   // Cleanup timeout on unmount
   useEffect(() => {

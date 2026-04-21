@@ -289,7 +289,7 @@ export const Table = <TData extends Record<string, any>>({
               />
             )}
             {buttonExtraContent && (
-              <span className='text-sm font-medium text-gray-600 mr-2'>
+              <span className='mr-2 text-sm font-medium text-gray-600'>
                 {buttonExtraContent}
               </span>
             )}

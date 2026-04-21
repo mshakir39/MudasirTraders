@@ -19,8 +19,14 @@ const WarrantyDetailsWrapper: React.FC<WarrantyDetailsWrapperProps> = ({
       brandName: warranty.warranty.brandName || '',
       series: warranty.warranty.series || '',
       warrentyStartDate: warranty.warranty.warrantyStartDate || '',
-      warrentyEndDate: warranty.warranty.warrantyEndDate || warranty.warranty.warrentyEndDate || '',
-      warrentyDuration: warranty.warranty.warrantyPeriod || warranty.warranty.warrentyDuration || 0,
+      warrentyEndDate:
+        warranty.warranty.warrantyEndDate ||
+        warranty.warranty.warrentyEndDate ||
+        '',
+      warrentyDuration:
+        warranty.warranty.warrantyPeriod ||
+        warranty.warranty.warrentyDuration ||
+        0,
       warrentyCode: warranty.warranty.warrantyCode || '',
       customerName: warranty.warranty.customerName || '',
       customerContactNumber: warranty.warranty.customerContactNumber || '',

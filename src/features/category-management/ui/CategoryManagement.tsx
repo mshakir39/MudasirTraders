@@ -14,7 +14,12 @@ import { unstable_noStore } from 'next/cache';
 import { useAtom } from 'jotai';
 import { toast } from 'react-toastify';
 import { CategoryWithBatteryData, BatteryData } from '@/types/category';
-import { categoriesAtom, fetchCategoriesAtom, brandsAtom, fetchBrandsAtom } from '@/store/sharedAtoms';
+import {
+  categoriesAtom,
+  fetchCategoriesAtom,
+  brandsAtom,
+  fetchBrandsAtom,
+} from '@/store/sharedAtoms';
 import { useCategoryActions } from '@/features/category-management/lib/useCategoryActions';
 import { CategoryTable } from '@/features/category-management/shared/ui/components/CategoryTable';
 import { BatteryList } from '@/features/category-management';

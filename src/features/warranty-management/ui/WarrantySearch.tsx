@@ -1,7 +1,14 @@
 // src/features/warranty-management/ui/WarrantySearch.tsx
 // Warranty search component - <150 lines
 
-import React, { useState, useOptimistic, useActionState, useEffect, startTransition, useRef } from 'react';
+import React, {
+  useState,
+  useOptimistic,
+  useActionState,
+  useEffect,
+  startTransition,
+  useRef,
+} from 'react';
 import { toast } from 'react-toastify';
 import { FaSearch } from 'react-icons/fa';
 import { WarrantyApi } from '@/entities/warranty/api/warrantyApi';
@@ -161,7 +168,10 @@ export const WarrantySearch: React.FC<WarrantySearchProps> = ({
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowSuggestions(false);
       }
     };
@@ -175,8 +185,8 @@ export const WarrantySearch: React.FC<WarrantySearchProps> = ({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Search Form */}
-      <form action={searchAction} className='flex gap-4 relative'>
-        <div className='flex-1 relative' ref={dropdownRef}>
+      <form action={searchAction} className='relative flex gap-4'>
+        <div className='relative flex-1' ref={dropdownRef}>
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
@@ -187,12 +197,12 @@ export const WarrantySearch: React.FC<WarrantySearchProps> = ({
           />
           {/* Autocomplete Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className='absolute top-full left-0 right-0 mt-1 bg-white border border-secondary-300 rounded-md shadow-lg max-h-96 overflow-y-auto z-50'>
+            <div className='absolute left-0 right-0 top-full z-50 mt-1 max-h-96 overflow-y-auto rounded-md border border-secondary-300 bg-white shadow-lg'>
               {suggestions.map((suggestion, index) => (
                 <div
                   key={index}
                   onClick={(e) => handleSuggestionClick(suggestion.code, e)}
-                  className='px-4 py-2 hover:bg-secondary-100 cursor-pointer border-b border-secondary-100 last:border-b-0'
+                  className='cursor-pointer border-b border-secondary-100 px-4 py-2 last:border-b-0 hover:bg-secondary-100'
                 >
                   <div className='font-medium text-secondary-900'>
                     {suggestion.code}

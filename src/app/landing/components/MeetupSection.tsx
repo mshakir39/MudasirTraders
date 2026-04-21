@@ -93,7 +93,11 @@ export default function MeetupSection() {
                     >
                       <Image
                         src={meetup.url}
-                        alt={meetup.title ? `Community Meetup: ${meetup.title} at Mudasir Traders` : 'Community Meetup event at Mudasir Traders battery shop in Dera Ghazi Khan with customers and team'}
+                        alt={
+                          meetup.title
+                            ? `Community Meetup: ${meetup.title} at Mudasir Traders`
+                            : 'Community Meetup event at Mudasir Traders battery shop in Dera Ghazi Khan with customers and team'
+                        }
                         fill={true}
                         sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
                         className={`transition-transform duration-300 group-hover:scale-105 ${

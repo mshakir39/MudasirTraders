@@ -66,7 +66,9 @@ export async function removeWarrantyCodes(invoiceNo: string) {
 
     const warrantyLookup = db.collection('warrantyLookup');
     const result = await warrantyLookup.deleteMany({ invoiceNo });
-    console.log(`🗑️ Removed ${result.deletedCount} warranty codes for invoice ${invoiceNo}`);
+    console.log(
+      `🗑️ Removed ${result.deletedCount} warranty codes for invoice ${invoiceNo}`
+    );
   } catch (error) {
     console.error('Error removing warranty codes from lookup:', error);
   }
@@ -83,9 +85,16 @@ export async function updateWarrantyCodes(
   try {
     // Remove old codes first
     await removeWarrantyCodes(invoiceNo);
-    
+
     // Add new codes
-    await addWarrantyCodes(products, invoiceNo, customerName, customerContactNumber, source, createdAt);
+    await addWarrantyCodes(
+      products,
+      invoiceNo,
+      customerName,
+      customerContactNumber,
+      source,
+      createdAt
+    );
   } catch (error) {
     console.error('Error updating warranty codes in lookup:', error);
   }

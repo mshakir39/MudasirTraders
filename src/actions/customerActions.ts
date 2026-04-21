@@ -12,25 +12,25 @@ export async function createCustomer(data: CustomerData) {
   try {
     // Check if customer with same phone number already exists
     const existingCustomer = await executeOperation('customers', 'findOne', {
-      phoneNumber: data.phoneNumber
+      phoneNumber: data.phoneNumber,
     });
 
     if (existingCustomer) {
-      return { 
-        success: false, 
-        error: 'Customer with this phone number already exists' 
+      return {
+        success: false,
+        error: 'Customer with this phone number already exists',
       };
     }
 
     // Also check by customer name (optional but helpful)
     const existingByName = await executeOperation('customers', 'findOne', {
-      customerName: data.customerName
+      customerName: data.customerName,
     });
 
     if (existingByName) {
-      return { 
-        success: false, 
-        error: 'Customer with this name already exists' 
+      return {
+        success: false,
+        error: 'Customer with this name already exists',
       };
     }
 

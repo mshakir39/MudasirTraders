@@ -64,12 +64,14 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
       const response = await fetch(url);
       const result = await response.json();
       if (result.success && Array.isArray(result.data)) {
-        const customerInfoArray = result.data.map((c: any) => ({
-          id: c._id?.toString() || c.id?.toString(),
-          name: c.customerName,
-          address: c.address || '',
-          contactNumber: c.phoneNumber || '',
-        })).sort((a: any, b: any) => a.name.localeCompare(b.name));
+        const customerInfoArray = result.data
+          .map((c: any) => ({
+            id: c._id?.toString() || c.id?.toString(),
+            name: c.customerName,
+            address: c.address || '',
+            contactNumber: c.phoneNumber || '',
+          }))
+          .sort((a: any, b: any) => a.name.localeCompare(b.name));
         setAllCustomerInfo(customerInfoArray);
       }
     } catch (error) {

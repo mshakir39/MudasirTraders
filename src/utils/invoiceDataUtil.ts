@@ -166,7 +166,10 @@ export class InvoiceDataUtil {
     }
 
     // Validate customer contact number - now optional
-    if (data.customerContactNumber && data.customerContactNumber.trim() !== '') {
+    if (
+      data.customerContactNumber &&
+      data.customerContactNumber.trim() !== ''
+    ) {
       cleanedData.customerContactNumber = data.customerContactNumber.trim();
     } else {
       cleanedData.customerContactNumber = ''; // Allow empty phone number
@@ -436,7 +439,8 @@ export class InvoiceDataUtil {
     }
 
     // Calculate actual remaining amount
-    const remainingAmount = invoice.remainingAmount || 
+    const remainingAmount =
+      invoice.remainingAmount ||
       (invoice.totalAmount || 0) - (invoice.receivedAmount || 0);
 
     // Exclude invoices with zero or negative remaining amount

@@ -7,8 +7,8 @@ export interface InvoiceProduct {
   series: string;
   quantity: number;
   productPrice: number;
-  costPrice?: number;        // ← NEW: Cost price at time of sale
-  profit?: number;            // ← NEW: Profit for this product
+  costPrice?: number; // ← NEW: Cost price at time of sale
+  profit?: number; // ← NEW: Profit for this product
   totalPrice: number;
   warrentyCode: string;
   warrentyStartDate: string;
@@ -78,8 +78,8 @@ export interface Invoice {
   previousAmounts?: number[]; // Individual amounts from previous invoices (for audit trail)
 
   // NEW: Cost and Profit fields
-  totalCost?: number;       // Total cost for this invoice
-  totalProfit?: number;     // Total profit for this invoice
+  totalCost?: number; // Total cost for this invoice
+  totalProfit?: number; // Total profit for this invoice
 
   // Helper getters (can be calculated, no need to store)
   // consolidatedAmount = sum(previousAmounts)

@@ -126,14 +126,18 @@ export async function POST(req: NextRequest) {
       const pendingInvoiceIds = pendingInvoices.map((inv: any) => inv.id);
       const previousAmounts = pendingInvoices.map((inv: any) => {
         // Calculate remaining amount dynamically (include additional payments)
-        const productTotal = (inv.products || []).reduce((sum: number, product: any) => {
-          if (product.isChargingService || product.isScrapBattery) {
-            return sum;
-          }
-          const price = product.productPrice || product.totalPrice || product.price || 0;
-          const qty = product.quantity || 1;
-          return sum + Number(price) * Number(qty);
-        }, 0);
+        const productTotal = (inv.products || []).reduce(
+          (sum: number, product: any) => {
+            if (product.isChargingService || product.isScrapBattery) {
+              return sum;
+            }
+            const price =
+              product.productPrice || product.totalPrice || product.price || 0;
+            const qty = product.quantity || 1;
+            return sum + Number(price) * Number(qty);
+          },
+          0
+        );
         const received = Number(inv.receivedAmount) || 0;
         const batteriesRate = Number(inv.batteriesRate) || 0;
         const additionalPayments = (inv.additionalPayment || []).reduce(
@@ -309,84 +313,92 @@ export async function POST(req: NextRequest) {
       receivedAmount: validatedInvoiceData.receivedAmount,
       isPayLater: formData?.paymentMethod?.includes('Pay Later') || false,
 
-      products: await Promise.all((validatedInvoiceData.products || []).map(async (product: any) => {
-        // Get current cost from stock for profit calculation
-        let currentCost = 0;
-        try {
-          const stockItem = await executeOperation('stock', 'findOne', {
-            brandName: product.brandName
-          }) as any;
-          
-          if (stockItem && Array.isArray(stockItem.seriesStock)) {
-            const seriesData = stockItem.seriesStock.find(
-              (s: any) => s.series === product.series
+      products: await Promise.all(
+        (validatedInvoiceData.products || []).map(async (product: any) => {
+          // Get current cost from stock for profit calculation
+          let currentCost = 0;
+          try {
+            const stockItem = (await executeOperation('stock', 'findOne', {
+              brandName: product.brandName,
+            })) as any;
+
+            if (stockItem && Array.isArray(stockItem.seriesStock)) {
+              const seriesData = stockItem.seriesStock.find(
+                (s: any) => s.series === product.series
+              );
+              currentCost = Number(seriesData?.productCost) || 0;
+            }
+          } catch (error) {
+            console.warn(
+              `Could not fetch cost for ${product.brandName} ${product.series}:`,
+              error
             );
-            currentCost = Number(seriesData?.productCost) || 0;
           }
-        } catch (error) {
-          console.warn(`Could not fetch cost for ${product.brandName} ${product.series}:`, error);
-        }
 
-        // Calculate warranty end date if warranty code is provided
-        let warrantyEndDate = product.warrentyEndDate;
+          // Calculate warranty end date if warranty code is provided
+          let warrantyEndDate = product.warrentyEndDate;
 
-        // Determine the actual warranty start date to use for calculations
-        let actualWarrantyStartDate = product.warrentyStartDate;
-        if (
-          (formData.useCustomDate === true ||
-            formData.useCustomDate === 'true') &&
-          formData.customDate
-        ) {
-          actualWarrantyStartDate = new Date(formData.customDate)
-            .toISOString()
-            .split('T')[0];
-        }
+          // Determine the actual warranty start date to use for calculations
+          let actualWarrantyStartDate = product.warrentyStartDate;
+          if (
+            (formData.useCustomDate === true ||
+              formData.useCustomDate === 'true') &&
+            formData.customDate
+          ) {
+            actualWarrantyStartDate = new Date(formData.customDate)
+              .toISOString()
+              .split('T')[0];
+          }
 
-        // Calculate warranty end date if warranty code is provided
-        if (
-          product.warrentyCode &&
-          actualWarrantyStartDate &&
-          product.warrentyDuration
-        ) {
-          const startDate = new Date(actualWarrantyStartDate);
-          // Note: Warranty validation will be done outside the map function
-          const duration = parseInt(product.warrentyDuration);
-          const endDate = new Date(startDate);
-          endDate.setMonth(endDate.getMonth() + duration);
-          warrantyEndDate = endDate.toISOString().split('T')[0];
-        }
+          // Calculate warranty end date if warranty code is provided
+          if (
+            product.warrentyCode &&
+            actualWarrantyStartDate &&
+            product.warrentyDuration
+          ) {
+            const startDate = new Date(actualWarrantyStartDate);
+            // Note: Warranty validation will be done outside the map function
+            const duration = parseInt(product.warrentyDuration);
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + duration);
+            warrantyEndDate = endDate.toISOString().split('T')[0];
+          }
 
-        // Auto-set warranty start date to custom date if enabled
-        let finalWarrantyStartDate = product.warrentyStartDate;
-        if (
-          (formData.useCustomDate === true ||
-            formData.useCustomDate === 'true') &&
-          formData.customDate
-        ) {
-          finalWarrantyStartDate = new Date(formData.customDate)
-            .toISOString()
-            .split('T')[0];
-        }
+          // Auto-set warranty start date to custom date if enabled
+          let finalWarrantyStartDate = product.warrentyStartDate;
+          if (
+            (formData.useCustomDate === true ||
+              formData.useCustomDate === 'true') &&
+            formData.customDate
+          ) {
+            finalWarrantyStartDate = new Date(formData.customDate)
+              .toISOString()
+              .split('T')[0];
+          }
 
-        const productProfit = Number(product.totalPrice) - (currentCost * Number(product.quantity));
+          const productProfit =
+            Number(product.totalPrice) - currentCost * Number(product.quantity);
 
-        return {
-          brandName: product.brandName,
-          series: product.series,
-          productPrice: product.productPrice,
-          costPrice: currentCost, // ← NEW: Cost at time of sale
-          profit: productProfit, // ← NEW: Profit per product
-          quantity: product.quantity,
-          isChargingService: !!product.isChargingService,
-          isScrapBattery: !!product.isScrapBattery,
-          warrentyCode: product.warrentyCode ? product.warrentyCode.trim() : '',
-          warrentyStartDate: finalWarrantyStartDate,
-          warrentyEndDate: warrantyEndDate,
-          warrentyDuration: product.warrentyDuration || '',
-          totalPrice: product.totalPrice,
-          batteryDetails: product.batteryDetails,
-        };
-      })),
+          return {
+            brandName: product.brandName,
+            series: product.series,
+            productPrice: product.productPrice,
+            costPrice: currentCost, // ← NEW: Cost at time of sale
+            profit: productProfit, // ← NEW: Profit per product
+            quantity: product.quantity,
+            isChargingService: !!product.isChargingService,
+            isScrapBattery: !!product.isScrapBattery,
+            warrentyCode: product.warrentyCode
+              ? product.warrentyCode.trim()
+              : '',
+            warrentyStartDate: finalWarrantyStartDate,
+            warrentyEndDate: warrantyEndDate,
+            warrentyDuration: product.warrentyDuration || '',
+            totalPrice: product.totalPrice,
+            batteryDetails: product.batteryDetails,
+          };
+        })
+      ),
 
       // Use calculated amounts from validation
       subtotal: validatedInvoiceData.subtotal,
@@ -401,16 +413,16 @@ export async function POST(req: NextRequest) {
 
     // Calculate total cost and profit for the invoice
     const totalCost = invoice.products.reduce((sum: number, product: any) => {
-      return sum + (product.costPrice * Number(product.quantity));
+      return sum + product.costPrice * Number(product.quantity);
     }, 0);
-    
+
     const totalProfit = invoice.products.reduce((sum: number, product: any) => {
       return sum + (product.profit || 0);
     }, 0);
 
     // Add cost fields to invoice
-    invoice.totalCost = totalCost;       // ← NEW: Total cost for this invoice
-    invoice.totalProfit = totalProfit;   // ← NEW: Total profit for this invoice
+    invoice.totalCost = totalCost; // ← NEW: Total cost for this invoice
+    invoice.totalProfit = totalProfit; // ← NEW: Total profit for this invoice
 
     // Debug the cost calculation
     console.log('💰 COST CALCULATION DEBUG:');
@@ -1105,7 +1117,9 @@ export async function POST(req: NextRequest) {
     console.log('🔍 FINAL INVOICE CHECK:');
     console.log(`   totalCost: ${invoice.totalCost}`);
     console.log(`   totalProfit: ${invoice.totalProfit}`);
-    console.log(`   products[0].costPrice: ${invoice.products?.[0]?.costPrice}`);
+    console.log(
+      `   products[0].costPrice: ${invoice.products?.[0]?.costPrice}`
+    );
     console.log(`   products[0].profit: ${invoice.products?.[0]?.profit}`);
 
     // For walk-in customers, create/update customer record
@@ -1115,28 +1129,41 @@ export async function POST(req: NextRequest) {
       const existingCustomer = await executeOperation('customers', 'findOne', {
         customerName: invoice.customerName,
         phoneNumber: invoice.customerContactNumber,
-        customerType: 'WalkIn Customer'
+        customerType: 'WalkIn Customer',
       });
 
-      if (existingCustomer && typeof existingCustomer === 'object' && ('_id' in existingCustomer || 'id' in existingCustomer)) {
-        customerId = (existingCustomer as any)._id?.toString() || (existingCustomer as any).id?.toString();
+      if (
+        existingCustomer &&
+        typeof existingCustomer === 'object' &&
+        ('_id' in existingCustomer || 'id' in existingCustomer)
+      ) {
+        customerId =
+          (existingCustomer as any)._id?.toString() ||
+          (existingCustomer as any).id?.toString();
       } else {
         // Create new walk-in customer
-        const customerResult = await executeOperation('customers', 'insertOne', {
-          customerName: invoice.customerName,
-          phoneNumber: invoice.customerContactNumber,
-          address: invoice.customerAddress,
-          email: '',
-          customerType: 'WalkIn Customer',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          totalInvoices: 0,
-          totalAmount: 0,
-          lastInvoiceDate: new Date(),
-        });
-        customerId = (customerResult && typeof customerResult === 'object' && 'insertedId' in customerResult)
-          ? (customerResult as any).insertedId
-          : null;
+        const customerResult = await executeOperation(
+          'customers',
+          'insertOne',
+          {
+            customerName: invoice.customerName,
+            phoneNumber: invoice.customerContactNumber,
+            address: invoice.customerAddress,
+            email: '',
+            customerType: 'WalkIn Customer',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            totalInvoices: 0,
+            totalAmount: 0,
+            lastInvoiceDate: new Date(),
+          }
+        );
+        customerId =
+          customerResult &&
+          typeof customerResult === 'object' &&
+          'insertedId' in customerResult
+            ? (customerResult as any).insertedId
+            : null;
       }
 
       // Store customerId in invoice
@@ -1189,16 +1216,20 @@ export async function POST(req: NextRequest) {
         invoice.products?.some((product: any) => product.isScrapBattery) ||
         false,
       // Add cost fields from invoice
-      totalCost: invoice.totalCost,         // ← NEW: Total cost from invoice
-      totalProfit: invoice.totalProfit,       // ← NEW: Total profit from invoice
+      totalCost: invoice.totalCost, // ← NEW: Total cost from invoice
+      totalProfit: invoice.totalProfit, // ← NEW: Total profit from invoice
     };
 
     // Debug the sales record
     console.log('🔍 FINAL SALES RECORD CHECK:');
     console.log(`   salesRecord.totalCost: ${salesRecord.totalCost}`);
     console.log(`   salesRecord.totalProfit: ${salesRecord.totalProfit}`);
-    console.log(`   salesRecord.products[0].costPrice: ${salesRecord.products[0]?.costPrice}`);
-    console.log(`   salesRecord.products[0].profit: ${salesRecord.products[0]?.profit}`);
+    console.log(
+      `   salesRecord.products[0].costPrice: ${salesRecord.products[0]?.costPrice}`
+    );
+    console.log(
+      `   salesRecord.products[0].profit: ${salesRecord.products[0]?.profit}`
+    );
 
     // 🔒 VALIDATION: Ensure sales record has required fields
     if (
@@ -1487,7 +1518,10 @@ export async function DELETE(req: NextRequest) {
               originalInvoiceNo: invoice.invoiceNo,
             });
           } catch (warrantyError) {
-            log.warning('Failed to remove warranty data from history:', warrantyError);
+            log.warning(
+              'Failed to remove warranty data from history:',
+              warrantyError
+            );
           }
         }
       }

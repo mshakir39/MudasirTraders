@@ -47,12 +47,16 @@ export async function GET() {
     <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    ${images.map((img) => `
+    ${images
+      .map(
+        (img) => `
     <image:image>
       <image:loc>${img.url}</image:loc>
       <image:title>Community Meetup - Mudasir Traders</image:title>
       <image:caption>Community meetup event at Mudasir Traders battery shop in Dera Ghazi Khan</image:caption>
-    </image:image>`).join('')}
+    </image:image>`
+      )
+      .join('')}
   </url>
 </urlset>`;
 

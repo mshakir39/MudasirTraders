@@ -245,9 +245,10 @@ export const InvoicePaymentSection: React.FC<InvoicePaymentSectionProps> = ({
             onClick={() =>
               setInvoiceData({
                 ...invoiceData,
-                receivedAmount: (remainingAmount + previousRemainingAmount) > 0
-                  ? remainingAmount + previousRemainingAmount
-                  : totalAmount,
+                receivedAmount:
+                  remainingAmount + previousRemainingAmount > 0
+                    ? remainingAmount + previousRemainingAmount
+                    : totalAmount,
               })
             }
             title='Add remaining amount'
