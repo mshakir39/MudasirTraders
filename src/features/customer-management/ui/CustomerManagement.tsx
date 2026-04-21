@@ -39,6 +39,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'regular' | 'walkin'>('all');
 
   const [customers, setCustomers] = useAtom(customersAtom);
   const fetchCustomers = useAtom(fetchCustomersAtom)[1];
@@ -67,20 +68,32 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
     onRefreshCustomers: handleRefreshCustomers,
   });
 
-  // Filter customers based on search
+  // Filter customers based on search and tab
   const filteredCustomers = useMemo(() => {
-    if (!searchTerm.trim()) return optimisticCustomers;
+    let filtered = optimisticCustomers;
 
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    return optimisticCustomers.filter(
-      (customer) =>
-        customer.customerName.toLowerCase().includes(lowerSearchTerm) ||
-        customer.phoneNumber.toLowerCase().includes(lowerSearchTerm) ||
-        customer.address.toLowerCase().includes(lowerSearchTerm) ||
-        (customer.email &&
-          customer.email.toLowerCase().includes(lowerSearchTerm))
-    );
-  }, [optimisticCustomers, searchTerm]);
+    // Filter by customer type tab
+    if (activeTab === 'regular') {
+      filtered = filtered.filter(c => c.customerType === 'Regular Customer');
+    } else if (activeTab === 'walkin') {
+      filtered = filtered.filter(c => c.customerType === 'WalkIn Customer');
+    }
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (customer) =>
+          customer.customerName.toLowerCase().includes(lowerSearchTerm) ||
+          customer.phoneNumber.toLowerCase().includes(lowerSearchTerm) ||
+          customer.address.toLowerCase().includes(lowerSearchTerm) ||
+          (customer.email &&
+            customer.email.toLowerCase().includes(lowerSearchTerm))
+      );
+    }
+
+    return filtered;
+  }, [optimisticCustomers, searchTerm, activeTab]);
 
   const handleCreateCustomer = useCallback(() => {
     setSelectedCustomer(null);
@@ -127,7 +140,43 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
 
   return (
     <div className={`p-0 py-6 md:p-6 ${className}`}>
-      <h1 className='mb-6 text-2xl font-bold text-secondary-900'>Customers</h1>
+      <div className='mb-6 flex items-center justify-between'>
+        <h1 className='text-2xl font-bold text-secondary-900'>Customers</h1>
+
+        {/* Beautiful Tabs */}
+        <div className='flex rounded-lg bg-gray-100 p-1'>
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+              activeTab === 'all'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            All Customers
+          </button>
+          <button
+            onClick={() => setActiveTab('regular')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+              activeTab === 'regular'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Regular Customers
+          </button>
+          <button
+            onClick={() => setActiveTab('walkin')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+              activeTab === 'walkin'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Walk-in Customers
+          </button>
+        </div>
+      </div>
 
       {/* Customer Table with built-in search */}
       <CustomerTable

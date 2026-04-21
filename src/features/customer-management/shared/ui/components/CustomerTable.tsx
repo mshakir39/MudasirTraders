@@ -134,6 +134,9 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
         buttonTitle='Add Customer'
         buttonOnClick={onAddCustomer}
         emptyMessage='No customers found.'
+        enableRowVirtualization={true}
+        tableBodyHeight={600}
+        minVisibleRows={15}
       />
     </div>
   );

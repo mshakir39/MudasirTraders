@@ -24,16 +24,13 @@ export async function GET(
 
     if (!customerId) {
       return NextResponse.json(
-        { error: 'Customer name is required' },
+        { error: 'Customer ID is required' },
         { status: 400 }
       );
     }
 
-    // Decode the customer name from URL
-    const customerName = decodeURIComponent(customerId);
-
-    // Get pending invoices for the customer
-    const result = await getCustomerPendingInvoices(customerName);
+    // Get pending invoices for the customer by ID
+    const result = await getCustomerPendingInvoices(customerId);
 
     if (!result.success) {
       return NextResponse.json(

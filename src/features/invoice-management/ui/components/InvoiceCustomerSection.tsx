@@ -40,41 +40,56 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
           customerInfo.address || invoiceData.customerAddress || '',
         customerContactNumber:
           customerInfo.contactNumber || invoiceData.customerContactNumber || '',
+        clientId: customerInfo.id || '',
       });
     } else {
-      // Find the most recent invoice for this customer to get their details
-      let customerInvoice = allInvoices.find(
-        (invoice: any) => invoice.customerName === customerName
+      // For walk-in customers, check if name matches a customer in the customers collection
+      const matchingCustomer = customers.find(
+        (c: any) => c.customerName === customerName
       );
 
-      if (!customerInvoice) {
-        customerInvoice = allInvoices.find((invoice: any) =>
-          invoice.customerName
-            .toLowerCase()
-            .includes(customerName.toLowerCase())
-        );
-      }
-
-      if (customerInvoice) {
-        // Auto-fill customer details from invoice data
+      if (matchingCustomer) {
+        // Use the customer ID from the customers collection
         setInvoiceData({
           ...invoiceData,
           customerName: customerName,
           customerAddress:
-            customerInvoice.customerAddress ||
-            invoiceData.customerAddress ||
-            '',
+            matchingCustomer.address || invoiceData.customerAddress || '',
           customerContactNumber:
-            customerInvoice.customerContactNumber ||
-            invoiceData.customerContactNumber ||
-            '',
+            matchingCustomer.phoneNumber || invoiceData.customerContactNumber || '',
+          clientId: matchingCustomer._id?.toString() || '',
         });
       } else {
-        // Just update the customer name if no previous data found
-        setInvoiceData({
-          ...invoiceData,
-          customerName: customerName,
-        });
+        // Find the most recent invoice for this customer to get their details
+        let customerInvoice = allInvoices.find(
+          (invoice: any) => invoice.customerName === customerName
+        );
+
+        if (!customerInvoice) {
+          customerInvoice = allInvoices.find((invoice: any) =>
+            invoice.customerName
+              .toLowerCase()
+              .includes(customerName.toLowerCase())
+          );
+        }
+
+        if (customerInvoice) {
+          setInvoiceData({
+            ...invoiceData,
+            customerName: customerName,
+            customerAddress:
+              customerInvoice.customerAddress || invoiceData.customerAddress || '',
+            customerContactNumber:
+              customerInvoice.customerContactNumber ||
+              invoiceData.customerContactNumber ||
+              '',
+          });
+        } else {
+          setInvoiceData({
+            ...invoiceData,
+            customerName: customerName,
+          });
+        }
       }
     }
   };
@@ -158,10 +173,14 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
           <Dropdown
             key={invoiceData.customerType}
             className='mt-2'
-            options={customers.map((customer) => ({
-              label: customer.customerName,
-              value: customer.id.toString(),
-            }))}
+            options={customers
+              .filter((customer) => 
+                !customer.customerType || customer.customerType === 'Regular Customer'
+              )
+              .map((customer) => ({
+                label: customer.customerName,
+                value: customer.id.toString(),
+              }))}
             defaultValue={invoiceData.clientId?.toString() || ''}
             onSelect={(option) => {
               const selectedCustomer = customers.find(
@@ -193,7 +212,21 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
             minLength={1}
             maxLength={100}
             onChange={handleCustomerNameChange}
+            onBlur={(e) => {
+              // Check for matching customer when user finishes typing
+              const customerName = e.target.value;
+              const matchingCustomer = customers.find(
+                (c: any) => c.customerName === customerName
+              );
+              if (matchingCustomer) {
+                setInvoiceData({
+                  ...invoiceData,
+                  clientId: matchingCustomer.id?.toString() || matchingCustomer._id?.toString() || '',
+                });
+              }
+            }}
             placeholder="Enter customer name or use '-' for walk-in"
+            customerType='WalkIn Customer'
           />
         </div>
       ) : (

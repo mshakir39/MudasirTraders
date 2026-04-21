@@ -8,6 +8,7 @@ export interface Customer {
   phoneNumber: string;
   address: string;
   email?: string;
+  customerType?: 'WalkIn Customer' | 'Regular Customer';
   createdAt: string;
   updatedAt?: string;
   totalInvoices?: number;
@@ -20,6 +21,7 @@ export interface CustomerFormData {
   phoneNumber: string;
   address: string;
   email?: string;
+  customerType?: 'WalkIn Customer' | 'Regular Customer';
 }
 
 export interface CustomerCreateRequest {
@@ -27,6 +29,7 @@ export interface CustomerCreateRequest {
   phoneNumber: string;
   address: string;
   email?: string;
+  customerType?: 'WalkIn Customer' | 'Regular Customer';
 }
 
 export interface CustomerApiResponse {

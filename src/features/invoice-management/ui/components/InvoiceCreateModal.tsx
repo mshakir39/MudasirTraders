@@ -77,21 +77,24 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
     resetAccordionData,
     ...accordionMethods
   } = useAccordionData(categories, stock);
-  const { customers: customerList } = useCustomers();
+  const { customers: customerList, refetchCustomers } = useCustomers();
 
   // Use custom hooks for form and accordion logic
   const { invoiceData, setInvoiceData, handleSubmit } = useInvoiceForm({
     onSubmit: async (data: InvoiceFormData) => {
       try {
         // Call the original onSubmit function
-        await onSubmit(data);
-        
+        const result = await onSubmit(data);
+
+        // Refresh customer list after successful invoice creation
+        refetchCustomers();
+
         // After successful submission, cleanup and close
         // Remove the saved state since invoice was successfully created
         if (activeStateId) {
           deleteState(activeStateId);
         }
-        
+
         // Clear active state and close modal
         setActiveStateId(null);
         setShowCreateModal(false);
@@ -171,14 +174,14 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
   }, [activeStateId, savedStates, setInvoiceData, setAccordionData]);
 
   // NEW: Fetch pending invoices with debouncing
-  const fetchPendingInvoices = useCallback(async (customerName: string) => {
-    if (!customerName || customerName.trim() === '') {
+  const fetchPendingInvoices = useCallback(async (customerId: string) => {
+    if (!customerId || customerId.trim() === '') {
       setPendingInvoices([]);
       return;
     }
 
     // Don't fetch if it's the same customer as before
-    if (customerName === previousCustomerNameRef.current) {
+    if (customerId === previousCustomerNameRef.current) {
       return;
     }
 
@@ -186,7 +189,7 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
     try {
       // Call the real API directly
       const response = await fetch(
-        `/api/customers/${encodeURIComponent(customerName)}/pending-invoices`
+        `/api/customers/${encodeURIComponent(customerId)}/pending-invoices`
       );
 
       const result = await response.json();
@@ -202,13 +205,13 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
       setPendingInvoices([]);
     } finally {
       setIsLoadingPending(false);
-      previousCustomerNameRef.current = customerName;
+      previousCustomerNameRef.current = customerId;
     }
   }, []);
 
   // NEW: Debounced fetch function
   const debouncedFetchPendingInvoices = useCallback(
-    (customerName: string) => {
+    (customerId: string) => {
       // Clear existing timeout
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
@@ -216,7 +219,7 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
 
       // Set new timeout
       debounceTimeoutRef.current = setTimeout(() => {
-        fetchPendingInvoices(customerName);
+        fetchPendingInvoices(customerId);
       }, 500); // 500ms delay
     },
     [fetchPendingInvoices]
@@ -471,8 +474,10 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
 
   // NEW: Fetch pending invoices when customer changes (with debouncing)
   useEffect(() => {
-    debouncedFetchPendingInvoices(invoiceData.customerName);
-  }, [invoiceData.customerName, debouncedFetchPendingInvoices]);
+    // Use clientId if available (for both regular and walk-in customers), otherwise use customerName
+    const searchId = invoiceData.clientId || invoiceData.customerName || '';
+    debouncedFetchPendingInvoices(searchId);
+  }, [invoiceData.clientId, invoiceData.customerName, debouncedFetchPendingInvoices]);
 
   // Cleanup timeout on unmount
   useEffect(() => {

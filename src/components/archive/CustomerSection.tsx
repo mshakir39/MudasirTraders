@@ -153,6 +153,7 @@ const CustomerSection: React.FC<CustomerSectionProps> = ({
           maxLength={100}
           onChange={handleCustomerNameChange}
           placeholder='Enter customer name or use "-" for walk-in'
+          customerType='WalkIn Customer'
         />
       ) : (
         <Input

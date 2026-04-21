@@ -81,10 +81,15 @@ export async function deleteCustomer(id: string) {
   }
 }
 
-export async function getCustomers() {
+export async function getCustomers(customerType?: string) {
   try {
     // React 19: Enhanced with client-side sorting for better compatibility
-    const customers = await executeOperation('customers', 'findAll');
+    let customers = await executeOperation('customers', 'findAll');
+
+    // Filter by customerType if provided
+    if (customerType && Array.isArray(customers)) {
+      customers = customers.filter((c: any) => c.customerType === customerType);
+    }
 
     // Sort customers by creation date (newest first)
     if (Array.isArray(customers)) {

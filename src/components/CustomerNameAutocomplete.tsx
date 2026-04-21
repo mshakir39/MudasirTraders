@@ -7,10 +7,9 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import { useAtom } from 'jotai';
-import { invoicesAtom } from '@/store/sharedAtoms';
 
 interface CustomerInfo {
+  id?: string;
   name: string;
   address?: string;
   contactNumber?: string;
@@ -32,6 +31,8 @@ interface CustomerNameAutocompleteProps {
   readOnly?: boolean;
   minLength?: number;
   maxLength?: number;
+  customerType?: 'WalkIn Customer' | 'Regular Customer';
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 }
 
 const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
@@ -44,6 +45,8 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
   readOnly = false,
   minLength,
   maxLength,
+  customerType,
+  onBlur,
 }) => {
   const [suggestions, setSuggestions] = useState<CustomerInfoWithMatch[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -51,63 +54,37 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Get invoices from Jotai store
-  const [invoices] = useAtom(invoicesAtom);
-
-  // Process customer data from invoices in Jotai store
-  const processCustomerData = useCallback(() => {
-    if (!Array.isArray(invoices) || invoices.length === 0) {
-      setAllCustomerInfo([]);
-      return;
-    }
-
-    // Process customer data
-    const customerMap = new Map<string, any>();
-
-    invoices.forEach((invoice: any) => {
-      const customerName = invoice.customerName;
-      const contactNumber = invoice.customerContactNumber;
-
-      if (
-        customerName &&
-        customerName.trim() !== ''
-        // ✅ Allow walk-in customers with "-" or similar
-      ) {
-        const uniqueKey =
-          contactNumber && contactNumber.trim() !== '' && contactNumber !== '-'
-            ? contactNumber
-            : customerName;
-
-        if (
-          !customerMap.has(uniqueKey) ||
-          new Date(invoice.createdDate) >
-            new Date(customerMap.get(uniqueKey)?.createdDate || '')
-        ) {
-          customerMap.set(uniqueKey, {
-            name: customerName,
-            address: invoice.customerAddress || '',
-            contactNumber: contactNumber || '',
-            createdDate: invoice.createdDate,
-          });
-        }
+  // Fetch customers from API
+  const fetchCustomers = useCallback(async () => {
+    try {
+      const url = new URL('/api/customers', window.location.origin);
+      if (customerType) {
+        url.searchParams.set('customerType', customerType);
       }
-    });
+      const response = await fetch(url);
+      const result = await response.json();
+      if (result.success && Array.isArray(result.data)) {
+        const customerInfoArray = result.data.map((c: any) => ({
+          id: c._id?.toString() || c.id?.toString(),
+          name: c.customerName,
+          address: c.address || '',
+          contactNumber: c.phoneNumber || '',
+        })).sort((a: any, b: any) => a.name.localeCompare(b.name));
+        setAllCustomerInfo(customerInfoArray);
+      }
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  }, [customerType]);
 
-    const customerInfoArray = Array.from(customerMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
-
-    setAllCustomerInfo(customerInfoArray);
-  }, [invoices]);
-
-  // Process customer data whenever invoices change
+  // Fetch customers on mount and when customerType changes
   useEffect(() => {
-    processCustomerData();
-  }, [processCustomerData]);
+    fetchCustomers();
+  }, [fetchCustomers]);
 
   // Memoize filtered suggestions to prevent unnecessary re-renders
   const filteredSuggestions = useMemo(() => {
-    if (value && value.length >= 2 && !readOnly) {
+    if (value.trim().length > 0 && allCustomerInfo.length > 0) {
       const searchValue = value.toLowerCase();
       const matches: CustomerInfoWithMatch[] = [];
 
@@ -243,13 +220,17 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
           value={value}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
+          onBlur={(e) => {
+            handleInputBlur(e);
+            if (onBlur) onBlur(e);
+          }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           required={required}
           readOnly={readOnly}
           minLength={minLength}
           maxLength={maxLength}
+          autoComplete='off'
           className={`w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
             readOnly ? 'cursor-not-allowed bg-gray-100' : 'bg-white'
           }`}

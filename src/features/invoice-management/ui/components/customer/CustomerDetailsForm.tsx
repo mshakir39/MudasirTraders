@@ -36,6 +36,7 @@ export const CustomerDetailsForm: React.FC<CustomerDetailsFormProps> = ({
           onChange={(value) => onChange('customerName', value)}
           name='customerName'
           label='Customer Name'
+          customerType='Regular Customer'
         />
       </div>
 

@@ -8,7 +8,9 @@ import {
 
 export async function GET(req: NextRequest) {
   try {
-    const result = await getCustomers();
+    const { searchParams } = new URL(req.url);
+    const customerType = searchParams.get('customerType') || undefined;
+    const result = await getCustomers(customerType);
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Error fetching customers:', error);

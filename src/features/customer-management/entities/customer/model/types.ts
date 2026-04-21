@@ -8,6 +8,7 @@ export interface Customer {
   phoneNumber: string;
   address: string;
   email?: string;
+  customerType?: string;
   createdAt: string;
   updatedAt?: string;
   totalInvoices?: number;

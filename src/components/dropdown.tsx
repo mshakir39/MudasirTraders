@@ -139,7 +139,7 @@ const DropdownComponent: FunctionComponent<DropdownProps> = ({
               <div key={index} className='relative'>
                 <button
                   name={name}
-                  className='group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-900 hover:bg-[var(--color-primary-500)] hover:text-white'
+                  className='group flex w-full items-center rounded-md px-2 py-2 text-sm text-gray-900 hover:bg-blue-500 hover:text-white'
                   onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();

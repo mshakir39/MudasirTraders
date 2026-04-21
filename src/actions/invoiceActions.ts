@@ -226,13 +226,53 @@ export async function updateInvoicePaymentStatus(
 }
 
 // NEW: Get customer pending and partial invoices for consolidation
-export async function getCustomerPendingInvoices(customerName: string) {
+export async function getCustomerPendingInvoices(customerId: string) {
   try {
-    const invoices = await executeOperation('invoices', 'find', {
-      customerName: customerName,
-      paymentStatus: { $in: ['pending', 'partial'] }, // Include both pending and partial invoices
-      status: { $ne: 'voided' },
-    });
+    // Import ObjectId for MongoDB queries
+    const { ObjectId } = require('mongodb');
+
+    // Check if customerId is a valid ObjectId format (24 hex characters)
+    const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(customerId);
+
+    let customerName = null;
+
+    if (isValidObjectId) {
+      // First try to find customer by ID to get customerName
+      const customer = await executeOperation('customers', 'findOne', { _id: new ObjectId(customerId) });
+      customerName = (customer && typeof customer === 'object' && 'customerName' in customer)
+        ? (customer as any).customerName
+        : null;
+    } else {
+      // Not a valid ObjectId, treat it as customerName directly (walk-in customer)
+      customerName = customerId;
+    }
+
+    // Query invoices - check by clientId first, then fall back to customerName
+    let invoices;
+    if (isValidObjectId) {
+      // First try to find by clientId
+      invoices = await executeOperation('invoices', 'find', {
+        clientId: customerId,
+        paymentStatus: { $in: ['pending', 'partial'] }, // Include both pending and partial invoices
+        status: { $ne: 'voided' },
+      });
+
+      // If no results and we have customerName, fall back to customerName
+      if ((!invoices || !Array.isArray(invoices) || invoices.length === 0) && customerName) {
+        invoices = await executeOperation('invoices', 'find', {
+          customerName: customerName,
+          paymentStatus: { $in: ['pending', 'partial'] },
+          status: { $ne: 'voided' },
+        });
+      }
+    } else {
+      // Walk-in customer: search by customerName only
+      invoices = await executeOperation('invoices', 'find', {
+        customerName: customerName,
+        paymentStatus: { $in: ['pending', 'partial'] },
+        status: { $ne: 'voided' },
+      });
+    }
 
     // Process invoices to calculate correct totals and remaining amounts
     const processedInvoices = Array.isArray(invoices)
@@ -243,19 +283,20 @@ export async function getCustomerPendingInvoices(customerName: string) {
             invoice.receivedAmount
           );
 
-          console.log(
-            `� Invoice ${invoice.invoiceNo}: Calculated=${calculation.totalAmount}, Remaining (from DB)=${invoice.remainingAmount || calculation.totalAmount}`
-          );
+          const calculatedTotal = calculation.totalAmount;
+          const calculatedRemaining = calculation.remainingAmount;
 
-          return {
-            ...invoice,
-            totalAmount: calculation.totalAmount,
-            remainingAmount:
-              invoice.remainingAmount !== undefined
-                ? invoice.remainingAmount
-                : calculation.totalAmount,
-          };
+          // Only include if remaining amount is not zero (exclude fully paid invoices)
+          if (calculatedRemaining > 0) {
+            return {
+              ...invoice,
+              calculatedTotal,
+              calculatedRemaining,
+            };
+          }
+          return null;
         })
+        .filter((invoice): invoice is any => invoice !== null)
       : [];
 
     // Filter out partial invoices with 0 total amount (ignore them) using utility
@@ -263,17 +304,10 @@ export async function getCustomerPendingInvoices(customerName: string) {
       InvoiceDataUtil.shouldIncludeInPending(invoice)
     );
 
-    console.log(`🔍 Original pending invoices: ${processedInvoices.length}`);
-    console.log(`🔍 Filtered pending invoices: ${filteredInvoices.length}`);
-
     // Sort by date (most recent first)
     const sortedInvoices = filteredInvoices.sort(
       (a, b) =>
         new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
-    );
-
-    console.log(
-      `✅ Processed ${sortedInvoices.length} pending invoices for ${customerName}`
     );
 
     return { success: true, data: sortedInvoices };

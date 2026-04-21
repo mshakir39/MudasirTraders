@@ -1107,7 +1107,42 @@ export async function POST(req: NextRequest) {
     console.log(`   totalProfit: ${invoice.totalProfit}`);
     console.log(`   products[0].costPrice: ${invoice.products?.[0]?.costPrice}`);
     console.log(`   products[0].profit: ${invoice.products?.[0]?.profit}`);
-    
+
+    // For walk-in customers, create/update customer record
+    let customerId = null;
+    if (invoice.customerType === 'WalkIn Customer') {
+      // Check if customer already exists by both name AND phone (more specific)
+      const existingCustomer = await executeOperation('customers', 'findOne', {
+        customerName: invoice.customerName,
+        phoneNumber: invoice.customerContactNumber,
+        customerType: 'WalkIn Customer'
+      });
+
+      if (existingCustomer && typeof existingCustomer === 'object' && ('_id' in existingCustomer || 'id' in existingCustomer)) {
+        customerId = (existingCustomer as any)._id?.toString() || (existingCustomer as any).id?.toString();
+      } else {
+        // Create new walk-in customer
+        const customerResult = await executeOperation('customers', 'insertOne', {
+          customerName: invoice.customerName,
+          phoneNumber: invoice.customerContactNumber,
+          address: invoice.customerAddress,
+          email: '',
+          customerType: 'WalkIn Customer',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          totalInvoices: 0,
+          totalAmount: 0,
+          lastInvoiceDate: new Date(),
+        });
+        customerId = (customerResult && typeof customerResult === 'object' && 'insertedId' in customerResult)
+          ? (customerResult as any).insertedId
+          : null;
+      }
+
+      // Store customerId in invoice
+      invoice.clientId = customerId;
+    }
+
     const invoiceResult = await executeOperation(
       'invoices',
       'insertOne',
@@ -1232,7 +1267,10 @@ export async function POST(req: NextRequest) {
 
     console.log('✅ Stock cache revalidated');
 
-    return NextResponse.json({ message: 'Invoice created successfully' });
+    return NextResponse.json({
+      message: 'Invoice created successfully',
+      customerId: customerId,
+    });
   } catch (err: any) {
     console.error('❌ Error creating invoice:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
