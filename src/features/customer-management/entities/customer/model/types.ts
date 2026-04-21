@@ -8,7 +8,7 @@ export interface Customer {
   phoneNumber: string;
   address: string;
   email?: string;
-  customerType?: string;
+  customerType?: 'WalkIn Customer' | 'Regular Customer';
   createdAt: string;
   updatedAt?: string;
   totalInvoices?: number;
