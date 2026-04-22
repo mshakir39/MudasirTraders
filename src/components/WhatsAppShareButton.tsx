@@ -14,13 +14,35 @@ const WhatsAppShareButton: React.FC<WhatsAppShareButtonProps> = ({
   size = 32,
   className = '',
 }) => {
-  // Create the invoice message
-  const totalAmount =
+  // Create the invoice message - match InvoicePreviewPricing calculations
+  const initialReceived = Number(invoiceData.receivedAmount) || 0;
+  const additionalPayments = invoiceData.additionalPayment || [];
+  const totalAdditionalReceived = additionalPayments.reduce(
+    (sum: number, payment: any) => sum + Number(payment.amount),
+    0
+  );
+  const totalReceived = initialReceived + totalAdditionalReceived;
+
+  // Calculate amounts for consolidated invoices
+  const consolidatedAmount =
+    invoiceData.previousAmounts?.reduce(
+      (sum: number, amount: number) => sum + amount,
+      0
+    ) || 0;
+  const subtotalAmount =
     invoiceData.products?.reduce(
       (sum: number, product: any) => sum + product.totalPrice,
       0
     ) || 0;
-  const remainingAmount = invoiceData.remainingAmount || 0;
+
+  // For consolidated invoices, total includes both consolidated amount and new items
+  const totalAmount =
+    invoiceData.consolidatedFrom && invoiceData.consolidatedFrom.length > 0
+      ? subtotalAmount + consolidatedAmount
+      : subtotalAmount;
+
+  const batteriesRate = Number(invoiceData.batteriesRate) || 0;
+  const actualRemaining = totalAmount - totalReceived - batteriesRate;
 
   const message = `*INVOICE RECEIPT*
 ================================
@@ -44,8 +66,8 @@ Contact: *${invoiceData.customerContactNumber}*
 
 Total Amount: *Rs ${totalAmount.toLocaleString()}*
 ${
-  remainingAmount > 0
-    ? `Payment Status: *PENDING*\nOutstanding: *Rs ${remainingAmount.toLocaleString()}*`
+  actualRemaining > 0
+    ? `Payment Status: *PENDING*\nOutstanding: *Rs ${actualRemaining.toLocaleString()}*`
     : `Payment Status: *PAID IN FULL*`
 }
 
