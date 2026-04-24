@@ -4,6 +4,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   FaFileInvoice,
   FaEdit,
@@ -27,6 +28,8 @@ export const InvoiceGridActions: React.FC<InvoiceGridActionsProps> = ({
   onDeleteInvoice,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -42,6 +45,18 @@ export const InvoiceGridActions: React.FC<InvoiceGridActionsProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Calculate menu position when opening
+  const handleToggle = () => {
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.right - 192 + window.scrollX, // 192 is the menu width (w-48)
+      });
+    }
+    setIsOpen(!isOpen);
+  };
 
   const handleAction = (action: string) => {
     switch (action) {
@@ -62,10 +77,11 @@ export const InvoiceGridActions: React.FC<InvoiceGridActionsProps> = ({
   };
 
   return (
-    <div className='relative inline-block text-left' ref={menuRef}>
-      <div>
+    <>
+      <div className='relative inline-block text-left'>
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          ref={buttonRef}
+          onClick={handleToggle}
           className='inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0'
           id='actions-menu-button'
           aria-expanded={isOpen}
@@ -84,45 +100,54 @@ export const InvoiceGridActions: React.FC<InvoiceGridActionsProps> = ({
         </button>
       </div>
 
-      {isOpen && (
-        <div className='absolute right-0 z-10 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none'>
-          <div className='py-1'>
-            <div
-              className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-              onClick={() => handleAction('preview')}
-            >
-              <FaFileInvoice className='text-green-600' />
-              Preview
-            </div>
-            {invoice.status !== 'voided' && (
+      {isOpen &&
+        createPortal(
+          <div
+            ref={menuRef}
+            className='fixed z-[9999] mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none'
+            style={{
+              top: `${menuPosition.top}px`,
+              left: `${menuPosition.left}px`,
+            }}
+          >
+            <div className='py-1'>
               <div
                 className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                onClick={() => handleAction('edit')}
+                onClick={() => handleAction('preview')}
               >
-                <FaEdit className='text-indigo-600' />
-                Edit
+                <FaFileInvoice className='text-green-600' />
+                Preview
               </div>
-            )}
-            {invoice.paymentStatus !== 'paid' &&
-              invoice.status !== 'voided' && (
+              {invoice.status !== 'voided' && (
                 <div
                   className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-                  onClick={() => handleAction('payment')}
+                  onClick={() => handleAction('edit')}
                 >
-                  <FaMoneyBillWave className='text-yellow-600' />
-                  Add Payment
+                  <FaEdit className='text-indigo-600' />
+                  Edit
                 </div>
               )}
-            <div
-              className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-              onClick={() => handleAction('delete')}
-            >
-              <FaTrash className='text-red-600' />
-              Delete
+              {invoice.paymentStatus !== 'paid' &&
+                invoice.status !== 'voided' && (
+                  <div
+                    className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                    onClick={() => handleAction('payment')}
+                  >
+                    <FaMoneyBillWave className='text-yellow-600' />
+                    Add Payment
+                  </div>
+                )}
+              <div
+                className='flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
+                onClick={() => handleAction('delete')}
+              >
+                <FaTrash className='text-red-600' />
+                Delete
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-    </div>
+          </div>,
+          document.body
+        )}
+    </>
   );
 };

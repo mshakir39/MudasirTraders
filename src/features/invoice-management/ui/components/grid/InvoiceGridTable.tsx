@@ -57,7 +57,7 @@ export const InvoiceGridTable: React.FC<InvoiceGridTableProps> = ({
                   })}
                 </td>
               ))}
-              <td className='whitespace-nowrap px-6 py-4 text-right text-sm font-medium'>
+              <td className='relative whitespace-nowrap px-6 py-4 text-right text-sm font-medium'>
                 <InvoiceGridActions
                   invoice={invoice}
                   onPreview={onPreview}
