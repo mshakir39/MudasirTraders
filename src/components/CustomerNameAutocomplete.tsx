@@ -50,6 +50,7 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
 }) => {
   const [suggestions, setSuggestions] = useState<CustomerInfoWithMatch[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [allCustomerInfo, setAllCustomerInfo] = useState<CustomerInfo[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -118,6 +119,7 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
   useEffect(() => {
     setSuggestions(filteredSuggestions);
     setShowSuggestions(filteredSuggestions.length > 0);
+    setHighlightedIndex(-1); // Reset highlight when suggestions change
   }, [filteredSuggestions]);
 
   // Handle input change
@@ -139,7 +141,8 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
         },
       });
       setShowSuggestions(false);
-      inputRef.current?.focus();
+      setHighlightedIndex(-1);
+      // Don't refocus immediately to avoid interference
     },
     [onChange, name]
   );
@@ -157,8 +160,29 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
     setTimeout(() => {
       if (!suggestionsRef.current?.contains(document.activeElement)) {
         setShowSuggestions(false);
+        setHighlightedIndex(-1);
       }
-    }, 150);
+    }, 200);
+  }, []);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node) &&
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+        setHighlightedIndex(-1);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   // Handle keyboard navigation
@@ -166,45 +190,34 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
     (e: React.KeyboardEvent) => {
       if (!showSuggestions) return;
 
-      const currentIndex = suggestions.findIndex((s) => s.name === value);
-
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          const nextIndex =
-            currentIndex < suggestions.length - 1 ? currentIndex + 1 : 0;
-          onChange({
-            target: {
-              name,
-              value: suggestions[nextIndex].name,
-              customerInfo: suggestions[nextIndex],
-            },
-          });
+          setHighlightedIndex((prev) =>
+            prev < suggestions.length - 1 ? prev + 1 : 0
+          );
           break;
         case 'ArrowUp':
           e.preventDefault();
-          const prevIndex =
-            currentIndex > 0 ? currentIndex - 1 : suggestions.length - 1;
-          onChange({
-            target: {
-              name,
-              value: suggestions[prevIndex].name,
-              customerInfo: suggestions[prevIndex],
-            },
-          });
+          setHighlightedIndex((prev) =>
+            prev > 0 ? prev - 1 : suggestions.length - 1
+          );
           break;
         case 'Enter':
           e.preventDefault();
-          if (suggestions.length > 0) {
+          if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
+            handleSuggestionClick(suggestions[highlightedIndex]);
+          } else {
             setShowSuggestions(false);
           }
           break;
         case 'Escape':
           setShowSuggestions(false);
+          setHighlightedIndex(-1);
           break;
       }
     },
-    [showSuggestions, suggestions, value, onChange, name]
+    [showSuggestions, suggestions, highlightedIndex, handleSuggestionClick]
   );
 
   return (
@@ -248,8 +261,12 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
           {suggestions.map((customer, index) => (
             <div
               key={index}
-              className='cursor-pointer border-b border-gray-100 px-3 py-3 last:border-b-0 hover:bg-blue-50'
-              onClick={() => handleSuggestionClick(customer)}
+              className={`cursor-pointer border-b border-gray-100 px-3 py-3 last:border-b-0 ${
+                highlightedIndex === index
+                  ? 'bg-blue-50'
+                  : 'hover:bg-blue-50'
+              }`}
+              onMouseDown={() => handleSuggestionClick(customer)}
             >
               <div className='text-sm font-medium text-gray-900'>
                 {customer.name}

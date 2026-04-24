@@ -31,8 +31,20 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
     const customerName = e.target.value;
     const customerInfo = e.target.customerInfo;
 
+    // Clear phone and address if customer name is cleared
+    if (!customerName || customerName.trim() === '') {
+      setInvoiceData({
+        ...invoiceData,
+        customerName: '',
+        customerAddress: '',
+        customerContactNumber: '',
+        clientId: '',
+      });
+      return;
+    }
+
+    // Only auto-fill when customer explicitly selects from autocomplete (customerInfo provided)
     if (customerInfo) {
-      // Auto-fill customer details from the selected customer info
       setInvoiceData({
         ...invoiceData,
         customerName: customerName,
@@ -43,58 +55,11 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
         clientId: customerInfo.id || '',
       });
     } else {
-      // For walk-in customers, check if name matches a customer in the customers collection
-      const matchingCustomer = customers.find(
-        (c: any) => c.customerName === customerName
-      );
-
-      if (matchingCustomer) {
-        // Use the customer ID from the customers collection
-        setInvoiceData({
-          ...invoiceData,
-          customerName: customerName,
-          customerAddress:
-            matchingCustomer.address || invoiceData.customerAddress || '',
-          customerContactNumber:
-            matchingCustomer.phoneNumber ||
-            invoiceData.customerContactNumber ||
-            '',
-          clientId: matchingCustomer._id?.toString() || '',
-        });
-      } else {
-        // Find the most recent invoice for this customer to get their details
-        let customerInvoice = allInvoices.find(
-          (invoice: any) => invoice.customerName === customerName
-        );
-
-        if (!customerInvoice) {
-          customerInvoice = allInvoices.find((invoice: any) =>
-            invoice.customerName
-              .toLowerCase()
-              .includes(customerName.toLowerCase())
-          );
-        }
-
-        if (customerInvoice) {
-          setInvoiceData({
-            ...invoiceData,
-            customerName: customerName,
-            customerAddress:
-              customerInvoice.customerAddress ||
-              invoiceData.customerAddress ||
-              '',
-            customerContactNumber:
-              customerInvoice.customerContactNumber ||
-              invoiceData.customerContactNumber ||
-              '',
-          });
-        } else {
-          setInvoiceData({
-            ...invoiceData,
-            customerName: customerName,
-          });
-        }
-      }
+      // Just update the name, don't auto-fill address/phone
+      setInvoiceData({
+        ...invoiceData,
+        customerName: customerName,
+      });
     }
   };
 

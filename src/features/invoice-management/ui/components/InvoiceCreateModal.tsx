@@ -24,7 +24,7 @@ import {
   calculateInvoiceTotals,
 } from '../../shared/transformers';
 import { PendingInvoice } from '@/entities/invoice/model/types';
-import { FaExclamationTriangle } from 'react-icons/fa';
+import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 import {
   saveInvoiceCreationStateAtom,
   restoreInvoiceCreationStateAtom,
@@ -204,7 +204,11 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
       const result = await response.json();
 
       if (result.success) {
-        setPendingInvoices(result.data || []);
+        // Filter out invoices with 0 or negative remaining amount
+        const filteredInvoices = (result.data || []).filter(
+          (invoice: any) => (invoice.remainingAmount || 0) > 0
+        );
+        setPendingInvoices(filteredInvoices);
       } else {
         console.error('❌ Failed to fetch pending invoices:', result.error);
         setPendingInvoices([]);
@@ -247,12 +251,13 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
     );
     const grandTotal = pendingRemainingTotal + newTotal;
 
-    return {
-      pendingRemainingTotal,
-      newTotal,
-      grandTotal,
-    };
+    return { pendingRemainingTotal, newTotal, grandTotal };
   };
+
+  // NEW: Remove all pending invoices from the list
+  const handleRemoveAllPendingInvoices = useCallback(() => {
+    setPendingInvoices([]);
+  }, []);
 
   // Save current state and close modal
   const handleSaveAndClose = useCallback(() => {
@@ -556,67 +561,77 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
               {/* NEW: Pending Invoices Alert */}
               {pendingInvoices.length > 0 && (
                 <div className='rounded-lg border border-yellow-200 bg-yellow-50 p-4'>
-                  <div className='flex'>
-                    <div className='flex-shrink-0'>
-                      <FaExclamationTriangle
-                        className='h-5 w-5 text-yellow-400'
-                        aria-hidden='true'
-                      />
-                    </div>
-                    <div className='ml-3'>
-                      <h3 className='text-sm font-medium text-yellow-800'>
-                        Pending Invoices Found
-                      </h3>
-                      <div className='mt-2 text-sm text-yellow-700'>
-                        <p>
-                          This customer has{' '}
-                          <span className='font-medium'>
-                            {pendingInvoices.length}
-                          </span>{' '}
-                          pending invoice(s):
-                        </p>
-                        <ul className='mt-1 list-inside list-disc space-y-1'>
-                          {pendingInvoices.map((invoice) => (
-                            <li key={invoice.id}>
-                              Invoice #{invoice.invoiceNo?.slice(-6) || 'N/A'} -
-                              <span className='font-medium'>
-                                {' '}
-                                Rs{' '}
-                                {(
-                                  invoice.remainingAmount || 0
-                                ).toLocaleString()}
-                              </span>
-                              {invoice.paymentStatus === 'partial' && (
-                                <span className='ml-1 text-xs text-yellow-600'>
-                                  (partial)
-                                </span>
-                              )}
-                              {invoice.paymentStatus === 'pending' && (
-                                <span className='ml-1 text-xs text-red-600'>
-                                  (unpaid)
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                        <div className='mt-2 border-t border-yellow-200 pt-2'>
-                          <p className='font-medium text-yellow-800'>
-                            Total remaining: Rs{' '}
-                            {pendingInvoices
-                              .reduce(
-                                (sum, invoice) =>
-                                  sum + (invoice.remainingAmount || 0),
-                                0
-                              )
-                              .toLocaleString()}
+                  <div className='flex items-start justify-between'>
+                    <div className='flex'>
+                      <div className='flex-shrink-0'>
+                        <FaExclamationTriangle
+                          className='h-5 w-5 text-yellow-400'
+                          aria-hidden='true'
+                        />
+                      </div>
+                      <div className='ml-3'>
+                        <h3 className='text-sm font-medium text-yellow-800'>
+                          Pending Invoices Found
+                        </h3>
+                        <div className='mt-2 text-sm text-yellow-700'>
+                          <p>
+                            This customer has{' '}
+                            <span className='font-medium'>
+                              {pendingInvoices.length}
+                            </span>{' '}
+                            pending invoice(s):
                           </p>
-                          <p className='mt-1 text-xs text-yellow-600'>
-                            This amount will be consolidated into the new
-                            invoice.
-                          </p>
+                          <ul className='mt-1 list-inside list-disc space-y-1'>
+                            {pendingInvoices.map((invoice) => (
+                              <li key={invoice.id}>
+                                Invoice #{invoice.invoiceNo?.slice(-6) || 'N/A'} -
+                                <span className='font-medium'>
+                                  {' '}
+                                  Rs{' '}
+                                  {(
+                                    invoice.remainingAmount || 0
+                                  ).toLocaleString()}
+                                </span>
+                                {invoice.paymentStatus === 'partial' && (
+                                  <span className='ml-1 text-xs text-yellow-600'>
+                                    (partial)
+                                  </span>
+                                )}
+                                {invoice.paymentStatus === 'pending' && (
+                                  <span className='ml-1 text-xs text-red-600'>
+                                    (unpaid)
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                          <div className='mt-2 border-t border-yellow-200 pt-2'>
+                            <p className='font-medium text-yellow-800'>
+                              Total remaining: Rs{' '}
+                              {pendingInvoices
+                                .reduce(
+                                  (sum, invoice) =>
+                                    sum + (invoice.remainingAmount || 0),
+                                  0
+                                )
+                                .toLocaleString()}
+                            </p>
+                            <p className='mt-1 text-xs text-yellow-600'>
+                              This amount will be consolidated into the new
+                              invoice.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
+                    <button
+                      type='button'
+                      onClick={handleRemoveAllPendingInvoices}
+                      className='ml-2 rounded-full p-1 text-yellow-600 hover:bg-yellow-200 hover:text-yellow-800'
+                      title='Remove all pending invoices'
+                    >
+                      <FaTimes className='h-5 w-5' />
+                    </button>
                   </div>
                 </div>
               )}
