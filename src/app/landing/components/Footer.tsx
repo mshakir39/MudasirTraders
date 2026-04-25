@@ -165,7 +165,7 @@ export default function Footer({ onBrandClick }: FooterProps) {
           <p className='mt-2'>
             Made by{' '}
             <a
-              href='https://muzamilshakir.com'
+              href='https://www.muzamilshakir.com'
               target='_blank'
               rel='noopener noreferrer'
               className='text-blue-400 transition-colors hover:text-white'
