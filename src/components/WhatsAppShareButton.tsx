@@ -89,6 +89,11 @@ ${
 Questions? Call us at:
 +923349627745
 
+================================
+
+Software developed by Muzamil Shakir
+Contact # 03367045100
+
 ================================`;
 
   const handleWhatsAppClick = async () => {

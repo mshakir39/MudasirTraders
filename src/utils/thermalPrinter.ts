@@ -409,6 +409,9 @@ ${receiptContent}
     content += '\n\n';
     content += centerText('Thank You!');
     content += centerText('Visit Again');
+    content += '\n';
+    content += centerText('Software developed by Muzamil Shakir');
+    content += centerText('Contact # 03367045100');
     content += '\n\n\n';
 
     return content;

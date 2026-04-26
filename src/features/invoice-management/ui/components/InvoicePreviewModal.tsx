@@ -7,7 +7,6 @@ import React, { useRef, useState } from 'react';
 import printHtmlAsPdf from '@/utils/printHtmlAsPdf';
 import { printWithThermalPrinter } from '@/utils/thermalPrinter';
 import Modal from '@/components/modal';
-import PrinterInstructionsModal from '@/components/PrinterInstructionsModal';
 import ErrorModal from '@/components/ErrorModal';
 
 // Import slice components
@@ -41,7 +40,6 @@ const InvoicePreviewModalRefactored: React.FC<InvoicePreviewModalProps> = ({
     ),
   });
 
-  const [showPrinterInstructions, setShowPrinterInstructions] = useState(false);
   const [errorModal, setErrorModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -62,10 +60,6 @@ const InvoicePreviewModalRefactored: React.FC<InvoicePreviewModalProps> = ({
 
   const printHandler = async () => {
     if (!data) return;
-    setShowPrinterInstructions(true);
-  };
-
-  const handlePrintConfirm = async () => {
     try {
       await printWithThermalPrinter(data);
     } catch (error: any) {
@@ -121,12 +115,6 @@ const InvoicePreviewModalRefactored: React.FC<InvoicePreviewModalProps> = ({
         {/* Footer */}
         <InvoicePreviewFooter />
       </div>
-
-      <PrinterInstructionsModal
-        isOpen={showPrinterInstructions}
-        onClose={() => setShowPrinterInstructions(false)}
-        onConfirm={handlePrintConfirm}
-      />
 
       <ErrorModal
         isOpen={errorModal.isOpen}
