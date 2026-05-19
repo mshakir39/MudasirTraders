@@ -104,6 +104,60 @@ export async function updateInvoice(id: string, data: Partial<InvoiceData>) {
 
 export async function deleteInvoice(id: string) {
   try {
+    // Check if this is a consolidated invoice
+    const invoiceToDelete = await executeOperation('invoices', 'findOne', {
+      _id: id,
+    }) as any;
+
+    if (invoiceToDelete && invoiceToDelete.consolidatedFrom && Array.isArray(invoiceToDelete.consolidatedFrom)) {
+      console.log('🔄 Deleting consolidated invoice - reverting voided invoices...');
+
+      // Revert the voided invoices back to active status
+      for (const voidedInvoiceId of invoiceToDelete.consolidatedFrom) {
+        const voidedInvoice = await executeOperation('invoices', 'findOne', {
+          _id: voidedInvoiceId,
+        }) as any;
+
+        if (voidedInvoice && voidedInvoice.status === 'voided') {
+          console.log(`🔄 Reverting voided invoice ${voidedInvoice.invoiceNo}...`);
+
+          // Revert invoice status back to active
+          await executeOperation('invoices', 'updateOne', {
+            documentId: voidedInvoiceId,
+            status: 'active',
+            voidedAt: null,
+            voidReason: null,
+            replacedBy: null, // Remove the link to the deleted consolidated invoice
+          });
+
+          console.log(`✅ Reverted invoice ${voidedInvoice.invoiceNo} to active status`);
+        }
+      }
+
+      // Revert stock for the consolidated invoice's products (add back stock)
+      if (invoiceToDelete.products && Array.isArray(invoiceToDelete.products)) {
+        console.log('🔄 Reverting stock for consolidated invoice products...');
+        for (const product of invoiceToDelete.products) {
+          if (product.isChargingService) {
+            console.log(`   ⏭️  Skipping charging service: ${product.brandName} ${product.series}`);
+            continue;
+          }
+
+          const quantityAsNumber = parseInt(String(product.quantity)) || 0;
+          console.log(`   🔄 Adding back stock: ${product.brandName} - ${product.series} (+${quantityAsNumber})`);
+
+          // Add stock back
+          await executeOperation('stock', 'addStockAndDecrementSoldCount', {
+            brandName: product.brandName,
+            series: product.series,
+            quantity: quantityAsNumber,
+          });
+          console.log(`   ✅ Stock reverted for ${product.brandName} - ${product.series}`);
+        }
+      }
+    }
+
+    // Now delete the consolidated invoice
     const result = await executeOperation('invoices', 'delete', {
       documentId: id,
     });
