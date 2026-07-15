@@ -1,4 +1,4 @@
-// src/pages/InvoiceManagementPage.tsx
+// src/views/InvoiceManagementPage.tsx
 // Invoice management page - <50 lines (composition only)
 
 'use client';

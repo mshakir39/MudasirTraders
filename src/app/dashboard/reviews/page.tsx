@@ -2,6 +2,6 @@
 // Use new FSD structure - preserve all functionality
 
 'use client';
-import ReviewsManagementPage from '@/pages/ReviewsManagementPage';
+import ReviewsManagementPage from '@/views/ReviewsManagementPage';
 
 export default ReviewsManagementPage;

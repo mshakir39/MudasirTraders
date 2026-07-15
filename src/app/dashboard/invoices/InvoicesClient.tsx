@@ -4,7 +4,7 @@
 'use client';
 
 import InvoiceErrorBoundary from '../../../components/invoices/InvoiceErrorBoundary';
-import InvoiceManagementPage from '@/pages/InvoiceManagementPage';
+import InvoiceManagementPage from '@/views/InvoiceManagementPage';
 
 export default function InvoicesClient() {
   return (

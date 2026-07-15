@@ -18,7 +18,7 @@ import { getDefaultSalesDateRange } from '@/lib/salesQuery';
 
 interface SalesManagementProps {
   initialSales: Sale[];
-  initialPagination: SalesPaginationMeta;
+  initialPagination?: SalesPaginationMeta;
   initialSummary: SalesSummary;
   customerNames: string[];
   className?: string;
@@ -57,15 +57,17 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
     customerName: selectedCustomer,
   });
 
+  const safeCustomerNames = Array.isArray(customerNames) ? customerNames : [];
+
   const customerOptions = useMemo<CustomerOption[]>(() => {
     return [
       { label: 'All Customers', value: '' },
-      ...customerNames.map((customer) => ({
+      ...safeCustomerNames.map((customer) => ({
         label: customer,
         value: customer,
       })),
     ];
-  }, [customerNames]);
+  }, [safeCustomerNames]);
 
   const { deleteSale } = useSalesActions({ sales, onRefreshSales: refetch });
 

@@ -1,4 +1,4 @@
-// src/pages/CustomersManagementPage.tsx
+// src/views/CustomersManagementPage.tsx
 // Customers management page - <80 lines (composition only)
 
 'use client';

@@ -377,6 +377,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         onRevenueDateChange={handleRevenueDateChange}
         onTopProductsDateChange={handleTopProductsDateChange}
         onSalesTrendDateChange={handleSalesTrendDateChange}
+        onSetAllTime={() => {}}
       />
 
       <StatsGrid stats={stats} revenueDateRange={revenueDateRange} />

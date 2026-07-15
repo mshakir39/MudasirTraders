@@ -1,4 +1,4 @@
-// src/pages/ReviewsManagementPage.tsx
+// src/views/ReviewsManagementPage.tsx
 // Reviews management page - <50 lines (composition only)
 
 import React from 'react';

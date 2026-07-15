@@ -11,7 +11,7 @@ import { SALES_BATCH_SIZE } from '@/lib/salesQuery';
 
 interface UseSalesInfiniteScrollOptions {
   initialSales: Sale[];
-  initialPagination: SalesPaginationMeta;
+  initialPagination?: SalesPaginationMeta;
   initialSummary: SalesSummary;
   dateRange: DateRange;
   customerName: string;
@@ -56,7 +56,7 @@ export function useSalesInfiniteScroll({
   const [sales, setSales] = useState<Sale[]>(initialSales);
   const [summary, setSummary] = useState<SalesSummary>(initialSummary);
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(initialPagination.hasNext);
+  const [hasMore, setHasMore] = useState(initialPagination?.hasNext ?? false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,8 +71,8 @@ export function useSalesInfiniteScroll({
     ) => {
       setSales((prev) => (append ? [...prev, ...batch] : batch));
       setSummary(nextSummary);
-      setHasMore(pagination.hasNext);
-      setPage(pagination.page);
+      setHasMore(pagination?.hasNext ?? false);
+      setPage(pagination?.page ?? 1);
     },
     []
   );

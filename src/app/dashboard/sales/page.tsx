@@ -1,6 +1,6 @@
 import { getSalesPaginated, getSalesCustomerNames } from '@/actions/salesActions';
 import SalesErrorBoundary from '@/components/sales/SalesErrorBoundary';
-import SalesManagementPage from '@/pages/SalesManagementPage';
+import SalesManagementPage from '@/views/SalesManagementPage';
 import { getDefaultSalesDateRange, SALES_BATCH_SIZE } from '@/lib/salesQuery';
 import { Metadata } from 'next';
 
