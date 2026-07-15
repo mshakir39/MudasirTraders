@@ -3,11 +3,13 @@
 
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect, useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
 import Table from '@/components/table';
 import { FaEye, FaTrash } from 'react-icons/fa';
 import { Sale } from '@/features/sales-management/entities/sales/model/types';
+
+const SALES_TABLE_SCROLL_HEIGHT = 'min(900px, calc(100dvh - 8rem))';
 
 interface SalesDataGridProps {
   filteredSales: Sale[];
@@ -15,6 +17,7 @@ interface SalesDataGridProps {
   onDeleteSale?: (saleId: string) => void;
   isLoading?: boolean;
   className?: string;
+  onNearBottom?: () => void;
 }
 
 export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
@@ -23,7 +26,50 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
   onDeleteSale,
   isLoading = false,
   className = '',
+  onNearBottom,
 }) => {
+  const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
+
+  const handleScrollContainerRef = useCallback((el: HTMLDivElement | null) => {
+    setScrollRoot(el);
+  }, []);
+
+  const handleBodyScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      if (!onNearBottom) return;
+      const el = e.currentTarget;
+      const distanceFromBottom =
+        el.scrollHeight - el.scrollTop - el.clientHeight;
+      if (distanceFromBottom < 80) {
+        onNearBottom();
+      }
+    },
+    [onNearBottom]
+  );
+
+  useEffect(() => {
+    if (!scrollRoot || !onNearBottom) return;
+
+    const sentinel = scrollRoot.querySelector('[data-sales-load-sentinel]');
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        const nearBottom =
+          scrollRoot.scrollHeight - scrollRoot.scrollTop - scrollRoot.clientHeight <
+          100;
+        if (nearBottom) {
+          onNearBottom();
+        }
+      },
+      { root: scrollRoot, rootMargin: '0px', threshold: 0 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [scrollRoot, onNearBottom, filteredSales.length]);
+
   const extraGlobalSearchText = useCallback((row: Sale) => {
     const products = row.products || [];
     const warrantyCodes = products
@@ -228,8 +274,13 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
         data={filteredSales}
         columns={columns}
         enableSearch={true}
-        enableRowVirtualization
-        minVisibleRows={13}
+        enableRowVirtualization={false}
+        compactLayout
+        stickyHeader
+        bodyScrollHeight={SALES_TABLE_SCROLL_HEIGHT}
+        showLoadMoreSentinel
+        onScrollContainerRef={handleScrollContainerRef}
+        onBodyScroll={handleBodyScroll}
         searchPlaceholder='Search sales...'
         showButton={false}
         emptyMessage='No sales found. Try adjusting your search or create a new sale.'

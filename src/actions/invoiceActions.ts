@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { ObjectId } from 'mongodb';
 import { InvoiceDataUtil } from '@/utils/invoiceDataUtil';
 import { InvoiceProduct } from '@/entities/invoice/model/types';
+import { normalizeInvoiceIdForMongo } from '@/actions/invoiceIdUtils';
 
 interface InvoiceItem {
   brandName: string;
@@ -114,9 +115,12 @@ export async function deleteInvoice(id: string) {
 
       // Revert the voided invoices back to active status
       for (const voidedInvoiceId of invoiceToDelete.consolidatedFrom) {
-        const voidedInvoice = await executeOperation('invoices', 'findOne', {
-          _id: voidedInvoiceId,
-        }) as any;
+        const normalizedVoidedInvoiceId = normalizeInvoiceIdForMongo(
+          voidedInvoiceId
+        );
+        const voidedInvoice = (await executeOperation('invoices', 'findOne', {
+          _id: normalizedVoidedInvoiceId || voidedInvoiceId,
+        })) as any;
 
         if (voidedInvoice && voidedInvoice.status === 'voided') {
           console.log(`🔄 Reverting voided invoice ${voidedInvoice.invoiceNo}...`);
@@ -215,7 +219,10 @@ export async function getInvoices() {
       batteriesRate: invoice.batteriesRate || 0,
       batteriesCountAndWeight: invoice.batteriesCountAndWeight || '',
     }));
-
+    console.log(
+      'data invoices',
+      data.filter((invoice) => invoice.customerName === 'Abdul razak')
+    );
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -289,15 +296,20 @@ export async function getCustomerPendingInvoices(customerId: string) {
     const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(customerId);
 
     let customerName = null;
+    let customerPhone = null;
 
     if (isValidObjectId) {
-      // First try to find customer by ID to get customerName
+      // First try to find customer by ID to get customerName and phone
       const customer = await executeOperation('customers', 'findOne', {
         _id: new ObjectId(customerId),
       });
       customerName =
         customer && typeof customer === 'object' && 'customerName' in customer
           ? (customer as any).customerName
+          : null;
+      customerPhone =
+        customer && typeof customer === 'object' && 'customerContactNumber' in customer
+          ? (customer as any).customerContactNumber
           : null;
     } else {
       // Not a valid ObjectId, treat it as customerName directly (walk-in customer)
@@ -307,38 +319,67 @@ export async function getCustomerPendingInvoices(customerId: string) {
     // Query invoices - check by clientId first, then fall back to customerName
     let invoices;
     if (isValidObjectId) {
-      // First try to find by clientId
+      const objectId = new ObjectId(customerId);
+
+      // First try to find by clientId as either string or ObjectId
       invoices = await executeOperation('invoices', 'find', {
-        clientId: customerId,
-        paymentStatus: { $in: ['pending', 'partial'] }, // Include both pending and partial invoices
+        $or: [{ clientId: customerId }, { clientId: objectId }],
+        paymentStatus: { $in: ['pending', 'partial'] },
         status: { $ne: 'voided' },
       });
 
-      // If no results and we have customerName, fall back to customerName
+      // If no results and we have customerName or customerPhone, fall back
       if (
         (!invoices || !Array.isArray(invoices) || invoices.length === 0) &&
-        customerName
+        (customerName || customerPhone)
       ) {
+        // Try to find by customerName and/or customerPhone
+        const orConditions: any[] = [];
+        if (customerName) {
+          orConditions.push({ customerName: customerName.trim() });
+        }
+        if (customerPhone) {
+          orConditions.push({ customerContactNumber: customerPhone.trim() });
+        }
         invoices = await executeOperation('invoices', 'find', {
-          customerName: customerName,
+          $or: orConditions,
           paymentStatus: { $in: ['pending', 'partial'] },
           status: { $ne: 'voided' },
         });
       }
     } else {
-      // Walk-in customer: search by customerName only
+      // Walk-in customer: search by customerName or phone if available
+      const orConditions: any[] = [{ customerName: customerName?.trim() }];
+      if (/^\d{11}$/.test(customerName || '')) {
+        // If the customerName is actually a phone number
+        orConditions.push({ customerContactNumber: customerName?.trim() });
+      }
       invoices = await executeOperation('invoices', 'find', {
-        customerName: customerName,
+        $or: orConditions,
         paymentStatus: { $in: ['pending', 'partial'] },
         status: { $ne: 'voided' },
       });
     }
 
+    // Debug: Log all invoices fetched from DB before filtering
+    console.log(
+      '🔍 Raw invoices fetched from DB:',
+      Array.isArray(invoices)
+        ? invoices.map((inv) => ({
+            invoiceNo: inv.invoiceNo,
+            status: inv.status,
+            paymentStatus: inv.paymentStatus,
+            remainingAmount: inv.remainingAmount,
+            customerName: inv.customerName,
+            customerContactNumber: inv.customerContactNumber,
+          }))
+        : invoices
+    );
+
     // Process invoices to calculate correct totals and remaining amounts
     const processedInvoices = Array.isArray(invoices)
       ? invoices
           .map((invoice: any) => {
-            // Use InvoiceDataUtil to calculate totals
             const calculation = InvoiceDataUtil.calculateAmounts(
               invoice.products || [],
               invoice.receivedAmount
@@ -346,13 +387,18 @@ export async function getCustomerPendingInvoices(customerId: string) {
 
             const calculatedTotal = calculation.totalAmount;
             const calculatedRemaining = calculation.remainingAmount;
+            const remainingAmount =
+              invoice.remainingAmount !== undefined && invoice.remainingAmount !== null
+                ? invoice.remainingAmount
+                : calculatedRemaining;
 
             // Only include if remaining amount is not zero (exclude fully paid invoices)
-            if (calculatedRemaining > 0) {
+            if (remainingAmount > 0) {
               return {
                 ...invoice,
                 calculatedTotal,
                 calculatedRemaining,
+                remainingAmount,
               };
             }
             return null;

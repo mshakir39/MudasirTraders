@@ -1,25 +1,36 @@
-// src/pages/SalesManagementPage.tsx
-// Sales management page - <50 lines (composition only)
-
 import React from 'react';
 import { SalesManagement } from '@/features/sales-management';
+import {
+  Sale,
+  SalesSummary,
+  SalesPaginationMeta,
+} from '@/features/sales-management/entities/sales/model/types';
 
 interface SalesManagementPageProps {
-  initialSales: any[];
+  initialSales: Sale[];
+  initialPagination: SalesPaginationMeta;
+  initialSummary: SalesSummary;
+  customerNames: string[];
 }
 
 export default function SalesManagementPage({
   initialSales,
+  initialPagination,
+  initialSummary,
+  customerNames,
 }: SalesManagementPageProps) {
   return (
-    <div className='p-0 py-6 md:p-6'>
-      {/* Header */}
-      <div className='mb-6 flex items-center justify-between'>
+    <div className='p-0 md:px-6 md:pb-6'>
+      <div className='mb-4 flex items-center justify-between'>
         <h1 className='text-2xl font-bold text-secondary-900'>Sales</h1>
       </div>
 
-      {/* Sales Management Component */}
-      <SalesManagement initialSales={initialSales} />
+      <SalesManagement
+        initialSales={initialSales}
+        initialPagination={initialPagination}
+        initialSummary={initialSummary}
+        customerNames={customerNames}
+      />
     </div>
   );
 }

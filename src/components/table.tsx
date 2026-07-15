@@ -42,6 +42,13 @@ interface TableProps<TData> {
   enableRowVirtualization?: boolean;
   tableBodyHeight?: number;
   minVisibleRows?: number;
+  compactLayout?: boolean;
+  bodyMaxHeight?: string;
+  bodyScrollHeight?: string;
+  onBodyScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
+  onScrollContainerRef?: (el: HTMLDivElement | null) => void;
+  showLoadMoreSentinel?: boolean;
+  stickyHeader?: boolean;
 }
 
 export const Table = <TData extends Record<string, any>>({
@@ -69,7 +76,16 @@ export const Table = <TData extends Record<string, any>>({
   enableRowVirtualization = false,
   tableBodyHeight = 600,
   minVisibleRows = 10,
+  compactLayout = false,
+  bodyMaxHeight,
+  bodyScrollHeight,
+  onBodyScroll,
+  onScrollContainerRef,
+  showLoadMoreSentinel = false,
+  stickyHeader = false,
 }: TableProps<TData>) => {
+  const sectionGap = compactLayout ? 'mt-2' : 'mt-6';
+  const scrollableBody = Boolean(bodyScrollHeight || bodyMaxHeight);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(0);
@@ -180,6 +196,16 @@ export const Table = <TData extends Record<string, any>>({
   const renderRows = enablePagination ? paginatedRows : sortedRows;
 
   const scrollParentRef = React.useRef<HTMLDivElement | null>(null);
+
+  const setScrollParentRef = React.useCallback(
+    (el: HTMLDivElement | null) => {
+      scrollParentRef.current = el;
+      if (scrollableBody) {
+        onScrollContainerRef?.(el);
+      }
+    },
+    [onScrollContainerRef, scrollableBody]
+  );
   const tbodyRef = React.useRef<HTMLTableSectionElement | null>(null);
 
   const rowVirtualizer = useVirtualizer({
@@ -255,7 +281,7 @@ export const Table = <TData extends Record<string, any>>({
       {/* Header with Search and Button */}
       {(enableSearch || showButton || stockCost !== undefined) && (
         <div
-          className={`mt-6 flex items-center ${enableSearch ? 'justify-between' : 'justify-end'} gap-4`}
+          className={`${sectionGap} flex items-center ${enableSearch ? 'justify-between' : 'justify-end'} gap-4`}
         >
           {enableSearch && (
             <div className={`w-80 ${searchParentClassName}`}>
@@ -305,11 +331,31 @@ export const Table = <TData extends Record<string, any>>({
       )}
 
       {/* Table */}
-      <div className='mt-6 rounded-lg border border-gray-200'>
+      <div className={`${sectionGap} rounded-lg border border-gray-200`}>
         <div
-          className='overflow-x-auto'
-          ref={enableRowVirtualization ? scrollParentRef : undefined}
-          style={containerStyle}
+          className={
+            scrollableBody
+              ? 'overflow-x-auto overflow-y-scroll'
+              : 'overflow-x-auto'
+          }
+          ref={
+            enableRowVirtualization || scrollableBody
+              ? setScrollParentRef
+              : undefined
+          }
+          style={{
+            ...containerStyle,
+            ...(bodyScrollHeight
+              ? {
+                  height: bodyScrollHeight,
+                  maxHeight: bodyScrollHeight,
+                  overflowY: 'scroll',
+                }
+              : scrollableBody && bodyMaxHeight
+                ? { maxHeight: bodyMaxHeight }
+                : {}),
+          }}
+          onScroll={scrollableBody ? onBodyScroll : undefined}
         >
           <table className='w-full table-fixed'>
             {(() => {
@@ -325,7 +371,11 @@ export const Table = <TData extends Record<string, any>>({
                 </colgroup>
               );
             })()}
-            <thead>
+            <thead
+              className={
+                stickyHeader ? 'sticky top-0 z-10 bg-gray-50 shadow-sm' : ''
+              }
+            >
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr
                   key={headerGroup.id}
@@ -461,6 +511,13 @@ export const Table = <TData extends Record<string, any>>({
             <div className='py-12 text-center text-sm text-gray-500'>
               {emptyMessage}
             </div>
+          )}
+          {showLoadMoreSentinel && (
+            <div
+              data-sales-load-sentinel
+              className='pointer-events-none h-px w-full shrink-0'
+              aria-hidden
+            />
           )}
         </div>
       </div>

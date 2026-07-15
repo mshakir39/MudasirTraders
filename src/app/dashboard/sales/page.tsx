@@ -1,42 +1,93 @@
-// src/app/dashboard/sales/page.tsx
-// Use new FSD structure - preserve all functionality
-
-import { getSales } from '@/actions/salesActions';
+import { getSalesPaginated, getSalesCustomerNames } from '@/actions/salesActions';
 import SalesErrorBoundary from '@/components/sales/SalesErrorBoundary';
 import SalesManagementPage from '@/pages/SalesManagementPage';
+import { getDefaultSalesDateRange, SALES_BATCH_SIZE } from '@/lib/salesQuery';
 import { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic'; // Better for real-time data
-export const revalidate = 60; // Cache for 1 minute
+export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Sales | Mudasir Traders',
   description: 'Manage your sales and track revenue',
 };
 
-async function getSalesData() {
+async function getSalesPageData() {
   try {
-    const salesResult = await getSales();
+    const dateRange = getDefaultSalesDateRange();
+    const [salesResult, customersResult] = await Promise.all([
+      getSalesPaginated(1, SALES_BATCH_SIZE, {
+        startDate: dateRange.start,
+        endDate: dateRange.end,
+      }),
+      getSalesCustomerNames(),
+    ]);
 
     if (!salesResult.success) {
       console.error('Failed to fetch sales:', salesResult.error);
-      return [];
+      return {
+        sales: [],
+        pagination: {
+          page: 1,
+          limit: SALES_BATCH_SIZE,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+        summary: {
+          totalSales: 0,
+          totalRevenue: 0,
+          avgSaleValue: 0,
+          uniqueCustomers: 0,
+        },
+        customerNames: [] as string[],
+      };
     }
 
-    // Ensure we always return an array
-    return Array.isArray(salesResult.data) ? salesResult.data : [];
+    return {
+      sales: Array.isArray(salesResult.data) ? salesResult.data : [],
+      pagination: salesResult.pagination!,
+      summary: salesResult.summary!,
+      customerNames: customersResult.success
+        ? (customersResult.data ?? [])
+        : [],
+    };
   } catch (error) {
     console.error('Error loading sales data:', error);
-    return [];
+    return {
+      sales: [],
+      pagination: {
+        page: 1,
+        limit: SALES_BATCH_SIZE,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      },
+      summary: {
+        totalSales: 0,
+        totalRevenue: 0,
+        avgSaleValue: 0,
+        uniqueCustomers: 0,
+      },
+      customerNames: [] as string[],
+    };
   }
 }
 
 export default async function SalesPage() {
-  const sales = await getSalesData();
+  const { sales, pagination, summary, customerNames } =
+    await getSalesPageData();
 
   return (
     <SalesErrorBoundary>
-      <SalesManagementPage initialSales={sales} />
+      <SalesManagementPage
+        initialSales={sales}
+        initialPagination={pagination}
+        initialSummary={summary}
+        customerNames={customerNames}
+      />
     </SalesErrorBoundary>
   );
 }

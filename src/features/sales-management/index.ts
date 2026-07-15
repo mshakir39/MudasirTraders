@@ -3,6 +3,7 @@
 
 export * from './entities/sales/model/types';
 export * from './lib/useSalesActions';
+export * from './lib/useSalesInfiniteScroll';
 export * from './shared/ui/components/SalesDataGrid';
 export * from './shared/ui/components/ProductDetailModal';
 export { SalesManagement } from './ui/SalesManagement';

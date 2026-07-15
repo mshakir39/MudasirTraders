@@ -106,6 +106,7 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
 
   // Sync local invoices with global state when it changes
   useEffect(() => {
+    console.log("globalInvoices",globalInvoices)
     if (globalInvoices.length > 0) {
       setInvoices(globalInvoices);
     }

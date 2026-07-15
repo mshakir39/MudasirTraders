@@ -3,6 +3,7 @@ import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { DefaultSession } from 'next-auth';
 import { MongoClient, Db } from 'mongodb';
+import util from 'util';
 
 declare module 'next-auth' {
   interface Session {
@@ -22,6 +23,7 @@ declare module 'next-auth/jwt' {
 }
 
 const handler = NextAuth({
+  ...( { trustHost: true } as any),
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
@@ -121,13 +123,25 @@ const handler = NextAuth({
   // Add fallback for session errors
   logger: {
     error: (code, metadata) => {
-      console.error('NextAuth error:', { code, metadata });
+      try {
+        console.error(
+          'NextAuth error:',
+          code,
+          util.inspect(metadata, { depth: 6, colors: false })
+        );
+      } catch (e) {
+        console.error('NextAuth error (failed to inspect metadata):', code, metadata);
+      }
     },
     warn: (code) => {
       console.warn('NextAuth warning:', code);
     },
     debug: (code, metadata) => {
-      console.debug('NextAuth debug:', { code, metadata });
+      try {
+        console.debug('NextAuth debug:', code, util.inspect(metadata, { depth: 6 }));
+      } catch (e) {
+        console.debug('NextAuth debug:', code, metadata);
+      }
     },
   },
 

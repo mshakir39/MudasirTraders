@@ -24,6 +24,7 @@ import {
   calculateInvoiceTotals,
 } from '../../shared/transformers';
 import { PendingInvoice } from '@/entities/invoice/model/types';
+import { shouldFetchPendingInvoices } from '../../shared/pendingInvoiceUtils';
 import { FaExclamationTriangle, FaTimes } from 'react-icons/fa';
 import {
   saveInvoiceCreationStateAtom,
@@ -494,16 +495,18 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
     invoiceData.isChargingService,
   ]);
 
-  // NEW: Fetch pending invoices when customer changes (with debouncing)
+  // Fetch pending invoices only after a real customer has been selected.
+  // Manual typing should not trigger a pending-invoice lookup.
   useEffect(() => {
-    // Use clientId if available (for both regular and walk-in customers), otherwise use customerName
-    const searchId = invoiceData.clientId || invoiceData.customerName || '';
+    if (!shouldFetchPendingInvoices(invoiceData)) {
+      setPendingInvoices([]);
+      previousCustomerNameRef.current = '';
+      return;
+    }
+
+    const searchId = invoiceData.clientId?.toString() || '';
     debouncedFetchPendingInvoices(searchId);
-  }, [
-    invoiceData.clientId,
-    invoiceData.customerName,
-    debouncedFetchPendingInvoices,
-  ]);
+  }, [invoiceData.clientId, invoiceData.customerName, debouncedFetchPendingInvoices]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -583,14 +586,12 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
                           </p>
                           <ul className='mt-1 list-inside list-disc space-y-1'>
                             {pendingInvoices.map((invoice) => (
-                              <li key={invoice.id}>
+                              <li key={invoice.id || invoice.invoiceNo || 'pending-invoice'}>
                                 Invoice #{invoice.invoiceNo?.slice(-6) || 'N/A'} -
                                 <span className='font-medium'>
                                   {' '}
                                   Rs{' '}
-                                  {(
-                                    invoice.remainingAmount || 0
-                                  ).toLocaleString()}
+                                  {(invoice.remainingAmount ?? 0).toLocaleString()}
                                 </span>
                                 {invoice.paymentStatus === 'partial' && (
                                   <span className='ml-1 text-xs text-yellow-600'>

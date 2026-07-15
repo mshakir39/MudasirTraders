@@ -55,10 +55,14 @@ export const InvoiceCustomerSection: React.FC<InvoiceCustomerSectionProps> = ({
         clientId: customerInfo.id || '',
       });
     } else {
-      // Just update the name, don't auto-fill address/phone
+      // A manually typed name should not keep a previously selected customer.
+      // This prevents stale clientId/customer data from triggering pending-invoice lookups.
       setInvoiceData({
         ...invoiceData,
         customerName: customerName,
+        customerAddress: '',
+        customerContactNumber: '',
+        clientId: '',
       });
     }
   };

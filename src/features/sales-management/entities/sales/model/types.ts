@@ -42,9 +42,20 @@ export interface SalesSummary {
   uniqueCustomers: number;
 }
 
+export interface SalesPaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export interface SalesApiResponse {
   success: boolean;
   data?: Sale[];
+  summary?: SalesSummary;
+  pagination?: SalesPaginationMeta;
   error?: string;
 }
 

@@ -3,15 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "NODE_OPTIONS='--dns-result-order=ipv4first --no-network-family-autoselection' next dev",
     "dev:fixed": "node scripts/dev-fixed.js",
+    "profit:overall": "node -r dotenv/config scripts/overall-profit.js",
     "audit:dashboard": "node -r dotenv/config scripts/audit-dashboard.js",
     "audit:dealers": "node -r dotenv/config scripts/audit-dealers.js",
     "analyze:stock-sync": "node -r dotenv/config scripts/analyze-stock-sync-standalone.js",
     "analyze:stock-quick": "node -r dotenv/config scripts/quick-stock-analysis.js",
     "analyze:invoice-amounts": "node -r dotenv/config scripts/analyze-invoice-amounts.js",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_OPTIONS='--dns-result-order=ipv4first --no-network-family-autoselection' next start",
     "format": "prettier --write --ignore-path .gitignore .",
     "lint": "next lint",
     "remove-unused-imports": "node scripts/remove-unused-imports.js",
@@ -70,7 +71,7 @@
     "@types/next-auth": "^3.15.0",
     "@types/node": "^20",
     "@types/node-fetch": "^2.6.2",
-    "@types/react": "^19.2.9",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "babel-jest": "^30.2.0",
     "cypress": "^15.10.0",
@@ -84,6 +85,6 @@
     "postcss": "^8.4.38",
     "prettier-plugin-tailwindcss": "^0.5.14",
     "tailwindcss": "^3.4.3",
-    "typescript": "^5"
+    "typescript": "^7.0.2"
   }
 }

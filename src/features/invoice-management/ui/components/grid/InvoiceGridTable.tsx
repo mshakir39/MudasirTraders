@@ -3,7 +3,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { InvoiceGridActions } from './InvoiceGridActions';
 
 interface InvoiceGridTableProps {
@@ -25,6 +25,7 @@ export const InvoiceGridTable: React.FC<InvoiceGridTableProps> = ({
   onAddPayment,
   onDeleteInvoice,
 }) => {
+  
   return (
     <div className='overflow-x-auto'>
       <table className='min-w-full divide-y divide-gray-200'>

@@ -1,5 +1,42 @@
 'use server';
 import { executeOperation } from '@/app/libs/executeOperation';
+import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
+import { buildSalesFilter, SALES_BATCH_SIZE } from '@/lib/salesQuery';
+
+async function getSalesSummary(filter: Record<string, unknown>) {
+  const db = await connectToMongoDB();
+  if (!db) {
+    throw new Error('Failed to connect to database');
+  }
+
+  const [agg] = await db
+    .collection('sales')
+    .aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: 1 },
+          totalRevenue: { $sum: { $ifNull: ['$totalAmount', 0] } },
+          customers: { $addToSet: '$customerName' },
+        },
+      },
+    ])
+    .toArray();
+
+  const totalSales = (agg?.totalSales as number) ?? 0;
+  const totalRevenue = (agg?.totalRevenue as number) ?? 0;
+  const uniqueCustomers = ((agg?.customers as string[]) ?? []).filter(
+    Boolean
+  ).length;
+
+  return {
+    totalSales,
+    totalRevenue,
+    avgSaleValue: totalSales > 0 ? totalRevenue / totalSales : 0,
+    uniqueCustomers,
+  };
+}
 
 interface SalesData {
   customerName: string;
@@ -60,21 +97,72 @@ export async function deleteSale(id: string) {
   }
 }
 
-export async function getSales() {
+export async function getSalesPaginated(
+  page = 1,
+  limit = SALES_BATCH_SIZE,
+  options?: {
+    startDate?: Date;
+    endDate?: Date;
+    customerName?: string;
+  }
+) {
   try {
-    // React 19: Use basic findAll and sort in JavaScript (compatible with executeOperation)
-    const sales = await executeOperation('sales', 'findAll');
+    const filter = buildSalesFilter(options);
+    const result = (await executeOperation('sales', 'findPaginated', {
+      filter,
+      sort: { date: -1 },
+      skip: (page - 1) * limit,
+      limit,
+    })) as { docs: any[]; total: number };
 
-    // Sort sales by date (newest first) - client-side sorting
-    if (Array.isArray(sales)) {
-      sales.sort((a: any, b: any) => {
-        const dateA = new Date(a.date || a.createdAt).getTime();
-        const dateB = new Date(b.date || b.createdAt).getTime();
-        return dateB - dateA; // Descending order (newest first)
-      });
+    const summary = await getSalesSummary(filter);
+
+    return {
+      success: true,
+      data: result.docs,
+      summary,
+      pagination: {
+        page,
+        limit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / limit),
+        hasNext: page * limit < result.total,
+        hasPrev: page > 1,
+      },
+    };
+  } catch (error: any) {
+    console.error('Error fetching paginated sales:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getSalesCustomerNames() {
+  try {
+    const db = await connectToMongoDB();
+    if (!db) {
+      throw new Error('Failed to connect to database');
     }
 
-    return { success: true, data: sales };
+    const names = await db.collection('sales').distinct('customerName');
+    const data = (names as string[])
+      .filter((name) => name && name.trim() !== '')
+      .sort();
+
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getSales() {
+  try {
+    const result = (await executeOperation('sales', 'findPaginated', {
+      filter: {},
+      sort: { date: -1 },
+      skip: 0,
+    })) as { docs: any[]; total: number };
+
+    return { success: true, data: result.docs };
   } catch (error: any) {
     console.error('Error fetching sales:', error);
     return { success: false, error: error.message };
@@ -83,7 +171,6 @@ export async function getSales() {
 
 export async function getSalesByDateRange(startDate: Date, endDate: Date) {
   try {
-    // React 19: Enhanced with better error handling and validation
     if (!startDate || !endDate) {
       throw new Error('Start date and end date are required');
     }
@@ -92,24 +179,13 @@ export async function getSalesByDateRange(startDate: Date, endDate: Date) {
       throw new Error('Start date must be before end date');
     }
 
-    // Use basic find operation and filter in JavaScript (compatible with executeOperation)
-    const sales = await executeOperation('sales', 'find');
+    const result = (await executeOperation('sales', 'findPaginated', {
+      filter: buildSalesFilter({ startDate, endDate }),
+      sort: { date: -1 },
+      skip: 0,
+    })) as { docs: any[]; total: number };
 
-    // Filter by date range and sort
-    const filteredSales = Array.isArray(sales)
-      ? sales
-          .filter((sale: any) => {
-            const saleDate = new Date(sale.date || sale.createdAt);
-            return saleDate >= startDate && saleDate <= endDate;
-          })
-          .sort((a: any, b: any) => {
-            const dateA = new Date(a.date || a.createdAt).getTime();
-            const dateB = new Date(b.date || b.createdAt).getTime();
-            return dateB - dateA; // Descending order (newest first)
-          })
-      : [];
-
-    return { success: true, data: filteredSales };
+    return { success: true, data: result.docs };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -117,21 +193,13 @@ export async function getSalesByDateRange(startDate: Date, endDate: Date) {
 
 export async function getSalesByCustomer(customerName: string) {
   try {
-    // Use basic find operation and filter in JavaScript (compatible with executeOperation)
-    const sales = await executeOperation('sales', 'find');
+    const result = (await executeOperation('sales', 'findPaginated', {
+      filter: buildSalesFilter({ customerName }),
+      sort: { date: -1 },
+      skip: 0,
+    })) as { docs: any[]; total: number };
 
-    // Filter by customer name and sort
-    const filteredSales = Array.isArray(sales)
-      ? sales
-          .filter((sale: any) => sale.customerName === customerName)
-          .sort((a: any, b: any) => {
-            const dateA = new Date(a.date || a.createdAt).getTime();
-            const dateB = new Date(b.date || b.createdAt).getTime();
-            return dateB - dateA; // Descending order (newest first)
-          })
-      : [];
-
-    return { success: true, data: filteredSales };
+    return { success: true, data: result.docs };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
