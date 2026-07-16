@@ -47,6 +47,15 @@ export interface CustomerApiResponse {
   error?: string;
 }
 
+export interface CustomersPaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
 export interface CustomerActionResponse {
   success: boolean;
   data?: Customer;

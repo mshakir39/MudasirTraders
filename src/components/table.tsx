@@ -49,6 +49,9 @@ interface TableProps<TData> {
   onScrollContainerRef?: (el: HTMLDivElement | null) => void;
   showLoadMoreSentinel?: boolean;
   stickyHeader?: boolean;
+  /** When set with onSearchChange, search is controlled (e.g. server-side). */
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 export const Table = <TData extends Record<string, any>>({
@@ -83,11 +86,16 @@ export const Table = <TData extends Record<string, any>>({
   onScrollContainerRef,
   showLoadMoreSentinel = false,
   stickyHeader = false,
+  searchValue,
+  onSearchChange,
 }: TableProps<TData>) => {
   const sectionGap = compactLayout ? 'mt-2' : 'mt-6';
   const scrollableBody = Boolean(bodyScrollHeight || bodyMaxHeight);
+  const serverSearch = typeof onSearchChange === 'function';
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState('');
+  const searchFieldValue = serverSearch ? (searchValue ?? '') : globalFilter;
+  const tableFilter = serverSearch ? '' : globalFilter;
   const [currentPage, setCurrentPage] = React.useState(0);
   const [pageSize, setPageSize] = React.useState(initialPageSize);
   const [containerHeight, setContainerHeight] = React.useState<
@@ -164,7 +172,7 @@ export const Table = <TData extends Record<string, any>>({
     onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
-      globalFilter,
+      globalFilter: tableFilter,
       columnVisibility: { __global_search: false } as any,
     },
   });
@@ -187,7 +195,7 @@ export const Table = <TData extends Record<string, any>>({
 
   React.useEffect(() => {
     setCurrentPage(0);
-  }, [globalFilter]);
+  }, [tableFilter, searchFieldValue]);
 
   React.useEffect(() => {
     setCurrentPage(0);
@@ -248,7 +256,7 @@ export const Table = <TData extends Record<string, any>>({
     minVisibleRows,
     tableBodyHeight,
     sorting,
-    globalFilter,
+    tableFilter,
     pageSize,
     currentPage,
     virtualItemsLen,
@@ -286,8 +294,14 @@ export const Table = <TData extends Record<string, any>>({
           {enableSearch && (
             <div className={`w-80 ${searchParentClassName}`}>
               <SearchField
-                value={globalFilter}
-                onChange={setGlobalFilter}
+                value={searchFieldValue}
+                onChange={(value) => {
+                  if (serverSearch) {
+                    onSearchChange?.(value);
+                  } else {
+                    setGlobalFilter(value);
+                  }
+                }}
                 placeholder={searchPlaceholder}
               />
             </div>

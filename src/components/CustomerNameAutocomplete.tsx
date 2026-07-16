@@ -59,6 +59,7 @@ const CustomerNameAutocomplete: React.FC<CustomerNameAutocompleteProps> = ({
   const fetchCustomers = useCallback(async () => {
     try {
       const url = new URL('/api/customers', window.location.origin);
+      url.searchParams.set('all', 'true');
       if (customerType) {
         url.searchParams.set('customerType', customerType);
       }

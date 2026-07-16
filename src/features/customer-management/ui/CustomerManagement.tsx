@@ -3,61 +3,63 @@
 
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { unstable_noStore } from 'next/cache';
-import { useAtom } from 'jotai';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Customer,
   CustomerFormData,
+  CustomersPaginationMeta,
 } from '@/features/customer-management/entities/customer/model/types';
-import { customersAtom, fetchCustomersAtom } from '@/store/sharedAtoms';
 import { useCustomerActions } from '@/features/customer-management/lib/useCustomerActions';
+import { useCustomersInfiniteScroll } from '@/features/customer-management/lib/useCustomersInfiniteScroll';
 import { CustomerTable } from '@/features/customer-management/shared/ui/components/CustomerTable';
 import { CustomerModal } from '@/features/customer-management/shared/ui/components/CustomerModal';
 import CustomerDeleteModal from '@/components/customer/CustomerDeleteModal';
-import Input from '@/components/customInput';
-import Button from '@/components/button';
-import { FaPlus } from 'react-icons/fa';
+import { CustomerTabFilter } from '@/lib/customersQuery';
 
 interface CustomerManagementProps {
   initialCustomers?: Customer[];
+  initialPagination?: CustomersPaginationMeta;
   onViewInvoices: (customer: Customer) => void;
   className?: string;
 }
 
 export const CustomerManagement: React.FC<CustomerManagementProps> = ({
-  initialCustomers,
+  initialCustomers = [],
+  initialPagination,
   onViewInvoices,
   className = '',
 }) => {
-  unstable_noStore();
-
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null
   );
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(
     null
   );
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'regular' | 'walkin'>(
-    'all'
-  );
+  const [activeTab, setActiveTab] = useState<CustomerTabFilter>('all');
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  const [customers, setCustomers] = useAtom(customersAtom);
-  const fetchCustomers = useAtom(fetchCustomersAtom)[1];
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchInput), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
-  // Data is pre-loaded by GlobalDataProvider, but fetch if empty
-  React.useEffect(() => {
-    if (!customers || customers.length === 0) {
-      fetchCustomers();
-    }
-  }, [customers, fetchCustomers]);
-
-  const handleRefreshCustomers = useCallback(async () => {
-    await fetchCustomers();
-  }, [fetchCustomers]);
+  const {
+    customers,
+    setCustomers,
+    hasMore,
+    loading,
+    loadingMore,
+    loadMore,
+    refetch,
+  } = useCustomersInfiniteScroll({
+    initialCustomers,
+    initialPagination,
+    activeTab,
+    search: debouncedSearch,
+  });
 
   const {
     optimisticCustomers,
@@ -69,35 +71,8 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   } = useCustomerActions({
     customers,
     onCustomersChange: setCustomers,
-    onRefreshCustomers: handleRefreshCustomers,
+    onRefreshCustomers: refetch,
   });
-
-  // Filter customers based on search and tab
-  const filteredCustomers = useMemo(() => {
-    let filtered = optimisticCustomers;
-
-    // Filter by customer type tab
-    if (activeTab === 'regular') {
-      filtered = filtered.filter((c) => c.customerType === 'Regular Customer');
-    } else if (activeTab === 'walkin') {
-      filtered = filtered.filter((c) => c.customerType === 'WalkIn Customer');
-    }
-
-    // Filter by search term
-    if (searchTerm.trim()) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (customer) =>
-          customer.customerName.toLowerCase().includes(lowerSearchTerm) ||
-          customer.phoneNumber.toLowerCase().includes(lowerSearchTerm) ||
-          customer.address.toLowerCase().includes(lowerSearchTerm) ||
-          (customer.email &&
-            customer.email.toLowerCase().includes(lowerSearchTerm))
-      );
-    }
-
-    return filtered;
-  }, [optimisticCustomers, searchTerm, activeTab]);
 
   const handleCreateCustomer = useCallback(() => {
     setSelectedCustomer(null);
@@ -134,22 +109,24 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
   const handleModalSubmit = useCallback(
     async (data: CustomerFormData) => {
       if (selectedCustomer) {
-        return await updateCustomer(selectedCustomer.id || '', data);
-      } else {
-        return await createCustomer(data);
+        return await updateCustomer(
+          selectedCustomer.id || selectedCustomer._id || '',
+          data
+        );
       }
+      return await createCustomer(data);
     },
     [selectedCustomer, updateCustomer, createCustomer]
   );
 
   return (
     <div className={`p-0 py-6 md:p-6 ${className}`}>
-      <div className='mb-6 flex items-center justify-between'>
+      <div className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <h1 className='text-2xl font-bold text-secondary-900'>Customers</h1>
 
-        {/* Beautiful Tabs */}
         <div className='flex rounded-lg bg-gray-100 p-1'>
           <button
+            type='button'
             onClick={() => setActiveTab('all')}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === 'all'
@@ -160,6 +137,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             All Customers
           </button>
           <button
+            type='button'
             onClick={() => setActiveTab('regular')}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === 'regular'
@@ -170,6 +148,7 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
             Regular Customers
           </button>
           <button
+            type='button'
             onClick={() => setActiveTab('walkin')}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
               activeTab === 'walkin'
@@ -182,18 +161,30 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         </div>
       </div>
 
-      {/* Customer Table with built-in search */}
       <CustomerTable
-        customers={filteredCustomers}
+        customers={optimisticCustomers}
         onViewInvoices={onViewInvoices}
         onEditCustomer={handleEditCustomer}
         onDeleteCustomer={handleDeleteCustomer}
         onAddCustomer={handleCreateCustomer}
-        loading={false}
+        loading={loading}
+        onNearBottom={hasMore ? loadMore : undefined}
+        searchValue={searchInput}
+        onSearchChange={setSearchInput}
         className='mt-4'
       />
 
-      {/* Customer Modal */}
+      {(loadingMore || (loading && customers.length > 0)) && (
+        <div className='py-3 text-center text-sm text-gray-500'>
+          Loading more customers…
+        </div>
+      )}
+      {!hasMore && customers.length > 0 && !loadingMore && (
+        <div className='py-3 text-center text-sm text-gray-400'>
+          All matching customers loaded
+        </div>
+      )}
+
       <CustomerModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
@@ -203,7 +194,6 @@ export const CustomerManagement: React.FC<CustomerManagementProps> = ({
         title={selectedCustomer ? 'Edit Customer' : 'Add Customer'}
       />
 
-      {/* Customer Delete Modal */}
       <CustomerDeleteModal
         isOpen={isDeleteModalOpen}
         isLoading={isDeleting}

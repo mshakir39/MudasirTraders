@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const customerName = searchParams.get('customerName');
+    const search = searchParams.get('search');
 
     if (customersOnly === 'true') {
       const result = await getSalesCustomerNames();
@@ -36,6 +37,7 @@ export async function GET(req: NextRequest) {
       startDate?: Date;
       endDate?: Date;
       customerName?: string;
+      search?: string;
     } = {};
 
     if (startDate && endDate) {
@@ -44,6 +46,9 @@ export async function GET(req: NextRequest) {
     }
     if (customerName) {
       options.customerName = customerName;
+    }
+    if (search) {
+      options.search = search;
     }
 
     const result = await getSalesPaginated(pageNum, limitNum, options);

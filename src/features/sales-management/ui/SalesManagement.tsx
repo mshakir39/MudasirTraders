@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { unstable_noStore } from 'next/cache';
 import { toast } from 'react-toastify';
 import {
@@ -40,7 +40,14 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
   const [selectedSaleInfo, setSelectedSaleInfo] = useState<Sale | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [dateRange] = useState<DateRange>(getDefaultSalesDateRange());
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchInput), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const {
     sales,
@@ -55,6 +62,7 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
     initialSummary,
     dateRange,
     customerName: selectedCustomer,
+    search: debouncedSearch,
   });
 
   const safeCustomerNames = Array.isArray(customerNames) ? customerNames : [];
@@ -256,6 +264,8 @@ export const SalesManagement: React.FC<SalesManagementProps> = ({
         onDeleteSale={handleDeleteSale}
         isLoading={loading && sales.length === 0}
         onNearBottom={loadMore}
+        searchValue={searchInput}
+        onSearchChange={setSearchInput}
       />
       {(loadingMore || (loading && sales.length > 0)) && (
         <p className='py-2 text-center text-sm text-secondary-500'>

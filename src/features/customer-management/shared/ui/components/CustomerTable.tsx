@@ -3,11 +3,13 @@
 
 'use client';
 
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FaEye, FaTrash, FaEdit } from 'react-icons/fa';
 import { Customer } from '@/features/customer-management/entities/customer/model/types';
 import Table from '@/components/table';
 import { ColumnDef } from '@tanstack/react-table';
+
+const CUSTOMERS_TABLE_SCROLL_HEIGHT = 'min(900px, calc(100dvh - 12rem))';
 
 interface CustomerTableProps {
   customers: Customer[];
@@ -17,6 +19,9 @@ interface CustomerTableProps {
   loading?: boolean;
   className?: string;
   onAddCustomer?: () => void;
+  onNearBottom?: () => void;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 export const CustomerTable: React.FC<CustomerTableProps> = ({
@@ -27,8 +32,54 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
   loading = false,
   className = '',
   onAddCustomer,
+  onNearBottom,
+  searchValue,
+  onSearchChange,
 }) => {
-  // Define columns for the Table component
+  const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
+
+  const handleScrollContainerRef = useCallback((el: HTMLDivElement | null) => {
+    setScrollRoot(el);
+  }, []);
+
+  const handleBodyScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      if (!onNearBottom) return;
+      const el = e.currentTarget;
+      const distanceFromBottom =
+        el.scrollHeight - el.scrollTop - el.clientHeight;
+      if (distanceFromBottom < 80) {
+        onNearBottom();
+      }
+    },
+    [onNearBottom]
+  );
+
+  useEffect(() => {
+    if (!scrollRoot || !onNearBottom) return;
+
+    const sentinel = scrollRoot.querySelector('[data-sales-load-sentinel]');
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        const nearBottom =
+          scrollRoot.scrollHeight -
+            scrollRoot.scrollTop -
+            scrollRoot.clientHeight <
+          100;
+        if (nearBottom) {
+          onNearBottom();
+        }
+      },
+      { root: scrollRoot, rootMargin: '0px', threshold: 0 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [scrollRoot, onNearBottom, customers.length]);
+
   const columns: ColumnDef<Customer>[] = React.useMemo(
     () => [
       {
@@ -97,6 +148,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
               className='p-2'
               style={{ color: '#2563eb' }}
               title='View Customer Invoices'
+              disabled={loading}
             >
               <FaEye size={16} />
             </button>
@@ -105,6 +157,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
               className='p-2'
               style={{ color: '#0284c7' }}
               title='Edit Customer'
+              disabled={loading}
             >
               <FaEdit size={16} />
             </button>
@@ -113,6 +166,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
               className='p-2'
               style={{ color: '#dc2626' }}
               title='Delete Customer'
+              disabled={loading}
             >
               <FaTrash size={16} />
             </button>
@@ -120,7 +174,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
         ),
       },
     ],
-    [onViewInvoices, onEditCustomer, onDeleteCustomer]
+    [onViewInvoices, onEditCustomer, onDeleteCustomer, loading]
   );
 
   return (
@@ -134,9 +188,15 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
         buttonTitle='Add Customer'
         buttonOnClick={onAddCustomer}
         emptyMessage='No customers found.'
-        enableRowVirtualization={true}
-        tableBodyHeight={600}
-        minVisibleRows={15}
+        enableRowVirtualization={false}
+        compactLayout
+        stickyHeader
+        bodyScrollHeight={CUSTOMERS_TABLE_SCROLL_HEIGHT}
+        showLoadMoreSentinel={!!onNearBottom}
+        onScrollContainerRef={handleScrollContainerRef}
+        onBodyScroll={handleBodyScroll}
+        searchValue={searchValue}
+        onSearchChange={onSearchChange}
       />
     </div>
   );

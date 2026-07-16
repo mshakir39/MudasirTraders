@@ -84,6 +84,46 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
         },
       },
       {
+        accessorKey: 'products',
+        header: 'Products',
+        cell: ({ row }) => {
+          const invoice = row.original;
+          const products = invoice.products || [];
+          const productCount = products.length;
+
+          if (productCount === 0) {
+            return <span className='text-gray-400'>No products</span>;
+          }
+
+          if (productCount === 1) {
+            const product = products[0];
+            return (
+              <div className='text-sm'>
+                <div className='font-medium text-blue-600'>
+                  {product.brandName || product.series || 'Unknown Product'} × {product.quantity}
+                </div>
+              </div>
+            );
+          }
+
+          const firstProduct = products[0];
+          const remainingCount = productCount - 1;
+
+          return (
+            <div className='text-sm'>
+              <div className='font-medium text-blue-600'>
+                {firstProduct.brandName || firstProduct.series} × {firstProduct.quantity}
+              </div>
+              {remainingCount > 0 && (
+                <div className='mt-1 text-xs text-gray-500'>
+                  +{remainingCount} more product{remainingCount > 1 ? 's' : ''}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: 'totalAmount',
         header: 'Total Amount',
         cell: ({ row }) => formatCurrency(row.original.totalAmount),

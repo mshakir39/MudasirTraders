@@ -1,43 +1,64 @@
-// src/app/dashboard/customers/page.tsx
-// Use new FSD structure - preserve all functionality
-
-'use client';
-
-import { CustomerManagement } from '@/features/customer-management';
+import { getCustomersPaginated } from '@/actions/customerActions';
 import CustomersErrorBoundary from '@/components/customers/CustomersErrorBoundary';
-import CustomerInvoicesModal from '@/components/customer/CustomerInvoicesModal';
-import { Customer } from '@/features/customer-management/entities/customer/model/types';
-import { useState } from 'react';
+import CustomersPageClient from './CustomersPageClient';
+import { CUSTOMERS_BATCH_SIZE } from '@/lib/customersQuery';
+import { Metadata } from 'next';
 
-// Client Component to handle event handlers
-export default function CustomersPage() {
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null
-  );
-  const [isInvoicesModalOpen, setIsInvoicesModalOpen] = useState(false);
+export const dynamic = 'force-dynamic';
 
-  const handleViewInvoices = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setIsInvoicesModalOpen(true);
-  };
+export const metadata: Metadata = {
+  title: 'Customers | Mudasir Traders',
+  description: 'Manage customers',
+};
 
-  const handleCloseInvoicesModal = () => {
-    setIsInvoicesModalOpen(false);
-    setSelectedCustomer(null);
-  };
+async function getCustomersPageData() {
+  try {
+    const result = await getCustomersPaginated(1, CUSTOMERS_BATCH_SIZE);
+
+    if (!result.success) {
+      console.error('Failed to fetch customers:', result.error);
+      return {
+        customers: [],
+        pagination: {
+          page: 1,
+          limit: CUSTOMERS_BATCH_SIZE,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    }
+
+    return {
+      customers: Array.isArray(result.data) ? result.data : [],
+      pagination: result.pagination!,
+    };
+  } catch (error) {
+    console.error('Error loading customers:', error);
+    return {
+      customers: [],
+      pagination: {
+        page: 1,
+        limit: CUSTOMERS_BATCH_SIZE,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      },
+    };
+  }
+}
+
+export default async function CustomersPage() {
+  const { customers, pagination } = await getCustomersPageData();
 
   return (
     <CustomersErrorBoundary>
-      <CustomerManagement onViewInvoices={handleViewInvoices} />
-
-      {/* Customer Invoices Modal */}
-      {selectedCustomer && (
-        <CustomerInvoicesModal
-          isOpen={isInvoicesModalOpen}
-          onClose={handleCloseInvoicesModal}
-          customer={selectedCustomer}
-        />
-      )}
+      <CustomersPageClient
+        initialCustomers={customers}
+        initialPagination={pagination}
+      />
     </CustomersErrorBoundary>
   );
 }

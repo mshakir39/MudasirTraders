@@ -1,16 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getCustomers,
+  getCustomersPaginated,
   createCustomer,
   updateCustomer,
   deleteCustomer,
 } from '@/actions/customerActions';
+import { CUSTOMERS_BATCH_SIZE } from '@/lib/customersQuery';
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const customerType = searchParams.get('customerType') || undefined;
-    const result = await getCustomers(customerType);
+    const search = searchParams.get('search') || undefined;
+    const all = searchParams.get('all') === 'true';
+
+    // Full list for autocomplete / invoice pickers
+    if (all) {
+      const result = await getCustomers(customerType);
+      return NextResponse.json(result);
+    }
+
+    const page = Math.max(1, Number(searchParams.get('page') || 1));
+    const limit = Math.min(
+      200,
+      Math.max(1, Number(searchParams.get('limit') || CUSTOMERS_BATCH_SIZE))
+    );
+
+    const result = await getCustomersPaginated(page, limit, {
+      customerType,
+      search,
+    });
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Error fetching customers:', error);
@@ -25,7 +45,6 @@ export async function POST(req: NextRequest) {
   try {
     const { customerName, phoneNumber, address, email } = await req.json();
 
-    // Validate required fields
     if (!customerName || !phoneNumber) {
       return NextResponse.json(
         { error: 'Customer name and phone number are required' },

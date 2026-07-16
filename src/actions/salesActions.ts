@@ -104,15 +104,18 @@ export async function getSalesPaginated(
     startDate?: Date;
     endDate?: Date;
     customerName?: string;
+    search?: string;
   }
 ) {
   try {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(Math.max(1, limit), 200);
     const filter = buildSalesFilter(options);
     const result = (await executeOperation('sales', 'findPaginated', {
       filter,
       sort: { date: -1 },
-      skip: (page - 1) * limit,
-      limit,
+      skip: (safePage - 1) * safeLimit,
+      limit: safeLimit,
     })) as { docs: any[]; total: number };
 
     const summary = await getSalesSummary(filter);
@@ -122,12 +125,12 @@ export async function getSalesPaginated(
       data: result.docs,
       summary,
       pagination: {
-        page,
-        limit,
+        page: safePage,
+        limit: safeLimit,
         total: result.total,
-        totalPages: Math.ceil(result.total / limit),
-        hasNext: page * limit < result.total,
-        hasPrev: page > 1,
+        totalPages: Math.ceil(result.total / safeLimit) || 0,
+        hasNext: safePage * safeLimit < result.total,
+        hasPrev: safePage > 1,
       },
     };
   } catch (error: any) {

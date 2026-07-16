@@ -91,12 +91,13 @@ export const useCustomerActions = ({
   const updateCustomer = useCallback(
     async (customerId: string, data: CustomerFormData) => {
       try {
-        const response = await fetch(`/api/customers/${customerId}`, {
+        const response = await fetch('/api/customers', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            id: customerId,
             customerName: data.customerName.trim(),
             phoneNumber: data.phoneNumber.trim(),
             address: data.address.trim(),
@@ -108,7 +109,7 @@ export const useCustomerActions = ({
 
         if (response.ok) {
           toast.success('Customer updated successfully');
-          await onRefreshCustomers(); // Refresh store after update
+          await onRefreshCustomers();
           return true;
         } else {
           toast.error(result.error || 'Failed to update customer');

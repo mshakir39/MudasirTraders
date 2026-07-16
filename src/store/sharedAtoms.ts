@@ -84,7 +84,7 @@ export const fetchCustomersAtom = atom(null, async (get, set) => {
   set(customersErrorAtom, null);
 
   try {
-    const response = await fetch('/api/customers');
+    const response = await fetch('/api/customers?all=true');
     const result = await response.json();
     set(
       customersAtom,

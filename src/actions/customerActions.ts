@@ -1,5 +1,9 @@
 'use server';
 import { executeOperation } from '@/app/libs/executeOperation';
+import {
+  CUSTOMERS_BATCH_SIZE,
+  buildCustomersFilter,
+} from '@/lib/customersQuery';
 
 interface CustomerData {
   customerName: string;
@@ -83,26 +87,53 @@ export async function deleteCustomer(id: string) {
 
 export async function getCustomers(customerType?: string) {
   try {
-    // React 19: Enhanced with client-side sorting for better compatibility
-    let customers = await executeOperation('customers', 'findAll');
+    const filter = buildCustomersFilter({ customerType });
+    const result = (await executeOperation('customers', 'findPaginated', {
+      filter,
+      sort: { createdAt: -1 },
+      skip: 0,
+    })) as { docs: any[]; total: number };
 
-    // Filter by customerType if provided
-    if (customerType && Array.isArray(customers)) {
-      customers = customers.filter((c: any) => c.customerType === customerType);
-    }
-
-    // Sort customers by creation date (newest first)
-    if (Array.isArray(customers)) {
-      customers.sort((a: any, b: any) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return dateB - dateA; // Descending order (newest first)
-      });
-    }
-
-    return { success: true, data: customers };
+    return { success: true, data: result.docs };
   } catch (error: any) {
     console.error('Error fetching customers:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getCustomersPaginated(
+  page = 1,
+  limit = CUSTOMERS_BATCH_SIZE,
+  options?: {
+    customerType?: string;
+    search?: string;
+  }
+) {
+  try {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(Math.max(1, limit), 200);
+    const filter = buildCustomersFilter(options);
+    const result = (await executeOperation('customers', 'findPaginated', {
+      filter,
+      sort: { createdAt: -1 },
+      skip: (safePage - 1) * safeLimit,
+      limit: safeLimit,
+    })) as { docs: any[]; total: number };
+
+    return {
+      success: true,
+      data: result.docs,
+      pagination: {
+        page: safePage,
+        limit: safeLimit,
+        total: result.total,
+        totalPages: Math.ceil(result.total / safeLimit) || 0,
+        hasNext: safePage * safeLimit < result.total,
+        hasPrev: safePage > 1,
+      },
+    };
+  } catch (error: any) {
+    console.error('Error fetching paginated customers:', error);
     return { success: false, error: error.message };
   }
 }

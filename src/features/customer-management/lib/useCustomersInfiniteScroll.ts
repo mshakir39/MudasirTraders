@@ -2,65 +2,60 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Sale,
-  SalesSummary,
-  DateRange,
-  SalesPaginationMeta,
-} from '@/features/sales-management/entities/sales/model/types';
-import { SALES_BATCH_SIZE } from '@/lib/salesQuery';
+  Customer,
+  CustomersPaginationMeta,
+} from '@/features/customer-management/entities/customer/model/types';
+import {
+  CUSTOMERS_BATCH_SIZE,
+  CustomerTabFilter,
+  customerTypeFromTab,
+} from '@/lib/customersQuery';
 
-interface UseSalesInfiniteScrollOptions {
-  initialSales: Sale[];
-  initialPagination?: SalesPaginationMeta;
-  initialSummary: SalesSummary;
-  dateRange: DateRange;
-  customerName: string;
-  search?: string;
+interface UseCustomersInfiniteScrollOptions {
+  initialCustomers: Customer[];
+  initialPagination?: CustomersPaginationMeta;
+  activeTab: CustomerTabFilter;
+  search: string;
 }
 
-async function fetchSalesBatch(
+async function fetchCustomersBatch(
   page: number,
-  dateRange: DateRange,
-  customerName: string,
-  search?: string
+  activeTab: CustomerTabFilter,
+  search: string
 ) {
   const params = new URLSearchParams({
     page: String(page),
-    limit: String(SALES_BATCH_SIZE),
-    startDate: dateRange.start.toISOString(),
-    endDate: dateRange.end.toISOString(),
+    limit: String(CUSTOMERS_BATCH_SIZE),
   });
-  if (customerName) {
-    params.set('customerName', customerName);
+
+  const customerType = customerTypeFromTab(activeTab);
+  if (customerType) {
+    params.set('customerType', customerType);
   }
-  if (search) {
-    params.set('search', search);
+  if (search.trim()) {
+    params.set('search', search.trim());
   }
 
-  const response = await fetch(`/api/sales?${params}`);
+  const response = await fetch(`/api/customers?${params}`);
   const result = await response.json();
 
   if (!response.ok || !result.success) {
-    throw new Error(result.error || 'Failed to fetch sales');
+    throw new Error(result.error || 'Failed to fetch customers');
   }
 
   return result as {
-    data: Sale[];
-    pagination: SalesPaginationMeta;
-    summary: SalesSummary;
+    data: Customer[];
+    pagination: CustomersPaginationMeta;
   };
 }
 
-export function useSalesInfiniteScroll({
-  initialSales,
+export function useCustomersInfiniteScroll({
+  initialCustomers,
   initialPagination,
-  initialSummary,
-  dateRange,
-  customerName,
+  activeTab,
   search,
-}: UseSalesInfiniteScrollOptions) {
-  const [sales, setSales] = useState<Sale[]>(initialSales);
-  const [summary, setSummary] = useState<SalesSummary>(initialSummary);
+}: UseCustomersInfiniteScrollOptions) {
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialPagination?.hasNext ?? false);
   const [loading, setLoading] = useState(false);
@@ -70,13 +65,11 @@ export function useSalesInfiniteScroll({
 
   const applyBatch = useCallback(
     (
-      batch: Sale[],
-      pagination: SalesPaginationMeta,
-      nextSummary: SalesSummary,
+      batch: Customer[],
+      pagination: CustomersPaginationMeta,
       append: boolean
     ) => {
-      setSales((prev) => (append ? [...prev, ...batch] : batch));
-      setSummary(nextSummary);
+      setCustomers((prev) => (append ? [...prev, ...batch] : batch));
       setHasMore(pagination?.hasNext ?? false);
       setPage(pagination?.page ?? 1);
     },
@@ -95,15 +88,12 @@ export function useSalesInfiniteScroll({
       setError(null);
 
       try {
-        const result = await fetchSalesBatch(pageNum, dateRange, customerName, search);
-        applyBatch(
-          result.data ?? [],
-          result.pagination,
-          result.summary,
-          append
-        );
+        const result = await fetchCustomersBatch(pageNum, activeTab, search);
+        applyBatch(result.data ?? [], result.pagination, append);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch sales');
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch customers'
+        );
       } finally {
         if (append) {
           loadingMoreRef.current = false;
@@ -113,7 +103,7 @@ export function useSalesInfiniteScroll({
         }
       }
     },
-    [applyBatch, customerName, dateRange.end, dateRange.start, search]
+    [activeTab, applyBatch, search]
   );
 
   const loadMore = useCallback(() => {
@@ -136,11 +126,11 @@ export function useSalesInfiniteScroll({
     setPage(1);
     setHasMore(true);
     loadBatch(1, false);
-  }, [customerName, dateRange.start, dateRange.end, search, loadBatch]);
+  }, [activeTab, search, loadBatch]);
 
   return {
-    sales,
-    summary,
+    customers,
+    setCustomers,
     hasMore,
     loading,
     loadingMore,

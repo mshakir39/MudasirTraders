@@ -5,7 +5,7 @@ export const useCustomers = () => {
 
   const fetchCustomers = useCallback(async () => {
     try {
-      const response = await fetch('/api/customers');
+      const response = await fetch('/api/customers?all=true');
       const result = await response.json();
       if (result.success && Array.isArray(result.data)) {
         setCustomers(result.data);

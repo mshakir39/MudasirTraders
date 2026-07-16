@@ -18,6 +18,8 @@ interface SalesDataGridProps {
   isLoading?: boolean;
   className?: string;
   onNearBottom?: () => void;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
@@ -27,6 +29,8 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
   isLoading = false,
   className = '',
   onNearBottom,
+  searchValue,
+  onSearchChange,
 }) => {
   const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
 
@@ -285,6 +289,8 @@ export const SalesDataGrid: React.FC<SalesDataGridProps> = ({
         showButton={false}
         emptyMessage='No sales found. Try adjusting your search or create a new sale.'
         extraGlobalSearchText={extraGlobalSearchText}
+        searchValue={searchValue}
+        onSearchChange={onSearchChange}
       />
     </div>
   );
