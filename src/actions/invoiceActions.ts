@@ -1,11 +1,13 @@
 'use server';
-import { calculateInvoiceAmounts } from '@/utils/invoiceCalculations';
+import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 import { executeOperation } from '@/app/libs/executeOperation';
-import { revalidatePath } from 'next/cache';
 import { ObjectId } from 'mongodb';
+import { revalidatePath } from 'next/cache';
 import { InvoiceDataUtil } from '@/utils/invoiceDataUtil';
 import { InvoiceProduct } from '@/entities/invoice/model/types';
 import { normalizeInvoiceIdForMongo } from '@/actions/invoiceIdUtils';
+import { normalizeSeriesForMatching } from '@/utils/seriesNormalization';
+import { calculateInvoiceAmounts } from '@/utils/invoiceCalculations';
 
 interface InvoiceItem {
   brandName: string;
@@ -530,9 +532,19 @@ export async function createConsolidatedInvoice(
           })) as any;
 
           if (stockItem && stockItem.seriesStock) {
-            const seriesData = stockItem.seriesStock.find(
+            // Try exact match first
+            let seriesData = stockItem.seriesStock.find(
               (s: any) => s.series === product.series
             );
+            
+            // Fallback to normalized matching
+            if (!seriesData) {
+              const normalizedSeries = normalizeSeriesForMatching(product.series);
+              seriesData = stockItem.seriesStock.find(
+                (s: any) => normalizeSeriesForMatching(s.series) === normalizedSeries
+              );
+            }
+            
             currentCost = Number(seriesData?.productCost) || 0;
           }
         } catch (error) {

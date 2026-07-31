@@ -1,5 +1,7 @@
 'use server';
+import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 import { executeOperation } from '@/app/libs/executeOperation';
+import { normalizeSeriesForMatching } from '@/utils/seriesNormalization';
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -439,9 +441,19 @@ async function getHistoricalCost(
     });
 
     if (currentStock && currentStock.seriesStock) {
-      const seriesData = currentStock.seriesStock.find(
+      // Try exact match first
+      let seriesData = currentStock.seriesStock.find(
         (s: any) => s.series === series
       );
+      
+      // Fallback to normalized matching
+      if (!seriesData) {
+        const normalizedSeries = normalizeSeriesForMatching(series);
+        seriesData = currentStock.seriesStock.find(
+          (s: any) => normalizeSeriesForMatching(s.series) === normalizedSeries
+        );
+      }
+      
       return Number(seriesData?.productCost) || 0;
     }
 

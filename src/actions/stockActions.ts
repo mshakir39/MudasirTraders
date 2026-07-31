@@ -1,6 +1,8 @@
 'use server';
-import { executeOperation } from '@/app/libs/executeOperation';
 import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
+import { executeOperation } from '@/app/libs/executeOperation';
+import { ICategory, IBatterySeries } from '@/interfaces';
+import { normalizeSeriesForMatching } from '@/utils/seriesNormalization';
 
 interface StockData {
   brandName: string;
@@ -74,9 +76,17 @@ export async function updateStock(data: StockData) {
     let currentSoldCount = 0;
     if (currentStock) {
       // Find the specific series being updated to capture changes
-      const currentSeries = currentStock.seriesStock?.find(
+      let currentSeries = currentStock.seriesStock?.find(
         (s: SeriesStock) => s.series === data.series
       );
+      
+      // Fallback to normalized matching
+      if (!currentSeries) {
+        const normalizedSeries = normalizeSeriesForMatching(data.series);
+        currentSeries = currentStock.seriesStock?.find(
+          (s: SeriesStock) => normalizeSeriesForMatching(s.series) === normalizedSeries
+        );
+      }
 
       if (currentSeries) {
         // Save the current soldCount before updating
@@ -350,9 +360,18 @@ export async function deleteStock(brandName: string, series: string) {
     // Find current stock for this brand and series
     const currentStock = await collection.findOne({ brandName });
     if (currentStock) {
-      const currentSeries = currentStock.seriesStock?.find(
+      // Try exact match first
+      let currentSeries = currentStock.seriesStock?.find(
         (s: SeriesStock) => s.series === series
       );
+      
+      // Fallback to normalized matching
+      if (!currentSeries) {
+        const normalizedSeries = normalizeSeriesForMatching(series);
+        currentSeries = currentStock.seriesStock?.find(
+          (s: SeriesStock) => normalizeSeriesForMatching(s.series) === normalizedSeries
+        );
+      }
 
       if (currentSeries) {
         // Save deletion to history

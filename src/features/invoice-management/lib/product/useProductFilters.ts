@@ -2,6 +2,7 @@
 // Product filtering utilities hook
 
 import { useCallback } from 'react';
+import { normalizeSeriesForMatching } from '@/utils/seriesNormalization';
 
 export const useProductFilters = () => {
   // Filter series options based on stock availability
@@ -76,9 +77,18 @@ export const useProductFilters = () => {
       const brandStock = stock.find((item) => item.brandName === brandName);
       if (!brandStock || !brandStock.seriesStock) return false;
 
-      const seriesStock = brandStock.seriesStock.find(
+      // Try exact match first
+      let seriesStock = brandStock.seriesStock.find(
         (item: any) => item.series === seriesName
       );
+      
+      // Fallback to normalized matching
+      if (!seriesStock) {
+        const normalizedSeries = normalizeSeriesForMatching(seriesName);
+        seriesStock = brandStock.seriesStock.find(
+          (item: any) => normalizeSeriesForMatching(item.series) === normalizedSeries
+        );
+      }
 
       return seriesStock && parseInt(seriesStock.quantity || '0') > 0;
     },

@@ -1,10 +1,13 @@
 'use server';
+import { NextRequest, NextResponse } from 'next/server';
+import { ObjectId } from 'mongodb';
 import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 import { executeOperation } from '@/app/libs/executeOperation';
+import log from '@/utils/logger';
+import { normalizeSeriesForMatching } from '@/utils/seriesNormalization';
+
 import { getAllSum } from '@/utils/getTotalSum';
 import { InvoiceDataUtil } from '@/utils/invoiceDataUtil';
-import { ObjectId } from 'mongodb';
-import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 
 // Track processing invoices to prevent duplicates
@@ -82,8 +85,28 @@ export async function PATCH(req: NextRequest) {
           throw new Error(`Invalid quantity for ${seriesName}: ${quantity}`);
         }
 
-        const stockQuery = { 'seriesStock.series': seriesName };
-        const stockExists = await db.collection('stock').findOne(stockQuery);
+        let stockQuery = { 'seriesStock.series': seriesName };
+        let stockExists = await db.collection('stock').findOne(stockQuery);
+
+        // Fallback: try normalized matching if exact match fails
+        if (!stockExists) {
+          const normalizedSeries = normalizeSeriesForMatching(seriesName);
+          const allStock = await db.collection('stock').find({}).toArray();
+          for (const stockDoc of allStock || []) {
+            if (stockDoc.seriesStock && Array.isArray(stockDoc.seriesStock)) {
+              const matchingSeries = stockDoc.seriesStock.find((item: any) => {
+                const dbSeries = String(item.series || '');
+                const normalizedDbSeries = normalizeSeriesForMatching(dbSeries);
+                return normalizedDbSeries === normalizedSeries;
+              });
+              
+              if (matchingSeries) {
+                stockExists = stockDoc;
+                break;
+              }
+            }
+          }
+        }
 
         if (!stockExists) {
           throw new Error(`Series '${seriesName}' not found in stock.`);
@@ -91,7 +114,8 @@ export async function PATCH(req: NextRequest) {
 
         const stockData = stockExists as any;
         const currentStock = stockData.seriesStock?.find(
-          (item: any) => item.series === seriesName
+          (item: any) => item.series === seriesName || 
+            normalizeSeriesForMatching(item.series) === normalizeSeriesForMatching(seriesName)
         );
         if (!currentStock) {
           throw new Error(`Series '${seriesName}' not found in stock data.`);

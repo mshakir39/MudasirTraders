@@ -18,6 +18,9 @@ import {
 import { useTabOrder } from '@/utils/hooks/useTabOrder';
 import { useStockColumns } from '@/utils/hooks/useStockColumns';
 import { transformStockData, calculateStockCost } from '@/utils/stockUtils';
+import { ICategory } from '@/interfaces';
+import { normalizeSeriesForMatching } from '@/utils/seriesNormalization';
+
 import {
   stockAtom,
   fetchStockAtom,
@@ -99,22 +102,30 @@ const StockLayout: React.FC<StockLayoutProps> = ({
     stock,
     (state, action: any) => {
       if (action.type === 'delete') {
+        const normalizedActionSeries = normalizeSeriesForMatching(action.series);
         return state.filter(
           (item) =>
             !(
               item.brandName === action.brandName &&
-              item.seriesStock.some((s: any) => s.series === action.series)
+              item.seriesStock.some((s: any) => 
+                s.series === action.series || 
+                normalizeSeriesForMatching(s.series) === normalizedActionSeries
+              )
             )
         );
       }
       if (action.type === 'add') return [...state, action.data];
       if (action.type === 'update') {
+        const normalizedActionSeries = normalizeSeriesForMatching(action.series);
         return state.map((item) =>
           item.brandName === action.brandName
             ? {
                 ...item,
                 seriesStock: item.seriesStock.map((s: any) =>
-                  s.series === action.series ? action.data : s
+                  s.series === action.series || 
+                  normalizeSeriesForMatching(s.series) === normalizedActionSeries
+                    ? action.data 
+                    : s
                 ),
               }
             : item

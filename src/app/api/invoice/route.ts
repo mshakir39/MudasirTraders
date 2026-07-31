@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import log from '@/utils/logger';
 import { addWarrantyCodes, removeWarrantyCodes } from '@/actions/warrantySync';
+import { normalizeSeriesForMatching } from '@/utils/seriesNormalization';
 
 // Escape user-provided text for use inside a RegExp
 function escapeRegex(input: string) {
@@ -28,21 +29,6 @@ function normalizeSeries(s: string) {
     .replace(/\s*\)\s*/g, ') ') // Add space after closing parenthesis
     .replace(/\s*\/\s*/g, '/') // Fix spaces around slashes
     .replace(/\s+/g, ' ') // Clean up any new multiple spaces
-    .trim();
-}
-
-// Normalize series by replacing all symbols with spaces, then exact matching
-function normalizeSeriesForMatching(input: string) {
-  return String(input || '')
-    .toLowerCase()
-    .replace(/[\/\(\)\-\,\.\+]/g, ' ') // Replace symbols with spaces
-    .replace(/([a-z])([0-9])/g, '$1 $2') // Add space between letters and numbers
-    .replace(/([0-9])([a-z])/g, '$1 $2') // Add space between numbers and letters
-    .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space between lowercase and uppercase
-    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2') // Add space before capitalized words
-    .replace(/(thin)(thick)/g, '$1 $2') // Split ThinThick
-    .replace(/(thinthick)/g, 'thin thick') // Handle combined form
-    .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
     .trim();
 }
 
@@ -323,9 +309,19 @@ export async function POST(req: NextRequest) {
             })) as any;
 
             if (stockItem && Array.isArray(stockItem.seriesStock)) {
-              const seriesData = stockItem.seriesStock.find(
+              // Try exact match first
+              let seriesData = stockItem.seriesStock.find(
                 (s: any) => s.series === product.series
               );
+              
+              // Fallback to normalized matching
+              if (!seriesData) {
+                const normalizedSeries = normalizeSeriesForMatching(product.series);
+                seriesData = stockItem.seriesStock.find(
+                  (s: any) => normalizeSeriesForMatching(s.series) === normalizedSeries
+                );
+              }
+              
               currentCost = Number(seriesData?.productCost) || 0;
             }
           } catch (error) {
@@ -1030,7 +1026,33 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      // Additional fallback: try with normalized series matching
       if (!stockExists) {
+        console.log(`🔍 Exact match failed for series: '${seriesName}', trying normalized matching...`);
+        const normalizedSeries = normalizeSeriesForMatching(seriesName);
+        console.log(`🔍 Normalized series: '${normalizedSeries}'`);
+        
+        // Try to find any stock with similar normalized series
+        const allStock = await executeOperation('stock', 'find', {}) as any[];
+        for (const stockDoc of allStock || []) {
+          if (stockDoc.seriesStock && Array.isArray(stockDoc.seriesStock)) {
+            const matchingSeries = stockDoc.seriesStock.find((item: any) => {
+              const dbSeries = String(item.series || '');
+              const normalizedDbSeries = normalizeSeriesForMatching(dbSeries);
+              return normalizedDbSeries === normalizedSeries;
+            });
+            
+            if (matchingSeries) {
+              console.log(`✅ Found normalized match: '${matchingSeries.series}' in brand '${stockDoc.brandName}'`);
+              stockExists = stockDoc;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!stockExists) {
+        console.error(`❌ Series '${seriesName}' not found in stock after all matching attempts`);
         throw new Error(`Series '${seriesName}' not found in stock.`);
       }
 

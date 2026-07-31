@@ -1,6 +1,7 @@
 'use server';
 import { ObjectId } from 'mongodb';
 import { connectToMongoDB } from './connectToMongoDB';
+import { normalizeSeriesForMatching } from '@/utils/seriesNormalization';
 
 // ✅ Reusable serializer — removes duplicate code
 function serializeDoc(doc: any): Record<string, any> {
@@ -115,13 +116,34 @@ export async function executeOperation(
 
         case 'updateStockQuantity':
           const quantity = document.quantity;
-          const seriesDocument = await db
+          let seriesDocument = await db
             .collection(collectionName)
             .findOne({ 'seriesStock.series': series });
 
+          // Fallback: try normalized matching if exact match fails
+          if (!seriesDocument) {
+            const normalizedSeries = normalizeSeriesForMatching(series);
+            const allStock = await db.collection(collectionName).find({}).toArray();
+            for (const stockDoc of allStock || []) {
+              if (stockDoc.seriesStock && Array.isArray(stockDoc.seriesStock)) {
+                const matchingSeries = stockDoc.seriesStock.find((item: any) => {
+                  const dbSeries = String(item.series || '');
+                  const normalizedDbSeries = normalizeSeriesForMatching(dbSeries);
+                  return normalizedDbSeries === normalizedSeries;
+                });
+                
+                if (matchingSeries) {
+                  seriesDocument = stockDoc;
+                  break;
+                }
+              }
+            }
+          }
+
           if (seriesDocument) {
             const seriesStock = seriesDocument.seriesStock.find(
-              (item: any) => item.series === series
+              (item: any) => item.series === series || 
+                normalizeSeriesForMatching(item.series) === normalizeSeriesForMatching(series)
             );
             if (seriesStock) {
               const currentInStock = seriesStock.inStock;
@@ -136,7 +158,7 @@ export async function executeOperation(
               } else {
                 const newInStock = currentInStock - quantity;
                 return await db.collection(collectionName).updateOne(
-                  { 'seriesStock.series': series },
+                  { 'seriesStock.series': seriesStock.series },
                   {
                     $set: { 'seriesStock.$.inStock': newInStock },
                     $inc: { 'seriesStock.$.soldCount': quantity },
@@ -152,13 +174,34 @@ export async function executeOperation(
 
         case 'updateStockAndSoldCount':
           const updateQuantity = parseInt(document.quantity) || 0;
-          const updateSeriesDoc = await db
+          let updateSeriesDoc = await db
             .collection(collectionName)
             .findOne({ 'seriesStock.series': series });
 
+          // Fallback: try normalized matching if exact match fails
+          if (!updateSeriesDoc) {
+            const normalizedSeries = normalizeSeriesForMatching(series);
+            const allStock = await db.collection(collectionName).find({}).toArray();
+            for (const stockDoc of allStock || []) {
+              if (stockDoc.seriesStock && Array.isArray(stockDoc.seriesStock)) {
+                const matchingSeries = stockDoc.seriesStock.find((item: any) => {
+                  const dbSeries = String(item.series || '');
+                  const normalizedDbSeries = normalizeSeriesForMatching(dbSeries);
+                  return normalizedDbSeries === normalizedSeries;
+                });
+                
+                if (matchingSeries) {
+                  updateSeriesDoc = stockDoc;
+                  break;
+                }
+              }
+            }
+          }
+
           if (updateSeriesDoc) {
             const seriesStock = updateSeriesDoc.seriesStock.find(
-              (item: any) => item.series === series
+              (item: any) => item.series === series || 
+                normalizeSeriesForMatching(item.series) === normalizeSeriesForMatching(series)
             );
             if (seriesStock) {
               const currentInStock = parseInt(seriesStock.inStock) || 0;
@@ -177,7 +220,7 @@ export async function executeOperation(
                 const newSoldCount = currentSoldCount + updateQuantity;
 
                 return await db.collection(collectionName).updateOne(
-                  { 'seriesStock.series': series },
+                  { 'seriesStock.series': seriesStock.series },
                   {
                     $set: {
                       'seriesStock.$.inStock': newInStock,
@@ -197,13 +240,34 @@ export async function executeOperation(
           const restoreQuantity = parseInt(document.quantity) || 0;
           const restoreSeries = document.series;
 
-          const restoreSeriesDoc = await db
+          let restoreSeriesDoc = await db
             .collection(collectionName)
             .findOne({ 'seriesStock.series': restoreSeries });
 
+          // Fallback: try normalized matching if exact match fails
+          if (!restoreSeriesDoc) {
+            const normalizedSeries = normalizeSeriesForMatching(restoreSeries);
+            const allStock = await db.collection(collectionName).find({}).toArray();
+            for (const stockDoc of allStock || []) {
+              if (stockDoc.seriesStock && Array.isArray(stockDoc.seriesStock)) {
+                const matchingSeries = stockDoc.seriesStock.find((item: any) => {
+                  const dbSeries = String(item.series || '');
+                  const normalizedDbSeries = normalizeSeriesForMatching(dbSeries);
+                  return normalizedDbSeries === normalizedSeries;
+                });
+                
+                if (matchingSeries) {
+                  restoreSeriesDoc = stockDoc;
+                  break;
+                }
+              }
+            }
+          }
+
           if (restoreSeriesDoc) {
             const seriesStock = restoreSeriesDoc.seriesStock.find(
-              (item: any) => item.series === restoreSeries
+              (item: any) => item.series === restoreSeries || 
+                normalizeSeriesForMatching(item.series) === normalizeSeriesForMatching(restoreSeries)
             );
             if (seriesStock) {
               const currentInStock = parseInt(seriesStock.inStock) || 0;
@@ -215,7 +279,7 @@ export async function executeOperation(
               );
 
               return await db.collection(collectionName).updateOne(
-                { 'seriesStock.series': restoreSeries },
+                { 'seriesStock.series': seriesStock.series },
                 {
                   $set: {
                     'seriesStock.$.inStock': newInStock,
@@ -234,13 +298,34 @@ export async function executeOperation(
           const addQuantity = parseInt(document.quantity) || 0;
           const addSeries = document.series;
 
-          const addSeriesDoc = await db
+          let addSeriesDoc = await db
             .collection(collectionName)
             .findOne({ 'seriesStock.series': addSeries });
 
+          // Fallback: try normalized matching if exact match fails
+          if (!addSeriesDoc) {
+            const normalizedSeries = normalizeSeriesForMatching(addSeries);
+            const allStock = await db.collection(collectionName).find({}).toArray();
+            for (const stockDoc of allStock || []) {
+              if (stockDoc.seriesStock && Array.isArray(stockDoc.seriesStock)) {
+                const matchingSeries = stockDoc.seriesStock.find((item: any) => {
+                  const dbSeries = String(item.series || '');
+                  const normalizedDbSeries = normalizeSeriesForMatching(dbSeries);
+                  return normalizedDbSeries === normalizedSeries;
+                });
+                
+                if (matchingSeries) {
+                  addSeriesDoc = stockDoc;
+                  break;
+                }
+              }
+            }
+          }
+
           if (addSeriesDoc) {
             const seriesStock = addSeriesDoc.seriesStock.find(
-              (item: any) => item.series === addSeries
+              (item: any) => item.series === addSeries || 
+                normalizeSeriesForMatching(item.series) === normalizeSeriesForMatching(addSeries)
             );
             if (seriesStock) {
               const currentInStock = parseInt(seriesStock.inStock) || 0;
@@ -249,7 +334,7 @@ export async function executeOperation(
               const newSoldCount = Math.max(0, currentSoldCount - addQuantity);
 
               return await db.collection(collectionName).updateOne(
-                { 'seriesStock.series': addSeries },
+                { 'seriesStock.series': seriesStock.series },
                 {
                   $set: {
                     'seriesStock.$.inStock': newInStock,

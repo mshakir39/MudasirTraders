@@ -308,9 +308,10 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
 
         toast.success('Invoice created successfully');
         handleCloseModal();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error creating invoice:', error);
-        toast.error('Failed to create invoice');
+        const errorMessage = error?.message || 'Failed to create invoice';
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -355,9 +356,10 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
 
         toast.success('Invoice updated successfully');
         handleCloseModal();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error updating invoice:', error);
-        toast.error('Failed to update invoice');
+        const errorMessage = error?.message || 'Failed to update invoice';
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -414,9 +416,10 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
       } else {
         toast.error(result.error || 'Failed to delete invoice');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting invoice:', error);
-      toast.error('Failed to delete invoice');
+      const errorMessage = error?.message || 'Failed to delete invoice';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -509,9 +512,10 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
 
         toast.success('Payment added successfully');
         handleCloseModal(); // Close modal after successful payment
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error adding payment:', error);
-        toast.error('Failed to add payment');
+        const errorMessage = error?.message || 'Failed to add payment';
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }

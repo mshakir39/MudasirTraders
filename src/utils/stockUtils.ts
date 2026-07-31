@@ -10,6 +10,7 @@
 
 import { ICategory } from '../interfaces';
 import { BatteryDetails, StockBatteryData } from '../interfaces';
+import { normalizeSeriesForMatching } from './seriesNormalization';
 
 export const normalizeInStock = (
   value: string | number | null | undefined
@@ -184,8 +185,16 @@ export function validateAndNormalizeStock(
     let stockItem: any = null;
     for (const brandStock of stock) {
       if (Array.isArray(brandStock.seriesStock)) {
+        // Try exact match first
         stockItem = brandStock.seriesStock.find(
           (item: any) => item.series === seriesName
+        );
+        if (stockItem) break;
+        
+        // Fallback to normalized matching
+        const normalizedSeriesName = normalizeSeriesForMatching(seriesName);
+        stockItem = brandStock.seriesStock.find(
+          (item: any) => normalizeSeriesForMatching(item.series) === normalizedSeriesName
         );
         if (stockItem) break;
       }
