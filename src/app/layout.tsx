@@ -4,6 +4,7 @@ import Providers from '@/components/Providers';
 import ConditionalGlobalDataProvider from '@/components/providers/ConditionalGlobalDataProvider';
 import CookieConsent from '@/components/CookieConsent';
 import FloatingAIAssistantWrapper from '@/components/FloatingAIAssistantWrapper';
+import { InternetStatusIndicator } from '@/components/InternetStatusIndicator';
 import 'react-toastify/dist/ReactToastify.css';
 import 'leaflet/dist/leaflet.css';
 import 'rsuite-table/dist/css/rsuite-table.css';
@@ -166,6 +167,7 @@ export default function RootLayout({
             {children}
             <CookieConsent />
             <FloatingAIAssistantWrapper />
+            <InternetStatusIndicator />
           </ConditionalGlobalDataProvider>
         </Providers>
       </body>
