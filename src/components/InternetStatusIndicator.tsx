@@ -3,18 +3,26 @@
 import { useInternetStatus } from '@/utils/hooks/useInternetStatus';
 import { FaWifi } from 'react-icons/fa';
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 /**
  * Internet Status Indicator Component
  * Displays a red "no internet" icon in the top right corner when offline
  * Automatically hides when online
+ * Hidden on landing page
  */
 export const InternetStatusIndicator = () => {
   const isOnline = useInternetStatus();
+  const pathname = usePathname();
 
   useEffect(() => {
     console.log('🔴 InternetStatusIndicator - isOnline:', isOnline);
   }, [isOnline]);
+
+  // Hide on landing page
+  if (pathname === '/') {
+    return null;
+  }
 
   // Temporarily always show for testing
   // if (isOnline) {
