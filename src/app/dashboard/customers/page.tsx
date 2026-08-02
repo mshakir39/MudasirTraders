@@ -16,7 +16,7 @@ async function getCustomersPageData() {
     const result = await getCustomersPaginated(1, CUSTOMERS_BATCH_SIZE);
 
     if (!result.success) {
-      console.error('Failed to fetch customers:', result.error);
+      console.error('Failed to fetch customers:', (result as { success: false; error: any }).error);
       return {
         customers: [],
         pagination: {
@@ -31,8 +31,8 @@ async function getCustomersPageData() {
     }
 
     return {
-      customers: Array.isArray(result.data) ? result.data : [],
-      pagination: result.pagination!,
+      customers: Array.isArray((result as { success: true; data: any[]; pagination: any }).data) ? (result as { success: true; data: any[]; pagination: any }).data : [],
+      pagination: (result as { success: true; data: any[]; pagination: any }).pagination,
     };
   } catch (error) {
     console.error('Error loading customers:', error);

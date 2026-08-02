@@ -17,8 +17,8 @@ export class CustomerApi {
 
       const result = await getCustomers();
 
-      if (result.success && Array.isArray(result.data)) {
-        return result.data;
+      if (result.success && Array.isArray((result as { success: true; data: any[] }).data)) {
+        return (result as { success: true; data: any[] }).data;
       }
 
       return [];
@@ -39,25 +39,26 @@ export class CustomerApi {
       const result = await createCustomer(customerData);
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to create customer');
+        throw new Error((result as { success: false; error: any }).error || 'Failed to create customer');
       }
 
       // Return the created customer data or a constructed customer object
+      const successResult = result as { success: true; data: any };
       if (
-        result.data &&
-        typeof result.data === 'object' &&
-        'customerName' in result.data
+        successResult.data &&
+        typeof successResult.data === 'object' &&
+        'customerName' in successResult.data
       ) {
         return {
           _id: `temp-${Date.now()}`,
           id: `temp-${Date.now()}`,
-          customerName: result.data.customerName,
-          phoneNumber: result.data.phoneNumber,
-          address: result.data.address || '',
-          email: result.data.email,
+          customerName: successResult.data.customerName,
+          phoneNumber: successResult.data.phoneNumber,
+          address: successResult.data.address || '',
+          email: successResult.data.email,
           createdAt:
-            result.data.createdAt instanceof Date
-              ? result.data.createdAt.toISOString()
+            successResult.data.createdAt instanceof Date
+              ? successResult.data.createdAt.toISOString()
               : new Date().toISOString(),
         };
       }
