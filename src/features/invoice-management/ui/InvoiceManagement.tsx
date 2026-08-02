@@ -586,6 +586,7 @@ export const InvoiceManagement: React.FC<InvoiceManagementProps> = ({
         onEditInvoice={(invoice) => handleOpenModal('edit', invoice)}
         onAddPayment={(invoice) => handleOpenModal('payment', invoice)}
         onDeleteInvoice={handleDeleteInvoice}
+        onRowClick={(invoice) => handleOpenModal('preview', invoice)}
         pendingPartialTotal={pendingPartialTotal}
         onPreviewReplacement={(replacementInvoiceId) => {
           // Find the replacement invoice by ID and open preview modal

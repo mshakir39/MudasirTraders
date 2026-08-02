@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import {
   getCustomers,
   getCustomersPaginated,
@@ -7,6 +7,13 @@ import {
   deleteCustomer,
 } from '@/actions/customerActions';
 import { CUSTOMERS_BATCH_SIZE } from '@/lib/customersQuery';
+import {
+  passThroughResponse,
+  errorResponse,
+  validationErrorResponse,
+} from '@/utils/apiResponse';
+import { validateCustomerData } from '@/utils/validators';
+import { handleApiError } from '@/utils/errorHandler';
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,7 +25,7 @@ export async function GET(req: NextRequest) {
     // Full list for autocomplete / invoice pickers
     if (all) {
       const result = await getCustomers(customerType);
-      return NextResponse.json(result);
+      return passThroughResponse(result);
     }
 
     const page = Math.max(1, Number(searchParams.get('page') || 1));
@@ -31,13 +38,10 @@ export async function GET(req: NextRequest) {
       customerType,
       search,
     });
-    return NextResponse.json(result);
+    return passThroughResponse(result);
   } catch (error: any) {
-    console.error('Error fetching customers:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch customers' },
-      { status: 500 }
-    );
+    const errorResult = handleApiError(error, 'GET /api/customers');
+    return errorResponse(errorResult.error, errorResult.statusCode);
   }
 }
 
@@ -45,11 +49,16 @@ export async function POST(req: NextRequest) {
   try {
     const { customerName, phoneNumber, address, email } = await req.json();
 
-    if (!customerName || !phoneNumber) {
-      return NextResponse.json(
-        { error: 'Customer name and phone number are required' },
-        { status: 400 }
-      );
+    // Validate customer data using improved validator
+    const validation = validateCustomerData({
+      customerName,
+      phoneNumber,
+      address,
+      email,
+    });
+
+    if (!validation.isValid) {
+      return validationErrorResponse(validation.errors);
     }
 
     const customerData = {
@@ -60,13 +69,10 @@ export async function POST(req: NextRequest) {
     };
 
     const result = await createCustomer(customerData);
-    return NextResponse.json(result);
+    return passThroughResponse(result);
   } catch (error: any) {
-    console.error('Error creating customer:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to create customer' },
-      { status: 500 }
-    );
+    const errorResult = handleApiError(error, 'POST /api/customers');
+    return errorResponse(errorResult.error, errorResult.statusCode);
   }
 }
 
@@ -75,20 +81,28 @@ export async function PUT(req: NextRequest) {
     const { id, ...data } = await req.json();
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'Customer ID is required' },
-        { status: 400 }
-      );
+      return validationErrorResponse(['Customer ID is required']);
+    }
+
+    // Validate customer data if provided
+    if (data.customerName || data.phoneNumber) {
+      const validation = validateCustomerData({
+        customerName: data.customerName,
+        phoneNumber: data.phoneNumber,
+        address: data.address,
+        email: data.email,
+      });
+
+      if (!validation.isValid) {
+        return validationErrorResponse(validation.errors);
+      }
     }
 
     const result = await updateCustomer(id, data);
-    return NextResponse.json(result);
+    return passThroughResponse(result);
   } catch (error: any) {
-    console.error('Error updating customer:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to update customer' },
-      { status: 500 }
-    );
+    const errorResult = handleApiError(error, 'PUT /api/customers');
+    return errorResponse(errorResult.error, errorResult.statusCode);
   }
 }
 
@@ -97,19 +111,13 @@ export async function DELETE(req: NextRequest) {
     const { id } = await req.json();
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'Customer ID is required' },
-        { status: 400 }
-      );
+      return validationErrorResponse(['Customer ID is required']);
     }
 
     const result = await deleteCustomer(id);
-    return NextResponse.json(result);
+    return passThroughResponse(result);
   } catch (error: any) {
-    console.error('Error deleting customer:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete customer' },
-      { status: 500 }
-    );
+    const errorResult = handleApiError(error, 'DELETE /api/customers');
+    return errorResponse(errorResult.error, errorResult.statusCode);
   }
 }

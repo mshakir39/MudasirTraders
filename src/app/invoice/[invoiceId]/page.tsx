@@ -1,18 +1,15 @@
-import { notFound } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Dancing_Script } from 'next/font/google';
 import { convertDate } from '@/utils/convertTime';
 import { getAllSum } from '@/utils/getTotalSum';
 import { formatRupees } from '@/utils/formatRupees';
 import { removeParentheses } from '@/utils/formatters';
 import InvoiceTable from '@/components/InvoiceTable';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const dancingScript = Dancing_Script({ subsets: ['latin'] });
-
-interface InvoicePageProps {
-  params: Promise<{
-    invoiceId: string;
-  }>;
-}
 
 const columns = [
   { label: 'ID', renderCell: (_: any, index: number) => index + 1 },
@@ -35,60 +32,129 @@ const columns = [
   { label: 'Amount', renderCell: (item: any) => `Rs ${item.totalPrice}` },
 ];
 
-export async function generateMetadata({ params }: InvoicePageProps) {
-  try {
-    const { invoiceId } = await params;
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      (process.env.NODE_ENV === 'production'
-        ? 'https://mudasirtraders.com'
-        : 'http://localhost:3000');
+export default function InvoicePage() {
+  const [invoice, setInvoice] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const res = await fetch(`${baseUrl}/api/invoice/${invoiceId}`);
-    const result = await res.json();
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      try {
+        // Get invoice ID from URL path
+        const pathParts = window.location.pathname.split('/');
+        const invoiceId = pathParts[pathParts.length - 1];
+        
+        console.log('Fetching invoice with ID:', invoiceId);
+        
+        if (!invoiceId) {
+          setError('No invoice ID found in URL');
+          setLoading(false);
+          return;
+        }
+        
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BASE_URL ||
+          (process.env.NODE_ENV === 'production'
+            ? 'https://mudasirtraders.com'
+            : 'http://localhost:3000');
 
-    if (!result.success) {
-      return { title: 'Invoice Not Found' };
-    }
+        const url = `${baseUrl}/api/invoice/${invoiceId}`;
+        console.log('Fetching from URL:', url);
+        
+        const res = await fetch(url);
+        console.log('Response status:', res.status);
+        
+        const result = await res.json();
+        console.log('Response data:', result);
 
-    return {
-      title: `Invoice #${result.data.invoiceNo} - Mudasir Traders`,
-      description: `Invoice for ${result.data.customerName}`,
+        if (!result.success) {
+          console.error('API returned unsuccessful:', result);
+          setError(result.error || 'Invoice not found');
+          setLoading(false);
+          return;
+        }
+
+        setInvoice(result.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching invoice:', err);
+        setError('Failed to load invoice: ' + (err as Error).message);
+        setLoading(false);
+      }
     };
-  } catch {
-    return { title: 'Invoice - Mudasir Traders' };
-  }
-}
 
-export default async function InvoicePage({ params }: InvoicePageProps) {
-  let result;
+    fetchInvoice();
+  }, []);
 
-  try {
-    const { invoiceId } = await params;
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      (process.env.NODE_ENV === 'production'
-        ? 'https://mudasirtraders.com'
-        : 'http://localhost:3000');
-
-    const res = await fetch(`${baseUrl}/api/invoice/${invoiceId}`, {
-      cache: 'no-store',
-    });
-
-    result = await res.json();
-    if (!result.success) notFound();
-  } catch {
+  if (loading) {
     return (
       <div className='flex min-h-screen items-center justify-center bg-gray-50'>
-        <div className='rounded bg-white p-6 text-center shadow'>
-          <h1 className='text-xl font-bold text-red-600'>Error</h1>
-          <p>Failed to load invoice</p>
-        </div>
+        <LoadingSpinner size='lg' />
       </div>
     );
   }
 
-  const invoice = result.data;
+  if (error || !invoice) {
+    return (
+      <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 px-4'>
+        <div className='max-w-md w-full rounded-2xl bg-white p-8 text-center shadow-xl'>
+          {/* Icon */}
+          <div className='mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-red-100'>
+            <svg
+              className='h-12 w-12 text-red-500'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+              />
+            </svg>
+          </div>
+
+          {/* Title */}
+          <h1 className='mb-2 text-3xl font-bold text-gray-900'>
+            Invoice Not Found
+          </h1>
+
+          {/* Description */}
+          <p className='mb-6 text-gray-600'>
+            {error || 'The invoice you are looking for does not exist or has been removed.'}
+          </p>
+
+          {/* Actions */}
+          <div className='flex flex-col gap-3 sm:flex-row sm:justify-center'>
+            <button
+              onClick={() => window.history.back()}
+              className='rounded-lg bg-sidebar-gradient px-6 py-3 font-semibold text-white transition-all hover:opacity-90 hover:shadow-lg'
+            >
+              Go Back
+            </button>
+            <a
+              href='/dashboard'
+              className='rounded-lg border-2 border-blue-500 px-6 py-3 font-semibold text-blue-600 transition-all hover:bg-blue-50'
+            >
+              Go to Dashboard
+            </a>
+          </div>
+
+          {/* Help Text */}
+          <p className='mt-6 text-sm text-gray-500'>
+            Need help? Contact support at{' '}
+            <a
+              href='mailto:Owner@mudasirtraders.com'
+              className='text-blue-600 hover:underline'
+            >
+              Owner@mudasirtraders.com
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const footerData = {
     ID: 'Total',

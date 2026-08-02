@@ -22,14 +22,16 @@ export const InternetStatusIndicator = () => {
   // }
 
   return (
-    <div className={`fixed bottom-24 right-8 z-[99999] flex items-center gap-2 px-2 py-1 rounded-lg shadow-lg ${isOnline ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+    <div className={`fixed bottom-9 right-24 z-[99999] group flex items-center gap-2 px-2 py-1 rounded-lg shadow-lg ${isOnline ? 'bg-green-600' : 'bg-red-600'} text-white`}>
       <div className="relative">
         <FaWifi className="w-5 h-5" />
         {!isOnline && (
           <div className="absolute left-1/2 top-1/2 h-5 w-0.5 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-white" />
         )}
       </div>
-      {/* <span className="text-sm font-medium">{isOnline ? 'Online' : 'No Internet'}</span> */}
+      <span className="text-sm font-medium whitespace-nowrap text-white">
+        {isOnline ? 'Connected' : 'No Internet'}
+      </span>
     </div>
   );
 };

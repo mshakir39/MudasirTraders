@@ -4,6 +4,7 @@ import {
   CUSTOMERS_BATCH_SIZE,
   buildCustomersFilter,
 } from '@/lib/customersQuery';
+import { handleActionError } from '@/utils/errorHandler';
 
 interface CustomerData {
   customerName: string;
@@ -48,7 +49,7 @@ export async function createCustomer(data: CustomerData) {
     // Return the customer document that was inserted
     return { success: true, data: customerDocument };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return handleActionError(error, 'createCustomer');
   }
 }
 
@@ -60,7 +61,7 @@ export async function updateCustomer(id: string, data: Partial<CustomerData>) {
     });
     return { success: true, data: result };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return handleActionError(error, 'updateCustomer');
   }
 }
 
@@ -80,8 +81,7 @@ export async function deleteCustomer(id: string) {
 
     return { success: true, data: result };
   } catch (error: any) {
-    console.error('Error deleting customer:', error);
-    return { success: false, error: error.message };
+    return handleActionError(error, 'deleteCustomer');
   }
 }
 
@@ -96,8 +96,7 @@ export async function getCustomers(customerType?: string) {
 
     return { success: true, data: result.docs };
   } catch (error: any) {
-    console.error('Error fetching customers:', error);
-    return { success: false, error: error.message };
+    return handleActionError(error, 'getCustomers');
   }
 }
 
@@ -133,7 +132,6 @@ export async function getCustomersPaginated(
       },
     };
   } catch (error: any) {
-    console.error('Error fetching paginated customers:', error);
-    return { success: false, error: error.message };
+    return handleActionError(error, 'getCustomersPaginated');
   }
 }

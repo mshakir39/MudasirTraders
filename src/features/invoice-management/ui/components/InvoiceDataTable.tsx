@@ -19,6 +19,7 @@ interface InvoiceDataTableProps {
   onDeleteInvoice: (invoiceId: string) => void;
   onCreateInvoice?: () => void;
   onPreviewReplacement?: (replacementInvoiceId: string) => void;
+  onRowClick?: (invoice: Invoice) => void;
   className?: string;
   pendingPartialTotal?: number;
 }
@@ -31,6 +32,7 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
   onDeleteInvoice,
   onCreateInvoice,
   onPreviewReplacement,
+  onRowClick,
   className = '',
   pendingPartialTotal = 0,
 }) => {
@@ -341,6 +343,7 @@ export const InvoiceDataTable: React.FC<InvoiceDataTableProps> = ({
             ? `Total: Rs ${pendingPartialTotal.toLocaleString()}`
             : undefined
         }
+        onRowClick={onRowClick}
       />
     </div>
   );
