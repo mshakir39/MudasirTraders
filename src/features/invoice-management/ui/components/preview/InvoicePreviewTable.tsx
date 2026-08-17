@@ -13,7 +13,7 @@ interface InvoicePreviewTableProps {
 }
 
 const columns = [
-  { label: 'ID', renderCell: (item: any, index: number) => index + 1 },
+  { label: 'ID', renderCell: (item: any, index: number) => index + 1, className: 'text-right' },
   {
     label: 'Name',
     renderCell: (item: any) => {
@@ -23,15 +23,18 @@ const columns = [
         : `${item.brandName} - ${item.series}`;
       return removeParentheses(name);
     },
+    className: 'text-left',
   },
-  { label: 'Qty', renderCell: (item: any) => item.quantity },
+  { label: 'Qty', renderCell: (item: any) => item.quantity, className: 'text-right' },
   {
     label: 'Price',
     renderCell: (item: any) => formatCurrency(item.productPrice),
+    className: 'text-right',
   },
   {
     label: 'Total',
     renderCell: (item: any) => formatCurrency(item.totalPrice),
+    className: 'text-right',
   },
 ];
 
@@ -47,8 +50,8 @@ export const InvoicePreviewTable: React.FC<InvoicePreviewTableProps> = ({
   };
 
   return (
-    <div className='mt-6 overflow-x-auto overflow-y-hidden md:mt-8'>
-      <div className='min-w-[500px]'>
+    <div className='mt-4 overflow-x-auto overflow-y-hidden sm:mt-6 md:mt-8'>
+      <div className='min-w-[350px] sm:min-w-[400px] md:min-w-[500px]'>
         <BasicTable
           data={data?.products}
           columns={columns}

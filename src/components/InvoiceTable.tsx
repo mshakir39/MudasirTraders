@@ -26,22 +26,22 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({
   return (
     <div className='w-full'>
       {/* Mobile View - Card Layout */}
-      <div className='block lg:hidden'>
+      <div className='block md:hidden lg:hidden'>
         {data?.map((row, rowIndex) => (
           <div
             key={rowIndex}
-            className='mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm'
+            className='mb-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:mb-4 sm:p-4'
           >
-            <div className='space-y-3'>
+            <div className='space-y-2 sm:space-y-3'>
               <div className='flex items-center justify-between border-b pb-2'>
-                <span className='font-bold text-gray-800'>
+                <span className='text-sm font-bold text-gray-800 sm:text-base'>
                   Item #{rowIndex + 1}
                 </span>
-                <span className='font-bold text-gray-800'>
+                <span className='text-sm font-bold text-gray-800 sm:text-base'>
                   {formatCurrency(row.totalPrice)}
                 </span>
               </div>
-              <div className='text-sm text-gray-700'>
+              <div className='text-xs text-gray-700 sm:text-sm'>
                 <div className='font-medium'>
                   {columns[1].renderCell(row, rowIndex)}
                 </div>
@@ -56,14 +56,14 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({
       </div>
 
       {/* Desktop View - Table Layout */}
-      <div className='hidden overflow-x-auto lg:block'>
-        <table className='w-full border-collapse'>
+      <div className='hidden overflow-x-auto md:block lg:block'>
+        <table className='w-full min-w-[500px] border-collapse sm:min-w-[600px]'>
           <thead>
             <tr className='bg-dark-900 text-white'>
               {columns?.map((column, index) => (
                 <th
                   key={index}
-                  className='p-3 text-left text-sm font-bold md:p-4 md:text-base lg:text-lg'
+                  className='p-2 text-left text-xs font-bold sm:p-3 sm:text-sm md:p-4 md:text-base lg:text-lg'
                 >
                   {column.label}
                 </th>
@@ -79,7 +79,7 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({
                 {columns?.map((column, index) => (
                   <td
                     key={index}
-                    className='p-3 text-left text-sm text-gray-700 md:p-4 md:text-base'
+                    className='p-2 text-left text-xs text-gray-700 sm:p-3 sm:text-sm md:p-4 md:text-base'
                   >
                     {column.renderCell(row, rowIndex)}
                   </td>
@@ -92,7 +92,7 @@ const InvoiceTable: React.FC<InvoiceTableProps<any>> = ({
               {columns?.map((column, index) => (
                 <td
                   key={index}
-                  className='border-t-2 border-gray-300 p-3 text-left text-sm font-bold md:p-4 md:text-base lg:text-lg'
+                  className='border-t-2 border-gray-300 p-2 text-left text-xs font-bold sm:p-3 sm:text-sm md:p-4 md:text-base lg:text-lg'
                 >
                   {modifiedFooterData[column.label]}
                 </td>

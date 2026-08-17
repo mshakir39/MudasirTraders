@@ -28,7 +28,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({
     <form onSubmit={onSubmit} className='space-y-2'>
       {children}
 
-      <div className='flex justify-end gap-3 pt-2'>
+      <div className='flex justify-end gap-3 pt-2 sticky bottom-0 bg-white pb-2 sm:pb-0 z-10 border-t border-gray-200 sm:border-t-0'>
         <Button
           variant='outline'
           text='Cancel'

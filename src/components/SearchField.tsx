@@ -22,7 +22,7 @@ const SearchField: React.FC<SearchFieldProps> = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className='w-full rounded-lg bg-white py-3 pl-12 pr-4 shadow-sm outline-none transition-all duration-200'
+          className='w-full rounded-lg bg-white py-2 pl-10 pr-3 text-xs shadow-sm outline-none transition-all duration-200 sm:py-3 sm:pl-12 sm:pr-4 sm:text-sm'
           style={{
             color: '#2563eb',
             borderColor: '#dbeafe',
@@ -40,8 +40,8 @@ const SearchField: React.FC<SearchFieldProps> = ({
               '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)';
           }}
         />
-        <div className='pointer-events-none absolute inset-y-0 left-4 flex items-center'>
-          <FaSearch className='h-4 w-4' style={{ color: '#60a5fa' }} />
+        <div className='pointer-events-none absolute inset-y-0 left-3 flex items-center sm:left-4'>
+          <FaSearch className='h-3 w-3 sm:h-4 sm:w-4' style={{ color: '#60a5fa' }} />
         </div>
       </div>
     </div>

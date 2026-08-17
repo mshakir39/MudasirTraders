@@ -30,16 +30,16 @@ export const InvoiceFilters: React.FC<InvoiceFiltersProps> = ({
 
   return (
     <div className={`${className}`}>
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3'>
         {/* Customer Filter */}
         <div>
-          <label className='mb-1 block text-sm font-medium text-gray-700'>
+          <label className='mb-1 block text-xs font-medium text-gray-700 sm:text-sm'>
             Customer
           </label>
           <select
             value={filter.customer || ''}
             onChange={(e) => handleFilterChange('customer', e.target.value)}
-            className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            className='w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 sm:px-3 sm:py-2 sm:text-sm'
           >
             <option value=''>All Customers</option>
             {customerOptions.map((customer) => (
@@ -52,7 +52,7 @@ export const InvoiceFilters: React.FC<InvoiceFiltersProps> = ({
 
         {/* Payment Status Filter */}
         <div>
-          <label className='mb-1 block text-sm font-medium text-gray-700'>
+          <label className='mb-1 block text-xs font-medium text-gray-700 sm:text-sm'>
             Payment Status
           </label>
           <select
@@ -60,7 +60,7 @@ export const InvoiceFilters: React.FC<InvoiceFiltersProps> = ({
             onChange={(e) =>
               handleFilterChange('paymentStatus', e.target.value)
             }
-            className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            className='w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 sm:px-3 sm:py-2 sm:text-sm'
           >
             <option value='all'>All Status</option>
             <option value='pending'>Pending</option>
@@ -71,7 +71,7 @@ export const InvoiceFilters: React.FC<InvoiceFiltersProps> = ({
 
         {/* Payment Method Filter */}
         <div>
-          <label className='mb-1 block text-sm font-medium text-gray-700'>
+          <label className='mb-1 block text-xs font-medium text-gray-700 sm:text-sm'>
             Payment Method
           </label>
           <select
@@ -79,7 +79,7 @@ export const InvoiceFilters: React.FC<InvoiceFiltersProps> = ({
             onChange={(e) =>
               handleFilterChange('paymentMethod', e.target.value)
             }
-            className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            className='w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 sm:px-3 sm:py-2 sm:text-sm'
           >
             <option value=''>All Methods</option>
             {paymentMethodOptions.map((method) => (

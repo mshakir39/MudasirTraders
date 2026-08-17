@@ -289,10 +289,10 @@ export const Table = <TData extends Record<string, any>>({
       {/* Header with Search and Button */}
       {(enableSearch || showButton || stockCost !== undefined) && (
         <div
-          className={`${sectionGap} flex items-center ${enableSearch ? 'justify-between' : 'justify-end'} gap-4`}
+          className={`${sectionGap} flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4`}
         >
           {enableSearch && (
-            <div className={`w-80 ${searchParentClassName}`}>
+            <div className={`w-full sm:w-80 ${searchParentClassName}`}>
               <SearchField
                 value={searchFieldValue}
                 onChange={(value) => {
@@ -306,11 +306,11 @@ export const Table = <TData extends Record<string, any>>({
               />
             </div>
           )}
-          <div className='flex items-center gap-4'>
+          <div className='flex flex-wrap items-center gap-2 sm:gap-4'>
             {stockCost !== undefined && stockCost > 0 && (
               <button
                 onClick={() => setShowStockCost((prev) => !prev)}
-                className='whitespace-nowrap font-bold text-gray-500 transition-colors hover:text-gray-700'
+                className='whitespace-nowrap text-xs font-bold text-gray-500 transition-colors hover:text-gray-700 sm:text-sm'
                 title={showStockCost ? 'Hide Stock Cost' : 'Show Stock Cost'}
               >
                 Total Stock Cost:{' '}
@@ -329,7 +329,7 @@ export const Table = <TData extends Record<string, any>>({
               />
             )}
             {buttonExtraContent && (
-              <span className='mr-2 text-sm font-medium text-gray-600'>
+              <span className='mr-2 text-xs font-medium text-gray-600 sm:text-sm'>
                 {buttonExtraContent}
               </span>
             )}
@@ -371,7 +371,7 @@ export const Table = <TData extends Record<string, any>>({
           }}
           onScroll={scrollableBody ? onBodyScroll : undefined}
         >
-          <table className='w-full table-fixed'>
+          <table className='w-full min-w-[600px] table-fixed sm:min-w-[800px]'>
             {(() => {
               const headerCount =
                 table.getHeaderGroups()[0]?.headers.length || columns.length;
@@ -398,7 +398,7 @@ export const Table = <TData extends Record<string, any>>({
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className='overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-left text-sm font-medium text-gray-700'
+                      className='overflow-hidden text-ellipsis whitespace-nowrap px-2 py-2 text-left text-xs font-medium text-gray-700 sm:px-3 sm:py-3 sm:text-sm'
                     >
                       {header.isPlaceholder ? null : (
                         <div
@@ -415,7 +415,7 @@ export const Table = <TData extends Record<string, any>>({
                           )}
                           {header.column.getCanSort() && (
                             <ChevronDownIcon
-                              className={`h-4 w-4 transition-transform ${
+                              className={`h-3 w-3 transition-transform sm:h-4 sm:w-4 ${
                                 header.column.getIsSorted() === 'asc'
                                   ? 'rotate-180 text-blue-600'
                                   : header.column.getIsSorted() === 'desc'
@@ -470,7 +470,7 @@ export const Table = <TData extends Record<string, any>>({
                               {row.getVisibleCells().map((cell) => (
                                 <td
                                   key={cell.id}
-                                  className='whitespace-normal break-words px-4 py-3 text-sm text-gray-900'
+                                  className='whitespace-normal break-words px-2 py-2 text-xs text-gray-900 sm:px-3 sm:py-3 sm:text-sm'
                                 >
                                   {flexRender(
                                     cell.column.columnDef.cell,
@@ -507,7 +507,7 @@ export const Table = <TData extends Record<string, any>>({
                       {row.getVisibleCells().map((cell) => (
                         <td
                           key={cell.id}
-                          className='whitespace-normal break-words px-4 py-3 text-sm text-gray-900'
+                          className='whitespace-normal break-words px-2 py-2 text-xs text-gray-900 sm:px-3 sm:py-3 sm:text-sm'
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
@@ -522,7 +522,7 @@ export const Table = <TData extends Record<string, any>>({
 
           {/* Empty State */}
           {renderRows.length === 0 && (
-            <div className='py-12 text-center text-sm text-gray-500'>
+            <div className='py-8 text-center text-xs text-gray-500 sm:py-12 sm:text-sm'>
               {emptyMessage}
             </div>
           )}
@@ -538,7 +538,7 @@ export const Table = <TData extends Record<string, any>>({
 
       {/* Pagination */}
       {enablePagination && totalPages > 1 && (
-        <div className='mt-4 flex items-center justify-between gap-2'>
+        <div className='mt-3 flex flex-col items-center gap-2 sm:mt-4 sm:flex-row sm:justify-between sm:gap-2'>
           <div className='flex items-center gap-2'>
             <select
               value={pageSize}
@@ -546,7 +546,7 @@ export const Table = <TData extends Record<string, any>>({
                 setPageSize(Number(e.target.value));
                 setCurrentPage(0);
               }}
-              className='rounded border border-gray-200 px-2 py-1 text-sm'
+              className='rounded border border-gray-200 px-2 py-1 text-xs sm:px-2 sm:py-1 sm:text-sm'
             >
               {[5, 10, 20, 30, 50].map((size) => (
                 <option key={size} value={size}>
@@ -554,12 +554,12 @@ export const Table = <TData extends Record<string, any>>({
                 </option>
               ))}
             </select>
-            <span className='text-sm text-gray-600'>entries</span>
+            <span className='text-xs text-gray-600 sm:text-sm'>entries</span>
           </div>
 
-          <div className='flex items-center gap-2'>
+          <div className='flex items-center gap-1 sm:gap-2'>
             <button
-              className='rounded border border-gray-200 px-3 py-1 text-sm transition-colors hover:bg-gray-50 disabled:opacity-50'
+              className='rounded border border-gray-200 px-2 py-1 text-xs transition-colors hover:bg-gray-50 disabled:opacity-50 sm:px-3 sm:py-1 sm:text-sm'
               onClick={handlePreviousPage}
               disabled={currentPage === 0}
             >
@@ -582,7 +582,7 @@ export const Table = <TData extends Record<string, any>>({
                   <button
                     key={pageNumber}
                     onClick={() => setCurrentPage(pageNumber)}
-                    className={`min-w-[32px] rounded px-2 py-1 text-sm ${
+                    className={`min-w-[28px] rounded px-1.5 py-1 text-xs sm:min-w-[32px] sm:px-2 sm:py-1 sm:text-sm ${
                       currentPage === pageNumber
                         ? 'bg-blue-600 text-white'
                         : 'text-gray-600 hover:bg-gray-100'
@@ -594,7 +594,7 @@ export const Table = <TData extends Record<string, any>>({
               })}
             </div>
             <button
-              className='rounded border border-gray-200 px-3 py-1 text-sm transition-colors hover:bg-gray-50 disabled:opacity-50'
+              className='rounded border border-gray-200 px-2 py-1 text-xs transition-colors hover:bg-gray-50 disabled:opacity-50 sm:px-3 sm:py-1 sm:text-sm'
               onClick={handleNextPage}
               disabled={currentPage >= totalPages - 1}
             >
@@ -602,7 +602,7 @@ export const Table = <TData extends Record<string, any>>({
             </button>
           </div>
 
-          <div className='text-sm text-gray-600'>
+          <div className='text-xs text-gray-600 sm:text-sm'>
             Showing {currentPage * pageSize + 1} to{' '}
             {Math.min((currentPage + 1) * pageSize, sortedRows.length)} of{' '}
             {sortedRows.length} entries

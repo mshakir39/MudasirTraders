@@ -97,9 +97,9 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
       title={`Add Payment - Invoice #${invoice.invoiceNo}`}
       size='medium'
     >
-      <form onSubmit={handleSubmit} className='space-y-4'>
-        <div className='rounded-lg bg-gray-50 p-4'>
-          <div className='grid grid-cols-2 gap-4 text-sm'>
+      <form onSubmit={handleSubmit} className='space-y-3 sm:space-y-4'>
+        <div className='rounded-lg bg-gray-50 p-3 sm:p-4'>
+          <div className='grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm'>
             <div>
               <span className='font-medium'>Total Amount:</span> Rs{' '}
               {totalAmount.toLocaleString()}
@@ -116,14 +116,14 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
         </div>
 
         <div>
-          <label className='mb-1 block text-sm font-medium text-gray-700'>
+          <label className='mb-1 block text-xs font-medium text-gray-700 sm:text-sm'>
             Payment Amount *
           </label>
           <input
             type='number'
             value={paymentAmount}
             onChange={(e) => setPaymentAmount(e.target.value)}
-            className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            className='w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 sm:px-3 sm:py-2 sm:text-sm'
             placeholder='Enter payment amount'
             min='0'
             step='0.01'
@@ -133,13 +133,13 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
         </div>
 
         <div>
-          <label className='mb-1 block text-sm font-medium text-gray-700'>
+          <label className='mb-1 block text-xs font-medium text-gray-700 sm:text-sm'>
             Payment Method *
           </label>
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
-            className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+            className='w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 sm:px-3 sm:py-2 sm:text-sm'
             required
           >
             <option value='Cash'>Cash</option>
@@ -150,18 +150,18 @@ export const InvoicePaymentModal: React.FC<InvoicePaymentModalProps> = ({
           </select>
         </div>
 
-        <div className='flex justify-end gap-3 pt-4'>
+        <div className='flex justify-end gap-2 pt-3 sm:gap-3 sm:pt-4'>
           <button
             type='button'
             onClick={onClose}
-            className='rounded-md border border-gray-300 px-4 py-2 text-gray-600 hover:bg-gray-50'
+            className='rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 sm:px-4 sm:py-2 sm:text-sm'
           >
             Cancel
           </button>
           <button
             type='submit'
             disabled={isLoading}
-            className='rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:bg-blue-300'
+            className='rounded-md bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700 disabled:bg-blue-300 sm:px-4 sm:py-2 sm:text-sm'
           >
             {isLoading ? 'Processing...' : 'Add Payment'}
           </button>

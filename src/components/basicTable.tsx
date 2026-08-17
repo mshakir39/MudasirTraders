@@ -6,17 +6,18 @@ interface TableProps<T> {
   columns: {
     label: string;
     renderCell: (item: T, index: number) => React.ReactNode;
+    className?: string;
   }[];
   footerData: any;
 }
 
 const Table: React.FC<TableProps<any>> = ({ data, columns, footerData }) => {
   return (
-    <table className='w-full border-collapse'>
+    <table className='w-full min-w-[400px] border-collapse sm:min-w-[500px]'>
       <thead>
         <tr className='bg-sidebar-gradient text-white'>
           {columns?.map((column, index) => (
-            <th key={index} className='p-4 text-lg font-bold'>
+            <th key={index} className={`p-2 text-xs font-bold sm:p-3 sm:text-sm md:p-4 md:text-base lg:text-lg ${column.className || 'text-left'}`}>
               {column.label}
             </th>
           ))}
@@ -26,7 +27,7 @@ const Table: React.FC<TableProps<any>> = ({ data, columns, footerData }) => {
         {data?.map((row, rowIndex) => (
           <tr key={rowIndex} className='hover:bg-gray-100'>
             {columns?.map((column, index) => (
-              <td key={index} className='border-b border-gray-200 p-4'>
+              <td key={index} className={`border-b border-gray-200 p-2 text-xs sm:p-3 sm:text-sm md:p-4 md:text-base ${column.className || 'text-left'}`}>
                 {column.renderCell(row, rowIndex)}
               </td>
             ))}
@@ -36,7 +37,7 @@ const Table: React.FC<TableProps<any>> = ({ data, columns, footerData }) => {
       <tfoot>
         <tr className='bg-gray-100'>
           {columns?.map((column, index) => (
-            <td key={index} className='p-4 text-lg font-bold'>
+            <td key={index} className={`p-2 text-xs font-bold sm:p-3 sm:text-sm md:p-4 md:text-base lg:text-lg ${column.className || 'text-left'}`}>
               {footerData[column.label]}
             </td>
           ))}

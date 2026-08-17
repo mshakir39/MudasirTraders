@@ -86,7 +86,7 @@ const InvoicePreviewModalRefactored: React.FC<InvoicePreviewModalProps> = ({
       size='large'
     >
       <div
-        className='relative flex h-full w-full flex-col bg-white p-4 md:p-8'
+        className='relative flex h-full w-full flex-col bg-white p-3 sm:p-4 md:p-6 lg:p-8'
         ref={downloadRef}
         data-invoice-modal
       >
@@ -104,7 +104,7 @@ const InvoicePreviewModalRefactored: React.FC<InvoicePreviewModalProps> = ({
         <InvoicePreviewTable data={data} />
 
         {/* Bottom Details Section */}
-        <div className='mt-6 flex w-full flex-col gap-4 md:mt-8 md:gap-6 lg:flex-row'>
+        <div className='mt-4 flex w-full flex-col gap-3 sm:mt-6 sm:gap-4 md:mt-8 md:gap-6 lg:flex-row'>
           {/* Summary Column */}
           <InvoicePreviewSummary data={data} />
 

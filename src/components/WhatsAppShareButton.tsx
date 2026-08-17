@@ -140,7 +140,7 @@ Contact # 03367045100
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '4px',
+        padding: '2px',
         borderRadius: '50%',
         transition: 'all 0.3s ease',
       }}

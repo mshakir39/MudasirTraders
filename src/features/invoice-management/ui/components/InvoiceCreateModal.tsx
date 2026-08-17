@@ -534,6 +534,7 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
       title='Create New Invoice'
       size='large'
       dialogPanelClass='w-full max-w-6xl'
+      fullScreenOnMobile={true}
     >
       <InvoiceForm
         invoiceData={invoiceData}
@@ -542,9 +543,9 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
         onSubmit={handleFormSubmit}
         onCancel={handleSaveAndClose} // Save state instead of just closing
       >
-        <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-          <div className='flex h-full flex-col'>
-            <div className='space-y-4'>
+        <div className='grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-3'>
+          <div className='flex h-full flex-col lg:border-r lg:border-gray-200 lg:pr-6'>
+            <div className='space-y-3 sm:space-y-4'>
               <InvoiceCustomerSection
                 invoiceData={invoiceData}
                 setInvoiceData={setInvoiceData}
@@ -644,9 +645,8 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
             </div>
           </div>
 
-          <div className='hidden lg:relative lg:block'>
-            <div className='absolute bottom-0 left-0 top-0 w-px bg-gray-200'></div>
-            <div className='flex h-full flex-col pl-6'>
+          <div className='relative lg:block lg:border-l lg:border-gray-200 lg:pl-6 lg:pr-6'>
+            <div className='flex h-full flex-col'>
               <InvoiceProductsSection
                 invoiceData={invoiceData}
                 setInvoiceData={setInvoiceData}
@@ -664,9 +664,8 @@ const InvoiceCreateModal: React.FC<InvoiceCreateModalProps> = ({
             </div>
           </div>
 
-          <div className='hidden lg:relative lg:block'>
-            <div className='absolute bottom-0 left-0 top-0 w-px bg-gray-200'></div>
-            <div className='flex h-full flex-col pl-6'>
+          <div className='relative lg:block lg:border-l lg:border-gray-200 lg:pl-6'>
+            <div className='flex h-full flex-col'>
               <InvoicePaymentSection
                 invoiceData={invoiceData}
                 setInvoiceData={setInvoiceData}

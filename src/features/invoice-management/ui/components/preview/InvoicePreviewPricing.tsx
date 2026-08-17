@@ -60,19 +60,19 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
 
   return (
     <div className='flex w-full flex-col border border-gray-100 lg:w-[45%]'>
-      <div className='flex items-center justify-between bg-sidebar-gradient p-2 text-white md:p-3'>
-        <span className='text-sm font-bold md:text-base lg:text-lg'>
+      <div className='flex items-center justify-between bg-sidebar-gradient p-1.5 text-white sm:p-2 md:p-3'>
+        <span className='text-xs font-bold sm:text-sm md:text-base lg:text-lg'>
           SubTotal
         </span>
-        <span className='text-sm font-bold md:text-base lg:text-lg'>
+        <span className='text-xs font-bold sm:text-sm md:text-base lg:text-lg'>
           Rs {formatCurrency(getAllSum(data?.products, 'totalPrice'))}
         </span>
       </div>
 
       {/* Consolidation Details - Only show for consolidated invoices */}
       {data?.consolidatedFrom && data?.consolidatedFrom.length > 0 && (
-        <div className='border border-purple-200 bg-purple-50 p-3'>
-          <div className='flex flex-col space-y-1 text-sm'>
+        <div className='border border-purple-200 bg-purple-50 p-2 sm:p-3'>
+          <div className='flex flex-col space-y-1 text-xs sm:text-sm'>
             {data?.consolidatedInvoiceNumbers?.length > 0
               ? // New format: Use actual invoice numbers if available
                 data?.consolidatedInvoiceNumbers?.map(
@@ -106,11 +106,11 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
       )}
 
       {(Number(data?.batteriesRate) || 0) > 0 && (
-        <div className='flex items-center justify-between border-b border-gray-50 p-2 text-black md:p-3'>
-          <span className='text-xs font-bold uppercase text-gray-500 md:text-sm'>
+        <div className='flex items-center justify-between border-b border-gray-50 p-1.5 text-black sm:p-2 md:p-3'>
+          <span className='text-xs font-bold uppercase text-gray-500 sm:text-xs md:text-sm'>
             {data?.batteriesCountAndWeight || 'Old Battery'}
           </span>
-          <span className='text-xs font-bold md:text-sm'>
+          <span className='text-xs font-bold sm:text-xs md:text-sm'>
             - Rs {formatCurrency(data?.batteriesRate)}
           </span>
         </div>
@@ -118,20 +118,20 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
 
       {(Number(data?.batteriesRate) || 0) === 0 &&
         data?.batteriesCountAndWeight && (
-          <div className='flex items-center justify-between border-b border-gray-50 p-2 text-black md:p-3'>
-            <span className='text-xs font-bold uppercase text-gray-500 md:text-sm'>
+          <div className='flex items-center justify-between border-b border-gray-50 p-1.5 text-black sm:p-2 md:p-3'>
+            <span className='text-xs font-bold uppercase text-gray-500 sm:text-xs md:text-sm'>
               {data?.batteriesCountAndWeight}
             </span>
-            <span className='text-xs font-bold md:text-sm'>- Old Battery</span>
+            <span className='text-xs font-bold sm:text-xs md:text-sm'>- Old Battery</span>
           </div>
         )}
 
       {Number(data?.receivedAmount) > 0 && (
-        <div className='flex items-center justify-between border-b border-gray-50 p-2 text-black md:p-3'>
-          <span className='text-xs font-bold text-gray-500 md:text-sm'>
+        <div className='flex items-center justify-between border-b border-gray-50 p-1.5 text-black sm:p-2 md:p-3'>
+          <span className='text-xs font-bold text-gray-500 sm:text-xs md:text-sm'>
             Received:
           </span>
-          <span className='text-xs font-bold md:text-sm'>
+          <span className='text-xs font-bold sm:text-xs md:text-sm'>
             - Rs {formatCurrency(data?.receivedAmount)}
           </span>
         </div>
@@ -139,32 +139,32 @@ export const InvoicePreviewPricing: React.FC<InvoicePreviewPricingProps> = ({
 
       {/* Additional Payments */}
       {data?.additionalPayment && data?.additionalPayment.length > 0 ? (
-        <div className='mt-2 bg-gray-50 p-3'>
+        <div className='mt-2 bg-gray-50 p-2 sm:p-3'>
           {data?.additionalPayment?.map((payment: any, idx: number) => (
             <div
               key={idx}
               className='flex items-center justify-between border-b border-gray-200 py-1 last:border-b-0'
             >
-              <span className='text-xs font-bold text-gray-500 md:text-sm'>
+              <span className='text-xs font-bold text-gray-500 sm:text-xs md:text-sm'>
                 {payment?.addedDate
                   ? convertDate(payment.addedDate).dateTime
                   : ''}
               </span>
-              <span className='text-xs font-bold md:text-sm'>
+              <span className='text-xs font-bold sm:text-xs md:text-sm'>
                 - Rs {formatCurrency(payment?.amount)}
               </span>
             </div>
           ))}
         </div>
       ) : (
-        <div className='mt-2 rounded-lg border bg-gray-50 p-3'></div>
+        <div className='mt-2 rounded-lg border bg-gray-50 p-2 sm:p-3'></div>
       )}
 
-      <div className='flex items-center justify-between bg-sidebar-gradient p-2 text-white md:p-3'>
-        <span className='text-sm font-bold md:text-base lg:text-lg'>
+      <div className='flex items-center justify-between bg-sidebar-gradient p-1.5 text-white sm:p-2 md:p-3'>
+        <span className='text-xs font-bold sm:text-sm md:text-base lg:text-lg'>
           {actualRemaining === 0 ? 'Total' : 'Balance Due'}
         </span>
-        <span className='text-sm font-bold md:text-base lg:text-lg'>
+        <span className='text-xs font-bold sm:text-sm md:text-base lg:text-lg'>
           {actualRemaining === 0
             ? 'PAID'
             : `Rs ${formatCurrency(actualRemaining)}`}

@@ -407,48 +407,48 @@ Questions? Call us at:
 
   return (
     <>
-      <div className='flex items-center gap-1'>
+      <div className='flex items-center gap-0.5 sm:gap-1'>
         <button
           onClick={handleDownload}
-          className='rounded p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors'
+          className='rounded p-1 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors sm:p-1.5'
           title='Download'
         >
-          <FaDownload className='h-4 w-4' />
+          <FaDownload className='h-3 w-3 sm:h-4 sm:w-4' />
         </button>
 
         <button
           onClick={handlePrint}
-          className='rounded p-1.5 text-gray-600 hover:bg-gray-50 hover:text-gray-700 transition-colors'
+          className='rounded p-1 text-gray-600 hover:bg-gray-50 hover:text-gray-700 transition-colors sm:p-1.5'
           title='Print'
         >
-          <BsPrinter className='h-4 w-4' />
+          <BsPrinter className='h-3 w-3 sm:h-4 sm:w-4' />
         </button>
 
         <button
           onClick={handleWhatsApp}
-          className='rounded p-1.5 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors'
+          className='rounded p-1 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors sm:p-1.5'
           title='Share via WhatsApp'
         >
-          <FaWhatsapp className='h-4 w-4' />
+          <FaWhatsapp className='h-3 w-3 sm:h-4 sm:w-4' />
         </button>
 
         {invoice.paymentStatus !== 'paid' &&
           invoice.status !== 'voided' && (
             <button
               onClick={(e) => handleAction('payment', e)}
-              className='rounded p-1.5 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700 transition-colors'
+              className='rounded p-1 text-yellow-600 hover:bg-yellow-50 hover:text-yellow-700 transition-colors sm:p-1.5'
               title='Add Payment'
             >
-              <FaMoneyBillWave className='h-4 w-4' />
+              <FaMoneyBillWave className='h-3 w-3 sm:h-4 sm:w-4' />
             </button>
           )}
 
         <button
           onClick={(e) => handleAction('delete', e)}
-          className='rounded p-1.5 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors'
+          className='rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors sm:p-1.5'
           title='Delete'
         >
-          <FaTrash className='h-4 w-4' />
+          <FaTrash className='h-3 w-3 sm:h-4 sm:w-4' />
         </button>
       </div>
 

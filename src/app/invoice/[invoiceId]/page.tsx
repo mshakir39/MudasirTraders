@@ -163,22 +163,22 @@ export default function InvoicePage() {
   };
 
   return (
-    <div className='min-h-screen bg-gray-50  px-2'>
-      <div className='mx-auto h-screen max-w-5xl rounded-lg bg-white shadow-lg print:bg-white print:shadow-none'>
-        <div className='p-4 sm:p-6'>
+    <div className='min-h-screen bg-gray-50 px-2 py-4 sm:px-4 sm:py-6'>
+      <div className='mx-auto min-h-screen max-w-5xl rounded-lg bg-white shadow-lg print:bg-white print:shadow-none'>
+        <div className='p-4 sm:p-6 md:p-8'>
           {/* Header */}
-          <div className='mb-2 text-2xl font-bold uppercase sm:text-4xl'>
+          <div className='mb-2 text-xl font-bold uppercase sm:text-2xl md:text-3xl lg:text-4xl'>
             Invoice
           </div>
-          <div className='mb-4 text-right font-bold'>
+          <div className='mb-4 text-right text-sm font-bold sm:text-base md:text-lg'>
             No: Inv-{invoice?.invoiceNo}
           </div>
 
           {/* From / To */}
-          <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2'>
             <div>
-              <div className='font-bold'>Invoice From:</div>
-              <p className='text-sm text-gray-600'>
+              <div className='text-sm font-bold sm:text-base md:text-lg'>Invoice From:</div>
+              <p className='text-xs text-gray-600 sm:text-sm md:text-base'>
                 MUDASIR TRADERS-DG KHAN <br />
                 +923349627745, +923215392445 <br />
                 General Bus Stand, near Badozai Market <br />
@@ -187,8 +187,8 @@ export default function InvoicePage() {
             </div>
 
             <div className='sm:text-right'>
-              <div className='font-bold'>Invoice To:</div>
-              <p className='text-sm text-gray-600'>
+              <div className='text-sm font-bold sm:text-base md:text-lg'>Invoice To:</div>
+              <p className='text-xs text-gray-600 sm:text-sm md:text-base'>
                 {removeParentheses(invoice?.customerName)} <br />
                 {invoice?.customerContactNumber} <br />
                 {invoice?.customerAddress}
@@ -197,7 +197,7 @@ export default function InvoicePage() {
           </div>
 
           {/* Date */}
-          <div className='mt-4 text-sm'>
+          <div className='mt-4 text-xs sm:text-sm md:text-base'>
             <span className='font-bold'>Date:</span>{' '}
             {invoice?.createdDate
               ? convertDate(invoice.createdDate).dateTime
@@ -205,7 +205,7 @@ export default function InvoicePage() {
           </div>
 
           {/* Table */}
-          <div className='mt-6 overflow-x-auto'>
+          <div className='mt-4 overflow-x-auto sm:mt-6'>
             <InvoiceTable
               data={invoice?.products}
               columns={columns}
@@ -214,9 +214,9 @@ export default function InvoicePage() {
           </div>
 
           {/* Bottom Section */}
-          <div className='mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2'>
+          <div className='mt-4 grid grid-cols-1 gap-4 sm:mt-6 sm:gap-6 lg:grid-cols-2'>
             {/* Left */}
-            <div className='space-y-2 text-sm'>
+            <div className='space-y-2 text-xs sm:text-sm md:text-base'>
               <div>
                 <b>Amount in Words:</b>{' '}
                 {formatRupees(getAllSum(invoice?.products, 'totalPrice'))}{' '}
@@ -236,43 +236,43 @@ export default function InvoicePage() {
             </div>
 
             {/* Right Totals */}
-            <div className='space-y-2 text-sm'>
-              <div className='flex justify-between bg-sidebar-gradient p-3 text-white'>
-                <span>SubTotal</span>
-                <span>Rs {getAllSum(invoice?.products, 'totalPrice')}</span>
+            <div className='space-y-2 text-xs sm:text-sm md:text-base'>
+              <div className='flex justify-between bg-sidebar-gradient p-2 text-white sm:p-3'>
+                <span className='text-xs sm:text-sm md:text-base'>SubTotal</span>
+                <span className='text-xs sm:text-sm md:text-base'>Rs {getAllSum(invoice?.products, 'totalPrice')}</span>
               </div>
 
               {Number(invoice?.batteriesRate) > 0 && (
-                <div className='flex justify-between p-3'>
-                  <span>
+                <div className='flex justify-between p-2 sm:p-3'>
+                  <span className='text-xs sm:text-sm md:text-base'>
                     {invoice?.batteriesCountAndWeight || 'Old Battery'}
                   </span>
-                  <span>- Rs {invoice?.batteriesRate}</span>
+                  <span className='text-xs sm:text-sm md:text-base'>- Rs {invoice?.batteriesRate}</span>
                 </div>
               )}
 
               {Number(invoice?.receivedAmount) > 0 && (
-                <div className='flex justify-between p-3'>
-                  <span>Received</span>
-                  <span>- Rs {invoice?.receivedAmount}</span>
+                <div className='flex justify-between p-2 sm:p-3'>
+                  <span className='text-xs sm:text-sm md:text-base'>Received</span>
+                  <span className='text-xs sm:text-sm md:text-base'>- Rs {invoice?.receivedAmount}</span>
                 </div>
               )}
 
               {invoice?.additionalPayment?.map((p: any, i: number) => {
                 const { dateTime } = convertDate(p.addedDate);
                 return (
-                  <div key={i} className='flex justify-between p-3'>
-                    <span>Received ({dateTime})</span>
-                    <span>- Rs {p.amount}</span>
+                  <div key={i} className='flex justify-between p-2 sm:p-3'>
+                    <span className='text-xs sm:text-sm md:text-base'>Received ({dateTime})</span>
+                    <span className="text-xs sm:text-sm md:text-base">- Rs {p.amount}</span>
                   </div>
                 );
               })}
 
-              <div className='mt-2 flex justify-between bg-sidebar-gradient p-3 text-white'>
-                <span>
+              <div className='mt-2 flex justify-between bg-sidebar-gradient p-2 text-white sm:p-3'>
+                <span className='text-xs sm:text-sm md:text-base'>
                   {invoice?.remainingAmount === 0 ? 'Total' : 'Remaining'}
                 </span>
-                <span>
+                <span className='text-xs sm:text-sm md:text-base'>
                   {invoice?.remainingAmount === 0
                     ? 'Paid'
                     : `Rs ${invoice?.remainingAmount}`}
@@ -282,7 +282,7 @@ export default function InvoicePage() {
           </div>
 
           <div
-            className={`mt-12 text-center text-4xl sm:text-6xl ${dancingScript.className}`}
+            className={`mt-8 text-center text-2xl sm:text-4xl md:text-5xl lg:text-6xl ${dancingScript.className}`}
           >
             Thank You!
           </div>

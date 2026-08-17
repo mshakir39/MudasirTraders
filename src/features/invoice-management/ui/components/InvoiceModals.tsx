@@ -101,25 +101,25 @@ export const InvoiceModals: React.FC<InvoiceModalsProps> = ({
 
       case 'productDetail':
         return (
-          <div className='p-6'>
-            <h3 className='mb-4 text-lg font-semibold'>Product Details</h3>
-            <div className='space-y-4'>
+          <div className='p-4 sm:p-6'>
+            <h3 className='mb-3 text-base font-semibold sm:mb-4 sm:text-lg'>Product Details</h3>
+            <div className='space-y-3 sm:space-y-4'>
               <div className='max-h-96 overflow-y-auto'>
                 {modalState.data?.products?.map((product, index) => (
                   <div
                     key={index}
-                    className='mb-3 border-b border-gray-200 pb-3 last:border-b-0'
+                    className='mb-2 border-b border-gray-200 pb-2 last:border-b-0 sm:mb-3 sm:pb-3'
                   >
-                    <div className='font-medium'>
+                    <div className='text-sm font-medium sm:text-base'>
                       {product.brandName} {product.series}
                     </div>
-                    <div className='text-sm text-gray-600'>
+                    <div className='text-xs text-gray-600 sm:text-sm'>
                       Quantity: {product.quantity} × Rs{' '}
                       {product.productPrice?.toLocaleString() || '0'} = Rs{' '}
                       {product.totalPrice?.toLocaleString() || '0'}
                     </div>
                     {product.warrentyCode && (
-                      <div className='text-sm text-gray-600'>
+                      <div className='text-xs text-gray-600 sm:text-sm'>
                         Warranty: {product.warrentyCode}
                       </div>
                     )}
@@ -129,7 +129,7 @@ export const InvoiceModals: React.FC<InvoiceModalsProps> = ({
               <div className='flex justify-end'>
                 <button
                   onClick={onClose}
-                  className='rounded-md bg-gray-600 px-4 py-2 text-white hover:bg-gray-700'
+                  className='rounded-md bg-gray-600 px-3 py-1.5 text-xs text-white hover:bg-gray-700 sm:px-4 sm:py-2 sm:text-sm'
                 >
                   Close
                 </button>
@@ -204,8 +204,8 @@ export const InvoiceModals: React.FC<InvoiceModalsProps> = ({
   if (!modalState.isOpen) return null;
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
-      <div className='mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-2 sm:p-4'>
+      <div className='mx-2 max-h-[90vh] w-full max-w-full overflow-y-auto rounded-lg bg-white shadow-xl sm:mx-4 sm:max-w-2xl'>
         {renderModalContent()}
       </div>
     </div>

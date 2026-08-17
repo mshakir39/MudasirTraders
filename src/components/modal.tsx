@@ -12,12 +12,13 @@ interface ModalProps {
   preventBackdropClose?: boolean;
   size?: 'large' | 'medium' | 'small';
   dynamicHeight?: boolean;
+  fullScreenOnMobile?: boolean;
 }
 
 const sizeClasses = {
-  small: 'max-w-sm sm:max-w-md',
-  medium: 'max-w-2xl sm:max-w-3xl',
-  large: 'max-w-6xl sm:max-w-7xl',
+  small: 'max-w-[95vw] sm:max-w-md',
+  medium: 'max-w-[95vw] sm:max-w-2xl md:max-w-3xl',
+  large: 'max-w-[95vw] sm:max-w-4xl md:max-w-6xl lg:max-w-7xl',
 };
 
 const Modal: FunctionComponent<ModalProps> = ({
@@ -31,9 +32,13 @@ const Modal: FunctionComponent<ModalProps> = ({
   preventBackdropClose = false,
   size = 'medium',
   dynamicHeight = false,
+  fullScreenOnMobile = false,
 }) => {
-  const defaultPanelClass = `w-full ${sizeClasses[size]} rounded-lg shadow-2xl  bg-white`;
+  const defaultPanelClass = `w-full ${sizeClasses[size]} ${fullScreenOnMobile ? 'h-full sm:h-auto sm:rounded-lg' : 'rounded-lg'} shadow-2xl bg-white`;
   const heightClass = dynamicHeight ? '' : 'max-h-[90vh]';
+  const containerClass = fullScreenOnMobile 
+    ? 'fixed inset-0 flex items-end sm:items-center justify-center p-0 sm:p-2 sm:p-4'
+    : 'fixed inset-0 flex items-center justify-center p-2 sm:p-4';
 
   return (
     <Dialog
@@ -45,22 +50,22 @@ const Modal: FunctionComponent<ModalProps> = ({
       <div className='fixed inset-0 bg-black/50' aria-hidden='true' />
 
       {/* Full-screen container to center the panel */}
-      <div className='fixed inset-0 flex items-center justify-center p-4'>
+      <div className={containerClass}>
         {/* The actual dialog panel */}
         <Dialog.Panel
-          className={`${defaultPanelClass} ${dialogPanelClass || ''} ${heightClass}`}
+          className={`${defaultPanelClass} ${dialogPanelClass || ''} ${heightClass} ${fullScreenOnMobile ? 'flex flex-col h-full sm:h-auto' : ''}`}
         >
           {/* Header */}
           {title && (
             <div
-              className='border-b border-gray-200 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 px-4 py-6 shadow-lg backdrop-blur-sm sm:px-6 sm:py-8'
+              className={`${fullScreenOnMobile ? 'sticky top-0 z-10' : ''} border-b border-gray-200 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 px-3 py-4 shadow-lg backdrop-blur-sm sm:px-4 sm:py-6 md:px-6 md:py-8`}
               style={{
                 background:
                   'linear-gradient(to right, rgb(30, 58, 138), rgb(29, 78, 216), rgb(37, 99, 235))',
               }}
             >
               <Dialog.Title
-                className='text-base font-bold leading-5 text-white drop-shadow-lg sm:text-xl sm:leading-6'
+                className='text-sm font-bold leading-5 text-white drop-shadow-lg sm:text-base sm:leading-6 md:text-xl md:leading-6'
                 style={{ color: 'white !important' }}
               >
                 {title}
@@ -70,7 +75,7 @@ const Modal: FunctionComponent<ModalProps> = ({
 
           {/* Content */}
           <div
-            className={`${parentClass || 'px-4 sm:px-6'} ${dynamicHeight ? 'overflow-y-auto' : 'overflow-y-auto'}`}
+            className={`${parentClass || 'px-3 py-2 sm:px-4 sm:py-3 md:px-6'} ${fullScreenOnMobile ? 'flex-1 overflow-y-auto' : ''} ${dynamicHeight ? 'overflow-y-auto' : 'overflow-y-auto'}`}
           >
             {children}
           </div>

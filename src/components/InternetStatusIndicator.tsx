@@ -24,13 +24,13 @@ export const InternetStatusIndicator = () => {
     return null;
   }
 
-  // Temporarily always show for testing
-  // if (isOnline) {
-  //   return null; // Hide when online
-  // }
+  // Hide when online - only show when offline
+  if (isOnline) {
+    return null; // Hide when online
+  }
 
   return (
-    <div className={`fixed bottom-9 right-24 z-[99999] group flex items-center gap-2 px-2 py-1 rounded-lg shadow-lg ${isOnline ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+    <div className={`fixed bottom-6 right-20 z-50 group flex items-center gap-2 px-2 py-1 rounded-lg shadow-lg ${isOnline ? 'bg-green-600' : 'bg-red-600'} text-white`}>
       <div className="relative">
         <FaWifi className="w-5 h-5" />
         {!isOnline && (

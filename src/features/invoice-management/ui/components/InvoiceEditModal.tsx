@@ -170,9 +170,9 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
         onSubmit={handleFormSubmit}
         onCancel={onClose}
       >
-        <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-3'>
           <div className='flex h-full flex-col'>
-            <div className='space-y-4'>
+            <div className='space-y-3 sm:space-y-4'>
               <InvoiceCustomerSection
                 invoiceData={invoiceData}
                 setInvoiceData={setInvoiceData}
@@ -185,9 +185,8 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
             </div>
           </div>
 
-          <div className='hidden lg:relative lg:block'>
-            <div className='absolute bottom-0 left-0 top-0 w-px bg-gray-200'></div>
-            <div className='flex h-full flex-col pl-6'>
+          <div className='relative lg:block lg:border-l lg:border-gray-200 lg:pl-6'>
+            <div className='flex h-full flex-col'>
               <InvoiceProductsSectionJotai
                 categories={categories}
                 stock={stock}
@@ -199,9 +198,8 @@ export const InvoiceEditModal: React.FC<InvoiceEditModalProps> = ({
             </div>
           </div>
 
-          <div className='hidden lg:relative lg:block'>
-            <div className='absolute bottom-0 left-0 top-0 w-px bg-gray-200'></div>
-            <div className='flex h-full flex-col pl-6'>
+          <div className='relative lg:block lg:border-l lg:border-gray-200 lg:pl-6'>
+            <div className='flex h-full flex-col'>
               <InvoicePaymentSection
                 invoiceData={invoiceData}
                 setInvoiceData={setInvoiceData}
