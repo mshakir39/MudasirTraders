@@ -1,6 +1,5 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import React, {
   useEffect,
   useState,
@@ -19,55 +18,10 @@ import { DateRangeControls } from '@/components/dashboard/DateRangeControls';
 import { StatsGrid } from '@/components/dashboard/StatsGrid';
 import Link from 'next/link';
 import { MdElectricalServices, MdDashboard } from 'react-icons/md';
-// Local prop types to satisfy dynamic() generics
-interface TopSellingProductsProps {
-  products: Array<{
-    brandName: string;
-    series: string;
-    soldCount: number;
-    inStock: number;
-  }>;
-  dateRange: DateRange;
-  isLoading?: boolean;
-}
-interface SalesTrendChartProps {
-  data: Array<{
-    date: string;
-    fullDate?: string;
-    sales: number;
-    revenue: number;
-  }>;
-  dateRange: DateRange;
-  isLoading?: boolean;
-}
-interface InventoryByBrandChartProps {
-  data: Array<{
-    brand: string;
-    value: number;
-    products: number;
-  }>;
-}
-const TopSellingProductsLazy = dynamic<TopSellingProductsProps>(
-  () =>
-    import('@/components/dashboard/TopSellingProducts').then(
-      (m) => m.TopSellingProducts as any
-    ),
-  { ssr: false, loading: () => null }
-);
-const SalesTrendChartLazy = dynamic<SalesTrendChartProps>(
-  () =>
-    import('@/components/dashboard/SalesTrendChart').then(
-      (m) => m.SalesTrendChart as any
-    ),
-  { ssr: false, loading: () => null }
-);
-const InventoryByBrandChartLazy = dynamic<InventoryByBrandChartProps>(
-  () =>
-    import('@/components/dashboard/InventoryByBrandChart').then(
-      (m) => m.InventoryByBrandChart as any
-    ),
-  { ssr: false, loading: () => null }
-);
+
+import { TopSellingProducts } from '@/components/dashboard/TopSellingProducts';
+import { SalesTrendChart } from '@/components/dashboard/SalesTrendChart';
+import { InventoryByBrandChart } from '@/components/dashboard/InventoryByBrandChart';
 import { lockDashboard } from '@/actions/dashboardActions';
 
 interface DateRange {
@@ -301,7 +255,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const handleRevenueDateChange = useCallback(
     (range: DateRange) => {
       setRevenueDateRange(range);
-      fetchData(range, topProductsDateRange, salesTrendDateRange);
+      fetchData(range, topProductsDateRange, salesTrendDateRange, false);
     },
     [topProductsDateRange, salesTrendDateRange, fetchData]
   );
@@ -468,13 +422,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* Charts Section */}
       <div className='mb-8 grid grid-cols-1 gap-6 lg:min-h-[500px] lg:grid-cols-2'>
-        <TopSellingProductsLazy
+        <TopSellingProducts
           products={stats.topSellingProducts}
           dateRange={topProductsDateRange}
           isLoading={topProductsLoading}
         />
 
-        <SalesTrendChartLazy
+        <SalesTrendChart
           data={chartData.salesTrend}
           dateRange={salesTrendDateRange}
           isLoading={salesTrendLoading}
@@ -483,7 +437,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* Inventory by Brand Chart */}
       <div className='mb-8'>
-        <InventoryByBrandChartLazy data={chartData.inventoryByBrand} />
+        <InventoryByBrandChart data={chartData.inventoryByBrand} />
       </div>
     </div>
   );

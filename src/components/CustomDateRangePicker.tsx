@@ -22,12 +22,14 @@ interface DateRangePickerProps {
   onDateChange: (range: DateRange) => void;
   initialDateRange?: DateRange;
   className?: string;
+  align?: 'left' | 'right';
 }
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
   onDateChange,
   initialDateRange,
   className = '',
+  align = 'left',
 }) => {
   // CRITICAL: Prevent any automatic parent notifications
   const hasInitialized = useRef(false);
@@ -317,42 +319,34 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   return (
-    // ✅ KEY FIX: `isolation: isolate` creates a new stacking context so this
-    // component always renders on top regardless of chart z-indexes in siblings.
     <div
-      className={`relative w-fit ${className}`}
+      className={`relative w-fit ${showDropdown ? 'z-50' : 'z-10'} ${className}`}
       ref={containerRef}
-      style={{ isolation: 'isolate' }}
     >
       <div
-        className='inline-flex cursor-pointer items-center gap-2 rounded-md border border-secondary-200 bg-white px-4 py-2 transition-colors hover:bg-secondary-50'
+        className='inline-flex cursor-pointer items-center gap-2 rounded-md border border-secondary-200 bg-white px-3 py-1.5 text-sm transition-colors hover:bg-secondary-50'
         onClick={toggleDropdown}
       >
-        <IoCalendarOutline className='h-5 w-5 text-secondary-500' />
+        <IoCalendarOutline className='h-4 w-4 text-secondary-500' />
         <span className='text-sm text-secondary-600'>{displayValue}</span>
       </div>
 
       {showDropdown && (
         <>
-          {/* Backdrop: closes dropdown on outside click, pointer-events:none so it 
-              doesn't block the dropdown panel itself. Charts are disabled via the
-              body.date-picker-open CSS class (add to globals.css — see below). */}
+          {/* Backdrop: closes dropdown on outside click */}
           <div
             className='date-picker-backdrop fixed inset-0'
-            style={{ zIndex: 99998, pointerEvents: 'none' }}
+            style={{ zIndex: 99998 }}
+            onClick={closeDropdown}
           />
 
-          {/*
-           * ✅ KEY FIXES for the dropdown panel:
-           *  1. `position: relative` + high z-index so it sits above the backdrop
-           *  2. `pointerEvents: 'all'` explicitly re-enables clicks inside
-           *  3. Removed Tailwind z-index classes — inline styles take priority
-           */}
+          {/* Dropdown panel */}
           <div
-            className='absolute top-full mt-2 w-64 overflow-visible rounded-lg border border-secondary-200 bg-white shadow-lg'
+            className={`absolute top-full mt-2 w-64 overflow-visible rounded-lg border border-secondary-200 bg-white shadow-2xl ${
+              align === 'right' ? 'right-0' : 'left-0'
+            }`}
             style={{
               zIndex: 99999,
-              position: 'absolute',
               pointerEvents: 'all',
             }}
           >

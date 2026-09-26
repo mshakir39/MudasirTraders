@@ -247,33 +247,53 @@ export async function GET(request: NextRequest) {
     logger.success('✅ Connected to MongoDB, fetching essential data...');
 
     // Fetch collections with targeted projections for high performance
-    const [initialStockDocs, salesDocs, invoicesDocs, customerCount] =
-      await Promise.all([
-        db.collection('stock').find().toArray(),
-        db.collection('sales').find().toArray(),
-        db
-          .collection('invoices')
-          .find(
-            {
-              status: { $ne: 'voided' },
-              paymentStatus: { $in: ['pending', 'partial'] },
+    const [
+      initialStockDocs,
+      salesDocs,
+      invoicesDocs,
+      customerCount,
+      stockHistoryDocs,
+    ] = await Promise.all([
+      db.collection('stock').find().toArray(),
+      db.collection('sales').find().toArray(),
+      db
+        .collection('invoices')
+        .find(
+          {
+            status: { $ne: 'voided' },
+            paymentStatus: { $in: ['pending', 'partial'] },
+          },
+          {
+            projection: {
+              status: 1,
+              paymentStatus: 1,
+              totalAmount: 1,
+              receivedAmount: 1,
+              batteriesRate: 1,
+              additionalPayment: 1,
+              products: 1,
+              remainingAmount: 1,
             },
-            {
-              projection: {
-                status: 1,
-                paymentStatus: 1,
-                totalAmount: 1,
-                receivedAmount: 1,
-                batteriesRate: 1,
-                additionalPayment: 1,
-                products: 1,
-                remainingAmount: 1,
-              },
-            }
-          )
-          .toArray(),
-        db.collection('customers').countDocuments(),
-      ]);
+          }
+        )
+        .toArray(),
+      db.collection('customers').countDocuments(),
+      db
+        .collection('stockHistory')
+        .find(
+          {},
+          {
+            projection: {
+              brandName: 1,
+              series: 1,
+              newCost: 1,
+              historyDate: 1,
+            },
+          }
+        )
+        .sort({ historyDate: 1 })
+        .toArray(),
+    ]);
 
     let stockDocs = initialStockDocs;
     let stock = stockDocs as unknown as StockItem[];
@@ -413,15 +433,204 @@ export async function GET(request: NextRequest) {
       0
     );
 
-    // PROFIT CALCULATION (SIMPLE - USING STORED COSTS)
-    // Calculate total cost and profit using stored values from sales data
-    const totalCost = filteredSalesForRevenue.reduce((sum, sale) => {
-      return sum + toNumber(sale.totalCost || 0); // ← Use stored totalCost
-    }, 0);
+    // Build fast in-memory map of historical costs: "normalizedBrand:::normalizedSeries" -> [{ time: timestamp, cost: number }]
+    const historyCostMap = new Map<string, Array<{ time: number; cost: number }>>();
 
-    const totalProfit = filteredSalesForRevenue.reduce((sum, sale) => {
-      return sum + toNumber(sale.totalProfit || 0); // ← Use stored totalProfit
-    }, 0);
+    if (Array.isArray(stockHistoryDocs)) {
+      stockHistoryDocs.forEach((doc: any) => {
+        const rawBrand = (doc.brandName || '').trim();
+        const rawSeries = (doc.series || '').trim();
+        const cost = toNumber(doc.newCost);
+        const rawDate = doc.historyDate;
+        if (!rawBrand || !rawSeries || cost <= 0 || !rawDate) return;
+
+        const dateObj = new Date(rawDate);
+        if (isNaN(dateObj.getTime())) return;
+
+        const normBrand = rawBrand.toLowerCase();
+        const normSeries = normalizeSalesSeries(rawBrand, rawSeries);
+        const key = `${normBrand}:::${normSeries}`;
+
+        const existing = historyCostMap.get(key) || [];
+        existing.push({ time: dateObj.getTime(), cost });
+        historyCostMap.set(key, existing);
+      });
+    }
+
+    // Build fast lookup map from current stock: "normalizedBrand:::normalizedSeries" -> stock info
+    const stockLookup = new Map<
+      string,
+      { inStock: number; brandName: string; series: string; productCost?: number }
+    >();
+
+    stock.forEach((document) => {
+      const documentBrandName = (document.brandName || '').trim();
+      const normalizedBrand = documentBrandName.toLowerCase();
+
+      if (Array.isArray(document.seriesStock)) {
+        document.seriesStock.forEach((seriesItem: any) => {
+          const seriesName = (seriesItem.series || '').trim();
+          const normalizedSeries = normalizeSalesSeries(
+            documentBrandName,
+            seriesName
+          );
+          const key = `${normalizedBrand}:::${normalizedSeries}`;
+          const inStock = toNumber(seriesItem.inStock);
+
+          stockLookup.set(key, {
+            inStock,
+            brandName: documentBrandName,
+            series: seriesName,
+            productCost: toNumber(seriesItem.productCost),
+          });
+        });
+      }
+    });
+
+    const getHistoricalProductCost = (
+      brandName: string,
+      series: string,
+      saleDate: Date
+    ): number => {
+      const normBrand = (brandName || '').trim().toLowerCase();
+      const normSeries = normalizeSalesSeries(normBrand, (series || '').trim());
+      const key = `${normBrand}:::${normSeries}`;
+
+      // 1. Check stockHistory (most recent entry on or before saleDate)
+      const historyList = historyCostMap.get(key);
+      if (historyList && historyList.length > 0) {
+        const saleTime = saleDate.getTime();
+        for (let i = historyList.length - 1; i >= 0; i--) {
+          if (historyList[i].time <= saleTime && historyList[i].cost > 0) {
+            return historyList[i].cost;
+          }
+        }
+        // If saleDate was before first recorded history entry, use earliest known cost
+        if (historyList[0].cost > 0) {
+          return historyList[0].cost;
+        }
+      }
+
+      // 2. Fallback to current stock series productCost
+      const stockMatch = stockLookup.get(key);
+      if (stockMatch && (stockMatch.productCost || 0) > 0) {
+        return stockMatch.productCost!;
+      }
+
+      return 0;
+    };
+
+    // PROFIT CALCULATION (USING STORED PROFITS WITH DYNAMIC HISTORICAL STOCK COST FALLBACK)
+    let totalCost = 0;
+    let totalProfit = 0;
+
+    filteredSalesForRevenue.forEach((sale: any) => {
+      // 1. Charging service: pure service fee, 0 inventory cost, 100% margin
+      if (sale.isChargingService) {
+        totalProfit += toNumber(sale.totalAmount);
+        return;
+      }
+
+      // 2. Scrap battery
+      if (sale.isScrapBattery) {
+        totalProfit += toNumber(sale.totalProfit || 0);
+        totalCost += toNumber(sale.totalCost || 0);
+        return;
+      }
+
+      // 3. Stored totalProfit & totalCost on sale (from modern invoices)
+      const storedProfit = toNumber(sale.totalProfit);
+      const storedCost = toNumber(sale.totalCost);
+      if (storedProfit > 0 && storedCost > 0) {
+        totalProfit += storedProfit;
+        totalCost += storedCost;
+        return;
+      }
+
+      // 4. Historical sales: compute dynamically using products array and stockHistory
+      const saleDate = getSaleDate(sale) || new Date();
+      const products =
+        Array.isArray(sale.products) && sale.products.length > 0
+          ? sale.products
+          : sale.brandName && sale.series
+            ? [sale]
+            : [];
+
+      let saleCalculatedProfit = 0;
+      let saleCalculatedCost = 0;
+      let hasCalculatedItem = false;
+
+      products.forEach((product: any) => {
+        if (product.isChargingService) {
+          saleCalculatedProfit += toNumber(
+            product.totalPrice || product.productPrice || 0
+          );
+          return;
+        }
+        if (product.isScrapBattery) return;
+
+        const qty = toNumber(product.quantity) || 1;
+        const sellingPrice =
+          toNumber(product.productPrice) ||
+          toNumber(product.unitPrice) ||
+          (qty > 0 && product.totalPrice
+            ? toNumber(product.totalPrice) / qty
+            : 0);
+
+        // If product itself already has profit stored:
+        if (
+          product.profit !== undefined &&
+          product.profit !== null &&
+          !isNaN(Number(product.profit)) &&
+          Number(product.profit) > 0
+        ) {
+          saleCalculatedProfit += toNumber(product.profit);
+          saleCalculatedCost += toNumber(product.costPrice || 0) * qty;
+          hasCalculatedItem = true;
+          return;
+        }
+
+        // Find unit cost: from product.costPrice OR historical stock cost
+        let unitCost = toNumber(product.costPrice);
+        if (unitCost <= 0) {
+          unitCost = getHistoricalProductCost(
+            product.brandName ||
+              product.batteryDetails?.brandName ||
+              sale.brandName ||
+              '',
+            product.series ||
+              product.batteryDetails?.name ||
+              sale.series ||
+              '',
+            saleDate
+          );
+        }
+
+        if (unitCost > 0) {
+          const lineCost = unitCost * qty;
+          const lineRevenue = sellingPrice * qty;
+          saleCalculatedCost += lineCost;
+          saleCalculatedProfit += lineRevenue - lineCost;
+          hasCalculatedItem = true;
+        } else {
+          if (storedProfit > 0) {
+            saleCalculatedProfit += storedProfit;
+            hasCalculatedItem = true;
+          }
+        }
+      });
+
+      if (hasCalculatedItem && saleCalculatedCost > 0) {
+        totalProfit += saleCalculatedProfit;
+        totalCost += saleCalculatedCost;
+      } else if (storedProfit > 0) {
+        totalProfit += storedProfit;
+        totalCost += storedCost;
+      } else {
+        totalCost += storedCost;
+        totalProfit += storedProfit;
+      }
+    });
 
     const profitMargin =
       totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
@@ -445,35 +654,6 @@ export async function GET(request: NextRequest) {
     logger.debug(
       `📊 Total sales in date range: ${filteredSalesForTopProducts.length}`
     );
-
-    // Build fast lookup map from current stock: "normalizedBrand:::normalizedSeries" -> stock info
-    const stockLookup = new Map<
-      string,
-      { inStock: number; brandName: string; series: string }
-    >();
-
-    stock.forEach((document) => {
-      const documentBrandName = (document.brandName || '').trim();
-      const normalizedBrand = documentBrandName.toLowerCase();
-
-      if (Array.isArray(document.seriesStock)) {
-        document.seriesStock.forEach((seriesItem: any) => {
-          const seriesName = (seriesItem.series || '').trim();
-          const normalizedSeries = normalizeSalesSeries(
-            documentBrandName,
-            seriesName
-          );
-          const key = `${normalizedBrand}:::${normalizedSeries}`;
-          const inStock = toNumber(seriesItem.inStock);
-
-          stockLookup.set(key, {
-            inStock,
-            brandName: documentBrandName,
-            series: seriesName,
-          });
-        });
-      }
-    });
 
     // Aggregate sales strictly from the filtered sales for the chosen date range
     const salesAggMap = new Map<

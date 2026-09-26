@@ -2,18 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaShoppingCart } from 'react-icons/fa';
-import {
-  ComposedChart,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Bar,
-  Legend,
-} from 'recharts';
+// Import directly from subpaths to avoid Turbopack barrel re-export issue
+// (recharts/es6/index.js re-exports ALL charts incl. LineChart, causing
+// "module factory not available" errors in dynamically loaded chunks)
+import { ComposedChart } from 'recharts/es6/chart/ComposedChart';
+import { Line } from 'recharts/es6/cartesian/Line';
+import { Bar } from 'recharts/es6/cartesian/Bar';
+import { XAxis } from 'recharts/es6/cartesian/XAxis';
+import { YAxis } from 'recharts/es6/cartesian/YAxis';
+import { CartesianGrid } from 'recharts/es6/cartesian/CartesianGrid';
+import { Tooltip } from 'recharts/es6/component/Tooltip';
+import { ResponsiveContainer } from 'recharts/es6/component/ResponsiveContainer';
+import { Legend } from 'recharts/es6/component/Legend';
 
 interface DateRange {
   start: Date;
@@ -69,8 +69,8 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({
       day: 'numeric',
     });
     const diffTime = Math.abs(range.end.getTime() - range.start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return `${diffDays}d (${start} - ${end})`;
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    return `${Math.max(1, diffDays)}d (${start} - ${end})`;
   };
 
   // Group data by month if date range is large (> 31 days)
@@ -78,7 +78,7 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({
     const diffTime = Math.abs(
       dateRange.end.getTime() - dateRange.start.getTime()
     );
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     // If date range is more than 31 days (approximately 1 month), group by month
     if (diffDays > 31) {
@@ -232,3 +232,5 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({
     </div>
   );
 };
+
+export default SalesTrendChart;

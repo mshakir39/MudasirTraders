@@ -26,7 +26,7 @@ export const DateRangeControls: React.FC<DateRangeControlsProps> = ({
   onSalesTrendDateChange,
   onSetAllTime,
 }) => (
-  <div className='mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl  bg-white p-4 shadow-md'>
+  <div className='relative z-30 mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-white p-4 shadow-md'>
     <div className='flex flex-wrap items-center gap-4'>
       <h3 className='text-lg font-semibold text-gray-900'>
         Date Range Filters
@@ -49,7 +49,6 @@ export const DateRangeControls: React.FC<DateRangeControlsProps> = ({
         <DateRangePicker
           onDateChange={onRevenueDateChange}
           initialDateRange={revenueDateRange}
-          className='scale-90'
         />
       </div>
       <div className='flex items-center gap-3'>
@@ -57,7 +56,6 @@ export const DateRangeControls: React.FC<DateRangeControlsProps> = ({
         <DateRangePicker
           onDateChange={onSalesTrendDateChange}
           initialDateRange={salesTrendDateRange}
-          className='scale-90'
         />
       </div>
       <div className='flex items-center gap-3'>
@@ -65,7 +63,7 @@ export const DateRangeControls: React.FC<DateRangeControlsProps> = ({
         <DateRangePicker
           onDateChange={onTopProductsDateChange}
           initialDateRange={topProductsDateRange}
-          className='scale-90'
+          align='right'
         />
       </div>
     </div>

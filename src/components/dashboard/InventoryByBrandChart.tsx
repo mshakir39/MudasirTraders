@@ -1,15 +1,13 @@
 import React from 'react';
 import { FaWarehouse } from 'react-icons/fa';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
+import { BarChart } from 'recharts/es6/chart/BarChart';
+import { Bar } from 'recharts/es6/cartesian/Bar';
+import { XAxis } from 'recharts/es6/cartesian/XAxis';
+import { YAxis } from 'recharts/es6/cartesian/YAxis';
+import { CartesianGrid } from 'recharts/es6/cartesian/CartesianGrid';
+import { Tooltip } from 'recharts/es6/component/Tooltip';
+import { ResponsiveContainer } from 'recharts/es6/component/ResponsiveContainer';
+import { Legend } from 'recharts/es6/component/Legend';
 
 interface InventoryByBrandChartProps {
   data: Array<{
@@ -73,3 +71,5 @@ export const InventoryByBrandChart: React.FC<InventoryByBrandChartProps> = ({
     )}
   </div>
 );
+
+export default InventoryByBrandChart;

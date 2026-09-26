@@ -35,8 +35,8 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       day: 'numeric',
     });
     const diffTime = Math.abs(range.end.getTime() - range.start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return `${diffDays}d (${start} - ${end})`;
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    return `${Math.max(1, diffDays)}d (${start} - ${end})`;
   };
 
   const profitMargin =
@@ -48,7 +48,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
     <div className='mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5'>
       <StatsCard
         title='Inventory Value'
-        value={`Rs ${stats.totalInventoryValue.toLocaleString('en-PK')}`}
+        value={`Rs ${Math.round(stats.totalInventoryValue).toLocaleString('en-PK')}`}
         subtitle={`${stats.totalProducts} products`}
         icon={<FaWarehouse className='h-6 w-6' style={{ color: '#2563eb' }} />}
         iconBgColor='bg-primary-50'

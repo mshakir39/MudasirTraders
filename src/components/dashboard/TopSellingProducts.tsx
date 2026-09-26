@@ -103,3 +103,5 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({
     </div>
   );
 };
+
+export default TopSellingProducts;
