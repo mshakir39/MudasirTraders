@@ -31,8 +31,8 @@ export const useCustomerActions = ({
   const [optimisticCustomers, addOptimisticCustomer] = useOptimistic(
     customers,
     (state, newCustomer: Customer) => [
-      ...state,
       { ...newCustomer, _id: `temp-${Date.now()}` },
+      ...state,
     ]
   );
 

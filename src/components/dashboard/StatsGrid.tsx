@@ -19,11 +19,13 @@ interface StatsGridProps {
     totalCustomers: number;
   };
   revenueDateRange: DateRange;
+  isLoading?: boolean;
 }
 
 export const StatsGrid: React.FC<StatsGridProps> = ({
   stats,
   revenueDateRange,
+  isLoading = false,
 }) => {
   const formatDateRange = (range: DateRange) => {
     const start = range.start.toLocaleDateString('en-PK', {
@@ -62,6 +64,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
         icon={<MdTrendingUp className='h-6 w-6' style={{ color: '#059669' }} />}
         iconBgColor='bg-success-50'
         iconColor='text-success-800'
+        isLoading={isLoading}
       />
 
       <StatsCard
@@ -78,6 +81,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
         iconBgColor='bg-accent-50'
         iconColor='text-accent-800'
         valueColor='text-accent-700'
+        isLoading={isLoading}
       />
 
       <StatsCard

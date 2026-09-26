@@ -72,7 +72,12 @@ export async function POST(req: NextRequest) {
     await Promise.all([
       db.collection('customers').createIndex({ customerName: 1 }),
       db.collection('customers').createIndex({ customerContactNumber: 1 }),
+      db.collection('customers').createIndex({ phoneNumber: 1 }),
       db.collection('customers').createIndex({ customerType: 1 }),
+      db.collection('customers').createIndex({ createdAt: -1 }),
+      db
+        .collection('customers')
+        .createIndex({ customerType: 1, createdAt: -1 }),
     ]);
     console.log('✅ Customer indexes created');
 

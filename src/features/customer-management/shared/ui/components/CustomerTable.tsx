@@ -37,23 +37,12 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
   onSearchChange,
 }) => {
   const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
+  const onNearBottomRef = React.useRef(onNearBottom);
+  onNearBottomRef.current = onNearBottom;
 
   const handleScrollContainerRef = useCallback((el: HTMLDivElement | null) => {
     setScrollRoot(el);
   }, []);
-
-  const handleBodyScroll = useCallback(
-    (e: React.UIEvent<HTMLDivElement>) => {
-      if (!onNearBottom) return;
-      const el = e.currentTarget;
-      const distanceFromBottom =
-        el.scrollHeight - el.scrollTop - el.clientHeight;
-      if (distanceFromBottom < 80) {
-        onNearBottom();
-      }
-    },
-    [onNearBottom]
-  );
 
   useEffect(() => {
     if (!scrollRoot || !onNearBottom) return;
@@ -63,22 +52,16 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry?.isIntersecting) return;
-        const nearBottom =
-          scrollRoot.scrollHeight -
-            scrollRoot.scrollTop -
-            scrollRoot.clientHeight <
-          100;
-        if (nearBottom) {
-          onNearBottom();
+        if (entry?.isIntersecting) {
+          onNearBottomRef.current?.();
         }
       },
-      { root: scrollRoot, rootMargin: '0px', threshold: 0 }
+      { root: scrollRoot, rootMargin: '200px', threshold: 0 }
     );
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [scrollRoot, onNearBottom, customers.length]);
+  }, [scrollRoot, !!onNearBottom]);
 
   const columns: ColumnDef<Customer>[] = React.useMemo(
     () => [
@@ -148,7 +131,6 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
               className='p-2'
               style={{ color: '#2563eb' }}
               title='View Customer Invoices'
-              disabled={loading}
             >
               <FaEye size={16} />
             </button>
@@ -157,7 +139,6 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
               className='p-2'
               style={{ color: '#0284c7' }}
               title='Edit Customer'
-              disabled={loading}
             >
               <FaEdit size={16} />
             </button>
@@ -166,7 +147,6 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
               className='p-2'
               style={{ color: '#dc2626' }}
               title='Delete Customer'
-              disabled={loading}
             >
               <FaTrash size={16} />
             </button>
@@ -174,7 +154,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
         ),
       },
     ],
-    [onViewInvoices, onEditCustomer, onDeleteCustomer, loading]
+    [onViewInvoices, onEditCustomer, onDeleteCustomer]
   );
 
   return (
@@ -194,7 +174,6 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
         bodyScrollHeight={CUSTOMERS_TABLE_SCROLL_HEIGHT}
         showLoadMoreSentinel={!!onNearBottom}
         onScrollContainerRef={handleScrollContainerRef}
-        onBodyScroll={handleBodyScroll}
         searchValue={searchValue}
         onSearchChange={onSearchChange}
       />

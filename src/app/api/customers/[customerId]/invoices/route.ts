@@ -1,19 +1,6 @@
 // app/api/customers/[customerId]/invoices/route.ts
-import { executeOperation } from '@/app/libs/executeOperation';
+import { connectToMongoDB } from '@/app/libs/connectToMongoDB';
 import { ObjectId } from 'mongodb';
-
-// Place this at the top level, outside of GET
-function isCustomerWithName(
-  val: unknown
-): val is { customerName: string; phoneNumber: string } {
-  return (
-    !!val &&
-    typeof val === 'object' &&
-    !Array.isArray(val) &&
-    Object.prototype.hasOwnProperty.call(val, 'customerName') &&
-    Object.prototype.hasOwnProperty.call(val, 'phoneNumber')
-  );
-}
 
 export async function GET(
   request: Request,
@@ -22,107 +9,111 @@ export async function GET(
   try {
     // React 19/Next.js 15+: Await params before using
     const { customerId } = await params;
-    console.log('🔍 Fetching invoices for customer ID:', customerId);
 
     // Validate if customerId is a valid ObjectId or number
     let customerIdValue: any;
-
-    // Check if it's a MongoDB ObjectId
     if (ObjectId.isValid(customerId) && customerId.length === 24) {
       customerIdValue = new ObjectId(customerId);
-      console.log('🆔 Using ObjectId format:', customerIdValue);
     } else {
-      // Try to parse as number
-      const numericId = parseInt(customerId);
+      const numericId = parseInt(customerId, 10);
       if (isNaN(numericId)) {
-        console.error('❌ Invalid customer ID format:', customerId);
         return Response.json(
           { error: 'Invalid customer ID format' },
           { status: 400 }
         );
       }
       customerIdValue = numericId;
-      console.log('🔢 Using numeric ID:', customerIdValue);
     }
 
-    // First, let's check if the customer exists using findOne
-    const customer = await executeOperation('customers', 'findOne', {
-      $or: [{ _id: customerIdValue }, { id: customerIdValue }],
+    const db = await connectToMongoDB();
+    if (!db) {
+      return Response.json(
+        { error: 'Failed to connect to database' },
+        { status: 500 }
+      );
+    }
+
+    const customerOr: any[] = [];
+    if (customerIdValue instanceof ObjectId) {
+      customerOr.push({ _id: customerIdValue });
+    }
+    customerOr.push({ _id: customerId });
+    customerOr.push({ id: customerId });
+    if (typeof customerIdValue === 'number') {
+      customerOr.push({ id: customerIdValue });
+      customerOr.push({ _id: customerIdValue });
+    }
+
+    const customer = await db.collection('customers').findOne({
+      $or: customerOr,
     });
 
     if (!customer) {
-      console.log('❌ Customer not found with ID:', customerIdValue);
       return Response.json({ error: 'Customer not found' }, { status: 404 });
     }
 
-    // Use the type guard to safely log the customer name
-    if (isCustomerWithName(customer)) {
-      console.log('✅ Customer found:', customer.customerName);
-    } else {
-      console.log('⚠️ Customer not found or invalid:', customer);
+    const customerObjId =
+      ObjectId.isValid(customerId) && customerId.length === 24
+        ? new ObjectId(customerId)
+        : null;
+    const numericId = parseInt(customerId, 10);
+    const hasNumericId = !isNaN(numericId);
+
+    const customerName = (customer as any)?.customerName?.trim();
+    const customerPhone = (
+      (customer as any)?.phoneNumber || (customer as any)?.customerContactNumber
+    )?.trim();
+
+    const orConditions: any[] = [];
+
+    // Match by ID references
+    if (customerObjId) {
+      orConditions.push({ clientId: customerObjId });
+      orConditions.push({ customerId: customerObjId });
+    }
+    orConditions.push({ clientId: customerId });
+    orConditions.push({ customerId: customerId });
+    if (hasNumericId) {
+      orConditions.push({ clientId: numericId });
+      orConditions.push({ customerId: numericId });
     }
 
-    // Get all invoices using findAll or getAll (check which operation your executeOperation supports)
-    let allInvoices;
-    try {
-      // Try different operation names that might be supported
-      allInvoices = await executeOperation('invoices', 'findAll');
-    } catch (error) {
-      try {
-        allInvoices = await executeOperation('invoices', 'getAll');
-      } catch (error2) {
-        try {
-          allInvoices = await executeOperation('invoices', 'find', {});
-        } catch (error3) {
-          console.error('❌ Could not fetch invoices with any operation');
-          return Response.json(
-            { error: 'Database operation not supported' },
-            { status: 500 }
-          );
-        }
-      }
+    // Match by customer name and phone
+    if (customerName && customerPhone) {
+      orConditions.push({
+        customerName: customerName,
+        customerContactNumber: customerPhone,
+      });
     }
 
-    console.log(
-      '📊 Total invoices found:',
-      Array.isArray(allInvoices) ? allInvoices.length : 'Not an array'
-    );
+    // Match by customer name
+    if (customerName) {
+      orConditions.push({ customerName: customerName });
+    }
 
-    // Filter invoices for this customer
-    const customerInvoices = Array.isArray(allInvoices)
-      ? allInvoices.filter((invoice: any) => {
-          // Use the type guard to safely access customer properties
-          if (isCustomerWithName(customer)) {
-            // Match by customer name (primary method)
-            const customerNameMatch =
-              invoice.customerName === customer.customerName;
+    // Match by phone
+    if (customerPhone) {
+      orConditions.push({ customerContactNumber: customerPhone });
+    }
 
-            // Also match by phone number as backup
-            const phoneMatch =
-              invoice.customerContactNumber === customer.phoneNumber;
+    const rawInvoices = await db
+      .collection('invoices')
+      .find({ $or: orConditions })
+      .toArray();
 
-            // Remove the restrictive customerType filter or make it more flexible
-            const customerTypeMatch =
-              !invoice.customerType ||
-              invoice.customerType === 'Regular' ||
-              invoice.customerType === 'Regular Customer' ||
-              invoice.customerType === 'WalkIn Customer';
+    // Map and sort invoices by newest first
+    const sortedInvoices = rawInvoices
+      .map((inv: any) => ({
+        ...inv,
+        id: inv._id ? inv._id.toString() : inv.id,
+        _id: inv._id ? inv._id.toString() : inv._id,
+      }))
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.createdDate || b.createdAt || 0).getTime() -
+          new Date(a.createdDate || a.createdAt || 0).getTime()
+      );
 
-            return customerNameMatch && phoneMatch && customerTypeMatch;
-          }
-          return false;
-        })
-      : [];
-
-    console.log('🎯 Filtered customer invoices:', customerInvoices.length);
-
-    // Sort by creation date (newest first)
-    const sortedInvoices = customerInvoices.sort(
-      (a: any, b: any) =>
-        new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()
-    );
-
-    console.log('✅ Returning sorted invoices:', sortedInvoices.length);
     return Response.json(sortedInvoices);
   } catch (error: any) {
     console.error('💥 Error fetching customer invoices:', error);
