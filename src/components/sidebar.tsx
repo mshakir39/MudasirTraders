@@ -8,6 +8,7 @@ import {
   FaFileInvoice,
   FaTags,
   FaShieldAlt,
+  FaExchangeAlt,
 } from 'react-icons/fa';
 import { FaHandshake, FaUserFriends, FaRobot } from 'react-icons/fa';
 import { FaCalendarAlt, FaStar } from 'react-icons/fa';
@@ -70,69 +71,34 @@ const Sidebar = ({
     setIsMobileMenuOpen(false);
   }, []);
 
-  const navigationItems = [
-    {
-      href: ROUTES.DASHBOARD,
-      label: 'Dashboard',
-      icon: MdDashboard,
-      active:
-        cleanPath === '/dashboard' || cleanPath === '/' || cleanPath === '',
-    },
-    {
-      href: ROUTES.BRANDS,
-      label: 'Brands',
-      icon: FaTags,
-      active: cleanPath === '/brands' || cleanPath === '/brands/',
-    },
-    {
-      href: ROUTES.CATEGORY,
-      label: 'Category',
-      icon: TbCategoryPlus,
-      active: cleanPath === '/category' || cleanPath === '/category/',
-    },
-    {
-      href: ROUTES.STOCK,
-      label: 'Stock',
-      icon: FaCarBattery,
-      active: cleanPath === '/stock' || cleanPath === '/stock/',
-    },
-    {
-      href: ROUTES.INVOICES,
-      label: 'Invoices',
-      icon: FaFileInvoice,
-      active: cleanPath === '/invoices' || cleanPath === '/invoices/',
-    },
-    {
-      href: ROUTES.SALES,
-      label: 'Sales',
-      icon: FaFileInvoice,
-      active: cleanPath === '/sales' || cleanPath === '/sales/',
-    },
-    {
-      href: ROUTES.CUSTOMERS,
-      label: 'Customers',
-      icon: FaUserFriends,
-      active: cleanPath === '/customers' || cleanPath === '/customers/',
-    },
-    {
-      href: ROUTES.REVIEWS,
-      label: 'Reviews',
-      icon: FaStar,
-      active: cleanPath === '/reviews' || cleanPath === '/reviews/',
-    },
-    {
-      href: ROUTES.WARRANTY_CHECK,
-      label: 'Warranty Check',
-      icon: FaShieldAlt,
-      active: cleanPath === '/warranty-check',
-    },
-    {
-      href: ROUTES.DEALERS,
-      label: 'Dealers',
-      icon: FaHandshake,
-      active: cleanPath === '/dealers' || cleanPath === '/dealers/',
-    },
-  ];
+  // Map imported navigation items to include active state based on current path
+  const iconMap = {
+    MdDashboard,
+    FaTags,
+    TbCategoryPlus,
+    FaCarBattery,
+    FaFileInvoice,
+    FaUserFriends,
+    FaStar,
+    FaShieldAlt,
+    FaExchangeAlt,
+    FaHandshake,
+    FaCalendarAlt,
+  } as const;
+
+  const navigationItems = NAVIGATION_ITEMS.map((item) => {
+    const IconComponent = iconMap[item.icon as keyof typeof iconMap];
+    const itemCleanHref = basePath && item.href.startsWith(basePath)
+      ? item.href.slice(basePath.length) || '/'
+      : item.href;
+    const active =
+      path === item.href ||
+      path === `${item.href}/` ||
+      cleanPath === itemCleanHref ||
+      cleanPath === `${itemCleanHref}/` ||
+      (item.href === ROUTES.DASHBOARD && (cleanPath === '/' || cleanPath === ''));
+    return { ...item, icon: IconComponent, active };
+  });
 
   const meetupsItem = {
     href: ROUTES.MEETUPS,

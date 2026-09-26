@@ -23,6 +23,7 @@ export const ROUTES = {
   PRICE_LIST: '/dashboard/priceList',
   SCRAP_STOCK: '/dashboard/scrapStock',
   REVIEWS: '/dashboard/reviews',
+  CLAIMS: '/dashboard/claims',
 
   // API routes
   API: {
@@ -46,6 +47,7 @@ export const ROUTE_GROUPS = {
     ROUTES.STOCK,
     ROUTES.MEETUPS,
     ROUTES.WARRANTY_CHECK,
+    ROUTES.CLAIMS,
     ROUTES.DEALER_BILLS,
     ROUTES.DEALERS,
     ROUTES.AI_ASSISTANT,
@@ -64,6 +66,7 @@ export const ROUTE_GROUPS = {
     ROUTES.SALES,
     ROUTES.STOCK,
     ROUTES.INVOICES,
+    ROUTES.CLAIMS,
     ROUTES.DEALER_BILLS,
     ROUTES.DEALERS,
     ROUTES.PRICE_LIST,
@@ -143,6 +146,11 @@ export const NAVIGATION_ITEMS = [
     href: ROUTES.WARRANTY_CHECK,
     label: 'Warranty Check',
     icon: 'FaShieldAlt',
+  },
+  {
+    href: ROUTES.CLAIMS,
+    label: 'Battery Claims',
+    icon: 'FaExchangeAlt',
   },
   {
     href: ROUTES.DEALERS,
