@@ -28,7 +28,6 @@ interface TopSellingProductsProps {
     inStock: number;
   }>;
   dateRange: DateRange;
-  isLoading?: boolean;
 }
 interface SalesTrendChartProps {
   data: Array<{
@@ -304,49 +303,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     [topProductsDateRange, salesTrendDateRange, fetchData]
   );
 
-  const [topProductsLoading, setTopProductsLoading] = useState(false);
-  const topProductsAbortRef = useRef<AbortController | null>(null);
-
   const handleTopProductsDateChange = useCallback(
-    async (range: DateRange) => {
+    (range: DateRange) => {
       setTopProductsDateRange(range);
-
-      if (topProductsAbortRef.current) {
-        topProductsAbortRef.current.abort();
-      }
-      const controller = new AbortController();
-      topProductsAbortRef.current = controller;
-
-      try {
-        setTopProductsLoading(true);
-        const params = new URLSearchParams();
-        params.append('start', range.start.toISOString());
-        params.append('end', range.end.toISOString());
-
-        const res = await fetch(
-          `/api/dashboard/top-products?${params.toString()}`,
-          {
-            signal: controller.signal,
-          }
-        );
-        const data = await res.json();
-        if (data.success && Array.isArray(data.topSellingProducts)) {
-          setStats((prev) => ({
-            ...prev,
-            topSellingProducts: data.topSellingProducts,
-          }));
-        }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          console.error('Error updating top products:', err);
-        }
-      } finally {
-        if (topProductsAbortRef.current === controller) {
-          setTopProductsLoading(false);
-        }
-      }
+      fetchData(revenueDateRange, range, salesTrendDateRange);
     },
-    []
+    [revenueDateRange, salesTrendDateRange, fetchData]
   );
 
   const handleSalesTrendDateChange = useCallback(
@@ -436,7 +398,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <TopSellingProductsLazy
           products={stats.topSellingProducts}
           dateRange={topProductsDateRange}
-          isLoading={topProductsLoading}
         />
 
         <SalesTrendChartLazy
