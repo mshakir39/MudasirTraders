@@ -15,11 +15,13 @@ interface TopSellingProductsProps {
     inStock: number;
   }>;
   dateRange: DateRange;
+  isLoading?: boolean;
 }
 
 export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({
   products,
   dateRange,
+  isLoading = false,
 }) => {
   const formatDateRange = (range: DateRange) => {
     const start = range.start.toLocaleDateString('en-PK', {
@@ -36,11 +38,18 @@ export const TopSellingProducts: React.FC<TopSellingProductsProps> = ({
   };
 
   return (
-    <div className='flex  h-full flex-col rounded-xl bg-white p-6 shadow-md'>
+    <div
+      className={`flex h-full flex-col rounded-xl bg-white p-6 shadow-md transition-opacity duration-150 ${
+        isLoading ? 'opacity-60' : 'opacity-100'
+      }`}
+    >
       <div className='mb-4 flex items-center justify-between'>
         <h3 className='flex items-center text-lg font-semibold text-secondary-900'>
           <MdTrendingUp className='mr-2 text-primary-600' />
-          Top Selling Products
+          <span>Top Selling Products</span>
+          {isLoading && (
+            <span className='ml-2 inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-600 border-t-transparent' />
+          )}
         </h3>
       </div>
       <div className='mb-3'>

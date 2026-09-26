@@ -28,6 +28,7 @@ interface TopSellingProductsProps {
     inStock: number;
   }>;
   dateRange: DateRange;
+  isLoading?: boolean;
 }
 interface SalesTrendChartProps {
   data: Array<{
@@ -303,12 +304,49 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     [topProductsDateRange, salesTrendDateRange, fetchData]
   );
 
+  const [topProductsLoading, setTopProductsLoading] = useState(false);
+  const topProductsAbortRef = useRef<AbortController | null>(null);
+
   const handleTopProductsDateChange = useCallback(
-    (range: DateRange) => {
+    async (range: DateRange) => {
       setTopProductsDateRange(range);
-      fetchData(revenueDateRange, range, salesTrendDateRange);
+
+      if (topProductsAbortRef.current) {
+        topProductsAbortRef.current.abort();
+      }
+      const controller = new AbortController();
+      topProductsAbortRef.current = controller;
+
+      try {
+        setTopProductsLoading(true);
+        const params = new URLSearchParams();
+        params.append('start', range.start.toISOString());
+        params.append('end', range.end.toISOString());
+
+        const res = await fetch(
+          `/api/dashboard/top-products?${params.toString()}`,
+          {
+            signal: controller.signal,
+          }
+        );
+        const data = await res.json();
+        if (data.success && Array.isArray(data.topSellingProducts)) {
+          setStats((prev) => ({
+            ...prev,
+            topSellingProducts: data.topSellingProducts,
+          }));
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Error updating top products:', err);
+        }
+      } finally {
+        if (topProductsAbortRef.current === controller) {
+          setTopProductsLoading(false);
+        }
+      }
     },
-    [revenueDateRange, salesTrendDateRange, fetchData]
+    []
   );
 
   const handleSalesTrendDateChange = useCallback(
@@ -318,6 +356,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     },
     [revenueDateRange, topProductsDateRange, fetchData]
   );
+
+  const handleSetAllTime = useCallback(() => {
+    const start = new Date(2020, 0, 1, 0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    const allTimeRange = { start, end };
+    setRevenueDateRange(allTimeRange);
+    setTopProductsDateRange(allTimeRange);
+    setSalesTrendDateRange(allTimeRange);
+    fetchData(allTimeRange, allTimeRange, allTimeRange);
+  }, [fetchData]);
 
   if (loading && !initialStats) return <LoadingSpinner />;
 
@@ -377,7 +426,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         onRevenueDateChange={handleRevenueDateChange}
         onTopProductsDateChange={handleTopProductsDateChange}
         onSalesTrendDateChange={handleSalesTrendDateChange}
-        onSetAllTime={() => {}}
+        onSetAllTime={handleSetAllTime}
       />
 
       <StatsGrid stats={stats} revenueDateRange={revenueDateRange} />
@@ -387,6 +436,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <TopSellingProductsLazy
           products={stats.topSellingProducts}
           dateRange={topProductsDateRange}
+          isLoading={topProductsLoading}
         />
 
         <SalesTrendChartLazy

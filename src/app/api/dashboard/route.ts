@@ -73,6 +73,15 @@ const normalizeSalesSeries = (brandName: string, series: string): string => {
     .trim();
 };
 
+// Helper function to safely extract sale date from multiple possible field names
+const getSaleDate = (sale: any): Date | null => {
+  const raw =
+    sale?.date || sale?.createdDate || sale?.saleDate || sale?.createdAt;
+  if (!raw) return null;
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 // Helper function to verify sales-stock synchronization
 const verifySalesStockSync = (salesData: any[], stockData: any[]) => {
   logger.debug('🔍 Starting sales-stock sync verification...');
@@ -237,13 +246,33 @@ export async function GET(request: NextRequest) {
 
     logger.success('✅ Connected to MongoDB, fetching essential data...');
 
-    // Fetch collections
-    const [initialStockDocs, salesDocs, invoicesDocs, customers] =
+    // Fetch collections with targeted projections for high performance
+    const [initialStockDocs, salesDocs, invoicesDocs, customerCount] =
       await Promise.all([
         db.collection('stock').find().toArray(),
         db.collection('sales').find().toArray(),
-        db.collection('invoices').find().toArray(),
-        db.collection('customers').find().toArray(),
+        db
+          .collection('invoices')
+          .find(
+            {
+              status: { $ne: 'voided' },
+              paymentStatus: { $in: ['pending', 'partial'] },
+            },
+            {
+              projection: {
+                status: 1,
+                paymentStatus: 1,
+                totalAmount: 1,
+                receivedAmount: 1,
+                batteriesRate: 1,
+                additionalPayment: 1,
+                products: 1,
+                remainingAmount: 1,
+              },
+            }
+          )
+          .toArray(),
+        db.collection('customers').countDocuments(),
       ]);
 
     let stockDocs = initialStockDocs;
@@ -367,8 +396,8 @@ export async function GET(request: NextRequest) {
     // REVENUE SALES FILTERING
     const filteredSalesForRevenue = Array.isArray(salesDocs)
       ? salesDocs.filter((sale: any) => {
-          if (!sale.date) return false;
-          const saleDate = new Date(sale.date);
+          const saleDate = getSaleDate(sale);
+          if (!saleDate) return false;
           return (
             saleDate >= revenueDateRange!.start &&
             saleDate <= revenueDateRange!.end
@@ -397,11 +426,12 @@ export async function GET(request: NextRequest) {
     const profitMargin =
       totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
-    // TOP PRODUCTS
+    // TOP PRODUCTS FILTERING
     const filteredSalesForTopProducts = Array.isArray(salesDocs)
       ? salesDocs.filter((sale: any) => {
-          if (!sale.date) return false;
-          const saleDate = new Date(sale.date);
+          if (sale.isChargingService || sale.isScrapBattery) return false;
+          const saleDate = getSaleDate(sale);
+          if (!saleDate) return false;
           return (
             saleDate >= topProductsDateRange!.start &&
             saleDate <= topProductsDateRange!.end
@@ -415,147 +445,137 @@ export async function GET(request: NextRequest) {
     logger.debug(
       `📊 Total sales in date range: ${filteredSalesForTopProducts.length}`
     );
-    logger.debug(
-      `📊 Total sales with products: ${filteredSalesForTopProducts.filter((sale) => Array.isArray(sale.products) && sale.products.length > 0).length}`
-    );
 
-    // Debug sales data structure
-    if (filteredSalesForTopProducts.length > 0) {
-      const sampleSale = filteredSalesForTopProducts[0];
-      logger.debug('📊 Sample sale structure:', {
-        customerName: sampleSale.customerName,
-        date: sampleSale.date,
-        productsCount: sampleSale.products?.length || 0,
-        firstProduct: sampleSale.products?.[0]
-          ? {
-              brandName: sampleSale.products[0].brandName,
-              series: sampleSale.products[0].series,
-              batteryDetails: sampleSale.products[0].batteryDetails,
-              quantity: sampleSale.products[0].quantity,
-            }
-          : null,
-      });
-    }
+    // Build fast lookup map from current stock: "normalizedBrand:::normalizedSeries" -> stock info
+    const stockLookup = new Map<
+      string,
+      { inStock: number; brandName: string; series: string }
+    >();
 
-    const actualSalesCount: { [key: string]: number } = {};
-    filteredSalesForTopProducts.forEach((sale: any) => {
-      if (Array.isArray(sale.products)) {
-        sale.products.forEach((product: any) => {
-          // Handle different possible field names for brand and series
-          const brandName =
-            product.brandName || product.batteryDetails?.brandName || '';
-          const series =
-            product.series || product.batteryDetails?.name || 'Unknown';
+    stock.forEach((document) => {
+      const documentBrandName = (document.brandName || '').trim();
+      const normalizedBrand = documentBrandName.toLowerCase();
 
-          // Only count if we have valid brand and series
-          if (brandName && series && series !== 'Unknown') {
-            const normalizedSeries = normalizeSalesSeries(brandName, series);
-            const normalizedKey = `${brandName}-${normalizedSeries}`;
-            const quantity = toNumber(product.quantity);
-
-            // Store only normalized key to avoid duplicates
-            actualSalesCount[normalizedKey] =
-              (actualSalesCount[normalizedKey] || 0) + quantity;
-
-            logger.debug(
-              `📊 Sales count for ${brandName}-${series}: ${quantity} (total: ${actualSalesCount[normalizedKey]})`
-            );
-          } else {
-            logger.warning(
-              `⚠️ Skipping invalid product: brandName="${brandName}", series="${series}"`
-            );
-          }
-        });
-      }
-    });
-
-    logger.debug('📊 Sales count summary:');
-    const salesKeys = Object.keys(actualSalesCount);
-    logger.debug(`📊 Total unique products sold: ${salesKeys.length}`);
-    salesKeys.slice(0, 10).forEach((key) => {
-      logger.debug(`📊 ${key}: ${actualSalesCount[key]} units sold`);
-    });
-
-    logger.debug('📦 Stock data structure check:');
-    logger.debug(`📦 Total stock documents: ${stock.length}`);
-    stock.slice(0, 3).forEach((doc, index) => {
-      logger.debug(
-        `📦 Stock doc ${index + 1}: brandName="${doc.brandName}", seriesStock count: ${doc.seriesStock?.length || 0}`
-      );
-      if (doc.seriesStock && doc.seriesStock.length > 0) {
-        doc.seriesStock.slice(0, 2).forEach((series, sIndex) => {
-          logger.debug(
-            `  Series ${sIndex + 1}: series="${series.series}", inStock=${series.inStock}, soldCount=${series.soldCount}`
-          );
-        });
-      }
-    });
-
-    const productSales = stock.reduce((sales: any[], document) => {
-      if (!document.seriesStock || !Array.isArray(document.seriesStock))
-        return sales;
-      const documentBrandName = document.brandName || '';
-      const documentSales = document.seriesStock
-        .map((series) => {
-          const seriesName = series.series || 'Unknown';
+      if (Array.isArray(document.seriesStock)) {
+        document.seriesStock.forEach((seriesItem: any) => {
+          const seriesName = (seriesItem.series || '').trim();
           const normalizedSeries = normalizeSalesSeries(
             documentBrandName,
             seriesName
           );
-          const normalizedKey = `${documentBrandName}-${normalizedSeries}`;
+          const key = `${normalizedBrand}:::${normalizedSeries}`;
+          const inStock = toNumber(seriesItem.inStock);
 
-          // Use only normalized key for consistent matching
-          const actualSoldCount = actualSalesCount[normalizedKey] || 0;
+          stockLookup.set(key, {
+            inStock,
+            brandName: documentBrandName,
+            series: seriesName,
+          });
+        });
+      }
+    });
 
-          logger.debug(
-            `🔍 Checking stock item: ${seriesName}, normalizedKey: ${normalizedKey}, actualSoldCount: ${actualSoldCount}, inStock: ${toNumber(series.inStock)}`
-          );
+    // Aggregate sales strictly from the filtered sales for the chosen date range
+    const salesAggMap = new Map<
+      string,
+      { brandName: string; series: string; soldCount: number }
+    >();
 
-          // Use calculated sales for date range, but fall back to stock soldCount if needed
-          const stockSoldCount = validateSoldCount(series.soldCount);
-          const dateRangeSoldCount = actualSoldCount || 0;
+    filteredSalesForTopProducts.forEach((sale: any) => {
+      // Handle both invoice products array and direct sales documents
+      const products =
+        Array.isArray(sale.products) && sale.products.length > 0
+          ? sale.products
+          : sale.brandName && sale.series
+            ? [sale]
+            : [];
 
-          // Prefer date range sales, but use stock soldCount if no sales in date range
-          const finalSoldCount =
-            dateRangeSoldCount > 0 ? dateRangeSoldCount : stockSoldCount;
+      products.forEach((product: any) => {
+        // Exclude charging services and scrap batteries
+        if (product.isChargingService || product.isScrapBattery) return;
 
-          logger.debug(
-            `🔍 Stock item ${seriesName}: stockSoldCount=${stockSoldCount}, dateRangeSoldCount=${dateRangeSoldCount}, finalSoldCount=${finalSoldCount}`
-          );
+        const rawBrand = (
+          product.brandName ||
+          product.batteryDetails?.brandName ||
+          ''
+        ).trim();
+        const rawSeries = (
+          product.series ||
+          product.batteryDetails?.name ||
+          ''
+        ).trim();
 
-          // Only include products that have been sold in the date range OR have historical sales
-          if (finalSoldCount > 0) {
-            return {
-              brandName: documentBrandName,
-              series: seriesName,
-              soldCount: finalSoldCount,
-              inStock: toNumber(series.inStock),
-              isDateRangeData: dateRangeSoldCount > 0, // Flag to indicate if this is date range data
-            };
-          }
-          return null;
-        })
-        .filter(Boolean); // Remove null entries
-      return [...sales, ...documentSales];
-    }, []);
-    const topSellingProducts = productSales
+        if (!rawBrand || !rawSeries || rawSeries.toLowerCase() === 'unknown') {
+          return;
+        }
+
+        const normalizedBrand = rawBrand.toLowerCase();
+        const normalizedSeries = normalizeSalesSeries(rawBrand, rawSeries);
+        const key = `${normalizedBrand}:::${normalizedSeries}`;
+        const quantity = toNumber(product.quantity) || 1;
+
+        const existing = salesAggMap.get(key);
+        if (existing) {
+          existing.soldCount += quantity;
+        } else {
+          const stockMatch = stockLookup.get(key);
+          salesAggMap.set(key, {
+            brandName: stockMatch?.brandName || rawBrand,
+            series: stockMatch?.series || rawSeries,
+            soldCount: quantity,
+          });
+        }
+      });
+    });
+
+    // Convert aggregated sales to product array with current stock
+    let topSellingProducts = Array.from(salesAggMap.entries())
+      .map(([key, item]) => {
+        const stockInfo = stockLookup.get(key);
+        return {
+          brandName: item.brandName,
+          series: item.series,
+          soldCount: item.soldCount,
+          inStock: stockInfo ? stockInfo.inStock : 0,
+        };
+      })
       .filter((product) => product.soldCount > 0)
       .sort((a, b) => b.soldCount - a.soldCount)
       .slice(0, 5);
 
-    logger.debug(
-      '🏆 Top selling products (date range + fallback to historical):'
-    );
+    // Fallback ONLY IF the entire sales collection has zero documents across the entire system
+    if (
+      topSellingProducts.length === 0 &&
+      (!salesDocs || salesDocs.length === 0)
+    ) {
+      const historicalSales: any[] = [];
+      stock.forEach((document) => {
+        const brandName = document.brandName || '';
+        if (Array.isArray(document.seriesStock)) {
+          document.seriesStock.forEach((seriesItem: any) => {
+            const count = validateSoldCount(seriesItem.soldCount);
+            if (count > 0) {
+              historicalSales.push({
+                brandName,
+                series: seriesItem.series || 'Unknown',
+                soldCount: count,
+                inStock: toNumber(seriesItem.inStock),
+              });
+            }
+          });
+        }
+      });
+      topSellingProducts = historicalSales
+        .sort((a, b) => b.soldCount - a.soldCount)
+        .slice(0, 5);
+    }
 
     logger.debug(
-      `🏆 Top selling products calculated: ${topSellingProducts.length}`
+      `🏆 Top selling products calculated for date range: ${topSellingProducts.length}`
     );
     topSellingProducts.forEach((product, index) => {
-      const dataSource = product.isDateRangeData
-        ? '📅 Date Range'
-        : '📊 Historical';
       logger.debug(
-        `  ${index + 1}. ${product.brandName} ${product.series}: ${product.soldCount} sold, ${product.inStock} in stock (${dataSource})`
+        `  ${index + 1}. ${product.brandName} ${product.series}: ${product.soldCount} sold, ${product.inStock} in stock`
       );
     });
 
@@ -632,9 +652,9 @@ export async function GET(request: NextRequest) {
       const dateStr = date.toISOString().split('T')[0];
       const dailySales = Array.isArray(salesDocs)
         ? salesDocs.filter((sale: any) => {
-            if (!sale.date) return false;
-            const saleDate = new Date(sale.date).toISOString().split('T')[0];
-            return saleDate === dateStr;
+            const saleDate = getSaleDate(sale);
+            if (!saleDate) return false;
+            return saleDate.toISOString().split('T')[0] === dateStr;
           })
         : [];
       const dailyRevenue = dailySales.reduce(
@@ -690,7 +710,7 @@ export async function GET(request: NextRequest) {
       totalProfit,
       profitMargin: Math.round(profitMargin * 10) / 10,
       totalPending,
-      totalCustomers: Array.isArray(customers) ? customers.length : 0,
+      totalCustomers: typeof customerCount === 'number' ? customerCount : 0,
       topSellingProducts,
       salesTrend,
       inventoryByBrand,
