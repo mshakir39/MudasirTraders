@@ -18,6 +18,7 @@ import { Legend } from 'recharts/es6/component/Legend';
 interface DateRange {
   start: Date;
   end: Date;
+  isAllTime?: boolean;
 }
 
 interface SalesTrendChartProps {
@@ -60,6 +61,9 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({
   const datePickerOpen = useDatePickerOpen();
 
   const formatDateRange = (range: DateRange) => {
+    if (range.isAllTime || range.start.getFullYear() <= 1970) {
+      return 'All Time';
+    }
     const start = range.start.toLocaleDateString('en-PK', {
       month: 'short',
       day: 'numeric',

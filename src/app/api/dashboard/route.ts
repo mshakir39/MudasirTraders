@@ -239,10 +239,25 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const revenueStart = searchParams.get('revenueStart');
     const revenueEnd = searchParams.get('revenueEnd');
+    const revenueAllTime =
+      searchParams.get('revenueAllTime') === 'true' ||
+      (revenueStart ? new Date(revenueStart).getFullYear() <= 1970 : false);
+
     const topProductsStart = searchParams.get('topProductsStart');
     const topProductsEnd = searchParams.get('topProductsEnd');
+    const topProductsAllTime =
+      searchParams.get('topProductsAllTime') === 'true' ||
+      (topProductsStart
+        ? new Date(topProductsStart).getFullYear() <= 1970
+        : false);
+
     const salesTrendStart = searchParams.get('salesTrendStart');
     const salesTrendEnd = searchParams.get('salesTrendEnd');
+    const salesTrendAllTime =
+      searchParams.get('salesTrendAllTime') === 'true' ||
+      (salesTrendStart
+        ? new Date(salesTrendStart).getFullYear() <= 1970
+        : false);
 
     logger.success('✅ Connected to MongoDB, fetching essential data...');
 
@@ -418,6 +433,9 @@ export async function GET(request: NextRequest) {
       ? salesDocs.filter((sale: any) => {
           const saleDate = getSaleDate(sale);
           if (!saleDate) return false;
+          if (revenueAllTime) {
+            return saleDate <= revenueDateRange!.end;
+          }
           return (
             saleDate >= revenueDateRange!.start &&
             saleDate <= revenueDateRange!.end
@@ -641,6 +659,9 @@ export async function GET(request: NextRequest) {
           if (sale.isChargingService || sale.isScrapBattery) return false;
           const saleDate = getSaleDate(sale);
           if (!saleDate) return false;
+          if (topProductsAllTime) {
+            return saleDate <= topProductsDateRange!.end;
+          }
           return (
             saleDate >= topProductsDateRange!.start &&
             saleDate <= topProductsDateRange!.end
@@ -822,11 +843,27 @@ export async function GET(request: NextRequest) {
 
     // SALES TREND
     const salesByDay = new Map<string, { count: number; revenue: number }>();
+    let earliestSaleDate: Date | null = null;
     if (Array.isArray(salesDocs)) {
       salesDocs.forEach((sale: any) => {
         if (sale.isChargingService || sale.isScrapBattery) return;
         const saleDate = getSaleDate(sale);
         if (!saleDate) return;
+        if (salesTrendAllTime) {
+          if (saleDate > salesTrendDateRange!.end) return;
+        } else {
+          if (
+            saleDate < salesTrendDateRange!.start ||
+            saleDate > salesTrendDateRange!.end
+          ) {
+            return;
+          }
+        }
+
+        if (!earliestSaleDate || saleDate < earliestSaleDate) {
+          earliestSaleDate = saleDate;
+        }
+
         const dayKey = saleDate.toLocaleDateString('en-CA', {
           timeZone: 'Asia/Karachi',
         });
@@ -838,7 +875,16 @@ export async function GET(request: NextRequest) {
     }
 
     const salesTrend = [];
-    const currentTrendDate = new Date(salesTrendDateRange!.start);
+    let trendStart = new Date(salesTrendDateRange!.start);
+    if (salesTrendAllTime) {
+      if (earliestSaleDate) {
+        trendStart = new Date(earliestSaleDate);
+      } else {
+        const today = new Date();
+        trendStart = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      }
+    }
+    const currentTrendDate = new Date(trendStart);
     currentTrendDate.setHours(0, 0, 0, 0);
     const endTrendBoundary = new Date(salesTrendDateRange!.end);
     endTrendBoundary.setHours(23, 59, 59, 999);

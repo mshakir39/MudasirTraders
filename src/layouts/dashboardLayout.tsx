@@ -27,6 +27,7 @@ import { lockDashboard } from '@/actions/dashboardActions';
 interface DateRange {
   start: Date;
   end: Date;
+  isAllTime?: boolean;
 }
 
 interface StreamlinedDashboardStats {
@@ -215,10 +216,25 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         const params = new URLSearchParams();
         params.append('revenueStart', revenueRange.start.toISOString());
         params.append('revenueEnd', revenueRange.end.toISOString());
+        if (revenueRange.isAllTime || revenueRange.start.getFullYear() <= 1970) {
+          params.append('revenueAllTime', 'true');
+        }
         params.append('topProductsStart', topProductsRange.start.toISOString());
         params.append('topProductsEnd', topProductsRange.end.toISOString());
+        if (
+          topProductsRange.isAllTime ||
+          topProductsRange.start.getFullYear() <= 1970
+        ) {
+          params.append('topProductsAllTime', 'true');
+        }
         params.append('salesTrendStart', salesTrendRange.start.toISOString());
         params.append('salesTrendEnd', salesTrendRange.end.toISOString());
+        if (
+          salesTrendRange.isAllTime ||
+          salesTrendRange.start.getFullYear() <= 1970
+        ) {
+          params.append('salesTrendAllTime', 'true');
+        }
 
         const url = `/api/dashboard?${params.toString()}`;
         const response = await fetch(url);
@@ -252,12 +268,62 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     );
   }, [revenueDateRange, topProductsDateRange, salesTrendDateRange, fetchData]);
 
+  const [revenueLoading, setRevenueLoading] = useState(false);
+  const [allTimeLoading, setAllTimeLoading] = useState(false);
+  const revenueAbortRef = useRef<AbortController | null>(null);
+
   const handleRevenueDateChange = useCallback(
-    (range: DateRange) => {
+    async (range: DateRange) => {
       setRevenueDateRange(range);
-      fetchData(range, topProductsDateRange, salesTrendDateRange, false);
+
+      if (revenueAbortRef.current) {
+        revenueAbortRef.current.abort();
+      }
+      const controller = new AbortController();
+      revenueAbortRef.current = controller;
+
+      try {
+        setRevenueLoading(true);
+        const params = new URLSearchParams();
+        params.append('revenueStart', range.start.toISOString());
+        params.append('revenueEnd', range.end.toISOString());
+        if (range.isAllTime || range.start.getFullYear() <= 1970) {
+          params.append('revenueAllTime', 'true');
+        }
+        params.append('topProductsStart', topProductsDateRange.start.toISOString());
+        params.append('topProductsEnd', topProductsDateRange.end.toISOString());
+        if (
+          topProductsDateRange.isAllTime ||
+          topProductsDateRange.start.getFullYear() <= 1970
+        ) {
+          params.append('topProductsAllTime', 'true');
+        }
+        params.append('salesTrendStart', salesTrendDateRange.start.toISOString());
+        params.append('salesTrendEnd', salesTrendDateRange.end.toISOString());
+        if (
+          salesTrendDateRange.isAllTime ||
+          salesTrendDateRange.start.getFullYear() <= 1970
+        ) {
+          params.append('salesTrendAllTime', 'true');
+        }
+
+        const url = `/api/dashboard?${params.toString()}`;
+        const response = await fetch(url, { signal: controller.signal });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        setStats(data);
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Error updating revenue data:', err);
+        }
+      } finally {
+        if (revenueAbortRef.current === controller) {
+          setRevenueLoading(false);
+        }
+      }
     },
-    [topProductsDateRange, salesTrendDateRange, fetchData]
+    [topProductsDateRange, salesTrendDateRange]
   );
 
   const [topProductsLoading, setTopProductsLoading] = useState(false);
@@ -278,6 +344,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         const params = new URLSearchParams();
         params.append('start', range.start.toISOString());
         params.append('end', range.end.toISOString());
+        if (range.isAllTime || range.start.getFullYear() <= 1970) {
+          params.append('allTime', 'true');
+        }
 
         const res = await fetch(
           `/api/dashboard/top-products?${params.toString()}`,
@@ -321,6 +390,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         const params = new URLSearchParams();
         params.append('start', range.start.toISOString());
         params.append('end', range.end.toISOString());
+        if (range.isAllTime || range.start.getFullYear() <= 1970) {
+          params.append('allTime', 'true');
+        }
 
         const res = await fetch(
           `/api/dashboard/sales-trend?${params.toString()}`,
@@ -346,15 +418,28 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     []
   );
 
-  const handleSetAllTime = useCallback(() => {
-    const start = new Date(2020, 0, 1, 0, 0, 0, 0);
+  const handleSetAllTime = useCallback(async () => {
+    const start = new Date(0);
     const end = new Date();
     end.setHours(23, 59, 59, 999);
-    const allTimeRange = { start, end };
+    const allTimeRange = { start, end, isAllTime: true };
     setRevenueDateRange(allTimeRange);
     setTopProductsDateRange(allTimeRange);
     setSalesTrendDateRange(allTimeRange);
-    fetchData(allTimeRange, allTimeRange, allTimeRange);
+
+    setRevenueLoading(true);
+    setTopProductsLoading(true);
+    setSalesTrendLoading(true);
+    setAllTimeLoading(true);
+
+    try {
+      await fetchData(allTimeRange, allTimeRange, allTimeRange, false);
+    } finally {
+      setRevenueLoading(false);
+      setTopProductsLoading(false);
+      setSalesTrendLoading(false);
+      setAllTimeLoading(false);
+    }
   }, [fetchData]);
 
   if (loading && !initialStats) return <LoadingSpinner />;
@@ -416,9 +501,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         onTopProductsDateChange={handleTopProductsDateChange}
         onSalesTrendDateChange={handleSalesTrendDateChange}
         onSetAllTime={handleSetAllTime}
+        revenueLoading={revenueLoading}
+        topProductsLoading={topProductsLoading}
+        salesTrendLoading={salesTrendLoading}
+        isAllTimeLoading={allTimeLoading}
       />
 
-      <StatsGrid stats={stats} revenueDateRange={revenueDateRange} />
+      <StatsGrid
+        stats={stats}
+        revenueDateRange={revenueDateRange}
+        isLoading={revenueLoading}
+      />
 
       {/* Charts Section */}
       <div className='mb-8 grid grid-cols-1 gap-6 lg:min-h-[500px] lg:grid-cols-2'>

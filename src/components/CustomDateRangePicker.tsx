@@ -10,6 +10,7 @@ import 'flatpickr/dist/themes/light.css';
 interface DateRange {
   start: Date;
   end: Date;
+  isAllTime?: boolean;
 }
 
 interface PresetRange {
@@ -23,6 +24,7 @@ interface DateRangePickerProps {
   initialDateRange?: DateRange;
   className?: string;
   align?: 'left' | 'right';
+  isLoading?: boolean;
 }
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
@@ -30,6 +32,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   initialDateRange,
   className = '',
   align = 'left',
+  isLoading = false,
 }) => {
   // CRITICAL: Prevent any automatic parent notifications
   const hasInitialized = useRef(false);
@@ -51,7 +54,16 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   // Component state - NEVER triggers parent on init
   const [showDropdown, setShowDropdown] = useState(false);
   const [showInput, setShowInput] = useState(true);
-  const [selectedRange, setSelectedRange] = useState<string>('');
+  const [selectedRange, setSelectedRange] = useState<string>(() => {
+    if (
+      initialDateRange &&
+      (initialDateRange.isAllTime ||
+        new Date(initialDateRange.start).getFullYear() <= 1970)
+    ) {
+      return 'ALL TIME';
+    }
+    return '';
+  });
   const [currentRange, setCurrentRange] =
     useState<[Date, Date]>(getInitialRange());
 
@@ -61,6 +73,16 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   // STABLE preset ranges
   const presetRanges: PresetRange[] = [
+    {
+      label: 'ALL TIME',
+      value: 'allTime',
+      getRange: () => {
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        const start = new Date(0);
+        return [start, end];
+      },
+    },
     {
       label: 'TODAY',
       value: 'today',
@@ -207,7 +229,12 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     });
   };
 
-  const displayValue = `${formatDate(currentRange[0])} - ${formatDate(currentRange[1])}`;
+  const isAllTime =
+    currentRange[0].getFullYear() <= 1970 || selectedRange === 'ALL TIME';
+
+  const displayValue = isAllTime
+    ? 'All Time'
+    : `${formatDate(currentRange[0])} - ${formatDate(currentRange[1])}`;
 
   // ONE-TIME initialization effect - NEVER notifies parent automatically
   useEffect(() => {
@@ -215,6 +242,24 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       hasInitialized.current = true;
     }
   }, []);
+
+  // Sync state if initialDateRange prop changes
+  useEffect(() => {
+    if (initialDateRange) {
+      const start = new Date(initialDateRange.start);
+      const end = new Date(initialDateRange.end);
+      setCurrentRange([start, end]);
+      if (start.getFullYear() <= 1970 || initialDateRange.isAllTime) {
+        setSelectedRange('ALL TIME');
+      } else {
+        setSelectedRange((prev) => (prev === 'ALL TIME' ? '' : prev));
+      }
+    }
+  }, [
+    initialDateRange?.start?.getTime(),
+    initialDateRange?.end?.getTime(),
+    initialDateRange?.isAllTime,
+  ]);
 
   // Handle custom date selection from Flatpickr
   const handleCustomDateChange = useCallback(
@@ -243,7 +288,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       flatpickrRef.current.flatpickr.setDate([start, end], true);
     }
 
-    onDateChange({ start, end });
+    onDateChange({
+      start,
+      end,
+      ...(range.value === 'allTime' ? { isAllTime: true } : {}),
+    });
 
     setTimeout(() => closeDropdown(), 100);
   };
@@ -299,7 +348,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     dateFormat: 'd.m.Y',
     defaultDate: currentRange,
     onChange: handleCustomDateChange,
-    minDate: '2000-01-01',
+    minDate: '1970-01-01',
     maxDate: new Date(),
     // ✅ REMOVED: static: true — this was causing the calendar to render inside
     // the dropdown's stacking context, making it fight with chart z-indexes.
@@ -329,6 +378,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       >
         <IoCalendarOutline className='h-4 w-4 text-secondary-500' />
         <span className='text-sm text-secondary-600'>{displayValue}</span>
+        {isLoading && (
+          <span className='inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-600 border-t-transparent' />
+        )}
       </div>
 
       {showDropdown && (
