@@ -641,34 +641,47 @@ export async function GET(request: NextRequest) {
       : 0;
 
     // SALES TREND
-    const salesTrend = [];
-    const diffTime = Math.abs(
-      salesTrendDateRange!.end.getTime() - salesTrendDateRange!.start.getTime()
-    );
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    for (let i = 0; i < diffDays; i++) {
-      const date = new Date(salesTrendDateRange!.start);
-      date.setDate(date.getDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
-      const dailySales = Array.isArray(salesDocs)
-        ? salesDocs.filter((sale: any) => {
-            const saleDate = getSaleDate(sale);
-            if (!saleDate) return false;
-            return saleDate.toISOString().split('T')[0] === dateStr;
-          })
-        : [];
-      const dailyRevenue = dailySales.reduce(
-        (sum: number, sale: any) => sum + toNumber(sale.totalAmount),
-        0
-      );
-      salesTrend.push({
-        date: date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-        }),
-        sales: dailySales.length,
-        revenue: dailyRevenue,
+    const salesByDay = new Map<string, { count: number; revenue: number }>();
+    if (Array.isArray(salesDocs)) {
+      salesDocs.forEach((sale: any) => {
+        if (sale.isChargingService || sale.isScrapBattery) return;
+        const saleDate = getSaleDate(sale);
+        if (!saleDate) return;
+        const dayKey = saleDate.toLocaleDateString('en-CA', {
+          timeZone: 'Asia/Karachi',
+        });
+        const existing = salesByDay.get(dayKey) || { count: 0, revenue: 0 };
+        existing.count += 1;
+        existing.revenue += toNumber(sale.totalAmount);
+        salesByDay.set(dayKey, existing);
       });
+    }
+
+    const salesTrend = [];
+    const currentTrendDate = new Date(salesTrendDateRange!.start);
+    currentTrendDate.setHours(0, 0, 0, 0);
+    const endTrendBoundary = new Date(salesTrendDateRange!.end);
+    endTrendBoundary.setHours(23, 59, 59, 999);
+
+    while (currentTrendDate <= endTrendBoundary) {
+      const dayKey = currentTrendDate.toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Karachi',
+      });
+      const label = currentTrendDate.toLocaleDateString('en-US', {
+        timeZone: 'Asia/Karachi',
+        month: 'short',
+        day: 'numeric',
+      });
+      const entry = salesByDay.get(dayKey) || { count: 0, revenue: 0 };
+
+      salesTrend.push({
+        date: label,
+        fullDate: dayKey,
+        sales: entry.count,
+        revenue: entry.revenue,
+      });
+
+      currentTrendDate.setDate(currentTrendDate.getDate() + 1);
     }
 
     // INVENTORY BY BRAND

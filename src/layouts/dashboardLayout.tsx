@@ -28,14 +28,17 @@ interface TopSellingProductsProps {
     inStock: number;
   }>;
   dateRange: DateRange;
+  isLoading?: boolean;
 }
 interface SalesTrendChartProps {
   data: Array<{
     date: string;
+    fullDate?: string;
     sales: number;
     revenue: number;
   }>;
   dateRange: DateRange;
+  isLoading?: boolean;
 }
 interface InventoryByBrandChartProps {
   data: Array<{
@@ -303,20 +306,90 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     [topProductsDateRange, salesTrendDateRange, fetchData]
   );
 
+  const [topProductsLoading, setTopProductsLoading] = useState(false);
+  const topProductsAbortRef = useRef<AbortController | null>(null);
+
   const handleTopProductsDateChange = useCallback(
-    (range: DateRange) => {
+    async (range: DateRange) => {
       setTopProductsDateRange(range);
-      fetchData(revenueDateRange, range, salesTrendDateRange);
+
+      if (topProductsAbortRef.current) {
+        topProductsAbortRef.current.abort();
+      }
+      const controller = new AbortController();
+      topProductsAbortRef.current = controller;
+
+      try {
+        setTopProductsLoading(true);
+        const params = new URLSearchParams();
+        params.append('start', range.start.toISOString());
+        params.append('end', range.end.toISOString());
+
+        const res = await fetch(
+          `/api/dashboard/top-products?${params.toString()}`,
+          { signal: controller.signal }
+        );
+        const data = await res.json();
+        if (data.success && Array.isArray(data.topSellingProducts)) {
+          setStats((prev) => ({
+            ...prev,
+            topSellingProducts: data.topSellingProducts,
+          }));
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Error updating top products:', err);
+        }
+      } finally {
+        if (topProductsAbortRef.current === controller) {
+          setTopProductsLoading(false);
+        }
+      }
     },
-    [revenueDateRange, salesTrendDateRange, fetchData]
+    []
   );
 
+  const [salesTrendLoading, setSalesTrendLoading] = useState(false);
+  const salesTrendAbortRef = useRef<AbortController | null>(null);
+
   const handleSalesTrendDateChange = useCallback(
-    (range: DateRange) => {
+    async (range: DateRange) => {
       setSalesTrendDateRange(range);
-      fetchData(revenueDateRange, topProductsDateRange, range);
+
+      if (salesTrendAbortRef.current) {
+        salesTrendAbortRef.current.abort();
+      }
+      const controller = new AbortController();
+      salesTrendAbortRef.current = controller;
+
+      try {
+        setSalesTrendLoading(true);
+        const params = new URLSearchParams();
+        params.append('start', range.start.toISOString());
+        params.append('end', range.end.toISOString());
+
+        const res = await fetch(
+          `/api/dashboard/sales-trend?${params.toString()}`,
+          { signal: controller.signal }
+        );
+        const data = await res.json();
+        if (data.success && Array.isArray(data.salesTrend)) {
+          setStats((prev) => ({
+            ...prev,
+            salesTrend: data.salesTrend,
+          }));
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.error('Error updating sales trend:', err);
+        }
+      } finally {
+        if (salesTrendAbortRef.current === controller) {
+          setSalesTrendLoading(false);
+        }
+      }
     },
-    [revenueDateRange, topProductsDateRange, fetchData]
+    []
   );
 
   const handleSetAllTime = useCallback(() => {
@@ -398,11 +471,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <TopSellingProductsLazy
           products={stats.topSellingProducts}
           dateRange={topProductsDateRange}
+          isLoading={topProductsLoading}
         />
 
         <SalesTrendChartLazy
           data={chartData.salesTrend}
           dateRange={salesTrendDateRange}
+          isLoading={salesTrendLoading}
         />
       </div>
 
