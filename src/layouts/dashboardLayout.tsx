@@ -124,21 +124,25 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [stats, setStats] = useState<StreamlinedDashboardStats>(() => {
     if (initialStats) {
       return {
-        totalProducts: initialStats.totalStockItems || 0,
-        totalInventoryValue: 0,
-        lowStockCount: 0,
-        outOfStockCount: 0,
+        totalProducts:
+          (initialStats as any).totalProducts ||
+          initialStats.totalStockItems ||
+          0,
+        totalInventoryValue: (initialStats as any).totalInventoryValue || 0,
+        lowStockCount: initialStats.lowStockCount || 0,
+        outOfStockCount: initialStats.outOfStockCount || 0,
         totalSales: initialStats.totalSales || 0,
-        totalRevenue: initialStats.totalSales || 0,
-        totalProfit: 0,
-        averageOrderValue: 0,
-        totalPending: 0,
+        totalRevenue:
+          (initialStats as any).totalRevenue ?? initialStats.totalSales ?? 0,
+        totalProfit: (initialStats as any).totalProfit || 0,
+        averageOrderValue: (initialStats as any).averageOrderValue || 0,
+        totalPending: initialStats.totalPending || 0,
         totalCustomers: initialStats.totalCustomers || 0,
         topSellingProducts: initialStats.topSellingProducts || [],
-        alerts: {
-          lowStock: 0,
-          outOfStock: 0,
-          pendingPayments: 0,
+        alerts: initialStats.alerts || {
+          lowStock: initialStats.lowStockCount || 0,
+          outOfStock: initialStats.outOfStockCount || 0,
+          pendingPayments: initialStats.totalPending || 0,
         },
       };
     }
@@ -197,7 +201,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   );
 
   const initialLoadRef = useRef(false);
-  const fetchingRef = useRef(false);
+  const fetchAbortRef = useRef<AbortController | null>(null);
 
   // Fetch data with date ranges
   const fetchData = useCallback(
@@ -207,9 +211,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       salesTrendRange: DateRange,
       shouldBlock: boolean = true
     ) => {
-      if (fetchingRef.current) return;
+      if (fetchAbortRef.current) {
+        fetchAbortRef.current.abort();
+      }
+      const controller = new AbortController();
+      fetchAbortRef.current = controller;
+
       try {
-        fetchingRef.current = true;
         if (shouldBlock) setLoading(true);
         setError(null);
 
@@ -237,20 +245,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         }
 
         const url = `/api/dashboard?${params.toString()}`;
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: controller.signal });
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
         setStats(data);
-      } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : 'Failed to fetch dashboard data'
-        );
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          setError(
+            error instanceof Error
+              ? error.message
+              : 'Failed to fetch dashboard data'
+          );
+        }
       } finally {
-        setLoading(false);
-        fetchingRef.current = false;
+        if (fetchAbortRef.current === controller) {
+          setLoading(false);
+        }
       }
     },
     []

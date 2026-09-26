@@ -63,32 +63,42 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const isAllTime =
+      searchParams.get('allTime') === 'true' ||
+      searchParams.get('topProductsAllTime') === 'true' ||
+      start.getFullYear() <= 1970;
+
     // Widen MongoDB query window by 36 hours on each side to ensure no time-zone boundary sales are cut off
     const queryStart = new Date(start.getTime() - 36 * 60 * 60 * 1000);
     const queryEnd = new Date(end.getTime() + 36 * 60 * 60 * 1000);
     const queryStartIso = queryStart.toISOString();
     const queryEndIso = queryEnd.toISOString();
 
+    const salesFilter = isAllTime
+      ? {
+          isChargingService: { $ne: true },
+          isScrapBattery: { $ne: true },
+        }
+      : {
+          $or: [
+            { date: { $gte: queryStart, $lte: queryEnd } },
+            { createdDate: { $gte: queryStart, $lte: queryEnd } },
+            { saleDate: { $gte: queryStart, $lte: queryEnd } },
+            { createdAt: { $gte: queryStart, $lte: queryEnd } },
+            { date: { $gte: queryStartIso, $lte: queryEndIso } },
+            { createdDate: { $gte: queryStartIso, $lte: queryEndIso } },
+            { saleDate: { $gte: queryStartIso, $lte: queryEndIso } },
+            { createdAt: { $gte: queryStartIso, $lte: queryEndIso } },
+          ],
+          isChargingService: { $ne: true },
+          isScrapBattery: { $ne: true },
+        };
+
     // Query sales matching the date range directly using index, fetching only necessary fields
     const [salesDocs, stockDocs] = await Promise.all([
       db
         .collection('sales')
-        .find(
-          {
-            $or: [
-              { date: { $gte: queryStart, $lte: queryEnd } },
-              { createdDate: { $gte: queryStart, $lte: queryEnd } },
-              { saleDate: { $gte: queryStart, $lte: queryEnd } },
-              { createdAt: { $gte: queryStart, $lte: queryEnd } },
-              { date: { $gte: queryStartIso, $lte: queryEndIso } },
-              { createdDate: { $gte: queryStartIso, $lte: queryEndIso } },
-              { saleDate: { $gte: queryStartIso, $lte: queryEndIso } },
-              { createdAt: { $gte: queryStartIso, $lte: queryEndIso } },
-            ],
-            isChargingService: { $ne: true },
-            isScrapBattery: { $ne: true },
-          },
-          {
+        .find(salesFilter, {
             projection: {
               date: 1,
               createdDate: 1,
@@ -157,7 +167,8 @@ export async function GET(request: NextRequest) {
     salesDocs.forEach((sale: any) => {
       if (sale.isChargingService || sale.isScrapBattery) return;
       const saleDate = getSaleDate(sale);
-      if (!saleDate || saleDate < start || saleDate > end) return;
+      if (!saleDate) return;
+      if (!isAllTime && (saleDate < start || saleDate > end)) return;
 
       const products =
         Array.isArray(sale.products) && sale.products.length > 0
