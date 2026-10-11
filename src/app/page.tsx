@@ -9,6 +9,7 @@ import LocationSection from './landing/components/LocationSection';
 import MeetupSection from './landing/components/MeetupSection';
 import HeroSlider from './landing/components/HeroSlider';
 import CustomerReviews from './landing/components/CustomerReviews';
+import FaqSection from './landing/components/FaqSection';
 
 export default function Home() {
   // Shared state for the selected brand
@@ -37,10 +38,10 @@ export default function Home() {
       id: 2,
       image:
         'https://res.cloudinary.com/divdl3sad/image/upload/v1769437289/Gemini_Generated_Image_djh63edjh63edjh6_gntnqv.png',
-      title: 'Premium Brands',
-      subtitle: 'Osaka, Fujika, AGS, Exide & More',
+      title: 'Authorized Dealership',
+      subtitle: 'Authorized Dealer of Fujika & Exide',
       description:
-        'Stocking only the most reliable battery brands with manufacturer warranty. All batteries tested for quality and performance before sale.',
+        'Official authorized dealer for Fujika and Exide. We also carry genuine Osaka, AGS, Phoenix, Daewoo, Volta, Alaska, Power Plus & Bridge Power with official manufacturer warranty.',
     },
     {
       id: 3,
@@ -81,17 +82,13 @@ export default function Home() {
         />
       </section>
 
-      <section aria-label='Customer Reviews Section'>
-        <CustomerReviews />
-      </section>
+      <CustomerReviews />
 
-      <section aria-label='Community Meetups'>
-        <MeetupSection />
-      </section>
+      <MeetupSection />
 
-      <section id='location-section' aria-label='Location & Contact Section'>
-        <LocationSection />
-      </section>
+      <FaqSection />
+
+      <LocationSection />
 
       {/* We pass the special click handler to the footer */}
       <footer id='footer-section'>
