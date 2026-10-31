@@ -221,10 +221,6 @@ export async function getInvoices() {
       batteriesRate: invoice.batteriesRate || 0,
       batteriesCountAndWeight: invoice.batteriesCountAndWeight || '',
     }));
-    console.log(
-      'data invoices',
-      data.filter((invoice) => invoice.customerName === 'Abdul razak')
-    );
     return { success: true, data };
   } catch (error: any) {
     return { success: false, error: error.message };

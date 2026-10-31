@@ -81,6 +81,22 @@ export async function POST(req: NextRequest) {
     ]);
     console.log('✅ Customer indexes created');
 
+    // Stock history and claims indexes (additive, no behaviour change)
+    console.log('📊 Creating stock history / claims indexes...');
+    await Promise.all([
+      db
+        .collection('stockHistory')
+        .createIndex({ brandName: 1, series: 1, historyDate: -1 }),
+      db.collection('stockHistory').createIndex({ historyDate: 1 }),
+      db.collection('claims').createIndex({ createdAt: -1 }),
+      db.collection('claims').createIndex({ supplierStatus: 1, createdAt: -1 }),
+      db
+        .collection('invoices')
+        .createIndex({ status: 1, paymentStatus: 1 }),
+      db.collection('sales').createIndex({ createdDate: -1 }),
+    ]);
+    console.log('✅ Stock history / claims indexes created');
+
     // Show index statistics
     const collections = [
       'invoices',

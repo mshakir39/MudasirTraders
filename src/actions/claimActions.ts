@@ -145,7 +145,12 @@ export async function createBatteryClaim(claimData: {
 }
 
 // 2. Fetch Claims with optional filtering
-export async function getBatteryClaims(filter?: { status?: string; search?: string }) {
+export async function getBatteryClaims(filter?: {
+  status?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}) {
   try {
     const db = await connectToMongoDB();
     if (!db) {
@@ -160,7 +165,10 @@ export async function getBatteryClaims(filter?: { status?: string; search?: stri
     }
 
     if (filter?.search) {
-      const regex = new RegExp(filter.search.trim(), 'i');
+      const regex = new RegExp(
+        filter.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        'i'
+      );
       query.$or = [
         { claimNumber: regex },
         { customerName: regex },
@@ -171,17 +179,27 @@ export async function getBatteryClaims(filter?: { status?: string; search?: stri
       ];
     }
 
-    const claims = await claimsCollection
-      .find(query)
-      .sort({ createdAt: -1 })
-      .toArray();
+    // Optional pagination: when no limit is given, behaviour is unchanged (all claims).
+    let cursor = claimsCollection.find(query).sort({ createdAt: -1 });
+    let pagination: { page: number; limit: number; total: number } | undefined;
+    if (filter?.limit && filter.limit > 0) {
+      const limit = Math.min(Math.floor(filter.limit), 500);
+      const page = Math.max(1, Math.floor(filter.page || 1));
+      cursor = cursor.skip((page - 1) * limit).limit(limit);
+      pagination = {
+        page,
+        limit,
+        total: await claimsCollection.countDocuments(query),
+      };
+    }
+    const claims = await cursor.toArray();
 
     const serialized = claims.map((c) => ({
       ...c,
       _id: c._id.toString(),
     }));
 
-    return { success: true, data: serialized };
+    return { success: true, data: serialized, ...(pagination && { pagination }) };
   } catch (error: any) {
     console.error('Error fetching battery claims:', error);
     return { success: false, error: error.message };

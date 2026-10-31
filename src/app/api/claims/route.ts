@@ -12,7 +12,14 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || undefined;
     const search = searchParams.get('search') || undefined;
 
-    const result = await getBatteryClaims({ status, search });
+    const limitParam = searchParams.get('limit');
+    const pageParam = searchParams.get('page');
+    const result = await getBatteryClaims({
+      status,
+      search,
+      limit: limitParam ? Number(limitParam) : undefined,
+      page: pageParam ? Number(pageParam) : undefined,
+    });
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Error in GET /api/claims:', error);

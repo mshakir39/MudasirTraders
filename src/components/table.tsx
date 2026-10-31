@@ -29,6 +29,7 @@ interface TableProps<TData> {
   secondaryButtonTitle?: string;
   showSecondaryButton?: boolean;
   stockCost?: number;
+  stockQuantity?: number;
   defaultShowStockCost?: boolean;
   pageSize?: number;
   onRowClick?: (row: TData) => void;
@@ -70,6 +71,7 @@ export const Table = <TData extends Record<string, any>>({
   secondaryButtonTitle,
   secondaryButtonOnClick,
   stockCost,
+  stockQuantity,
   defaultShowStockCost = false,
   pageSize: initialPageSize = 10,
   onRowClick,
@@ -307,6 +309,11 @@ export const Table = <TData extends Record<string, any>>({
             </div>
           )}
           <div className='flex flex-wrap items-center gap-2 sm:gap-4'>
+            {stockQuantity !== undefined && stockQuantity > 0 && (
+              <span className='whitespace-nowrap text-xs font-bold text-gray-500 sm:text-sm'>
+                Total Stock Qty: {stockQuantity.toLocaleString()}
+              </span>
+            )}
             {stockCost !== undefined && stockCost > 0 && (
               <button
                 onClick={() => setShowStockCost((prev) => !prev)}

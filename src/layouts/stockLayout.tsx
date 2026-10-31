@@ -77,6 +77,7 @@ const StockLayout: React.FC<StockLayoutProps> = ({
   const [seriesOptions, setSeriesOptions] = useState<SeriesOption[]>([]);
   const [formData, setFormData] = useState<FormStockData>(EMPTY_FORM_STOCK);
   const [stockCost, setStockCost] = useState(0);
+  const [stockQuantity, setStockQuantity] = useState(0);
   const [showStockCost, setShowStockCost] = useState(false);
 
   // History modal
@@ -173,10 +174,17 @@ const StockLayout: React.FC<StockLayoutProps> = ({
       );
       setTableData(transformed);
       setStockCost(calculateStockCost(filtered[0].seriesStock));
+      setStockQuantity(
+        filtered[0].seriesStock.reduce(
+          (t: number, i: StockBatteryData) => t + (Number(i.inStock) || 0),
+          0
+        )
+      );
     } else {
       fetchData(currentBrandName);
       setTableData([]);
       setStockCost(0);
+      setStockQuantity(0);
     }
   }, [
     stock,
@@ -462,6 +470,11 @@ const StockLayout: React.FC<StockLayoutProps> = ({
               </svg>
             </div>
           </div>
+          {!loading && stockQuantity > 0 && (
+            <span className='whitespace-nowrap text-sm font-bold text-gray-500'>
+              Total Stock Qty: {stockQuantity.toLocaleString()}
+            </span>
+          )}
           {!loading && stockCost > 0 && (
             <button
               onClick={() => setShowStockCost(!showStockCost)}
@@ -512,7 +525,10 @@ const StockLayout: React.FC<StockLayoutProps> = ({
               enableSearch={true}
               searchPlaceholder='Search stock...'
               stockCost={stockCost}
+              stockQuantity={stockQuantity}
               defaultShowStockCost={false}
+              stickyHeader
+              bodyMaxHeight='calc(100vh - 340px)'
             />
           )}
         </div>

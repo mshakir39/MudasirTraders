@@ -261,6 +261,70 @@ export async function GET(request: NextRequest) {
 
     logger.success('✅ Connected to MongoDB, fetching essential data...');
 
+    // Pre-filter sales in MongoDB using a SUPERSET of the JS date filters below.
+    // The exact filtering (getSaleDate + windows) still runs in JS, so results
+    // are identical; we only avoid loading sales outside every window.
+    const DAY = 24 * 60 * 60 * 1000;
+    const nowMs = Date.now();
+    const parseOr = (v: string | null, fallback: number) => {
+      const t = v ? new Date(v).getTime() : NaN;
+      return isNaN(t) ? fallback : t;
+    };
+    const revStartMs = parseOr(revenueStart, nowMs - 30 * DAY);
+    const revEndMs = parseOr(revenueEnd, nowMs);
+    const topStartMs =
+      topProductsStart && topProductsEnd
+        ? parseOr(topProductsStart, revStartMs)
+        : revStartMs;
+    const topEndMs =
+      topProductsStart && topProductsEnd
+        ? parseOr(topProductsEnd, revEndMs)
+        : revEndMs;
+    const trendStartMs =
+      salesTrendStart && salesTrendEnd
+        ? parseOr(salesTrendStart, nowMs - 14 * DAY)
+        : nowMs - 14 * DAY;
+    const trendEndMs =
+      salesTrendStart && salesTrendEnd
+        ? parseOr(salesTrendEnd, nowMs)
+        : nowMs;
+    const anyAllTime = revenueAllTime || topProductsAllTime || salesTrendAllTime;
+    const hiDate = new Date(Math.max(revEndMs, topEndMs, trendEndMs) + DAY);
+    const loDate = new Date(
+      Math.min(revStartMs, topStartMs, trendStartMs) - DAY
+    );
+    const dateFields = ['date', 'createdDate', 'saleDate', 'createdAt'];
+    const inWindowExpr = (field: string) => ({
+      $let: {
+        vars: {
+          d: {
+            $convert: {
+              input: `$${field}`,
+              to: 'date',
+              onError: 'ERR',
+              onNull: null,
+            },
+          },
+        },
+        in: {
+          $or: [
+            { $eq: ['$$d', 'ERR'] }, // unparsable in Mongo: keep, JS decides
+            {
+              $and: [
+                { $eq: [{ $type: '$$d' }, 'date'] },
+                ...(anyAllTime ? [] : [{ $gte: ['$$d', loDate] }]),
+                { $lte: ['$$d', hiDate] },
+              ],
+            },
+          ],
+        },
+      },
+    });
+    const salesPrefilter = {
+      $expr: { $or: dateFields.map(inWindowExpr) },
+    };
+
+
     // Fetch collections with targeted projections for high performance
     const [
       initialStockDocs,
@@ -270,7 +334,7 @@ export async function GET(request: NextRequest) {
       stockHistoryDocs,
     ] = await Promise.all([
       db.collection('stock').find().toArray(),
-      db.collection('sales').find().toArray(),
+      db.collection('sales').find(salesPrefilter).toArray(),
       db
         .collection('invoices')
         .find(
@@ -747,7 +811,9 @@ export async function GET(request: NextRequest) {
     // Fallback ONLY IF the entire sales collection has zero documents across the entire system
     if (
       topSellingProducts.length === 0 &&
-      (!salesDocs || salesDocs.length === 0)
+      (!salesDocs ||
+        salesDocs.length === 0) &&
+      (await db.collection('sales').estimatedDocumentCount()) === 0
     ) {
       const historicalSales: any[] = [];
       stock.forEach((document) => {
